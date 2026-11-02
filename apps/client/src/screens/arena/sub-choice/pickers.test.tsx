@@ -94,6 +94,7 @@ describe('pool pick (§6.7, L44-05)', () => {
     const { user, props } = setup(POOL_VIEW(), pool([]));
     const dialog = sheet('Recover from pool');
     expect(within(dialog).getByText('No eligible cards in the pool.')).not.toBeNull();
+    expect(button(dialog, 'Confirm recovery').hasAttribute('disabled')).toBe(true);
     await user.click(button(dialog, 'Confirm recovery'));
     expectNoArenaIntent(props);
   });
@@ -125,6 +126,30 @@ describe('pool pick (§6.7, L44-05)', () => {
     await user.click(button(dialog, 'Confirm recovery'));
     expect(onResolveSubChoice.mock.calls).toEqual([[{ kind: 'pool-pick', instanceIds: ['pool-tax', 'pool-thief'] }]]);
   });
+
+  it('never revives a dropped pick on a later resend with no tap in between (Review Focus 2)', async () => {
+    const { user, props, rerender, onResolveSubChoice } = setup(POOL_VIEW(), pool(['pool-tax', 'pool-spy', 'pool-thief']));
+    await user.click(button(sheet('Recover from pool'), 'Tax'));
+    await user.click(button(sheet('Recover from pool'), 'Spy'));
+    rerender(<ArenaScreen {...props} subChoice={pool(['pool-tax', 'pool-thief'])} />);
+    rerender(<ArenaScreen {...props} subChoice={pool(['pool-tax', 'pool-spy', 'pool-thief'])} />);
+    const dialog = sheet('Recover from pool');
+    expect(within(dialog).getByText('Select exactly 2 cards from the shared pool (1/2 selected).')).not.toBeNull();
+    expect(pressedOf(dialog, ['Tax', 'Spy', 'Thief'])).toEqual(['true', 'false', 'false']);
+    expect(button(dialog, 'Confirm recovery').hasAttribute('disabled')).toBe(true);
+    await user.click(button(dialog, 'Thief'));
+    await user.click(button(dialog, 'Confirm recovery'));
+    expect(onResolveSubChoice.mock.calls).toEqual([[{ kind: 'pool-pick', instanceIds: ['pool-tax', 'pool-thief'] }]]);
+  });
+
+  it('sends the ids in tap order, not pool order', async () => {
+    const { user, onResolveSubChoice } = setup(POOL_VIEW(), pool(['pool-tax', 'pool-spy', 'pool-thief']));
+    const dialog = sheet('Recover from pool');
+    await user.click(button(dialog, 'Thief'));
+    await user.click(button(dialog, 'Tax'));
+    await user.click(button(dialog, 'Confirm recovery'));
+    expect(onResolveSubChoice.mock.calls).toEqual([[{ kind: 'pool-pick', instanceIds: ['pool-thief', 'pool-tax'] }]]);
+  });
 });
 
 describe('special pick (§6.7, L44-05)', () => {
@@ -138,6 +163,12 @@ describe('special pick (§6.7, L44-05)', () => {
     expect(within(dialog).queryByRole('button', { name: 'Card Transformer' })).toBeNull();
     await user.click(button(dialog, 'Confirm special'));
     expect(onResolveSubChoice.mock.calls).toEqual([[{ kind: 'special-pick', cardId: 'cloning' }]]);
+  });
+
+  it('renders every special the server sends, with no client-side filter (golden rule 8)', () => {
+    setup(makeArenaView(), { ...SPECIAL, eligibleCardIds: ['cloning', 'card-transformer'] });
+    const dialog = sheet('Choose a special');
+    expect(pressedOf(dialog, ['Cloning', 'Card Transformer'])).toEqual(['true', 'false']);
   });
 
   it('sends the tapped special', async () => {
@@ -176,6 +207,21 @@ describe('the commit lock (A.9.4; L74-25 sets it while reconnecting)', () => {
     const commit = vi.fn<ArenaCommit>();
     const { user } = renderUi(<SubChoiceSheet subChoice={subChoice} view={view()} nowMs={0} commit={commit} actionReject={null} locked />);
     const locked = within(sheet(title)).getByRole('button', { name: confirm, description: DISABLED_REASON_COPY['actions-locked'] });
+    expect(locked.hasAttribute('disabled')).toBe(true);
+    await user.click(locked);
+    expect(commit).not.toHaveBeenCalled();
+  });
+
+  it('a locked Recover from pool sheet keeps selection live but disables Confirm recovery with its reason', async () => {
+    const commit = vi.fn<ArenaCommit>();
+    const { user } = renderUi(
+      <SubChoiceSheet subChoice={pool(['pool-tax', 'pool-spy', 'pool-thief'])} view={POOL_VIEW()} nowMs={0} commit={commit} actionReject={null} locked />,
+    );
+    const dialog = sheet('Recover from pool');
+    await user.click(button(dialog, 'Tax'));
+    await user.click(button(dialog, 'Spy'));
+    expect(within(dialog).getByText('Select exactly 2 cards from the shared pool (2/2 selected).')).not.toBeNull();
+    const locked = within(dialog).getByRole('button', { name: 'Confirm recovery', description: DISABLED_REASON_COPY['actions-locked'] });
     expect(locked.hasAttribute('disabled')).toBe(true);
     await user.click(locked);
     expect(commit).not.toHaveBeenCalled();

@@ -1208,10 +1208,11 @@ Appendix A). Each Lot 74 task appends its bullet here, in task order.
   instance id anywhere in the DOM (a base Spy picks blind, Q54); the first card is preselected.
   Pool shows the eligible pool cards with nothing preselected, greys the unselected tiles at
   `maxCount`, and enables 'Confirm recovery' only at exactly `maxCount` (ids in tap order; a pick
-  a resend no longer offers drops out for good and stays out if a later resend offers it again). Special shows the server's `eligibleCardIds` by catalog
-  name, the first preselected (the server leaves Card Transformer out). The Reanimation kit
-  picker uses `KitTile` (portrait, name, `aria-pressed`), the first preselected, and renders for
-  an eliminated POV. Each Confirm honours the host's `locked` ('Actions locked').
+  a resend no longer offers drops out for good and stays out if a later resend offers it again).
+  Special shows the server's `eligibleCardIds` by catalog name, the first preselected (the server
+  leaves Card Transformer out). The Reanimation kit picker uses `KitTile` (portrait, name,
+  `aria-pressed`), the first preselected, and renders for an eliminated POV. Each Confirm honours
+  the host's `locked` ('Actions locked').
 
 ## Design system (V2 · Lots 10+)
 
