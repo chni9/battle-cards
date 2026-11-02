@@ -47,6 +47,18 @@ describe('reward picks (L74-18)', () => {
       .toEqual([{ type: 'card', instanceId: 'r-spy' }, { type: 'points' }]);
   });
 
+  it("blocks Confirm with 'already chosen' when the other choice holds the only offered card (final review)", () => {
+    const single: RewardChoiceRequiredPayload = { ...PROMPT, availableCards: [SPY] };
+    for (const [holder, switcher] of [[0, 1], [1, 0]] as const) {
+      const picks = pickRewardKind(pickRewardKind(DEFAULT_REWARD_PICKS, holder, 'card', single.availableCards), switcher, 'card', single.availableCards);
+      expect([picks[holder], picks[switcher]]).toEqual([{ kind: 'card', cardId: 'r-spy' }, { kind: 'card', cardId: null }]);
+      expect(rewardConfirm(single, picks)).toEqual({ payload: null, block: 'reward-card-already-chosen' });
+    }
+    const none: RewardChoiceRequiredPayload = { ...PROMPT, availableCards: [] };
+    expect(rewardConfirm(none, pickRewardKind(DEFAULT_REWARD_PICKS, 1, 'card', none.availableCards)))
+      .toEqual({ payload: null, block: 'reward-card-unavailable' });
+  });
+
   it('remembers every card the prompt offered, in first-seen order', () => {
     const seen = [SPY, THIEF];
     expect(mergeSeenCards(seen, [THIEF, SPY])).toBe(seen);

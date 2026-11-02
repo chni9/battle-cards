@@ -240,6 +240,19 @@ describe('Mirror (§6.7, L44-03, L56-04)', () => {
     rerender(<ArenaScreen {...props} subChoice={{ ...MIRROR }} />);
     const dialog = sheet('Mirror redirect');
     expect(['p1', 'p2'].map((name) => within(dialog).getByRole('button', { name }).getAttribute('aria-pressed'))).toEqual(['true', 'false']);
+    expectNoArenaIntent(props);
+  });
+
+  it('re-arms the answer latch on a resend: Confirm, a resent prompt, Confirm sends twice (final review)', async () => {
+    const { user, props, rerender, onResolveSubChoice } = setup({ subChoice: MIRROR });
+    const confirm = (): HTMLElement => within(sheet('Mirror redirect')).getByRole('button', { name: 'Confirm redirect' });
+    await user.click(confirm());
+    await user.click(confirm());
+    expect(onResolveSubChoice).toHaveBeenCalledTimes(1);
+    rerender(<ArenaScreen {...props} subChoice={{ ...MIRROR }} />);
+    await user.click(confirm());
+    const redirect = { kind: 'mirror', pendingEffectId: 'e1', newTargetPlayerId: 'p1' };
+    expect(onResolveSubChoice.mock.calls).toEqual([[redirect], [redirect]]);
   });
 });
 

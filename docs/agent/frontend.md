@@ -1208,7 +1208,9 @@ Appendix A). Each Lot 74 task appends its bullet here, in task order.
   radiogroups ('Choice 1' lives, 'Choice 2' points) and, for 'A card', a grid that greys the
   other choice's card and any card the prompt offered before but no longer does, with the
   `ILLEGAL_ACTION_COPY` reward-card bodies as reasons (Q55); Choice 2 starts on the first card
-  Choice 1 does not hold. Nothing shows another seat's open prompt (§14.2).
+  Choice 1 does not hold. An 'A card' pick with no free card left, because the other choice holds
+  every offered card, blocks Confirm with the 'already chosen' reason, not 'unavailable' (final
+  review). Nothing shows another seat's open prompt (§14.2).
 - `screens/arena/sub-choice/steal-choice.tsx`, `pool-choice.tsx`, `special-choice.tsx`,
   `kit-choice.tsx` (L74-19, spec v7 §6.7, §6.3, §11): the other select + Confirm pickers on the
   L74-18 host, with V2's copy and payloads. Steal shows a face only where the victim's Spy+ hand

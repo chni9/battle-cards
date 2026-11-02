@@ -89,11 +89,20 @@ export type RewardConfirm =
   | { readonly payload: Extract<ResolveSubChoicePayload, { kind: 'elimination-reward' }>; readonly block: null }
   | { readonly payload: null; readonly block: RewardCardBlock };
 
-/** Why the pick in `slot` cannot be sent, or null: an empty or no-longer-offered card, or the other slot's card. */
+/**
+ * Why the pick in `slot` cannot be sent, or null: an empty or no-longer-offered card, or the other
+ * slot's card. An empty card pick means `pickRewardKind` found no free card: when the prompt offers
+ * cards and the other slot holds every one, the true reason is that it is already chosen (final
+ * review); with nothing offered, it is unavailable.
+ */
 function pickBlock(subChoice: RewardChoiceRequiredPayload, picks: RewardPicks, slot: RewardSlot): RewardCardBlock | null {
   const pick = picks[slot];
   if (pick.kind !== 'card') return null;
-  if (pick.cardId === null) return 'reward-card-unavailable';
+  if (pick.cardId === null) {
+    const offered = subChoice.availableCards;
+    const allHeld = offered.length > 0 && offered.every((card) => holdsCard(picks, otherSlot(slot), card.instanceId));
+    return allHeld ? 'reward-card-already-chosen' : 'reward-card-unavailable';
+  }
   return rewardCardBlock(pick.cardId, slot, picks, subChoice.availableCards);
 }
 
