@@ -18,6 +18,7 @@ import { CHROME_FOCUS_CLASS } from '../../ui/primitives/chrome-classes';
 import { PlayerName } from '../../ui/seat/player-name';
 import type { LogLine, LogSegment } from '../../view-model/log';
 import type { CardSheetSource } from './card-sheet-source';
+import { unreachable } from './unreachable';
 
 export interface LogLineSegmentsProps {
   line: LogLine;
@@ -25,11 +26,6 @@ export interface LogLineSegmentsProps {
   view: PlayingStateView;
   /** The sheet passes it: inspectable card names become buttons. The ticker omits it (it is one button). */
   onOpenCard?: (source: CardSheetSource) => void;
-}
-
-function unreachable(value: never): never {
-  void value;
-  throw new Error('Unhandled log segment');
 }
 
 function segmentElement(

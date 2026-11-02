@@ -17,6 +17,7 @@ import { spokenGlyphAmount } from '../../ui/card/glyph-amount';
 import type { IconName } from '../../ui/icons/icon-names';
 import { DRAW_ACTION_LABEL } from '../../view-model/chrome-labels';
 import type { SeatBadge } from '../../view-model/seats';
+import { unreachable } from './unreachable';
 
 /** Screen-reader words after a seat's "+n" (plan Appendix B, §10.6). */
 export const SEAT_MORE_STATUSES_LABEL = 'more statuses';
@@ -29,11 +30,6 @@ export interface SeatBadgeView {
   label: string;
   /** The short value printed beside the icon on the seat, else null. */
   value: string | null;
-}
-
-function unreachable(value: never): never {
-  void value;
-  throw new Error('Unhandled seat badge');
 }
 
 /** The card words a seat badge speaks, from the catalog name (an unknown id falls back to the id). */

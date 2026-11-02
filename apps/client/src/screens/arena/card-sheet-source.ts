@@ -20,6 +20,7 @@ import {
 
 import { inPlayThumbs, type CardRef, type InPlayThumb } from '../../view-model/card-actions';
 import type { CardCounter } from '../../ui/card/card-face';
+import { unreachable } from './unreachable';
 
 export type CardSheetSource =
   | { kind: 'hand'; instance: CardInstance }
@@ -53,11 +54,6 @@ export type CardSheetContext =
   | { readonly kind: 'active'; readonly count: CardSheetCount | null }
   | { readonly kind: 'spy-reveal' }
   | null;
-
-function unreachable(value: never): never {
-  void value;
-  throw new Error('Unhandled card sheet source');
-}
 
 /** hand → zone 'hand', special → 'special', in-play → thumb.ref, others → 'read-only'. */
 export function cardRefFor(source: CardSheetSource): CardRef {

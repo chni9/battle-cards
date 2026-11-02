@@ -54,6 +54,14 @@ describe('Log ticker and sheet (§6.9)', () => {
     expectNoArenaIntent(props);
   });
 
+  it('shows a newest card line as plain text: the ticker holds no nested button (final review)', () => {
+    const { props } = setup([drawBy('me', 0), ATTACK]);
+    const ticker = within(region('ticker')).getByRole('button', { name: /^Action log: .*Basic attack/ });
+    expect(visibleText(ticker)).toContain('Basic attack');
+    expect(ticker.querySelectorAll('button')).toHaveLength(0);
+    expectNoArenaIntent(props);
+  });
+
   it('reads "No actions yet" in the ticker and in the sheet while the log is empty', async () => {
     const { user } = setup([]);
     const ticker = within(region('ticker')).getByRole('button', { name: 'Action log: No actions yet' });

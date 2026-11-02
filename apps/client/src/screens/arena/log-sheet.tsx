@@ -39,16 +39,16 @@ export function LogSheet({ open, view, model, onClose, onOpenCard }: LogSheetPro
   const stuck = useRef(true);
 
   useEffect(() => {
-    if (open) {
-      stuck.current = true;
+    if (!open) {
+      return;
     }
-  }, [open]);
+    // Every opening starts on the newest line.
+    stuck.current = true;
 
-  useEffect(() => {
     const body = panel.current;
     const scroller = body?.closest<HTMLElement>('[data-zone="sheet-body"]') ?? null;
 
-    if (!open || body === null || scroller === null) {
+    if (body === null || scroller === null) {
       return;
     }
 

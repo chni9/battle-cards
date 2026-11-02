@@ -24,6 +24,7 @@ import type { KitId } from '@card-battle/shared';
 
 import type { ShopTab } from '../../view-model/shop';
 import { sheetInstanceFor, type CardSheetSource } from './card-sheet-source';
+import { unreachable } from './unreachable';
 
 export type ArenaSheet =
   | { kind: 'card'; source: CardSheetSource }
@@ -61,11 +62,6 @@ export const EMPTY_ARENA_SHEETS: ArenaSheetsState = { open: [], closing: [], tar
 
 /** One close per tap, and two quick closes are the worst case before an exit (220 ms) ends. */
 export const MAX_CLOSING_SHEETS = 2;
-
-function unreachable(value: never): never {
-  void value;
-  throw new Error('Unhandled arena sheet');
-}
 
 /**
  * `card:<sheetInstanceFor(source).instanceId>`, `kit:<kitId>`, `seat:<playerId>`, `shop` (one Shop,
