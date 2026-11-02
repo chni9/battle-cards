@@ -6,6 +6,11 @@
  * switch) started again from "everything seen". Here it is module state keyed by room code, read
  * through `useSyncExternalStore`, so a new arena for the same room keeps the count. It is memory
  * only: a page reload starts again, and App needs no prop for it.
+ *
+ * A rematch stays in the same room and code (Play again) and the transcript continues, so the count
+ * a finished match left would show the lobby lines as unread. `forgetChatSeen` drops a room's entry,
+ * and the next render treats the room as first seen. App forgets a room's seen count when the room
+ * returns to its lobby (L74-21), so a new match starts with the lobby lines seen.
  */
 
 import { useEffect, useSyncExternalStore } from 'react';
@@ -31,6 +36,15 @@ export function markChatSeen(gameCode: string, count: number): void {
   }
 }
 
+/** Drops the room's seen count, so the next `useChatUnread` render counts the lines already there as seen. Notifies only if there was an entry. */
+export function forgetChatSeen(gameCode: string): void {
+  if (seenByRoom.delete(gameCode)) {
+    for (const listener of listeners) {
+      listener();
+    }
+  }
+}
+
 export function subscribeChatSeen(listener: () => void): () => void {
   listeners.add(listener);
   return () => {
@@ -47,10 +61,12 @@ export interface ChatUnreadInput {
 /** The unread count (V2 `chatUnreadCount`) over the store's seen count for this room. */
 export function useChatUnread({ gameCode, messageCount, open }: ChatUnreadInput): number {
   const stored = useSyncExternalStore(subscribeChatSeen, () => chatSeenCount(gameCode));
-  // First sight of a room: the lines already there are seen (V2 seeded at mount). While the sheet
-  // is open the seen count follows the transcript, so every way it closes marks everything seen.
+  // First sight of a room, or after `forgetChatSeen`: the lines already there are seen (V2 seeded at
+  // mount). While the sheet is open the seen count follows the transcript, so every way it closes
+  // marks everything seen. A transcript shorter than the seen count (a walk-in claimed a living seat
+  // and lost the side lines) re-seeds at the shorter count, so the next lines still count.
   useEffect(() => {
-    if (open || stored === undefined) {
+    if (open || stored === undefined || messageCount < stored) {
       markChatSeen(gameCode, messageCount);
     }
   }, [open, stored, gameCode, messageCount]);

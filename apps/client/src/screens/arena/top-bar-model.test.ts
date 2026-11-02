@@ -7,7 +7,7 @@ import { describe, expect, it } from 'vitest';
 
 import { makeArenaView } from './test-view';
 import {
-  activeBlockLabel, arenaFlag, CODE_COPIED_LABEL, CODE_COPY_FAILED_LABEL, COPY_CODE_LABEL, gameCodeLine,
+  activeBlockLabel, arenaFlag, chatAriaLabel, CODE_COPIED_LABEL, CODE_COPY_FAILED_LABEL, COPY_CODE_LABEL, gameCodeLine,
   LEAVE_CONFIRM_CHROME, MENU_LABEL, topBarRoundLabel, turnBannerOf, turnBannerText, type TurnBanner,
 } from './top-bar-model';
 
@@ -64,5 +64,9 @@ describe('top bar model (spec v7 §6.1)', () => {
     expect(gameCodeLine(makeArenaView(), 'Reconnecting…')).toBe('Code TEST · Reconnecting…');
     expect([MENU_LABEL, COPY_CODE_LABEL, CODE_COPIED_LABEL, CODE_COPY_FAILED_LABEL])
       .toEqual(['Menu', 'Copy', 'Code copied', 'Copy failed']);
+  });
+
+  it('names the Chat control Chat, or Chat, N unread (V2; the badge is aria-hidden, L74-16)', () => {
+    expect([0, 1, 12].map((unread) => chatAriaLabel(unread))).toEqual(['Chat', 'Chat, 1 unread', 'Chat, 12 unread']);
   });
 });

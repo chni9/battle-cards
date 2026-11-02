@@ -1166,7 +1166,10 @@ Appendix A). Each Lot 74 task appends its bullet here, in task order.
   keyed by `gameCode` (`useSyncExternalStore`), so a reconnect remount and the live → finished
   switch keep it. The first sight of a room counts the lines already there as seen (V2), the seen
   count follows the transcript while the sheet is open, so any close marks every line seen, and
-  `chatUnreadCount` counts the rest. App needs no prop.
+  `chatUnreadCount` counts the rest. A transcript shorter than the seen count (a walk-in claimed a
+  seat) re-seeds at the shorter count. `forgetChatSeen(gameCode)` makes the next render treat the
+  room as first seen: App calls it when a room returns to its lobby (L74-21), so a rematch starts
+  with the lobby lines seen. App needs no prop.
 
 ## Design system (V2 · Lots 10+)
 

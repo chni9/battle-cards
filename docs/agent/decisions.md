@@ -5614,13 +5614,20 @@ Source: technical spec v7 §6.1 item 1, §6.9, §13 Q48; Appendix A `table-chat-
   of the page, read through `useSyncExternalStore`. A reconnect remount and the live → finished
   switch mount a new arena for the same room and keep the count; a reload starts again. App needs
   no prop and no change.
-- **What counts** stays V2's (`chatUnreadCount`): the lines on screen when a room's arena first
-  renders are seen, nothing is unread while the sheet is open, and the seen count follows the
-  transcript while it is open, so every close (Esc, backdrop, swipe, or targeting closing it)
+- **What counts** stays V2's (`chatUnreadCount`): the lines already there the first time a room's
+  seen count is read (the arena's first render of the room, or the first render after
+  `forgetChatSeen`) are seen, nothing is unread while the sheet is open, and the seen count follows
+  the transcript while it is open, so every close (Esc, backdrop, swipe, or targeting closing it)
   marks every line seen.
-- **Count-based, as V2.** A walk-in who claims a living seat loses the side lines, and its badge
-  stays hidden until the transcript passes the old count. Tracking by message order is a later
-  presentation fix.
+- **A rematch forgets the room.** Play again stays in the same room and code and the transcript
+  continues, so the count a finished match left would show the lobby lines as unread (V2 seeded at
+  mount). `forgetChatSeen(gameCode)` deletes a room's entry, and the next render treats the room as
+  first seen. App forgets a room's seen count when the room returns to its lobby (L74-21), so a new
+  match starts with the lobby lines seen. This task adds the function and its test and does not
+  edit App (D8).
+- **Count-based, as V2, with one fix.** A walk-in who claims a living seat loses the side lines, so
+  the transcript can become shorter than the seen count. The hook then re-seeds at the shorter
+  count, and the next lines count. Tracking by message order is still a later presentation fix.
 - **Chat is first** in the top bar's right row (plan A.9.4). The sheet has no Close button: it is a
   read-only bottom sheet like the card, kit, seat and log sheets (§6.7: Esc, backdrop, swipe-down).
 
