@@ -211,13 +211,9 @@ export function ShopSheet({
   const once = useCommitOnce({ view, reject: actionReject });
 
   // One control for every Shop buy; one argument, never `commit(intent, undefined)` (A.9.3, D4).
+  // Only a buy that went out latches and closes the Shop (L74 Part 2 final review).
   function buy(intent: ArenaIntent): void {
-    if (
-      once('shop', () => {
-        commit(intent);
-        return true;
-      })
-    ) {
+    if (once('shop', () => commit(intent))) {
       onClose();
     }
   }

@@ -8,7 +8,7 @@ import { act, screen, within } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
 import type { ActionRejectPayload } from '../../net/use-room-connection';
-import { renderUi, type RenderUiOptions } from '../../test/render';
+import { renderUi, type RenderUiOptions, type RenderUiResult } from '../../test/render';
 import { makeCard, makeSelf } from '../../view-model/test-fixtures';
 import { ILLEGAL_ACTION_COPY } from '../illegal-action-copy';
 import { ArenaScreen, type ArenaScreenProps } from './arena-screen';
@@ -17,6 +17,7 @@ import { makeArenaProps, makeArenaView } from './test-view';
 
 const NOT_YOUR_TURN: ActionRejectPayload = { code: 'not-your-turn', message: 'Not your turn.' };
 const ALREADY_ACTED: ActionRejectPayload = { code: 'already-acted', message: 'Already acted.' };
+const CHAT_TOO_LONG: ActionRejectPayload = { code: 'send-chat-too-long', message: 'A chat message is at most 200 characters.' };
 const handView = (): PlayingStateView => makeArenaView({ overrides: { self: makeSelf({ points: 30, hand: [makeCard('spy'), makeCard('tax')] }) } });
 function setup(view: PlayingStateView, overrides: Partial<ArenaScreenProps> = {}, options: RenderUiOptions = {}) {
   const props = makeArenaProps({ view, ...overrides });
@@ -30,6 +31,20 @@ function region(name: string): HTMLElement {
 const handCard = (name: string): HTMLElement => within(region('hand')).getByRole('button', { name });
 const draw = (): HTMLElement => within(region('dock')).getByRole('button', { name: /^Draw, plus / });
 const toastShows = (title: string): boolean => within(screen.getByRole('alert')).queryByText(title) !== null;
+/** The in-place wrapper that counts a hand card's spring-backs (`data-reject-shakes`, like `data-upgrade-flip`). */
+function shakeWrapper(name: string): HTMLElement {
+  const wrapper = handCard(name).closest<HTMLElement>('[data-reject-shakes]');
+  if (wrapper === null) throw new Error(`no shake count on ${name}`);
+  return wrapper;
+}
+const shakes = (name: string): string | null => shakeWrapper(name).getAttribute('data-reject-shakes');
+/** Plays Spy on p2 through tap-tap targeting: the send the next reject answers. */
+async function playSpy(user: RenderUiResult['user'], props: ArenaScreenProps): Promise<void> {
+  await user.click(handCard('Spy'));
+  await user.click(within(screen.getByRole('dialog', { name: 'Spy' })).getByRole('button', { name: /^Use/ }));
+  await user.click(within(region('arena')).getByRole('button', { name: 'p2, target' }));
+  expect(vi.mocked(props.onPlayCard).mock.calls).toEqual([['spy-1', { targetPlayerId: 'p2' }]]);
+}
 
 describe('reject toast (§6.12)', () => {
   it('shows the ILLEGAL_ACTION_COPY title and body in an error toast, not a modal', () => {
@@ -61,20 +76,27 @@ describe('reject toast (§6.12)', () => {
     expect(props.onDismissActionReject).toHaveBeenCalledTimes(1);
   });
 
-  it.each([{ reducedMotion: false, cue: 'shake' }, { reducedMotion: true, cue: 'flash' }])(
-    'a rejected Spy play marks its hand card: $cue (reduced motion $reducedMotion; §6.6.2, §8.3)',
-    async ({ reducedMotion, cue }) => {
+  it.each([{ reducedMotion: false, motion: 'full' }, { reducedMotion: true, motion: 'reduced' }])(
+    'a rejected Spy play springs its hand card back once, a shake or a flash: $motion motion (§6.6.2, §8.3)',
+    async ({ reducedMotion, motion }) => {
       const { user, props, rerender } = setup(handView(), {}, { reducedMotion });
-      await user.click(handCard('Spy'));
-      await user.click(within(screen.getByRole('dialog', { name: 'Spy' })).getByRole('button', { name: /^Use/ }));
-      await user.click(within(region('arena')).getByRole('button', { name: 'p2, target' }));
-      expect(vi.mocked(props.onPlayCard).mock.calls).toEqual([['spy-1', { targetPlayerId: 'p2' }]]);
-      expect(handCard('Spy').closest('[data-reject-cue]')).toBeNull();
+      await playSpy(user, props);
+      expect([shakes('Spy'), shakes('Tax')]).toEqual(['0', '0']);
       rerender(<ArenaScreen {...props} actionReject={NOT_YOUR_TURN} />);
-      expect(handCard('Spy').closest('[data-reject-cue]')?.getAttribute('data-reject-cue')).toBe(cue);
-      expect(handCard('Tax').closest('[data-reject-cue]')).toBeNull();
+      expect([shakes('Spy'), shakes('Tax')]).toEqual(['1', '0']);
+      expect(shakeWrapper('Spy').getAttribute('data-motion')).toBe(motion);
     },
   );
+
+  it('an unrelated later reject (a chat send) with no state update never shakes the rejected card again (L74-25 M2)', async () => {
+    const { user, props, rerender } = setup(handView());
+    await playSpy(user, props);
+    rerender(<ArenaScreen {...props} actionReject={NOT_YOUR_TURN} />);
+    expect(shakes('Spy')).toBe('1');
+    rerender(<ArenaScreen {...props} actionReject={CHAT_TOO_LONG} />);
+    expect(toastShows(ILLEGAL_ACTION_COPY['send-chat-too-long'].body)).toBe(true);
+    expect([shakes('Spy'), shakes('Tax')]).toEqual(['1', '0']);
+  });
 
   it('a Draw reject with no state update re-arms the Draw latch and shakes no card (Review Focus 4)', async () => {
     const { user, props, rerender } = setup(handView());
@@ -84,6 +106,6 @@ describe('reject toast (§6.12)', () => {
     rerender(<ArenaScreen {...props} actionReject={ALREADY_ACTED} />);
     await user.click(draw());
     expect(props.onDraw).toHaveBeenCalledTimes(2);
-    expect(document.querySelector('[data-reject-cue]')).toBeNull();
+    expect([shakes('Spy'), shakes('Tax')]).toEqual(['0', '0']);
   });
 });

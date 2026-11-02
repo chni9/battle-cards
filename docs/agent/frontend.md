@@ -987,7 +987,12 @@ Appendix A). Each Lot 74 task appends its bullet here, in task order.
   `createArenaCommit(handlers, hooks?)` (L74-17): `hooks.onSent(intent, context)` runs after the
   send with the caller's `CommitContext` (or `{}`), and `hooks.allow` can veto a send (L74-25
   while reconnecting; L75 `allowTutorialSend`). A caller with no context calls `commit(intent)`
-  with one argument.
+  with one argument. `ArenaCommit` is `(intent, context?) => boolean` (Part 2 final review): false
+  when `allow` vetoes or the optional handler is absent (no `onSent` then), true once the intent
+  went out. Every latch, sheet close and targeting end keys on it: `dockCommit` returns it, the
+  Shop buy and the sub-choice answer latch on it, the card sheet latches and closes on it, a target
+  tap ends targeting on it, and `dispatchDrop` reports `'returned'` on false, so the card springs
+  back.
 - `screens/arena/card-sheet.tsx` actions + `card-sheet-actions.ts` (L74-08, spec v7 §6.6.1,
   §6.6.2, §11): the row comes from `cardActions(view, liveCardRefFor(source, view), ctx).actions`,
   in model order. Use (`primary`, "Use" plus the play cost as a `−` `CostAmount`), Upgrade
@@ -1110,8 +1115,8 @@ Appendix A). Each Lot 74 task appends its bullet here, in task order.
   view, reject })` returns `once(control, send)`; call `once('<control>', () => commit(intent))`
   from the click handler.
   - `send` returns whether the send went out, and only a real send latches. The dock's
-    `DockCommit` returns false while the targeting tap guard swallows a send, so a swallowed tap
-    leaves the button live.
+    `DockCommit` returns false while the targeting tap guard swallows a send, and otherwise the
+    commit's own result, so a swallowed or vetoed tap leaves the button live.
   - Latches are per control name: Unspy's Confirm never blocks a quick Draw after it.
   - A new view identity (any state update, a new `turnSequence` included) or a new
     `actionReject` re-arms every latch: a rejected send may arrive with no state update.
@@ -1299,8 +1304,11 @@ Appendix A). Each Lot 74 task appends its bullet here, in task order.
   after `REJECT_TOAST_MS` (6 s), each calling `onDismissActionReject` once. A state update never
   dismisses it. The timeout answers the toast watch point: a live sheet's focus trap keeps Tab off
   its OK. The hand card the rejected send spent (`onSent`'s `CommitContext`, the last send, no state
-  update since) shakes in its slot (`data-reject-cue="shake"`), or flashes `--danger` under reduced
-  motion (`flash`). A Draw latched before a drop re-arms on the rejoin's state push.
+  update since) shakes in its slot, or flashes `--danger` under reduced motion; its wrapper counts
+  the spring-backs in `data-reject-shakes`, as `data-upgrade-flip` counts the flips. The reject
+  consumes the last-send record, so a later unrelated reject (chat, forfeit, claim) with no state
+  update in between never shakes that card again (final review). A Draw latched before a drop
+  re-arms on the rejoin's state push.
 
 ## Design system (V2 · Lots 10+)
 

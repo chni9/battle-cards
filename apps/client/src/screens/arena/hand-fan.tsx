@@ -240,8 +240,8 @@ function HandCard({ card, selected, onOpen, rejectToken }: HandCardProps): React
     <div
       ref={scope}
       data-upgrade-flip={String(flips)}
+      data-reject-shakes={String(shakes)}
       data-motion={motionAttribute(reduced)}
-      {...(shakes > 0 ? { 'data-reject-cue': reduced ? 'flash' : 'shake' } : {})}
     >
       <Card
         size="hand"

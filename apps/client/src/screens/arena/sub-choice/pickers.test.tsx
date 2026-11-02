@@ -204,7 +204,7 @@ describe('the commit lock (A.9.4; L74-25 sets it while reconnecting)', () => {
     { title: 'Choose a special', confirm: 'Confirm special', view: () => makeArenaView(), subChoice: SPECIAL },
     { title: 'Choose a kit', confirm: 'Confirm kit', view: () => makeArenaView({ pov: 'reanimating' }), subChoice: KIT },
   ])('a locked $title sheet disables $confirm with its reason and sends nothing', async ({ title, confirm, view, subChoice }) => {
-    const commit = vi.fn<ArenaCommit>();
+    const commit = vi.fn<ArenaCommit>(() => true);
     const { user } = renderUi(<SubChoiceSheet subChoice={subChoice} view={view()} nowMs={0} commit={commit} actionReject={null} locked />);
     const locked = within(sheet(title)).getByRole('button', { name: confirm, description: DISABLED_REASON_COPY['actions-locked'] });
     expect(locked.hasAttribute('disabled')).toBe(true);
@@ -213,7 +213,7 @@ describe('the commit lock (A.9.4; L74-25 sets it while reconnecting)', () => {
   });
 
   it('a locked Recover from pool sheet keeps selection live but disables Confirm recovery with its reason', async () => {
-    const commit = vi.fn<ArenaCommit>();
+    const commit = vi.fn<ArenaCommit>(() => true);
     const { user } = renderUi(
       <SubChoiceSheet subChoice={pool(['pool-tax', 'pool-spy', 'pool-thief'])} view={POOL_VIEW()} nowMs={0} commit={commit} actionReject={null} locked />,
     );

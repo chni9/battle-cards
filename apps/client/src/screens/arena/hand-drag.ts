@@ -70,7 +70,8 @@ export type DropOutcome = 'sent' | 'choice' | 'returned';
 /**
  * An intent leaves through the arena commit (§6.6.4); a pre-send choice opens and sends nothing
  * (§6.6.3); anything else returns the card. `context` (L74-17) rides with the intent so its ghost
- * flies from the release point; without one, `commit` gets the intent alone (plan D4).
+ * flies from the release point; without one, `commit` gets the intent alone (plan D4). A commit
+ * that did not go out (a veto) returns the card too, so it springs back (L74 Part 2 final review).
  */
 export function dispatchDrop(
   result: DropResult | null,
@@ -82,13 +83,10 @@ export function dispatchDrop(
     return 'returned';
   }
   switch (result.kind) {
-    case 'intent':
-      if (context === undefined) {
-        commit(result.intent);
-      } else {
-        commit(result.intent, context);
-      }
-      return 'sent';
+    case 'intent': {
+      const sent = context === undefined ? commit(result.intent) : commit(result.intent, context);
+      return sent ? 'sent' : 'returned';
+    }
     case 'open-choice':
       openChoice(result.choice);
       return 'choice';

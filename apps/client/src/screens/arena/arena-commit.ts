@@ -8,6 +8,9 @@
  * `hooks.allow` can veto a send, and `hooks.onSent` runs after it with the caller's
  * `CommitContext` (L74-17, plan A.9.3). A caller with no context calls `commit(intent)` with one
  * argument, never `commit(intent, undefined)`.
+ * `commit` returns whether the intent went out, and a caller latches, closes its sheet or ends
+ * targeting only on `true` (L74 Part 2 final review): L75's `allowTutorialSend` vetoes on client
+ * state while the models keep the buttons enabled, so a vetoed send must leave its control live.
  * Leave, forfeit and chat are App-level actions, not `ArenaIntent`s: the top bar (and later the
  * chat sheet) calls `onLeave` / `onForfeit` / `onSendChat` directly, outside this helper.
  *
@@ -60,11 +63,15 @@ export interface ArenaCommitHooks {
    * `allowTutorialSend`; it never replaces it.
    */
   readonly allow?: (intent: ArenaIntent) => boolean;
-  /** After the send: L74-17 own-intent FX (`ownIntentFxFor`), L74-25 the last-send record. `{}` for a one-argument call. */
+  /** After a send that went out: L74-17 own-intent FX (`ownIntentFxFor`), L74-25 the last-send record. `{}` for a one-argument call. */
   readonly onSent?: (intent: ArenaIntent, context: CommitContext) => void;
 }
 
-export type ArenaCommit = (intent: ArenaIntent, context?: CommitContext) => void;
+/**
+ * Returns whether the intent went out: false when `allow` vetoed it or its optional handler is
+ * absent. Every latch, sheet close and targeting end keys on it (L74 Part 2 final review).
+ */
+export type ArenaCommit = (intent: ArenaIntent, context?: CommitContext) => boolean;
 
 /** The intent callbacks of `ArenaScreenProps` the helper routes to. */
 export type ArenaIntentHandlers = Pick<
@@ -85,7 +92,8 @@ export type ArenaIntentHandlers = Pick<
   | 'onResolveSubChoice'
 >;
 
-function sendIntent(handlers: ArenaIntentHandlers, intent: ArenaIntent): void {
+/** Whether the intent reached a handler: false only for an absent optional handler. */
+function sendIntent(handlers: ArenaIntentHandlers, intent: ArenaIntent): boolean {
   switch (intent.kind) {
     case 'playCard': {
       const { instanceId, targetPlayerId, quantity, consumeInstanceId } = intent.payload;
@@ -100,47 +108,49 @@ function sendIntent(handlers: ArenaIntentHandlers, intent: ArenaIntent): void {
       } else {
         handlers.onPlayCard(instanceId, options);
       }
-      return;
+      return true;
     }
     case 'sellCard':
       handlers.onSellCard(intent.payload.instanceId);
-      return;
+      return true;
     case 'upgradeCard':
       handlers.onUpgradeCard(intent.payload.instanceId);
-      return;
+      return true;
     case 'playMultipleAttacks':
       handlers.onPlayMultipleAttacks(intent.payload.attacks);
-      return;
+      return true;
     case 'deactivatePersistent':
-      handlers.onDeactivatePersistent?.(intent.payload.effectId);
-      return;
+      if (handlers.onDeactivatePersistent === undefined) return false;
+      handlers.onDeactivatePersistent(intent.payload.effectId);
+      return true;
     case 'clearSpy':
       handlers.onClearSpy(intent.payload.targetPlayerId);
-      return;
+      return true;
     case 'drawCard':
       handlers.onDraw();
-      return;
+      return true;
     case 'activateDuplication':
-      handlers.onActivateDuplication?.();
-      return;
+      if (handlers.onActivateDuplication === undefined) return false;
+      handlers.onActivateDuplication();
+      return true;
     case 'buyCard':
       handlers.onBuyCard(intent.payload.cardId);
-      return;
+      return true;
     case 'buyUpgradePoint':
       handlers.onBuyUpgradePoint();
-      return;
+      return true;
     case 'sellUpgradePoint':
       handlers.onSellUpgradePoint();
-      return;
+      return true;
     case 'buySpecialCard':
       handlers.onBuySpecialCard();
-      return;
+      return true;
     case 'buyPoolCard':
       handlers.onBuyPoolCard();
-      return;
+      return true;
     case 'resolveSubChoice':
       handlers.onResolveSubChoice(intent.payload);
-      return;
+      return true;
     default: {
       const _exhaustive: never = intent;
       return _exhaustive;
@@ -150,10 +160,10 @@ function sendIntent(handlers: ArenaIntentHandlers, intent: ArenaIntent): void {
 
 export function createArenaCommit(handlers: ArenaIntentHandlers, hooks: ArenaCommitHooks = {}): ArenaCommit {
   return (intent, context) => {
-    if (hooks.allow?.(intent) === false) {
-      return;
+    if (hooks.allow?.(intent) === false || !sendIntent(handlers, intent)) {
+      return false;
     }
-    sendIntent(handlers, intent);
     hooks.onSent?.(intent, context ?? {});
+    return true;
   };
 }

@@ -37,6 +37,27 @@ function expectOnly(handlers: Handlers, name: keyof Handlers): void {
   }
 }
 
+/**
+ * The required handlers alone. Built by hand: a rest-destructure would leave two unused bindings
+ * that @typescript-eslint/no-unused-vars rejects (ignoreRestSiblings is off).
+ */
+function requiredOf(all: Handlers): ArenaIntentHandlers {
+  return {
+    onPlayCard: all.onPlayCard,
+    onSellCard: all.onSellCard,
+    onUpgradeCard: all.onUpgradeCard,
+    onPlayMultipleAttacks: all.onPlayMultipleAttacks,
+    onDraw: all.onDraw,
+    onClearSpy: all.onClearSpy,
+    onBuyCard: all.onBuyCard,
+    onBuyUpgradePoint: all.onBuyUpgradePoint,
+    onSellUpgradePoint: all.onSellUpgradePoint,
+    onBuySpecialCard: all.onBuySpecialCard,
+    onBuyPoolCard: all.onBuyPoolCard,
+    onResolveSubChoice: all.onResolveSubChoice,
+  };
+}
+
 describe('createArenaCommit (L74-08, Appendix A.6)', () => {
   it('maps a playCard with no option key to onPlayCard(instanceId) alone', () => {
     const handlers = makeHandlers();
@@ -97,23 +118,7 @@ describe('createArenaCommit (L74-08, Appendix A.6)', () => {
 
   it('makes an intent without its optional handler a no-op', () => {
     const all = makeHandlers();
-    // Built by hand: a rest-destructure would leave two unused bindings that
-    // @typescript-eslint/no-unused-vars rejects (ignoreRestSiblings is off).
-    const required: ArenaIntentHandlers = {
-      onPlayCard: all.onPlayCard,
-      onSellCard: all.onSellCard,
-      onUpgradeCard: all.onUpgradeCard,
-      onPlayMultipleAttacks: all.onPlayMultipleAttacks,
-      onDraw: all.onDraw,
-      onClearSpy: all.onClearSpy,
-      onBuyCard: all.onBuyCard,
-      onBuyUpgradePoint: all.onBuyUpgradePoint,
-      onSellUpgradePoint: all.onSellUpgradePoint,
-      onBuySpecialCard: all.onBuySpecialCard,
-      onBuyPoolCard: all.onBuyPoolCard,
-      onResolveSubChoice: all.onResolveSubChoice,
-    };
-    const commit = createArenaCommit(required);
+    const commit = createArenaCommit(requiredOf(all));
     expect(() => {
       commit({ kind: 'deactivatePersistent', payload: { effectId: 'eff-1' } });
       commit({ kind: 'activateDuplication' });
@@ -169,5 +174,31 @@ describe('createArenaCommit hooks (L74-17, A.9.3)', () => {
     expect([handlers.onDraw.mock.calls.length, onSent.mock.calls.length]).toEqual([0, 0]);
     commit({ kind: 'clearSpy', payload: { targetPlayerId: 'p2' } });
     expect(handlers.onClearSpy.mock.calls).toStrictEqual([['p2']]);
+  });
+});
+
+describe('createArenaCommit result (L74 Part 2 final review, L74-25 M1)', () => {
+  it('returns false on a veto and calls no handler and no onSent; true once the intent went out', () => {
+    const handlers = makeHandlers();
+    const onSent = vi.fn<NonNullable<ArenaCommitHooks['onSent']>>();
+    let allowed = false;
+    const commit = createArenaCommit(handlers, { allow: () => allowed, onSent });
+    expect(commit({ kind: 'drawCard' })).toBe(false);
+    expect(commit({ kind: 'playCard', payload: { instanceId: 'card-1' } }, { instanceId: 'card-1' })).toBe(false);
+    for (const name of NAMES) expect(handlers[name]).not.toHaveBeenCalled();
+    expect(onSent).not.toHaveBeenCalled();
+    allowed = true;
+    expect(commit({ kind: 'drawCard' })).toBe(true);
+    expect([handlers.onDraw.mock.calls.length, onSent.mock.calls.length]).toEqual([1, 1]);
+  });
+
+  it('returns false and fires no onSent when the optional handler is absent', () => {
+    const all = makeHandlers();
+    const onSent = vi.fn<NonNullable<ArenaCommitHooks['onSent']>>();
+    const commit = createArenaCommit(requiredOf(all), { onSent });
+    expect(commit({ kind: 'deactivatePersistent', payload: { effectId: 'eff-1' } })).toBe(false);
+    expect(commit({ kind: 'activateDuplication' })).toBe(false);
+    expect(onSent).not.toHaveBeenCalled();
+    expect(commit({ kind: 'buyPoolCard' })).toBe(true);
   });
 });

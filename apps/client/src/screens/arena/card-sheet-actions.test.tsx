@@ -142,7 +142,7 @@ describe('card sheet actions (L74-08)', () => {
   });
 
   it('hands a targeted Use to onBeginTargeting and commits nothing (the L74-10 seam)', async () => {
-    const commit = vi.fn<ArenaCommit>();
+    const commit = vi.fn<ArenaCommit>(() => true);
     const onBeginTargeting = vi.fn<(request: { instanceId: string; seatIds: readonly string[] }) => void>();
     const onClose = vi.fn();
     const { user } = renderUi(
@@ -163,7 +163,7 @@ describe('card sheet actions (L74-08)', () => {
   });
 
   it('a held card commits with its instanceId as the commit context (A.9.3, L74-17)', async () => {
-    const commit = vi.fn<ArenaCommit>();
+    const commit = vi.fn<ArenaCommit>(() => true);
     const { user } = renderUi(
       <CardSheet open source={{ kind: 'special', instance: makeCard('poison') }} view={viewWith({ points: 8, specialCards: [makeCard('poison')] })} ctx={LIVE} onClose={vi.fn()} commit={commit} />,
     );

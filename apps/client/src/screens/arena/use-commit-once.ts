@@ -7,7 +7,8 @@
  * `useCommitOnce` latches a control once its send went out:
  *
  * - **Only a real send latches.** `send` returns whether it went out. A send the arena's tap guard
- *   swallowed (`dockCommit` returns false) leaves the control live, never enabled-looking but dead.
+ *   swallowed or the commit helper's `allow` vetoed (`dockCommit` and `commit` return false) leaves
+ *   the control live, never enabled-looking but dead.
  * - **Per control.** Each control name has its own latch, so an Unspy Confirm followed quickly by
  *   Draw still draws.
  * - **Re-armed by a new view or a new reject.** A new view identity (any state update, a new

@@ -95,7 +95,7 @@ describe('slot-drop (§6.7 select + Drop, Q42 / Q56)', () => {
   });
 
   it('locked keeps a tile tap selecting but disables Drop and Cancel, sending nothing; unlocked, Drop sends (A.9.4)', async () => {
-    const commit = vi.fn<ArenaCommit>();
+    const commit = vi.fn<ArenaCommit>(() => true);
     const base = { subChoice: OWN, view: makeArenaView(), nowMs: 0, commit, actionReject: null } as const;
     const { user, rerender } = renderUi(<SubChoiceSheet {...base} locked />);
     await user.click(button('Poison'));

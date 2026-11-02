@@ -215,7 +215,7 @@ describe('self strip and in-play card sheet in the arena (L74-09)', () => {
     const without = viewWith({});
     const thumb = inPlayThumbs(withPoison, 'me').find((entry) => entry.instance.instanceId === 'eff-poison');
     if (thumb === undefined) throw new Error('no Poison thumb');
-    const commit = vi.fn<ArenaCommit>();
+    const commit = vi.fn<ArenaCommit>(() => true);
     const sheet = (open: boolean, view: PlayingStateView): ReactElement => (
       <CardSheet open={open} source={{ kind: 'in-play', thumb }} view={view} ctx={LIVE} onClose={vi.fn()} commit={commit} />
     );
@@ -291,7 +291,7 @@ describe('self strip and in-play card sheet in the arena (L74-09)', () => {
     const [opponentShield] = inPlayThumbs(view, 'p1');
     const [ownShield] = inPlayThumbs(view, 'me');
     if (opponentShield === undefined || ownShield === undefined) throw new Error('missing Shield thumbs');
-    const commit = vi.fn<ArenaCommit>();
+    const commit = vi.fn<ArenaCommit>(() => true);
     const first = renderCardSheet({ kind: 'in-play', thumb: opponentShield }, view, commit);
     expect(within(screen.getByRole('dialog', { name: 'Shield' })).queryByRole('button', { name: /^Upgrade/ })).toBeNull();
     first.unmount();

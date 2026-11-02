@@ -132,11 +132,8 @@ export function SubChoiceSheet({
   const send: SubChoiceSend = (payload) => {
     // A lost send must never latch the answer (plan A.9.4).
     if (locked) return;
-    // One argument (plan A.9.3, D4).
-    once('resolve', () => {
-      commit({ kind: 'resolveSubChoice', payload });
-      return true;
-    });
+    // One argument (plan A.9.3, D4). Only an answer that went out latches (L74 Part 2 final review).
+    once('resolve', () => commit({ kind: 'resolveSubChoice', payload }));
   };
   const countdown = subChoiceCountdown(shown.deadlineMs, nowMs);
   const frame: SubChoiceFrame = ({ body, actions }) => (

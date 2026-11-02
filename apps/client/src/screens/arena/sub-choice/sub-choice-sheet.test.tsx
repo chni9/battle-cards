@@ -129,7 +129,7 @@ describe('sub-choice host (§6.7, L30-03)', () => {
   });
 
   it('locked disables Confirm with its reason and sends nothing; Minimize stays usable; unlocking sends once (A.9.4)', async () => {
-    const commit = vi.fn<ArenaCommit>();
+    const commit = vi.fn<ArenaCommit>(() => true);
     const base = { subChoice: MIRROR, view: mirrorView(), nowMs: 0, commit, actionReject: null } as const;
     const { user, rerender } = renderUi(<SubChoiceSheet {...base} locked />, { reducedMotion: true });
     const dialog = sheet('Mirror redirect');

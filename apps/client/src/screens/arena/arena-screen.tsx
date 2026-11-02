@@ -17,8 +17,10 @@
  *   `commit` or opens the card sheet for its pre-send choice, and nothing drags while targeting.
  * - §6.1 item 5 (L74-13): the dock region renders `strip.dock` (`Dock`), and its sends use the same
  *   tap guard as the seats, so no double tap on the targeting bar reaches Draw, Unspy or Activate
- *   duplication underneath. `dockCommit` says whether a send went out, and `actionReject` re-arms
- *   the dock's once-per-view latch (`use-commit-once.ts`, final review R2).
+ *   duplication underneath. `dockCommit` returns the commit's own result (false under the tap guard
+ *   or an `allow` veto), and `actionReject` re-arms the dock's once-per-view latch
+ *   (`use-commit-once.ts`, final review R2). Every latch, sheet close and targeting end keys on
+ *   `commit`'s result, so a vetoed send leaves its control live (L74 Part 2 final review).
  * - §6.8 (L74-14): the dock's Shop opens the reducer-hosted Shop sheet; its buys go through `commit`.
  * - §6.9 (L74-15): the ticker and Menu → Action log open the reducer-hosted log sheet.
  * - §6.9 (L74-16): Chat opens the reducer-hosted chat sheet; its unread count lives in
@@ -182,11 +184,16 @@ function ArenaScreenInner(props: ArenaScreenProps): ReactElement {
   });
   // The spring-back key (L74-25): read once per new reject, render-phase, never an effect. Only the
   // card the last send spent, and only when no state update came since that send (`rejectCueFor`).
+  // The reject consumes the record, so an unrelated later reject (chat, forfeit, claim) with no
+  // state update in between never shakes that card again (L74-25 review M2).
   const [seenReject, setSeenReject] = useState(props.actionReject);
   const [rejectCue, setRejectCue] = useState<RejectCue | null>(null);
   if (props.actionReject !== seenReject) {
     setSeenReject(props.actionReject);
-    if (props.actionReject !== null) setRejectCue(rejectCueFor(lastSent, view, props.actionReject));
+    if (props.actionReject !== null) {
+      setRejectCue(rejectCueFor(lastSent, view, props.actionReject));
+      setLastSent(null);
+    }
   }
   // The banner host's inputs, as the V2 table maps them (`TableBannerFlash`, L51-06); L74-23 reuses `povWon`.
   const pov = view.players.find((player) => player.id === view.you);
@@ -266,8 +273,12 @@ function ArenaScreenInner(props: ArenaScreenProps): ReactElement {
   };
   const onTarget = (playerId: string): void => {
     if (live?.seatIds.includes(playerId) !== true) return;
-    commit({ kind: 'playCard', payload: { instanceId: live.instanceId, targetPlayerId: playerId } }, { instanceId: live.instanceId });
-    finishTargeting();
+    const sent = commit(
+      { kind: 'playCard', payload: { instanceId: live.instanceId, targetPlayerId: playerId } },
+      { instanceId: live.instanceId },
+    );
+    // A vetoed send keeps targeting live, so the seat can commit again (L74 Part 2 final review).
+    if (sent) finishTargeting();
   };
   // Esc cancels targeting. The collapsed sheet takes no Esc (sheet-stack.ts `escTargetId`), and an
   // expanded sheet a later task opens above the bar (the L74-13 Unspy sheet) takes it first.
@@ -281,11 +292,11 @@ function ArenaScreenInner(props: ArenaScreenProps): ReactElement {
   const targeting = live !== null;
   // The dock's exit (L74-13): the same commit, silenced while the tap guard is up, so the second tap
   // of a double tap on the bar's Cancel or a target cannot land on Draw, Unspy or Activate duplication.
-  // It says whether the send went out, so the dock latches only a real send (final review, R2).
+  // It returns the commit's own result, false under the tap guard or a veto, so the dock latches only
+  // a send that went out (final review R2; L74 Part 2 final review).
   const dockCommit: DockCommit = (intent) => {
     if (tapGuard.guarded) return false;
-    commit(intent);
-    return true;
+    return commit(intent);
   };
 
   // Drag from the hand (L74-12, §6.6.3): exclusive with targeting; a pre-send choice opens the card sheet.

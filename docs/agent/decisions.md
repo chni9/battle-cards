@@ -5827,3 +5827,22 @@ backlog L74-25 watch point; the Part 1 re-review note on a null-room send.
 - The classic board keeps `IllegalActionDialog` until L75.
 
 ---
+
+## 2026-11-02 · [P] V7 arena commit: its result says whether the intent went out (L74 final review)
+
+Source: Lot 74 Part 2 final review (L74-25 M1, rescoped); plan A.9.3; L74-25 review M1.
+
+- The arena commit returns whether the intent went out; every latch, close and targeting end keys
+  on it (L74 final review; L75's `allowTutorialSend` vetoes while buttons stay enabled).
+- `ArenaCommit` is `(intent, context?) => boolean`. It is false when `allow` vetoes or when the
+  intent's optional handler (`onDeactivatePersistent`, `onActivateDuplication`) is absent, and
+  `onSent` then does not run: no own-intent FX and no spring-back record for a send that never
+  left.
+- The six callers: `dockCommit` returns the result (false under the tap guard too); the Shop buy
+  and the sub-choice answer latch on it (`useCommitOnce`); the card sheet latches its view and
+  closes only on true; a target tap ends targeting only on true; `dispatchDrop` reports
+  `'returned'` on false, so a vetoed drop springs back.
+- Inside L74 no enabled control can meet a veto (`reconnecting` disables the same controls in the
+  same render), so the tests stub the commit helper instead of going through reconnect.
+
+---

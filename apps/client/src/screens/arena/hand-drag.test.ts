@@ -31,8 +31,9 @@ const PLATE = { x: 150, y: 250 };
 const SELL = { x: 350, y: 450 };
 const OUTSIDE = { x: 999, y: 999 };
 const held = (instance: CardInstance, zone: 'hand' | 'special' = 'hand') => cardActions(VIEW, { zone, instance }, LIVE);
+/** `commit` reports a send that went out, as the arena's does without a veto. */
 function spies() {
-  return { commit: vi.fn<ArenaCommit>(), openChoice: vi.fn<(choice: DropChoice) => void>() };
+  return { commit: vi.fn<ArenaCommit>(() => true), openChoice: vi.fn<(choice: DropChoice) => void>() };
 }
 
 describe('gesture and drag start guard (§6.6.5)', () => {
@@ -110,6 +111,14 @@ describe('dispatchDrop maps each dropTarget result (§6.6.3, §6.6.4)', () => {
     const context = { instanceId: 'atk-1', dropPoint: SEAT_P1 };
     expect(dispatchDrop(dropTarget(SEAT_P1, RECTS, held(ATTACK)), commit, openChoice, context)).toBe('sent');
     expect(commit.mock.calls).toStrictEqual([[{ kind: 'playCard', payload: { instanceId: 'atk-1', targetPlayerId: 'p1' } }, context]]);
+  });
+
+  it('reports a commit that did not go out as returned, so the card springs back (L74 Part 2 final review)', () => {
+    const commit = vi.fn<ArenaCommit>(() => false);
+    const openChoice = vi.fn<(choice: DropChoice) => void>();
+    expect(dispatchDrop(dropTarget(SEAT_P1, RECTS, held(ATTACK)), commit, openChoice, { instanceId: 'atk-1', dropPoint: SEAT_P1 })).toBe('returned');
+    expect(dispatchDrop(dropTarget(SELL, RECTS, held(ATTACK)), commit, openChoice)).toBe('returned');
+    expect([commit.mock.calls.length, openChoice.mock.calls.length]).toEqual([2, 0]);
   });
 });
 

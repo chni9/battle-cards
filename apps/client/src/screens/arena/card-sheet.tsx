@@ -213,13 +213,14 @@ export function CardSheet(props: CardSheetProps): ReactElement {
     if (commit === undefined || committedFor.current === view) {
       return;
     }
-    committedFor.current = view;
     // A held card names itself for the own-intent FX (L74-17, A.9.3); any other source sends one argument (D4).
-    if (ref.zone === 'hand' || ref.zone === 'special') {
-      commit(intent, { instanceId: model.instanceId });
-    } else {
-      commit(intent);
+    const sent =
+      ref.zone === 'hand' || ref.zone === 'special' ? commit(intent, { instanceId: model.instanceId }) : commit(intent);
+    // Only a send that went out latches the view and closes the sheet (L74 Part 2 final review).
+    if (!sent) {
+      return;
     }
+    committedFor.current = view;
     onClose();
   }
 
