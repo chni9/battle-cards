@@ -129,7 +129,7 @@ export function mirrorOptions(view: PlayingStateView, subChoice: MirrorChoiceReq
 export interface SubChoiceFrameParts {
   /** The kind's prompt and tiles, under the expiry line. */
   readonly body: ReactNode;
-  /** The Sheet footer (Confirm; L74-20: Cancel and Drop); null renders none. */
+  /** The Sheet footer (Confirm, or slot-drop's Cancel and Drop); null renders none. */
   readonly actions: ReactElement | null;
 }
 
@@ -145,8 +145,8 @@ export interface SubChoicePickerProps<P extends SubChoiceRequiredPayload> {
   readonly frame: SubChoiceFrame;
   readonly send: SubChoiceSend;
   /**
-   * The host's `locked` (Lot 74 plan A.9.4). Every commit button (Confirm; L74-20 Drop and Cancel)
-   * renders disabled with 'Actions locked'; selection stays live.
+   * The host's `locked` (Lot 74 plan A.9.4). Every commit button (Confirm, or slot-drop's Drop and
+   * Cancel) renders disabled with 'Actions locked'; selection stays live.
    */
   readonly locked: boolean;
 }

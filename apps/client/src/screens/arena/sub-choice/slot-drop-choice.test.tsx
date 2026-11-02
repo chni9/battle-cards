@@ -79,6 +79,25 @@ describe('slot-drop (§6.7 select + Drop, Q42 / Q56)', () => {
     expect(onResolveSubChoice.mock.calls).toEqual([[{ kind: 'slot-drop', cancel: true }]]);
   });
 
+  it('Drop then Cancel share one latch: Cancel sends nothing until a resend arrives (final review)', async () => {
+    const { user, props, rerender, onResolveSubChoice } = setup(OWN);
+    await user.click(button('Shield (shield)'));
+    await user.click(button('Drop'));
+    await user.click(button('Cancel'));
+    expect(onResolveSubChoice.mock.calls).toEqual([[{ kind: 'slot-drop', slotId: 'slot-shield' }]]);
+    rerender(<ArenaScreen {...props} subChoice={{ ...OWN }} />);
+    await user.click(button('Cancel'));
+    expect(onResolveSubChoice.mock.calls).toEqual([[{ kind: 'slot-drop', slotId: 'slot-shield' }], [{ kind: 'slot-drop', cancel: true }]]);
+  });
+
+  it("Curse on a full victim: Drop sends the victim's selected slotId (final review)", async () => {
+    const { user, props, onResolveSubChoice } = setup(CURSE);
+    await user.click(button('Poison'));
+    expectNoArenaIntent(props);
+    await user.click(button('Drop'));
+    expect(onResolveSubChoice.mock.calls).toEqual([[{ kind: 'slot-drop', slotId: 'slot-poison' }]]);
+  });
+
   it('own slots: the V2 prompt, your expiry hint and the own Cancel outcome', () => {
     setup(OWN);
     expect(within(dialog()).getByText('You have four active cards. Pick one to remove so the new card can stay.')).not.toBeNull();
