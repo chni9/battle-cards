@@ -33,6 +33,9 @@
  * - §4.1, §6.10 (L74-21): the arena records the `TURN_STARTED` sighting (`useTurnStartedRecord`),
  *   computes `turnClock(...)` once per render and hands it to the top bar. `ArenaScreenProps`
  *   extends `TableScreenProps` with the raw payload and the room's cached lobby rules.
+ * - §6.11 (L74-22): Menu → Table rules opens the rules sheet from `tableRulesRecall` over
+ *   `props.cachedLobbyRules`; the entry is hidden while it is null. The arena never derives the
+ *   rules: App (live) and EndScreen (finished) choose the source.
  *
  * Import rule (L74-01 brief): `screens/arena/` imports only from `ui/`, `view-model/`, `fx/`,
  * `net/` (types), `help/`, `feedback/` and the shared screen modules. It never imports
@@ -48,10 +51,12 @@ import { TableBannerHost } from '../../ui/banner/table-banner-host';
 import { v7SeatColor } from '../../ui/palette';
 import { liveSheetId } from '../../ui/primitives/sheet-stack';
 import { useSheetStackStore } from '../../ui/primitives/sheet-stack-context';
+import { RulesSheet } from '../../ui/rules/rules-sheet';
 import { seatIndexOf } from '../../ui/seat-colors';
 import { actionLock, type ActionContext } from '../../view-model/action-lock';
 import { selfStrip } from '../../view-model/self-strip';
 import { log } from '../../view-model/log';
+import { tableRulesRecall } from '../../view-model/rules-recall';
 import { seats } from '../../view-model/seats';
 import { shop } from '../../view-model/shop';
 import { povHasWon } from '../../view-model/table-banner';
@@ -63,6 +68,7 @@ import { arenaRegionAttributes } from './arena-regions';
 import { ArenaSeats } from './arena-seats';
 import {
   arenaSheetEntries,
+  arenaSheetKey,
   closeArenaSheet,
   EMPTY_ARENA_SHEETS,
   endTargeting,
@@ -154,6 +160,10 @@ function ArenaScreenInner(props: ArenaScreenProps): ReactElement {
   const strip = selfStrip(view, ctx);
   // The ticker and the log sheet read one model per render (§6.9, L74-15).
   const logModel = log(view);
+  // Menu → Table rules (§6.11, L74-22): `props.cachedLobbyRules` is this room's rules, and `tableRulesRecall`
+  // adds the Classic guard and the `RulesRecall` shape. Null while they are unknown: no entry, no sheet.
+  const tableRules =
+    props.cachedLobbyRules === null ? null : tableRulesRecall({ gameCode: view.gameCode, rules: props.cachedLobbyRules }, view);
   // The read-only sheet host (Appendix A.5): one reducer state, one component per entry.
   const [sheets, setSheets] = useState<ArenaSheetsState>(EMPTY_ARENA_SHEETS);
   // `setSheets` is stable; it is listed because the React Compiler infers it once the render also
@@ -253,6 +263,13 @@ function ArenaScreenInner(props: ArenaScreenProps): ReactElement {
           onOpenLog={() => {
             openSheet({ kind: 'log' });
           }}
+          {...(tableRules !== null
+            ? {
+                onOpenRules: () => {
+                  openSheet({ kind: 'rules' });
+                },
+              }
+            : {})}
           onOpenChat={() => {
             openSheet({ kind: 'chat' });
           }}
@@ -463,6 +480,19 @@ function ArenaScreenInner(props: ArenaScreenProps): ReactElement {
                 onClose={() => {
                   closeSheet(sheet);
                 }}
+              />
+            );
+          case 'rules':
+            // Rules that become unknown while the sheet is open unmount it (the entry is gone with them).
+            return tableRules === null ? null : (
+              <RulesSheet
+                key={key}
+                open={open}
+                rules={tableRules}
+                onClose={() => {
+                  closeSheet(sheet);
+                }}
+                dataAttributes={{ 'data-arena-sheet': arenaSheetKey(sheet) }}
               />
             );
         }

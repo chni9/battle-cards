@@ -1125,7 +1125,7 @@ editor stay until L76.
 - **Excluded kit (Q15):** `opacity-40 grayscale` on the portrait only, plus a visible "Excluded"
   caption (`EXCLUDED_LABEL`) in `--text-2`, Nunito 800 at 11px (`text-v7-micro`), at full
   opacity, so the state is never carried by dimming alone.
-- **Sheet:** `<RulesSheet open rules onClose />` is a read-only `Sheet` (placement `auto`: a
+- **Sheet:** `<RulesSheet open rules onClose dataAttributes? />` is a read-only `Sheet` (`dataAttributes` lands on the panel, as on `Sheet`; the arena passes `data-arena-sheet="rules"`, L74-22) (placement `auto`: a
   bottom sheet on phones, centered on desktop; Esc, backdrop and swipe-down close it, only the
   top sheet takes Esc) titled "Table rules". Its only button is Close (`secondary`), which also
   takes the initial focus; it has no editable control and no `aria-pressed`. The body is the

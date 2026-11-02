@@ -8,7 +8,8 @@
  * - Right: Chat, Feedback `!`, the flag and Menu, each a 44 px icon-only `IconButton` named by its
  *   aria-label (§5.6). Chat comes first (L74-16) and carries the unread badge; it opens the arena's
  *   chat sheet (§6.9). The menu body lives in `menu-sheet.tsx` (L74-15), owner-local here; its
- *   Action log entry opens the arena's log sheet (§6.9).
+ *   Action log entry opens the arena's log sheet (§6.9), and its Table rules entry (L74-22, only
+ *   while the rules are known) the rules sheet (§6.11).
  * - The flag opens the confirm for the live `tableFlagIntent(...)` (decisions.md 2026-10-28), and
  *   only the confirm button calls `onForfeit` / `onLeave` (§6.6.4, L43-05). Those are App-level
  *   actions, not `ArenaIntent`s, so they leave outside the commit helper.
@@ -52,6 +53,8 @@ export interface TopBarProps {
   onOpenFeedback?: () => void;
   /** L74-15: the menu's Action log entry (spec v7 §6.9). */
   onOpenLog?: () => void;
+  /** L74-22: Table rules; absent while the rules are unknown (spec v7 §6.11). */
+  onOpenRules?: () => void;
   /** L74-16: the Chat icon, first in the right row, and its unread badge (spec v7 §6.1 item 1, §6.9). */
   onOpenChat?: () => void;
   /** Default 0. */
@@ -68,6 +71,7 @@ export function TopBar({
   onForfeit,
   onOpenFeedback,
   onOpenLog,
+  onOpenRules,
   onOpenChat,
   chatUnread = 0,
   clock,
@@ -182,6 +186,7 @@ export function TopBar({
           setHowToPlayOpen(true);
         }}
         {...(onOpenLog !== undefined ? { onOpenLog } : {})}
+        {...(onOpenRules !== undefined ? { onOpenRules } : {})}
       />
       {flag !== null ? (
         <LeaveConfirmSheet

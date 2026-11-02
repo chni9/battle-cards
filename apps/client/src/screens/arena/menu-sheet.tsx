@@ -2,9 +2,9 @@
  * The top-bar menu sheet — technical spec v7 §6.1 and §6.9; L74-15 (extracted from `top-bar.tsx`,
  * plan Appendix A.9.4). Owner-local in `TopBar`: the bar renders it and nothing else does.
  *
- * Body order (§6.1): How to play, then the Action log entry (L74-15; L74-22 adds Table rules), then
- * the game code line with Copy (`Code copied` / `Copy failed`). A menu entry closes the menu before
- * it opens its own surface, so the two never stack.
+ * Body order (§6.1): How to play, then the Action log entry (L74-15), the Table rules entry (L74-22,
+ * only while the rules are known), then the game code line with Copy (`Code copied` / `Copy failed`).
+ * A menu entry closes the menu before it opens its own surface, so the two never stack.
  */
 
 import type { PlayingStateView } from '@card-battle/shared';
@@ -12,6 +12,7 @@ import { useState, type ReactElement } from 'react';
 
 import { Button } from '../../ui/primitives/button';
 import { Sheet } from '../../ui/primitives/sheet';
+import { TABLE_RULES_LABEL } from '../../ui/ui-copy';
 import { ACTION_LOG_OPEN_LABEL, HOW_TO_PLAY_ARIA_LABEL } from '../../view-model/table-copy';
 import {
   CODE_COPIED_LABEL,
@@ -28,8 +29,10 @@ export interface MenuSheetProps {
   onClose: () => void;
   /** How to play; the entry closes the menu first. */
   onHowToPlay: () => void;
-  /** L74-15: the Action log entry; absent → no entry. L74-22 adds `onOpenRules`. */
+  /** L74-15: the Action log entry; absent → no entry. */
   onOpenLog?: () => void;
+  /** L74-22: the Table rules entry; absent while the rules are unknown (spec v7 §6.11). */
+  onOpenRules?: () => void;
 }
 
 type CopyState = 'idle' | 'copied' | 'failed';
@@ -39,7 +42,7 @@ const COPY_STATUS_LABEL: Readonly<Record<Exclude<CopyState, 'idle'>, string>> = 
   failed: CODE_COPY_FAILED_LABEL,
 };
 
-export function MenuSheet({ open, view, statusLabel, onClose, onHowToPlay, onOpenLog }: MenuSheetProps): ReactElement {
+export function MenuSheet({ open, view, statusLabel, onClose, onHowToPlay, onOpenLog, onOpenRules }: MenuSheetProps): ReactElement {
   const [copy, setCopy] = useState<CopyState>('idle');
   const [wasOpen, setWasOpen] = useState(open);
 
@@ -95,6 +98,19 @@ export function MenuSheet({ open, view, statusLabel, onClose, onHowToPlay, onOpe
             }}
           >
             {ACTION_LOG_OPEN_LABEL}
+          </Button>
+        ) : null}
+        {onOpenRules !== undefined ? (
+          <Button
+            variant="quiet"
+            icon="rules"
+            fullWidth
+            onClick={() => {
+              onClose();
+              onOpenRules();
+            }}
+          >
+            {TABLE_RULES_LABEL}
           </Button>
         ) : null}
         <div className="flex items-center gap-2">

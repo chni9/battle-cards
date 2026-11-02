@@ -866,7 +866,7 @@ Appendix A). Each Lot 74 task appends its bullet here, in task order.
   - Feedback: the live arena owns its `FeedbackDialog` (`screen="table"`); the finished board
     calls `onOpenFeedback` instead.
   - Menu sheet (`menu-sheet.tsx`, owner-local in `TopBar`; L74-15): How to play
-    (`HowToPlayDialog`; Skip and Got it mark it seen, Esc does not), Action log (L74-15) and
+    (`HowToPlayDialog`; Skip and Got it mark it seen, Esc does not), Action log (L74-15), Table rules (L74-22, only while the rules are known) and
     `Code {code} · {connection}` with Copy (`Code copied` / `Copy failed`).
   - The flag opens `LeaveConfirmSheet` (V7 `Dialog`) for the live
     `tableFlagIntent(...)`, which carries `isSpectator`.
@@ -1239,6 +1239,14 @@ Appendix A). Each Lot 74 task appends its bullet here, in task order.
   App also calls `forgetChatSeen(gameCode)` from an effect keyed on the room's lobby phase and code,
   after the lobby has rendered, so a rematch's arena starts with the lobby chat lines seen (the
   L74-16 store; never from a message handler, where a mounted arena would seed the count again).
+- Table rules recall (L74-22, spec v7 §6.11, §7.4): Menu → Table rules (`rules` icon, after
+  Action log) opens the reducer-hosted `{ kind: 'rules' }` sheet (key `rules`), the L72
+  `RulesSheet`: the human turn time, the Random mark and all 16 kits, each excluded one named
+  "Excluded". The source is `ArenaScreenProps.cachedLobbyRules`: App's in-memory cache of this
+  room's last lobby rules on the live board (`cachedLobbyRules`, L74-21) and
+  `view.lobbyRules ?? null` (`FinishedStateView.lobbyRules`) from `EndScreen` on the finished
+  board; the arena shapes it with `tableRulesRecall` (Classic only). The entry is hidden while it
+  is null (a reload mid-game, a walk-in who never saw the lobby). No protocol change.
 
 ## Design system (V2 · Lots 10+)
 
