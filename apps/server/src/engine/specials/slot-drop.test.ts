@@ -133,6 +133,16 @@ describe('fifth slot keeps one copy of the played card (rules spec §5 Active sl
     expect(cardCopies(state)).toEqual(before);
   });
 
+  it.each(FIFTH_SLOT_PLAYS)('$name: Cancel refunds the points the play paid (L82-03)', (play) => {
+    const { state, a } = playFifth(play);
+    expect(a.points).toBeLessThan(20);
+
+    expect(cancelSlotDrop(state, a.id).ok).toBe(true);
+    expect(a.points).toBe(20);
+    expect(a.turnLedger.pointsSpent).toBe(0);
+    expect(a.matchStats.pointsSpent).toBe(0);
+  });
+
   it.each(FIFTH_SLOT_PLAYS)('$name: Drop activates the card and pools only the dropped one', (play) => {
     const { state, a, slotOwner, before } = playFifth(play);
 

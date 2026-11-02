@@ -306,7 +306,9 @@ activation and ticks share `absorbLedgerFromVictim`.
 `Player.matchStats` is career totals for the finished recap. It is **not** the turn
 ledger: Reanimation resets `turnLedger` and keeps `matchStats`. Cloning does not copy
 another seat's stats. Spend matches Absorber — `recordChosenPointsSpent` / `payCost`,
-never theft. `livesLost` increments in `applyDamage` and `applyLifeLoss` **separately**
+never theft. A slot-drop Cancel undoes the play's spend with `refundChosenPointsSpent`
+(points back through `returnSpentPoints` in `gain-points.ts`, never `gainPoints`, and
+`turnLedger` and `matchStats` unwound together; L82-03). `livesLost` increments in `applyDamage` and `applyLifeLoss` **separately**
 (do not merge those primitives). Gains are post-cap.
 
 Think time is **not** on `GameState`. `GameRoom` owns `ThinkTimeAccumulator` (wall-clock).

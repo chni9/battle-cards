@@ -10,6 +10,7 @@ import {
   type SlotDropCancelRestore,
 } from '@card-battle/shared';
 
+import { refundChosenPointsSpent } from '../economy/record-chosen-spend';
 import { findPlayer } from '../turn/advance-turn';
 import { startPendingSentence } from '../turn/pending-sentences';
 import { SUB_CHOICE_MS } from '../turn/sub-choice';
@@ -114,7 +115,7 @@ export function beginSlotDrop(
   };
 }
 
-/** Human cancel — abort the fifth activation; bots and timeout never call this. */
+/** Human cancel — abort the fifth activation and refund the play; bots and timeout never call this. */
 export function cancelSlotDrop(
   state: GameState,
   playerId: string,
@@ -131,17 +132,22 @@ export function cancelSlotDrop(
     const holder = findPlayer(state, restore.playerId);
 
     if (holder !== undefined) {
-      if (restore.pooled) {
-        const poolIndex = state.pool.findIndex(
-          (card) => card.instanceId === restore.instance.instanceId,
-        );
+      refundChosenPointsSpent(holder, restore.points);
+      const special = restore.special;
 
-        if (poolIndex >= 0) {
-          state.pool.splice(poolIndex, 1);
+      if (special !== null) {
+        if (special.pooled) {
+          const poolIndex = state.pool.findIndex(
+            (card) => card.instanceId === special.instance.instanceId,
+          );
+
+          if (poolIndex >= 0) {
+            state.pool.splice(poolIndex, 1);
+          }
         }
-      }
 
-      holder.specialCards.push(restore.instance);
+        holder.specialCards.push(special.instance);
+      }
     }
   }
 

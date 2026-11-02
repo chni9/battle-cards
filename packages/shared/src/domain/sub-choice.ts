@@ -77,12 +77,13 @@ export type PendingSlotActivationPayload =
     }
   | { kind: 'sentence'; sourcePlayerId: string; isUpgraded: boolean };
 
-/** Restore a special removed on play when the human cancels slot-drop (Lot 69 hotfix). */
+/** What a human Cancel on slot-drop gives back to the player who made the play (Lot 69 hotfix). */
 export interface SlotDropCancelRestore {
   playerId: string;
-  instance: CardInstance;
-  /** Card was returned to the pool on play (non-persistent special). */
-  pooled: boolean;
+  /** Points the play paid; Cancel refunds them (rules spec §5 Active slots, L82-03). */
+  points: number;
+  /** The played special when it left `specialCards`; `pooled` when the play sent it to the pool. */
+  special: { instance: CardInstance; pooled: boolean } | null;
 }
 
 /** Lot 69 — drop one occupied slot before a fifth activation sticks. */
@@ -98,7 +99,7 @@ export interface SlotDropSubChoicePayload {
     isUpgraded: boolean;
   }[];
   pendingActivation: PendingSlotActivationPayload;
-  /** Present when the activating card left `specialCards` or the pool on play. */
+  /** Set by every card play that opens the pick. */
   cancelRestore?: SlotDropCancelRestore;
 }
 

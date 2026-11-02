@@ -5486,3 +5486,31 @@ leaves 15 after the play and 15 after Cancel; Curse on a full victim leaves 12 a
 card is back in specials and the turn is not spent, so the player can play it again and pay
 twice. Rules spec §5 says the card returns but says nothing about its cost. Code left as is;
 designer question: should Cancel refund the points the play paid?
+
+---
+## 2026-11-02 · [P] Slot-drop Cancel refunds the play (designer, L82-03)
+
+Supersedes the 2026-10-30 `[UNDEFINED]` entry "Slot-drop Cancel keeps the play cost spent".
+The developer answered "Rembourser": Cancel on the fifth-active picker becomes a real, free
+cancel. This is a Classic rule change under AGENTS.md golden rule 6's exception; rules spec §5
+(Active slots) now says the points paid to play the card are refunded.
+
+Locked (no value or protocol change; `PROTOCOL_VERSION` stays 45):
+
+- "What the play spent" is the catalog `cost.points` that `playCardAction` charged the actor.
+  It has no upgraded variant and no discount, and no handler of a card that opens a slot
+  (Shield, Sentence, every persistent, Curse) spends anything else. For Curse the caster paid,
+  chooses and cancels, so the caster is refunded.
+- Every card play that opens the pick now sets `cancelRestore`, with `points` and `special`
+  (the played special, or null for a hand card). Before, a hand play set none.
+- `refundChosenPointsSpent` gives the points back and subtracts them from
+  `turnLedger.pointsSpent` and `matchStats.pointsSpent`. The points return through
+  `returnSpentPoints`, which sits in `gain-points.ts` because the technical spec v4 §4.2 guard
+  keeps every points increment in that file. It is not `gainPoints`: a refund is not a gain in
+  the recap or for gain observers, and a Curse drain later that turn must not charge refunded
+  points.
+- Bots and timeouts never cancel, so they are unaffected.
+
+Not changed: the play's action-log row and its live `ACTION_PLAYED` keep the paid points
+delta, and no row records the refund. Points return in the next state. Changing that needs a
+log or protocol decision, so it stays open for the developer.

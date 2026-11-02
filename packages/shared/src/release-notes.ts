@@ -72,6 +72,10 @@ const RELEASE_NOTES_CATALOG = [
         before: 'After the fifth-active picker, a copy of the played card could also land in the pool.',
         after: 'Fixed some bugs.',
       },
+      {
+        before: 'Cancelling the fifth-active picker kept the points you paid for the card.',
+        after: 'Cancelling the fifth-active picker refunds the points you paid.',
+      },
     ],
   },
   {

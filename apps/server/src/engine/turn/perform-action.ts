@@ -1857,13 +1857,13 @@ function playCardAction(
     }
   }
 
-  const cancelRestore = fromSpecials
-    ? {
-        playerId: actorPlayerId,
-        instance,
-        pooled: !isPersistentSpecialCardId(cardId) && cardId !== 'card-absorber',
-      }
-    : undefined;
+  const cancelRestore = {
+    playerId: actorPlayerId,
+    points: playPoints,
+    special: fromSpecials
+      ? { instance, pooled: !isPersistentSpecialCardId(cardId) && cardId !== 'card-absorber' }
+      : null,
+  };
 
   reconcileSlotCapAfterPlay(
     state,

@@ -75,6 +75,10 @@ describe('release notes catalog (L63-07 / L65-05)', () => {
         before: 'After the fifth-active picker, a copy of the played card could also land in the pool.',
         after: 'Fixed some bugs.',
       },
+      {
+        before: 'Cancelling the fifth-active picker kept the points you paid for the card.',
+        after: 'Cancelling the fifth-active picker refunds the points you paid.',
+      },
     ]);
   });
 
