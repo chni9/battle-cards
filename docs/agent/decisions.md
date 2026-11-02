@@ -5779,6 +5779,8 @@ Part 1 final review (Minor 15, ledger 47, 48, 68).
   banner host drops its You are dead cue (`deadCue={false}`, a `ui/` prop); the classic table
   keeps it.
 - **Stale seat sheets** close when their player stops being an opponent, so `openSeatId` never
-  names the POV (final review Minor 15).
+  names the POV (final review Minor 15). A new POV (`view.you` changes or `isSpectator` flips)
+  closes every read-only sheet through its exit and ends targeting, so a Spy reveal opened as a
+  walk-in never stays on screen after a claim (review fix round 1).
 
 ---

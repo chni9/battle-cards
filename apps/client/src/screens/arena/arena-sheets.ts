@@ -169,6 +169,17 @@ export function closeStaleSeatSheets(state: ArenaSheetsState, seatIds: readonly 
   return stale.length === 0 ? state : stale.reduce((current, sheet) => closeArenaSheet(current, sheet), state);
 }
 
+/**
+ * Ends targeting and closes every open sheet through its exit, oldest first, as `closeArenaSheet`
+ * does (the press shield still covers a tap in flight); the same state object when nothing is open
+ * or targeted. The arena calls it when the POV changes (a walk-in claimed a seat): a sheet opened
+ * from the old POV's view, such as a Spy reveal, never stays on screen for the new one (L74-23).
+ */
+export function closeAllArenaSheets(state: ArenaSheetsState): ArenaSheetsState {
+  const base = endTargeting(state);
+  return base.open.reduce((current, sheet) => closeArenaSheet(current, sheet), base);
+}
+
 export interface ArenaSheetEntry {
   readonly sheet: ArenaSheet;
   readonly key: string;

@@ -6,7 +6,7 @@
  * final review Minor 15 (L74-23).
  */
 import type { SubChoiceRequiredPayload } from '@card-battle/shared';
-import { act, fireEvent, screen, within } from '@testing-library/react';
+import { act, fireEvent, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { renderUi, type RenderUiOptions } from '../../test/render';
@@ -126,6 +126,16 @@ describe('POV elimination overlay (spec v7 §6.12)', () => {
     expect(document.querySelector('[data-banner="dead"]')).toBeNull();
   });
 
+  it('shows You are dead on a first paint already eliminated, for TABLE_BANNER_MS (designer 2026-11-02)', () => {
+    vi.useFakeTimers();
+    setup({ view: ELIMINATED });
+    expect(overlay().textContent).toBe('You are dead');
+    act(() => {
+      vi.advanceTimersByTime(TABLE_BANNER_MS);
+    });
+    expect(overlay().textContent).toBe('');
+  });
+
   it.each<{ label: string; next: Partial<ArenaScreenProps> }>([
     { label: 'a sub-choice is open', next: { view: ELIMINATED, subChoice: MIRROR } },
     { label: 'a Reanimation is pending', next: { view: makeArenaView({ pov: 'reanimating', overrides: { currentTurnPlayerId: 'p1' } }) } },
@@ -147,5 +157,24 @@ describe('seat sheets after a claim (final review Minor 15)', () => {
     update({ view: makeArenaView({ overrides: { pendingEffects: [attack] } }) }); // the walk-in sat in seat 'me'
     expect(document.querySelector('[data-threat-arrow="eff-1"]')).not.toBeNull();
     expect(document.querySelectorAll('[data-highlighted]')).toHaveLength(0);
+  });
+
+  it('closes every sheet when the POV changes, so a Spy reveal a walk-in opened never stays on screen after a claim', async () => {
+    vi.spyOn(Element.prototype, 'getBoundingClientRect').mockImplementation(() => new DOMRect(0, 0, 375, 480));
+    const { user, props, update } = setup({ view: makeArenaView({ pov: 'walk-in', tiers: { p1: 'spy-plus' } }) });
+    await user.click(within(region('arena')).getByRole('button', { name: 'p1' }));
+    const hand = document.querySelector<HTMLElement>('[data-seat-sheet-section="hand"]');
+    if (hand === null) throw new Error('no revealed hand');
+    const [first] = within(hand).getAllByRole('button');
+    if (first === undefined) throw new Error('no hand thumb');
+    await user.click(first);
+    expect(screen.getByRole('dialog', { name: 'Basic attack' })).toBeTruthy();
+    update({ view: makeArenaView() }); // the walk-in sat in seat 'me', which sees no Spy relation
+    expect(screen.queryAllByRole('dialog')).toEqual([]);
+    // Both close through their exit (the press shield), then unmount.
+    await waitFor(() => {
+      expect(document.querySelector('[data-arena-sheet]')).toBeNull();
+    });
+    expectNoArenaIntent(props);
   });
 });

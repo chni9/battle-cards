@@ -7,8 +7,8 @@ import { describe, expect, it } from 'vitest';
 import { inPlayThumbs } from '../../view-model/card-actions';
 import { makeCard, makeSelf } from '../../view-model/test-fixtures';
 import {
-  arenaSheetEntries, arenaSheetKey, closeArenaSheet, closeStaleSeatSheets, EMPTY_ARENA_SHEETS, endTargeting, MAX_CLOSING_SHEETS,
-  openArenaSheet, openSeatId, startTargeting, type ArenaSheet, type TargetingState,
+  arenaSheetEntries, arenaSheetKey, closeAllArenaSheets, closeArenaSheet, closeStaleSeatSheets, EMPTY_ARENA_SHEETS, endTargeting,
+  MAX_CLOSING_SHEETS, openArenaSheet, openSeatId, startTargeting, type ArenaSheet, type TargetingState,
 } from './arena-sheets';
 import { makeArenaView } from './test-view';
 
@@ -146,5 +146,14 @@ describe('targeting (L74-10, §6.6.2)', () => {
     const spy = card('spy-1');
     const state = startTargeting(openArenaSheet(EMPTY_ARENA_SHEETS, spy), targetingOf(spy));
     expect(closeArenaSheet(state, spy)).toEqual({ open: [], closing: [spy], targeting: null });
+  });
+
+  it('closes every sheet through its exit and ends targeting, and returns the same state when nothing is open (a new POV, L74-23)', () => {
+    const spy = card('spy-1');
+    const seat: ArenaSheet = { kind: 'seat', playerId: 'p1' };
+    expect(closeAllArenaSheets(openArenaSheet(openArenaSheet(EMPTY_ARENA_SHEETS, seat), kit))).toEqual({ open: [], closing: [seat, kit], targeting: null });
+    expect(closeAllArenaSheets(startTargeting(openArenaSheet(EMPTY_ARENA_SHEETS, spy), targetingOf(spy)))).toEqual({ open: [], closing: [spy], targeting: null });
+    const closed = closeArenaSheet(openArenaSheet(EMPTY_ARENA_SHEETS, kit), kit);
+    expect(closeAllArenaSheets(closed)).toBe(closed);
   });
 });

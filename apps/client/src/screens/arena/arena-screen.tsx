@@ -40,7 +40,8 @@
  *   eliminated Watching POV's strip gets the Watching header, and their Leave table bumps the top
  *   bar's `confirmRequest`. Claim a seat calls App's `onReopenClaim`. The POV elimination overlay
  *   replaces the banner's You are dead (`deadCue={false}`) and never covers a sub-choice. A seat
- *   sheet whose player stopped being an opponent (a walk-in sat there) closes.
+ *   sheet whose player stopped being an opponent (a walk-in sat there) closes, and a new POV closes
+ *   every read-only sheet and ends targeting.
  *
  * Import rule (L74-01 brief): `screens/arena/` imports only from `ui/`, `view-model/`, `fx/`,
  * `net/` (types), `help/`, `feedback/` and the shared screen modules. It never imports
@@ -74,6 +75,7 @@ import { ArenaSeats } from './arena-seats';
 import {
   arenaSheetEntries,
   arenaSheetKey,
+  closeAllArenaSheets,
   closeArenaSheet,
   closeStaleSeatSheets,
   EMPTY_ARENA_SHEETS,
@@ -214,8 +216,17 @@ function ArenaScreenInner(props: ArenaScreenProps): ReactElement {
     // "adjust state while rendering" pattern, as ui/primitives/sheet.tsx does; never an effect.
     setSheets(endTargeting(sheets));
   }
+  // A new POV (a walk-in claimed a seat: `view.you` changes or `isSpectator` flips) closes every
+  // reducer-hosted sheet through its exit and ends targeting, so a sheet opened from the old POV's
+  // view, such as a Spy reveal, never stays on screen (L74-23). Render-phase, as the targeting end.
+  const povKey = `${view.you}:${view.isSpectator === true ? 'spectator' : 'seat'}`;
+  const [sheetsPovKey, setSheetsPovKey] = useState(povKey);
+  if (sheetsPovKey !== povKey) {
+    setSheetsPovKey(povKey);
+    setSheets((current) => closeAllArenaSheets(current));
+  }
   // A seat sheet whose player is no longer an opponent (a walk-in sat in that seat) closes, so
-  // `openSeatId` never names the POV (final review Minor 15). The updater form composes with the
+  // `openSeatId` never names the POV (final review Minor 15). The updater forms compose with the
   // targeting update above in the same render.
   const seatIds = seatsModel.seats.map((seat) => seat.playerId);
   if (closeStaleSeatSheets(sheets, seatIds) !== sheets) {

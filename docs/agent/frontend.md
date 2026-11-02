@@ -1267,7 +1267,9 @@ Appendix A). Each Lot 74 task appends its bullet here, in task order.
     sub-choice is open and is skipped with `pendingReanimation`. The arena's `TableBannerHost`
     gets `deadCue={false}`, so the banner's 'You are dead' never shows beside it.
   - A seat sheet whose player is no longer an opponent (a walk-in claimed that seat) closes
-    (`closeStaleSeatSheets`), so `openSeatId` never names the POV.
+    (`closeStaleSeatSheets`), so `openSeatId` never names the POV. A new POV (`view.you` or
+    `isSpectator` changes) closes every read-only sheet through its exit and ends targeting
+    (`closeAllArenaSheets`), so no sheet opened from the old POV's view stays on screen.
 
 ## Design system (V2 · Lots 10+)
 
