@@ -178,6 +178,28 @@ describe('drag from the hand (§6.6.3, §6.6.5)', () => {
     expectNoArenaIntent(props);
   });
 
+  it.each(['blur', 'visibilitychange'] as const)(
+    'switching away mid-drag (%s) springs the card back, leaves no ghost and sends nothing (L74-26 gate G7)',
+    (how) => {
+      const { props } = setup(playView());
+      vi.spyOn(seat('p1'), 'getBoundingClientRect').mockReturnValue(new DOMRect(0, 0, 100, 100));
+      lift(handCard('Basic attack, 1 damage'));
+      move(50, 50);
+      expect(seat('p1').getAttribute('data-drop')).toBe('over');
+      if (how === 'blur') {
+        fireEvent.blur(window);
+      } else {
+        vi.spyOn(document, 'visibilityState', 'get').mockReturnValue('hidden');
+        fireEvent(document, new Event('visibilitychange'));
+      }
+      expect([ghost(), sellZone()]).toEqual([null, null]);
+      expect(seat('p1').hasAttribute('data-drop')).toBe(false);
+      // The pointer comes back over the seat and lifts: the drag already ended, so nothing drops.
+      release(50, 50);
+      expectNoArenaIntent(props);
+    },
+  );
+
   it('measures seats and the plate from their arena anchors', () => {
     renderUi(<>
       <div data-zone="opponent-seat" data-player-id="p1" />

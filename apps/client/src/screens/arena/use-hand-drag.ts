@@ -214,13 +214,25 @@ export function useHandDrag(input: HandDragInput): {
     const onCancel = (event: PointerEvent): void => {
       if (event.pointerId === trackedPointerId) onPointerCancel();
     };
+    // Switching away mid-drag (another app or tab) may never deliver the pointerup, so the page
+    // leaving focus or going hidden ends the drag like a cancel: no ghost stays up (L74-26 G7).
+    const onLeave = (): void => {
+      onPointerCancel();
+    };
+    const onVisibility = (): void => {
+      if (document.visibilityState === 'hidden') onPointerCancel();
+    };
     window.addEventListener('pointermove', onMove);
     window.addEventListener('pointerup', onUp);
     window.addEventListener('pointercancel', onCancel);
+    window.addEventListener('blur', onLeave);
+    document.addEventListener('visibilitychange', onVisibility);
     return () => {
       window.removeEventListener('pointermove', onMove);
       window.removeEventListener('pointerup', onUp);
       window.removeEventListener('pointercancel', onCancel);
+      window.removeEventListener('blur', onLeave);
+      document.removeEventListener('visibilitychange', onVisibility);
     };
   }, [trackedPointerId]);
 

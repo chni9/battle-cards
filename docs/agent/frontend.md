@@ -1306,7 +1306,9 @@ Appendix A). Each Lot 74 task appends its bullet here, in task order.
   pre-send choice (nothing sent), or springs the card back (instantly under reduced motion). The
   click that ends a drag never opens the sheet, but a keyboard click (`detail` 0) is never
   swallowed. A release while a sheet is live (one a second finger opened mid-drag) springs back
-  and sends nothing (final review, Minor 2 and 5).
+  and sends nothing (final review, Minor 2 and 5). Switching away mid-drag (window `blur`, or
+  `visibilitychange` to hidden) cancels it the same way, so no ghost stays up when the pointerup
+  never arrives (L74-26 gate G7).
 - L74-12 browser check (2026-10-28, solo Assassin vs 3 Normal bots, `?ui=next`, 180 s turns,
   built-in browser at 375×812 then 390×844; mouse drags plus scripted pointer sequences for
   two-segment gestures). Passed:
