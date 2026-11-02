@@ -214,7 +214,12 @@ export function CardSheet(props: CardSheetProps): ReactElement {
       return;
     }
     committedFor.current = view;
-    commit(intent);
+    // A held card names itself for the own-intent FX (L74-17, A.9.3); any other source sends one argument (D4).
+    if (ref.zone === 'hand' || ref.zone === 'special') {
+      commit(intent, { instanceId: model.instanceId });
+    } else {
+      commit(intent);
+    }
     onClose();
   }
 

@@ -252,3 +252,18 @@ describe('TableBannerHost under StrictMode (L51-06)', () => {
     advance(MS); off(TURN);
   });
 });
+
+describe('TableBannerHost visual viewport (L74-17 watch point)', () => {
+  afterEach(() => { vi.unstubAllGlobals(); });
+  it('sits in the visualViewport box, never inset-0, and follows the phone keyboard', () => {
+    class FakeVisualViewport extends EventTarget { offsetTop = 0; offsetLeft = 0; width = 390; height = 844; }
+    const viewport = new FakeVisualViewport();
+    vi.stubGlobal('visualViewport', viewport);
+    renderUi(host({ isMyTurn: true }));
+    const root = document.querySelector<HTMLElement>('[data-zone="table-banners"]');
+    expect([root?.style.position, root?.style.width, root?.style.height]).toEqual(['fixed', '390px', '844px']);
+    expect(root?.className ?? '').not.toMatch(/\binset-0\b/);
+    act(() => { viewport.offsetTop = 120; viewport.height = 480; viewport.dispatchEvent(new Event('resize')); });
+    expect([root?.style.top, root?.style.height]).toEqual(['120px', '480px']);
+  });
+});

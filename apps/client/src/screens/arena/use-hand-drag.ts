@@ -175,13 +175,21 @@ export function useHandDrag(input: HandDragInput): {
       return;
     }
     const latest = latestHeldActions(input.view, input.ctx, phase.card);
-    const outcome = dispatchDrop(resolveDrop(pointOf(event), phase.rects, latest), input.commit, () => {
-      input.openChoice(phase.card);
-    });
+    const point = pointOf(event);
+    // The context names the card and the release point, so its ghost flies from there (L74-17).
+    const outcome = dispatchDrop(
+      resolveDrop(point, phase.rects, latest),
+      input.commit,
+      () => {
+        input.openChoice(phase.card);
+      },
+      { instanceId: phase.card.instance.instanceId, dropPoint: point },
+    );
     if (outcome === 'returned') {
       springBack(phase.card, phase.origin);
     } else {
-      // The card flight is L74-17 / L78: a sent drop or an opened choice drops the ghost at once.
+      // A sent drop or an opened choice drops the ghost at once; the sent card's flight leaves from the
+      // release point through the commit's own-intent FX (L74-17), L78 restyles it.
       setPhase(null);
     }
   });

@@ -23,21 +23,33 @@
  * - §6.9 (L74-15): the ticker and Menu → Action log open the reducer-hosted log sheet.
  * - §6.9 (L74-16): Chat opens the reducer-hosted chat sheet; its unread count lives in
  *   `chat-unread-store.ts`, and `onSendChat` is called directly (App-level, not an `ArenaIntent`).
+ * - §6.12, §8.1, §8.3, Q63 (L74-17; plan A.9.2): `ArenaScreen` is a shell,
+ *   `<TableFxProvider><ArenaScreenInner/></TableFxProvider>` like `TableScreen`, so the `fx/`
+ *   overlay draws over the arena. `ArenaScreenInner` runs the shared `useTableFxTriggers` (seeded
+ *   elimination beats, log chips and ghosts, threat cues), mounts `TableBannerHost` once with the
+ *   V2 table's mapping, and flies own intents from the commit helper's `onSent` (`ownIntentFxFor`).
  *
  * Import rule (L74-01 brief): `screens/arena/` imports only from `ui/`, `view-model/`, `fx/`,
  * `net/` (types), `help/`, `feedback/` and the shared screen modules. It never imports
  * `screens/table/` or `design/`; `TableScreenProps` is the one type behind the alias below.
  */
 
+import type { SentenceAnnouncementLogEntry } from '@card-battle/shared';
 import { useCallback, useEffect, useEffectEvent, useRef, useState, type ReactElement } from 'react';
 
+import { TableFxProvider } from '../../fx/table-fx-context';
+import { useTableFxTriggers } from '../../fx/use-table-fx-triggers';
+import { TableBannerHost } from '../../ui/banner/table-banner-host';
+import { v7SeatColor } from '../../ui/palette';
 import { liveSheetId } from '../../ui/primitives/sheet-stack';
 import { useSheetStackStore } from '../../ui/primitives/sheet-stack-context';
+import { seatIndexOf } from '../../ui/seat-colors';
 import { actionLock, type ActionContext } from '../../view-model/action-lock';
 import { selfStrip } from '../../view-model/self-strip';
 import { log } from '../../view-model/log';
 import { seats } from '../../view-model/seats';
 import { shop } from '../../view-model/shop';
+import { povHasWon } from '../../view-model/table-banner';
 import { threats } from '../../view-model/threats';
 import type { TableScreenProps } from '../table';
 import { createArenaCommit } from './arena-commit';
@@ -68,6 +80,7 @@ import { selectedHandInstanceId } from './hand-fan-model';
 import { KitSheet } from './kit-sheet';
 import { LogSheet } from './log-sheet';
 import { LogTicker } from './log-ticker';
+import { ownIntentFxFor } from './own-intent-fx';
 import { SeatSheet } from './seat-sheet';
 import { SelfStrip } from './self-strip';
 import { ShopSheet } from './shop-sheet';
@@ -81,13 +94,35 @@ import { useTapGuard } from './use-tap-guard';
 
 export type ArenaScreenProps = TableScreenProps;
 
+/** The FX provider shell (plan A.9.2), as `TableScreen`: the overlay draws over the arena. */
 export function ArenaScreen(props: ArenaScreenProps): ReactElement {
+  return (
+    <TableFxProvider>
+      <ArenaScreenInner {...props} />
+    </TableFxProvider>
+  );
+}
+
+function ArenaScreenInner(props: ArenaScreenProps): ReactElement {
   const { view } = props;
   const readOnly = props.readOnly ?? false;
   const ctx: ActionContext = { subChoice: props.subChoice, readOnly };
   const lock = actionLock(view, ctx);
+  // The FX triggers both boards share (L74-17): seeded elimination beats (Q63), log chips and ghosts, threat cues.
+  const fx = useTableFxTriggers({ view, lastActionResolved: props.lastActionResolved, subChoice: props.subChoice });
   // The single exit for every ArenaIntent (§6.6.4, Appendix A.6): built once per render; the handlers are read at call time.
-  const commit = createArenaCommit(props);
+  // Own-intent FX fly after the send (Lot 14, A.9.3).
+  const commit = createArenaCommit(props, {
+    onSent: (intent, context) => {
+      const own = ownIntentFxFor(intent, context);
+      if (own !== null) fx.ownIntent(own);
+    },
+  });
+  // The banner host's inputs, as the V2 table maps them (`TableBannerFlash`, L51-06); L74-23 reuses `povWon`.
+  const pov = view.players.find((player) => player.id === view.you);
+  const povEliminated = pov?.isEliminated === true;
+  const povWon = povHasWon(view.players, view.you, props.youWon ?? false);
+  const povSeat = seatIndexOf(view, view.you);
   const arenaRef = useRef<HTMLDivElement>(null);
   const layoutBox = useArenaLayoutBox(arenaRef);
   const seatsModel = seats(view, layoutBox);
@@ -133,7 +168,7 @@ export function ArenaScreen(props: ArenaScreenProps): ReactElement {
   };
   const onTarget = (playerId: string): void => {
     if (live?.seatIds.includes(playerId) !== true) return;
-    commit({ kind: 'playCard', payload: { instanceId: live.instanceId, targetPlayerId: playerId } });
+    commit({ kind: 'playCard', payload: { instanceId: live.instanceId, targetPlayerId: playerId } }, { instanceId: live.instanceId });
     finishTargeting();
   };
   // Esc cancels targeting. The collapsed sheet takes no Esc (sheet-stack.ts `escTargetId`), and an
@@ -289,6 +324,21 @@ export function ArenaScreen(props: ArenaScreenProps): ReactElement {
       </div>
       {/* Portaled to `document.body` on `Z_INDEX.dragGhost`, under every sheet (Appendix A.8 ruling 10). */}
       <HandDragLayer drag={handDrag.view} />
+      {/* Portaled to `document.body` on `Z_INDEX.banner`, mounted once (§6.12, L74-17). `seatIndexOf` is null for a walk-in, as in V2. */}
+      <TableBannerHost
+        isMyTurn={view.currentTurnPlayerId === view.you && !readOnly && !povEliminated && !povWon}
+        isEliminated={povEliminated}
+        youWon={povWon}
+        pendingEffects={view.pendingEffects}
+        sentenceAnnouncements={view.actionLog.filter(
+          (entry): entry is SentenceAnnouncementLogEntry =>
+            entry.kind === 'sentenceCountdown' || entry.kind === 'sentenceFired',
+        )}
+        actionLog={view.actionLog}
+        nicknameOf={(id) => view.players.find((player) => player.id === id)?.nickname ?? id}
+        you={view.you}
+        {...(povSeat !== null ? { seatColor: v7SeatColor(povSeat) } : {})}
+      />
       {/* The sheets are the last children of the arena root and never inside a clickable element: a React portal bubbles clicks to its ancestors. No `default`, so a new `ArenaSheet` variant fails `noImplicitReturns` until it gets a case. */}
       {arenaSheetEntries(sheets).map(({ sheet, key, open }) => {
         switch (sheet.kind) {

@@ -161,4 +161,13 @@ describe('card sheet actions (L74-08)', () => {
     expect(commit).not.toHaveBeenCalled();
     expect(onClose).not.toHaveBeenCalled();
   });
+
+  it('a held card commits with its instanceId as the commit context (A.9.3, L74-17)', async () => {
+    const commit = vi.fn<ArenaCommit>();
+    const { user } = renderUi(
+      <CardSheet open source={{ kind: 'special', instance: makeCard('poison') }} view={viewWith({ points: 8, specialCards: [makeCard('poison')] })} ctx={LIVE} onClose={vi.fn()} commit={commit} />,
+    );
+    await user.click(within(screen.getByRole('dialog', { name: 'Poison' })).getByRole('button', { name: 'Use minus 8 pts' }));
+    expect(commit.mock.calls).toStrictEqual([[{ kind: 'playCard', payload: { instanceId: 'poison-1' } }, { instanceId: 'poison-1' }]]);
+  });
 });

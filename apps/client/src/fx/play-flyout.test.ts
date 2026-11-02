@@ -49,18 +49,6 @@ describe('measureTokenFlyout playerId (L51-09 / L51-13)', () => {
     expect(DECK_CARD_FLYOUT_HEIGHT).toBe(72);
   });
 
-  it('enqueues opponent buy/sell ghosts as small cards, not playCard flyouts (L51-13)', () => {
-    const table = readFileSync(join(dir, '../screens/table.tsx'), 'utf8');
-    expect(table).toContain('enqueueDeckCardGhost');
-    expect(table).toContain('leftoverLiveFlowChips');
-    expect(table).toContain('playCardGhostsForPublicLogEntry');
-    expect(table).toContain('measurePlayCardGhost');
-    expect(table).toContain('emitResourceFlowFlash');
-    expect(table).toContain("asCard: true");
-    expect(table).not.toContain('measurePlayFlyout');
-    expect(table).not.toContain('enqueueSellCardGhost');
-  });
-
   it('token chip chrome is asCard-only — width must not promote resource icons (L51-14)', () => {
     expect(tokenFlyoutUsesCardChrome({ asCard: true })).toBe(true);
     expect(tokenFlyoutUsesCardChrome({})).toBe(false);
@@ -82,7 +70,5 @@ describe('measureTokenFlyout playerId (L51-09 / L51-13)', () => {
     expect(overlay).toContain('queryPendingFlashAnchor');
     expect(overlay).toContain('queryPlayerFxAnchor');
     expect(overlay).toContain('visibleClientRect');
-    const table = readFileSync(join(dir, '../screens/table.tsx'), 'utf8');
-    expect(table).toContain('measureIncomingCollapsedCue');
   });
 });

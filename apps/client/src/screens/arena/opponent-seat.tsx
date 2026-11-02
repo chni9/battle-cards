@@ -21,7 +21,8 @@
  * - **Anchors:** `data-zone="opponent-seat"`, `data-player-id`, `data-seat`, `data-seat-index`,
  *   `data-tier`, `data-eliminated`, `data-active-seat`, `data-tapped-seat`,
  *   `data-hint-anchor="hidden-kit"` (unspied and base-Spied, Q66), `data-zone="opponent-portrait"`
- *   and `data-spy-eye` on the eye badge. Values keep `data-resource-kind` for the L74-17 FX.
+ *   and `data-spy-eye` on the eye badge. Values keep `data-resource-kind` for the L74-17 FX: each
+ *   flashes and floats a public chip amount (`useResourceFlash`, by player id), `?` included.
  * - **Targeting (L74-10, §6.6.5).** With `target`, the button carries `data-target-seat`. A valid
  *   seat is named "{nickname}, target", its tap is the target tap, and it wears a `--mine` ring
  *   (the POV's own outgoing effect, §5.1) that pulses at full motion. Any other seat is
@@ -33,6 +34,7 @@
 
 import { useId, type CSSProperties, type ReactElement } from 'react';
 
+import { useResourceFlash } from '../../fx/use-resource-flash';
 import { KitPortrait } from '../../ui/kit/kit-portrait';
 import { usePrefersReducedMotion } from '../../ui/motion/use-prefers-reduced-motion';
 import { Icon } from '../../ui/icons/icon';
@@ -46,6 +48,7 @@ import { botSeatLabelText } from '../../ui/seat/bot-seat-label-text';
 import { PlayerName } from '../../ui/seat/player-name';
 import type { SeatPlacement } from '../../view-model/seat-layout';
 import { SEAT_VISIBLE_BADGE_COUNT, type SeatModel, type SeatResource } from '../../view-model/seats';
+import { ResourceFlashCue } from './resource-flash';
 import { SEAT_MORE_STATUSES_LABEL, seatBadgeView } from './seat-badges';
 import { seatRect } from './seat-geometry';
 import { targetSeatLabel, type SeatTarget } from './targeting-model';
@@ -73,22 +76,26 @@ const SEAT_TITLE_SEPARATOR = ' · ';
 /** The drop ring on the root: the POV's own outgoing effect color (§5.1), thicker under the pointer. */
 const DROP_RING_CLASS = { valid: 'ring-2 ring-v7-mine', over: 'ring-4 ring-v7-mine' } as const;
 
-function ResourceValue({ resource }: { resource: SeatResource }): ReactElement {
+/** L74-17 (§6.12): a seat value flashes its public chip amount, also on a hidden `?`, and never flies. */
+function ResourceValue({ resource, playerId }: { resource: SeatResource; playerId: string }): ReactElement {
   const { kind, value } = resource;
   const caption = RESOURCE_CAPTIONS[kind];
   const hidden = value === '?';
   const isLife = kind === 'life';
+  const flash = useResourceFlash({ kind, value: value === '?' ? 'unknown' : value, playerId });
   return (
     <li
       data-resource-kind={kind}
+      {...(flash.tone !== null ? { 'data-resource-flash': flash.tone } : {})}
       title={hidden ? `${caption} unknown` : caption}
-      className={isLife ? LIVES_PILL_CLASS : RESOURCE_ROW_CLASS}
+      className={`relative ${isLife ? LIVES_PILL_CLASS : RESOURCE_ROW_CLASS}`}
     >
       <Icon name={RESOURCE_ICON[kind]} size={isLife ? 12 : 10} className="shrink-0" />
       <span aria-hidden="true" className={`font-v7-display ${isLife ? 'text-v7-caption' : 'text-v7-micro'}`}>
         {hidden ? '?' : String(value)}
       </span>
       <span className="sr-only">{`${caption} ${hidden ? 'unknown' : String(value)}`}</span>
+      <ResourceFlashCue flash={flash} />
     </li>
   );
 }
@@ -206,7 +213,7 @@ export function OpponentSeat({ model, center, tapped, onOpen, target, drop }: Op
           </div>
           <ul data-zone="opponent-resources" className="flex w-7 flex-col gap-px leading-none">
             {model.resources.map((resource) => (
-              <ResourceValue key={resource.kind} resource={resource} />
+              <ResourceValue key={resource.kind} resource={resource} playerId={model.playerId} />
             ))}
           </ul>
         </div>

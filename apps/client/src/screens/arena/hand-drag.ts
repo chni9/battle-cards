@@ -16,7 +16,7 @@ import type { MouseEvent as ReactMouseEvent, PointerEvent as ReactPointerEvent }
 import type { ActionContext } from '../../view-model/action-lock';
 import { cardActions, type CardActionsModel, type DropZones } from '../../view-model/card-actions';
 import { dropTarget, type DropResult, type DropZoneRects, type Point, type Rect } from '../../view-model/drop-target';
-import type { ArenaCommit } from './arena-commit';
+import type { ArenaCommit, CommitContext } from './arena-commit';
 import { liveCardRefFor } from './card-sheet-source';
 import type { HandCardSource } from './hand-fan-model';
 
@@ -69,19 +69,25 @@ export type DropOutcome = 'sent' | 'choice' | 'returned';
 
 /**
  * An intent leaves through the arena commit (§6.6.4); a pre-send choice opens and sends nothing
- * (§6.6.3); anything else returns the card.
+ * (§6.6.3); anything else returns the card. `context` (L74-17) rides with the intent so its ghost
+ * flies from the release point; without one, `commit` gets the intent alone (plan D4).
  */
 export function dispatchDrop(
   result: DropResult | null,
   commit: ArenaCommit,
   openChoice: (choice: DropChoice) => void,
+  context?: CommitContext,
 ): DropOutcome {
   if (result === null) {
     return 'returned';
   }
   switch (result.kind) {
     case 'intent':
-      commit(result.intent);
+      if (context === undefined) {
+        commit(result.intent);
+      } else {
+        commit(result.intent, context);
+      }
       return 'sent';
     case 'open-choice':
       openChoice(result.choice);

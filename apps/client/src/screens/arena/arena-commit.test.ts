@@ -3,7 +3,7 @@
  */
 import { describe, expect, it, vi } from 'vitest';
 
-import { createArenaCommit, type ArenaIntentHandlers } from './arena-commit';
+import { createArenaCommit, type ArenaCommitHooks, type ArenaIntentHandlers } from './arena-commit';
 
 function makeHandlers() {
   return {
@@ -133,5 +133,30 @@ describe('createArenaCommit (L74-08, Appendix A.6)', () => {
     for (const name of ['onPlayCard', 'onSellCard', 'onUpgradeCard', 'onPlayMultipleAttacks', 'onDraw', 'onClearSpy'] as const) {
       expect(handlers[name]).not.toHaveBeenCalled();
     }
+  });
+});
+
+describe('createArenaCommit hooks (L74-17, A.9.3)', () => {
+  it('fires onSent after the send, with the context or {} (Lot 14: FX never delay an intent)', () => {
+    const order: string[] = [];
+    const handlers = makeHandlers();
+    handlers.onDraw.mockImplementation(() => { order.push('send'); });
+    const onSent = vi.fn<NonNullable<ArenaCommitHooks['onSent']>>(() => { order.push('fx'); });
+    const commit = createArenaCommit(handlers, { onSent });
+    commit({ kind: 'drawCard' });
+    const context = { instanceId: 'card-1', dropPoint: { x: 5, y: 6 } };
+    commit({ kind: 'sellCard', payload: { instanceId: 'card-1' } }, context);
+    expect(order).toEqual(['send', 'fx', 'fx']);
+    expect(onSent.mock.calls).toStrictEqual([[{ kind: 'drawCard' }, {}], [{ kind: 'sellCard', payload: { instanceId: 'card-1' } }, context]]);
+  });
+
+  it('sends nothing and fires no onSent when allow says no', () => {
+    const handlers = makeHandlers();
+    const onSent = vi.fn<NonNullable<ArenaCommitHooks['onSent']>>();
+    const commit = createArenaCommit(handlers, { allow: (intent) => intent.kind !== 'drawCard', onSent });
+    commit({ kind: 'drawCard' });
+    expect([handlers.onDraw.mock.calls.length, onSent.mock.calls.length]).toEqual([0, 0]);
+    commit({ kind: 'clearSpy', payload: { targetPlayerId: 'p2' } });
+    expect(handlers.onClearSpy.mock.calls).toStrictEqual([['p2']]);
   });
 });

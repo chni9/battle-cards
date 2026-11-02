@@ -5632,3 +5632,33 @@ Source: technical spec v7 §6.1 item 1, §6.9, §13 Q48; Appendix A `table-chat-
   read-only bottom sheet like the card, kit, seat and log sheets (§6.7: Esc, backdrop, swipe-down).
 
 ---
+
+## 2026-11-02 · [P] V7 FX hosting: one trigger hook for both boards, seeded eliminations (L74-17)
+
+Source: technical spec v7 §4.1, §6.6.2, §6.12, §8.1, §8.3, §10.4, §12.1, Q63; Lot 74 plan A.9.2,
+A.9.3, A.9.6; backlog L74-17 watch point.
+
+- **One implementation.** The table's FX trigger effects (resolution flash, elimination beat,
+  public-log chips and card ghosts, reward pulse, threat outline and cue) and their six enqueue
+  helpers moved out of `screens/table.tsx` into `fx/use-table-fx-triggers.ts`. Every decision they
+  make is pure in `view-model/fx-triggers.ts`. Both boards call the hook until L75 deletes the old
+  caller.
+- **Q63 changes the default table.** Elimination beats are seeded on mount, so a reconnect or the
+  finished board replays none. The classic table gets the fix too, so `lot-72-v7` gains a
+  "Fixed some bugs." item. Resolution flashes stay unseeded, as in V2.
+- **Own-intent FX in the commit helper.** `createArenaCommit(handlers, { onSent })` sends first,
+  then passes the intent and its `CommitContext` to `ownIntentFxFor` (Lot 14). A caller with no
+  context calls `commit(intent)` with one argument: Vitest compares `mock.calls` arrays by length.
+  A dropped card's ghost starts at the release point, where the drag ghost was.
+- **Resource values.** `fx/use-resource-flash.ts` re-implements V2 `ResourceIcon`'s flash, floats
+  and own-value flyout, because the arena may not import `design/` and L74 may not edit it. Both
+  copies live until L75 deletes `ResourceIcon`. The outline look is the L74 default; L78 restyles it.
+- **Unanchored resolution flashes.** L74-06 draws no `data-pending-id` for a grid third-party
+  effect with no tapped seat, or for a dropped adjacent arrow (Q20). `queryPendingFlashAnchor`
+  then falls back to `[data-zone="pending"]`, so the outcome label shows on the central plate.
+  Accepted: the outcome stays visible and no markup is added.
+- **Banner layer.** `TableBannerHost` sits on the visual-viewport box, like Sheet and Toast.
+- **Source-text rows.** The `fx/play-flyout.test.ts` table.tsx assertions became hook behavior
+  tests (`docs/backlog_v7_test_classification.md`).
+
+---

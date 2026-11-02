@@ -1262,8 +1262,7 @@ table keeps until L75; L74-17 mounts the host in the arena. Which cue fires stay
   always `--text-on-cta`, at 4.5:1 or better on every fill (`banner-items.test.ts`): 13.70:1 on
   `--cta`, 5.79:1 on `--threat-attack`, 5.97:1 on `--danger`, 6.50:1 to 14.59:1 on the seat
   hues. A seat hue never shares a slab with `--life` or a `--threat-*` color.
-- **Layer:** the root portals to `document.body`, like Sheet and Toast, and is
-  `fixed inset-0`, `pointer-events: none`, on `Z_INDEX.banner` (90): above sheets (50) and
+- **Layer:** the root portals to `document.body`, like Sheet and Toast, and is `position: fixed` at the live `visualViewport` box (`useVisualViewportBox`, like Sheet and Toast; never `inset-0`, so a banner never sits under the phone keyboard, L74-17), `data-zone="table-banners"`, `pointer-events: none`, on `Z_INDEX.banner` (90): above sheets (50) and
   Minimize bars (80), below toasts (95), all compared at body level. A transformed or isolated
   ancestor (the arena, the L78 board shake) can neither re-anchor it nor trap it under the
   sheets. It never takes focus or a press. Mount it once per arena so its regions exist before

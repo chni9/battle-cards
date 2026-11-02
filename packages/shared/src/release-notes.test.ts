@@ -71,6 +71,7 @@ describe('release notes catalog (L63-07 / L65-05)', () => {
         before: 'After you cancelled the fifth-active picker, the turn timer could show the wrong time.',
         after: 'Fixed some bugs.',
       },
+      { before: 'Reconnecting or viewing the final board replayed old elimination flashes.', after: 'Fixed some bugs.' },
     ]);
   });
 

@@ -104,6 +104,13 @@ describe('dispatchDrop maps each dropTarget result (§6.6.3, §6.6.4)', () => {
     expect(dispatchDrop(null, commit, openChoice)).toBe('returned');
     expect([commit.mock.calls.length, openChoice.mock.calls.length]).toEqual([0, 0]);
   });
+
+  it('passes the drop context to commit with the intent (L74-17, A.9.3)', () => {
+    const { commit, openChoice } = spies();
+    const context = { instanceId: 'atk-1', dropPoint: SEAT_P1 };
+    expect(dispatchDrop(dropTarget(SEAT_P1, RECTS, held(ATTACK)), commit, openChoice, context)).toBe('sent');
+    expect(commit.mock.calls).toStrictEqual([[{ kind: 'playCard', payload: { instanceId: 'atk-1', targetPlayerId: 'p1' } }, context]]);
+  });
 });
 
 describe('a drop resolves against the latest view (Review Focus 4)', () => {

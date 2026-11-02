@@ -9,21 +9,27 @@
  * and the thumbs only ask ArenaScreen to open a sheet (§6.6.4). The Activate duplication button is
  * the dock's (L74-13); the strip keeps only the "Duplication active" badge. A walk-in has no kit
  * and no resources (Q38), so it gets no strip here: L74-23 owns the Watching strip.
+ *
+ * L74-17 (§6.12, §8.3): each resource pill flashes and floats its Δ (`useResourceFlash`,
+ * `ResourceFlashCue`), and the POV's own Δ flies its chips from the log.
  */
 
 import type { KitId } from '@card-battle/shared';
 import type { ReactElement } from 'react';
 
+import { useResourceFlash } from '../../fx/use-resource-flash';
+import type { ResourceKind } from '../../ui/asset-lookup';
 import { Card } from '../../ui/card/card';
 import type { CardCounter } from '../../ui/card/card-face';
 import { RESOURCE_ICON } from '../../ui/icons/icon-names';
 import { KitPortrait } from '../../ui/kit/kit-portrait';
 import { Badge } from '../../ui/primitives/badge';
-import { Pill } from '../../ui/primitives/pill';
+import { Pill, type PillProps } from '../../ui/primitives/pill';
 import { RESOURCE_CAPTIONS } from '../../ui/resource-captions';
 import type { ThumbBadge } from '../../view-model/card-actions';
 import { SELF_STRIP_POV_LABELS, type SelfFlowBadge, type SelfStripModel } from '../../view-model/self-strip';
 import type { CardSheetSource } from './card-sheet-source';
+import { ResourceFlashCue } from './resource-flash';
 
 export interface SelfStripProps {
   /** `selfStrip(view, ctx)`, computed once in ArenaScreen (Appendix A.2); L74-13 reads `.dock` from the same value. */
@@ -75,6 +81,23 @@ function FlowBadge({ badge }: { readonly badge: SelfFlowBadge }): ReactElement {
   }
 }
 
+/**
+ * A resource pill that flashes and floats its own Δ (L74-17, spec v7 §6.12): the POV listens as
+ * `self` and flies its chips (`useResourceFlash`). `data-resource-flash` is set only mid-flash.
+ */
+function FlashingPill(props: PillProps & { readonly resourceKind: ResourceKind; readonly value: number }): ReactElement {
+  const flash = useResourceFlash({ kind: props.resourceKind, value: props.value });
+  return (
+    <span
+      className="relative inline-flex rounded-v7-chrome-sm"
+      {...(flash.tone !== null ? { 'data-resource-flash': flash.tone } : {})}
+    >
+      <Pill {...props} />
+      <ResourceFlashCue flash={flash} />
+    </span>
+  );
+}
+
 export function SelfStrip({ model, onOpenKit, onOpenCard }: SelfStripProps): ReactElement | null {
   const { kitId, resources } = model;
   if (kitId === null || resources === null) {
@@ -93,7 +116,7 @@ export function SelfStrip({ model, onOpenKit, onOpenCard }: SelfStripProps): Rea
         />
         <div className="flex min-w-0 flex-1 flex-col gap-2">
           <div data-zone="resources" data-hint-anchor="resources" className="flex flex-wrap items-center gap-2">
-            <Pill
+            <FlashingPill
               icon={RESOURCE_ICON.life}
               label={RESOURCE_CAPTIONS.life}
               value={resources.lives}
@@ -101,7 +124,7 @@ export function SelfStrip({ model, onOpenKit, onOpenCard }: SelfStripProps): Rea
               size="lg"
               captionVisible
             />
-            <Pill
+            <FlashingPill
               icon={RESOURCE_ICON.shield}
               label={RESOURCE_CAPTIONS.shield}
               value={resources.shield}
@@ -109,14 +132,14 @@ export function SelfStrip({ model, onOpenKit, onOpenCard }: SelfStripProps): Rea
               captionVisible
             />
             {resources.shieldIsUpgraded ? <Badge label={UPGRADED_SHIELD_LABEL} tone="shield" /> : null}
-            <Pill
+            <FlashingPill
               icon={RESOURCE_ICON.point}
               label={RESOURCE_CAPTIONS.point}
               value={resources.points}
               resourceKind="point"
               captionVisible
             />
-            <Pill
+            <FlashingPill
               icon={RESOURCE_ICON.upgradePoint}
               label={RESOURCE_CAPTIONS.upgradePoint}
               value={resources.upgradePoints}
