@@ -29,3 +29,15 @@ export function gainPoints(
   player.points += amount;
   player.matchStats.pointsGained += amount;
 }
+
+/**
+ * Gives back points a cancelled play paid (L82-03). A refund, not a gain: it skips
+ * `pointsGained` and every gain observer. `refundChosenPointsSpent` unwinds the spend.
+ */
+export function returnSpentPoints(player: Player, amount: number): void {
+  if (amount < 0) {
+    throw new RangeError(`returnSpentPoints received a negative amount: ${amount}`);
+  }
+
+  player.points += amount;
+}

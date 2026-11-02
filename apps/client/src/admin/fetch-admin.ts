@@ -36,8 +36,35 @@ export function subscribeAdminUnauthorized(listener: UnauthorizedListener): () =
   };
 }
 
-/** Clear the stored secret and show the password gate again (401). */
-export function lockAdminSession(): void {
+/**
+ * What the server says to a wrong password once the shared IP limiter trips (technical spec v6
+ * §14, `respondInboxAuthFailure`). It is the copy of the gate and of every page, Feedback included.
+ */
+export const ADMIN_RATE_LIMIT_COPY = 'Too many wrong passwords. Try again in a few minutes.';
+
+/**
+ * Counts locks. A request captures it before it starts, so a response that arrives after a lock
+ * (Sign out or a 401) cannot undo it: it neither stores the old password again nor locks the
+ * session the designer unlocked since (spec v7 §7.8, L80-02). A counter rather than an
+ * `AbortController` keeps the gate probe, every page and Feedback's two direct calls on one rule
+ * with no per-call wiring.
+ */
+let adminSession = 0;
+
+export function currentAdminSession(): number {
+  return adminSession;
+}
+
+/**
+ * Clear the stored secret and show the password gate again, for a 401 and for Sign out. A call
+ * that names a `session` which is no longer current is a no-op: it belongs to a request that
+ * started before an earlier lock.
+ */
+export function lockAdminSession(session?: number): void {
+  if (session !== undefined && session !== adminSession) {
+    return;
+  }
+  adminSession += 1;
   clearStoredInboxPassword();
   for (const listener of unauthorizedListeners) {
     listener();
@@ -70,18 +97,21 @@ export async function adminGet<T>(
       }
     }
   }
+  const session = currentAdminSession();
   try {
     const response = await fetchImpl(url.toString(), {
       headers: { 'X-Inbox-Password': password },
     });
     if (response.status === 401) {
-      lockAdminSession();
+      lockAdminSession(session);
     }
     if (!response.ok) {
       return { ok: false, status: response.status };
     }
     const data = (await response.json()) as T;
-    storeInboxPassword(password);
+    if (session === currentAdminSession()) {
+      storeInboxPassword(password);
+    }
     return { ok: true, data };
   } catch {
     return { ok: false, status: 0 };
@@ -94,6 +124,9 @@ export function adminErrorCopy(status: number): string {
   }
   if (status === 404) {
     return 'Not found';
+  }
+  if (status === 429) {
+    return ADMIN_RATE_LIMIT_COPY;
   }
   if (status === 503) {
     return 'Database unavailable';
