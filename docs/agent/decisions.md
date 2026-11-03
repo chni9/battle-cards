@@ -6329,3 +6329,19 @@ L74-21 cache)" above; the L74-26 task review (M1) and the controller's ruling of
 - **Why:** the dock needs a stable footprint, while every other surface needs the whole reason.
 
 ---
+
+## 2026-11-03 · [P] "Bas plus court": the portrait bottom band compacts when the plate would cover a seat (L75-13, designer)
+
+- **Source.** Designer, 2026-11-03, answering the L74-26 gate's stop item (the plate covers grid
+  row 2 of an 8-seat table by 82 px at 360×740 and by 14 px at 375×812; a Duplicator's two-row dock
+  does the same to a 2-seat table at 360 px). Lot 75 plan, controller ruling R5. Supersedes
+  nothing: the 2026-11-03 L74-26 entry asked for this choice.
+- **Rule.** In portrait, when the seat grid plus the plate's footprint do not fit the arena region,
+  the bottom band compacts. The self strip goes to one row with a smaller portrait, the hand cards
+  get smaller, and the dock keeps its controls. The trigger is a pure geometry helper over the
+  layout box and the seats, not a fixed seat count, with hysteresis so the band never flaps at the
+  threshold. `SEAT_BOX` and `PLATE_BOX` do not change.
+- **Rejected.** Compact grid seats and a side-anchored plate.
+- **Follow-up.** L75-13 appends the measured numbers in a new dated entry.
+
+---
