@@ -3,7 +3,13 @@ import { defaultLobbyRules, type LobbyRules } from '@card-battle/shared';
 import { describe, expect, it } from 'vitest';
 
 import type { SoloMenuSeed } from '../solo-menu-seed';
-import { applySoloRulesChange, initialSoloRulesState, soloLaunchKitSelection } from './solo-rules-state';
+import {
+  applySoloRulesChange,
+  applySoloRulesPayload,
+  initialSoloRulesState,
+  soloLaunchKitSelection,
+  type SoloRulesState,
+} from './solo-rules-state';
 
 const SEED: SoloMenuSeed = {
   opponentCount: 3, difficulty: 'hard', kitSelection: 'assassin',
@@ -44,5 +50,41 @@ describe('solo rules state (spec v7 §7.1, Lot 70)', () => {
     expect(randomOnly.kitSelection).toBe('assassin');
     expect(soloLaunchKitSelection(randomOnly)).toBe('random');
     expect(soloLaunchKitSelection(picked)).toBe('assassin');
+  });
+});
+
+describe('applySoloRulesPayload (L76-09)', () => {
+  const fresh = initialSoloRulesState(undefined);
+
+  it('a kit or Random payload keeps the clock and leaves includeTurnTime false', () => {
+    expect(applySoloRulesPayload(fresh, { excludedKitIds: ['ghost'], randomOnly: true })).toEqual({
+      rules: { excludedKitIds: ['ghost'], randomOnly: true, turnTimeSeconds: 60 }, includeTurnTime: false, kitSelection: 'random',
+    });
+  });
+
+  it('a slider payload sets the seconds and includeTurnTime', () => {
+    expect(applySoloRulesPayload(fresh, { excludedKitIds: [], randomOnly: false, turnTimeSeconds: 90 })).toEqual({
+      rules: { excludedKitIds: [], randomOnly: false, turnTimeSeconds: 90 }, includeTurnTime: true, kitSelection: 'random',
+    });
+  });
+
+  it('resets an excluded local pick to Random and keeps an allowed one', () => {
+    const picked: SoloRulesState = { ...fresh, kitSelection: 'assassin' };
+    expect(applySoloRulesPayload(picked, { excludedKitIds: ['assassin'], randomOnly: false }).kitSelection).toBe('random');
+    expect(applySoloRulesPayload(picked, { excludedKitIds: ['ghost'], randomOnly: false }).kitSelection).toBe('assassin');
+  });
+
+  it('Random only hides the pick but keeps it, and the launch sends random', () => {
+    const next = applySoloRulesPayload({ ...fresh, kitSelection: 'assassin' }, { excludedKitIds: [], randomOnly: true });
+    expect([next.kitSelection, soloLaunchKitSelection(next)]).toEqual(['assassin', 'random']);
+  });
+
+  it('a seeded clock above 180 stays the server default through kit edits', () => {
+    const seeded = initialSoloRulesState({
+      opponentCount: 2, difficulty: 'hard', kitSelection: 'wizard',
+      lobbyRules: { excludedKitIds: [], randomOnly: false, turnTimeSeconds: 300 },
+    });
+    const next = applySoloRulesPayload(seeded, { excludedKitIds: ['ghost'], randomOnly: false });
+    expect([next.rules.turnTimeSeconds, next.includeTurnTime]).toEqual([300, false]);
   });
 });

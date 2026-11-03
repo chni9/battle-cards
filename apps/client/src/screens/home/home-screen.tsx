@@ -36,7 +36,7 @@ import { whatsNewAutoScope, type WhatsNewAutoTrigger } from './home-whats-new';
 import { OnlinePath } from './online-path';
 import { SoloPath } from './solo-path';
 import {
-  applySoloRulesChange,
+  applySoloRulesPayload,
   initialSoloRulesState,
   soloLaunchKitSelection,
   type SoloRulesState,
@@ -295,8 +295,12 @@ export function HomeScreen({
                 soloDifficulty={soloDifficulty}
                 soloKitSelection={solo.kitSelection}
                 soloRules={solo.rules}
-                onSoloRulesChange={(next, turnTimeChanged) => {
-                  setSolo((current) => applySoloRulesChange(current, next, turnTimeChanged));
+                rulesEditor={{
+                  onChange: (payload) => {
+                    setSolo((current) => applySoloRulesPayload(current, payload));
+                  },
+                  disabled: busy,
+                  serverDefaultTime: !solo.includeTurnTime,
                 }}
                 onBack={goHub}
                 onNicknameChange={onNicknameChange}

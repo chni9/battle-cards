@@ -4,7 +4,7 @@
  * `rules-recall-table-end`. L72-16.
  *
  * Pure: it reads `LobbyRules` and the kit catalog, never a clock or a DOM, so the strip, the
- * sheet and the L76 host editor share one list of faces.
+ * sheet and the L76-09 host editor share one list of faces.
  */
 
 import { getKit, KIT_IDS, type KitId, type LobbyRules } from '@card-battle/shared';
@@ -39,14 +39,19 @@ export function formatTurnTimeSeconds(seconds: number): string {
  * The strip's spoken summary, for the button's `aria-describedby`: the seconds, "Random" when
  * kits are dealt at random, then "Excluded" followed by the excluded kit names (in `KIT_IDS`
  * order, like the faces), joined by commas. It uses only words the strip already shows, so it
- * adds no copy (L72-16 fix round 1). The button's name stays "Table rules".
+ * adds no copy (L72-16 fix round 1). The button's name stays "Table rules". The strip passes its
+ * clock label as `clock` (L76-09), so "Server default" is spoken as shown; by default it is the
+ * seconds.
  */
-export function rulesSummaryText(rules: LobbyRules): string {
+export function rulesSummaryText(
+  rules: LobbyRules,
+  clock: string = formatTurnTimeSeconds(rules.turnTimeSeconds),
+): string {
   const excludedNames = rulesKitFaces(rules)
     .filter((face) => face.excluded)
     .map((face) => face.name);
   return [
-    formatTurnTimeSeconds(rules.turnTimeSeconds),
+    clock,
     rules.randomOnly ? 'Random' : null,
     excludedNames.length > 0 ? `${EXCLUDED_LABEL} ${excludedNames.join(', ')}` : null,
   ]

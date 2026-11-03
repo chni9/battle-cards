@@ -8,8 +8,9 @@
  * so a server default above 180 reads as sent), the Random mark when kits are dealt, and all 16
  * kits with the excluded ones named in words (`EXCLUDED_LABEL`), never by color or greyscale
  * alone (Q15). It has no editable control and its only button is Close, which also gives the
- * focus trap a target. L76 adds the host editor in this folder; until then the sheet is the
- * guests' view, and the L74 menu and the L77 Game over recall open it directly.
+ * focus trap a target. With `editor` (the host, the solo menu: L76-09) the same sheet holds
+ * `RulesEditor` and Close stays its only action; without it the sheet is the guests', walk-ins',
+ * arena menu's and Game over's read-only view.
  *
  * Only the portrait is dimmed. The name and the "Excluded" caption keep `--text-2` at full
  * opacity, so the state stays readable on `--panel`. The portrait is `aria-hidden`: the visible
@@ -23,6 +24,8 @@ import { KitPortrait } from '../kit/kit-portrait';
 import { Button } from '../primitives/button';
 import { Sheet } from '../primitives/sheet';
 import { EXCLUDED_LABEL, TABLE_RULES_LABEL } from '../ui-copy';
+import { RulesEditor } from './rules-editor';
+import type { RulesEditorBinding } from './rules-editor-model';
 import { formatTurnTimeSeconds, rulesKitFaces } from './rules-summary';
 
 export interface RulesSheetProps {
@@ -31,6 +34,8 @@ export interface RulesSheetProps {
   onClose: () => void;
   /** Lands on the `Sheet` panel. The arena passes `data-arena-sheet` (L74-22). */
   dataAttributes?: Readonly<Record<`data-${string}`, string>>;
+  /** The host or the solo menu: the body is `RulesEditor` (L76-09). Absent: the read-only view. */
+  editor?: RulesEditorBinding;
 }
 
 /**
@@ -40,7 +45,7 @@ export interface RulesSheetProps {
  */
 const KIT_GRID_CLASS = 'grid grid-cols-[repeat(auto-fill,minmax(5.5rem,1fr))] gap-x-2 gap-y-4';
 
-export function RulesSheet({ open, rules, onClose, dataAttributes }: RulesSheetProps): ReactElement | null {
+export function RulesSheet({ open, rules, onClose, dataAttributes, editor }: RulesSheetProps): ReactElement | null {
   return (
     <Sheet
       mode="read-only"
@@ -55,45 +60,49 @@ export function RulesSheet({ open, rules, onClose, dataAttributes }: RulesSheetP
         </Button>
       }
     >
-      <div className="flex flex-col gap-4">
-        <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
-          <p className="inline-flex items-center gap-2">
-            <Icon name="clock" size={24} />
-            <span className="font-v7-body text-v7-body font-bold text-v7-text-2">Human turn</span>
-            <span className="font-v7-display text-v7-title leading-none text-v7-text">
-              {formatTurnTimeSeconds(rules.turnTimeSeconds)}
-            </span>
-          </p>
-          {rules.randomOnly ? (
+      {editor !== undefined ? (
+        <RulesEditor rules={rules} editor={editor} />
+      ) : (
+        <div className="flex flex-col gap-4">
+          <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
             <p className="inline-flex items-center gap-2">
-              <Icon name="random" size={24} />
-              <span className="font-v7-body text-v7-body font-extrabold text-v7-text">Random</span>
+              <Icon name="clock" size={24} />
+              <span className="font-v7-body text-v7-body font-bold text-v7-text-2">Human turn</span>
+              <span className="font-v7-display text-v7-title leading-none text-v7-text">
+                {formatTurnTimeSeconds(rules.turnTimeSeconds)}
+              </span>
             </p>
-          ) : null}
-        </div>
-        <ul className={KIT_GRID_CLASS}>
-          {rulesKitFaces(rules).map((face) => (
-            <li
-              key={face.kitId}
-              data-kit-id={face.kitId}
-              data-excluded={face.excluded ? 'true' : 'false'}
-              className="flex min-w-0 flex-col items-center gap-1.5 text-center"
-            >
-              <span aria-hidden="true" className={face.excluded ? 'opacity-40 grayscale' : ''}>
-                <KitPortrait kitId={face.kitId} size="thumb" />
-              </span>
-              <span className="max-w-full font-v7-body text-v7-caption font-bold leading-tight break-words text-v7-text-2">
-                {face.name}
-              </span>
-              {face.excluded ? (
-                <span className="font-v7-body text-v7-micro font-extrabold leading-none text-v7-text-2">
-                  {EXCLUDED_LABEL}
+            {rules.randomOnly ? (
+              <p className="inline-flex items-center gap-2">
+                <Icon name="random" size={24} />
+                <span className="font-v7-body text-v7-body font-extrabold text-v7-text">Random</span>
+              </p>
+            ) : null}
+          </div>
+          <ul className={KIT_GRID_CLASS}>
+            {rulesKitFaces(rules).map((face) => (
+              <li
+                key={face.kitId}
+                data-kit-id={face.kitId}
+                data-excluded={face.excluded ? 'true' : 'false'}
+                className="flex min-w-0 flex-col items-center gap-1.5 text-center"
+              >
+                <span aria-hidden="true" className={face.excluded ? 'opacity-40 grayscale' : ''}>
+                  <KitPortrait kitId={face.kitId} size="thumb" />
                 </span>
-              ) : null}
-            </li>
-          ))}
-        </ul>
-      </div>
+                <span className="max-w-full font-v7-body text-v7-caption font-bold leading-tight break-words text-v7-text-2">
+                  {face.name}
+                </span>
+                {face.excluded ? (
+                  <span className="font-v7-body text-v7-micro font-extrabold leading-none text-v7-text-2">
+                    {EXCLUDED_LABEL}
+                  </span>
+                ) : null}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
     </Sheet>
   );
 }

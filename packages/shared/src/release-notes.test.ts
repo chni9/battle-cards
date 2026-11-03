@@ -81,6 +81,10 @@ describe('release notes catalog (L63-07 / L65-05)', () => {
       },
       { before: 'Reconnecting or viewing the final board replayed old elimination flashes.', after: 'Fixed some bugs.' },
       { before: 'Some help text about kits, Spy and starting an online game was out of date.', after: 'Fixed some bugs.' },
+      {
+        before: 'In the lobby, only the host could open the table rules.',
+        after: 'Everyone can open the table rules, and the host edits them there.',
+      },
     ]);
   });
 

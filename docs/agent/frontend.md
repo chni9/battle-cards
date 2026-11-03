@@ -651,15 +651,18 @@ and are mirrored in `ui/palette.ts` and `ui/motion/motion-tokens.ts`.
   Never clamp it and never read `DEFAULT_TURN_TIME_SECONDS` here.
 - **Excluded is a word:** an excluded kit carries `EXCLUDED_LABEL` at full opacity. Dim or grey
   the portrait only (`opacity-40 grayscale` on the portrait wrapper), never the name or the label.
-- **L76 adds the host editor here:** the slider sends on release, All / None / Random and the
-  16 kit toggles, in this folder, reusing `rulesKitFaces`. `screens/lobby-rules-panel.tsx` stays
-  until L76.
+- **Host editor (L76-09):** `RulesStrip` and `RulesSheet` take an optional `editor`
+  (`RulesEditorBinding`); with it the sheet's body is `RulesEditor`, whose payloads come from the
+  pure `rules-editor-model.ts` (details under `## Home and lobby (V7 · Lot 76)`).
+  `screens/lobby-rules-panel.tsx` is deleted.
 - **Nesting:** the strip's portraits are the non-clickable `KitPortrait` inside one `<button>`;
   they are `aria-hidden` in the sheet, where the visible name names the kit.
 - **Tests:** `rules-strip.test.tsx` and `rules-sheet.test.tsx` repeat the small `rules()` and
   `kitFace()` helpers instead of sharing a file. They assert the literal strings.
 - **Gallery:** section `rules` (`ui/rules/rules.gallery.tsx`, DEV only): default, Random only
-  with three kits excluded, a 300 s server default and one allowed kit.
+  with three kits excluded, a 300 s server default and one allowed kit; since L76-09 also the host
+  editor (live apply), the solo Server default demo and a disabled editor
+  (`rules.gallery-demos.tsx` holds the stateful demo).
 
 ### Coach panel (`ui/coach/`, L72-17)
 
@@ -1622,6 +1625,28 @@ Spec v7 §7.1–§7.5 and §7.7; plan `docs/superpowers/plans/2026-10-21-v7-lot-
   `lobby-screen.ready-chrome.test.ts` (split from `lobby-ready.test.ts`).
 - `screens/how-to-play-content.ts`, `screens/kit-pick-copy.ts`, `screens/home/home-copy.ts`, `screens/lobby/lobby-screen.tsx`, `screens/lobby-kit-picker-dialog.tsx` (L76-03, spec v7 §10.1, Q11 = B): the Lot 76 stale copy rows. How to play Kits, the lobby Your kit line, the solo kit line and the picker lead read the Lot 69 rule (`KIT_PRIVACY_COPY`: a kit shows only to an upgraded Spy or Spy Thief, or once its player is eliminated; How to play adds that a basic Spy shows only resources). Kits also names host exclusions and dealt-at-random kits (Lot 70) and the Gambler bust that no longer eliminates (Lot 66). The Random kit preview says "one of the allowed kits", and the Online Create helper waits for every guest's Ready (`ONLINE_CREATE_HELPER`, L57). Strings used by several screens live in `screens/kit-pick-copy.ts`; Home strings that tests import live in `screens/home/home-copy.ts`. The v6 §5.1 `kits` row points at v7 §10.1.
 - `ui/kit/kit-details.tsx`, `view-model/kit-inspect-traits.ts` (L76-03, spec v7 §10.1): a kit with `randomStartingSpecialCount` (Prophet 2, Gambler 2) shows that many hidden special versos (`data-random-special`) after its fixed specials, captioned `RANDOM_SPECIAL_CAPTION` "Random special", with no cost; the arena kit sheet and the picker inherit them. Prophet's ability drops "Invisibility excluded". `view-model/kit-inspect-traits.test.ts` holds that assertion beside the one line edited in `screens/table/kit-inspect-dialog.test.ts` (plan Appendix A.9 ruling 2).
+- `ui/rules/rules-editor.tsx`, `rules-editor-model.ts` (L76-09, spec v7 §7.4, §13 Q3/Q4/Q8/Q15/Q18/Q31):
+  the host editor. `RulesStrip` and `RulesSheet` take an optional `editor: RulesEditorBinding`
+  (`onChange`, `disabled?`, `serverDefaultTime?`). Without it they stay the read-only strip and
+  sheet that guests, walk-ins, the arena menu and Game over use (Q15). With it, the same "Table
+  rules" sheet holds `RulesEditor`: the "Human turn" `Slider` (5–180, step 1, at `sliderSeconds`,
+  so a 300 s server default sits at 180 while the strip shows 300s), then All / None and the
+  Random `Toggle`, then the 16 kit toggles (`aria-pressed` = allowed, named by the kit, Excluded in
+  words). Every change is one `SET_LOBBY_RULES` payload from the pure model, applied live; Close,
+  Esc, backdrop and swipe only close. The slider sends once per release (`Slider.onCommit`), the
+  only payload with `turnTimeSeconds`. Kit, Random, All and None never carry it, because it would
+  override the server clock for the life of the room. The last allowed kit is `aria-disabled` and
+  described by the visible `LAST_ALLOWED_KIT_REASON`. `disabled` locks every editor control (solo
+  launch Q8; L76-14 reconnecting) while the strip still opens. `serverDefaultTime` makes the strip,
+  its spoken summary and the slider readout at the untouched value read `SERVER_DEFAULT_LABEL`.
+- `screens/lobby/lobby-screen.tsx`, `screens/home/solo-path.tsx`, `home-screen.tsx`,
+  `solo-rules-state.ts` (L76-09): the lobby mounts `RulesStrip` for everyone and gives only the
+  host `editor={{ onChange: onSetLobbyRules }}`. The solo path gets
+  `{ onChange: (p) => setSolo((s) => applySoloRulesPayload(s, p)), disabled: busy,
+  serverDefaultTime: !solo.includeTurnTime }`. `applySoloRulesPayload` merges a payload into the
+  local rules (the clock only when the payload carries it) through `applySoloRulesChange`: only a
+  slider release sets `includeTurnTime`, and an excluded local pick falls back to Random.
+  `screens/lobby-rules-panel.tsx` is deleted.
 
 ## Design system (V2 · Lots 10+)
 
@@ -1720,7 +1745,7 @@ rules above are unchanged — this section only covers how the client looks.
   `main`: private Draw, invisible players are not targets, Sentence chip
   inspect, hand layout stays put, point chips cap at 50, your kit portrait
   is one step larger, and the action log shows icon-only resource nets
-  (unspied card sales hide the payout; unspied shop buys hide the price; resolve lines show each seat’s gain or loss). `lot-68` (2026-09-29) shipped Ghost Tax+, Shield+ vs Imposition, and fixed some bugs. `lot-69` stays as written. `lot-71` (2026-10-06) shipped on `main`: Spy Thief chooses one opponent (the upgrade hits every living opponent), and forfeiting or leaving the table pays kill rewards at the same time to queued attackers unless one player is left. Active Poison does not. The host can hide kits, deal kits at random, and set human turns from 5 to 180 seconds; players chat in the lobby and at the table until the room closes, and eliminated players and spectators share a separate chat. A Ghost's points from lost lives show as +? until that Ghost is spied. `lot-72` (2026-10-07: active-slot drop cancel; no Poison tick during Block; the lobby host never passes to a bot) shipped on `main` (promote #79) before V7 Lot 72 merged. **V7 (technical spec v7 §10.4):** `lot-72-v7` (2026-10-26, "New look") is the open V7 entry; each V7 player-facing PR appends one Before / After item per screen area during the promotion freeze. New ids never reuse an existing id: seen-state (`ui/release-storage.ts`) is keyed by id. First item: the §10.5 catalog-text fix (After `Fixed some bugs.`). Second item: the classic tutorial's resources tip no longer shows a stray life icon (After `Fixed some bugs.`). Third item: the turn timer after a fifth-active picker cancel (server fix L82-01, After `Fixed some bugs.`). Fourth item: the played card no longer also lands in the pool after a fifth-active picker (server fix L82-02, After `Fixed some bugs.`). Fifth item: Cancel on the fifth-active picker refunds the play's points (designer rule change L82-03). Sixth item: past elimination flashes no longer replay after a reconnect or on the finished board (Q63, L74-17, After `Fixed some bugs.`). Seventh item: the Lot 76 copy fixes (How to play Kits, Your kit, the kit picker and its Random kit, the Online Create helper, Prophet's ability and the random-special versos; L76-03, After `Fixed some bugs.`). Sentence chips sit
+  (unspied card sales hide the payout; unspied shop buys hide the price; resolve lines show each seat’s gain or loss). `lot-68` (2026-09-29) shipped Ghost Tax+, Shield+ vs Imposition, and fixed some bugs. `lot-69` stays as written. `lot-71` (2026-10-06) shipped on `main`: Spy Thief chooses one opponent (the upgrade hits every living opponent), and forfeiting or leaving the table pays kill rewards at the same time to queued attackers unless one player is left. Active Poison does not. The host can hide kits, deal kits at random, and set human turns from 5 to 180 seconds; players chat in the lobby and at the table until the room closes, and eliminated players and spectators share a separate chat. A Ghost's points from lost lives show as +? until that Ghost is spied. `lot-72` (2026-10-07: active-slot drop cancel; no Poison tick during Block; the lobby host never passes to a bot) shipped on `main` (promote #79) before V7 Lot 72 merged. **V7 (technical spec v7 §10.4):** `lot-72-v7` (2026-10-26, "New look") is the open V7 entry; each V7 player-facing PR appends one Before / After item per screen area during the promotion freeze. New ids never reuse an existing id: seen-state (`ui/release-storage.ts`) is keyed by id. First item: the §10.5 catalog-text fix (After `Fixed some bugs.`). Second item: the classic tutorial's resources tip no longer shows a stray life icon (After `Fixed some bugs.`). Third item: the turn timer after a fifth-active picker cancel (server fix L82-01, After `Fixed some bugs.`). Fourth item: the played card no longer also lands in the pool after a fifth-active picker (server fix L82-02, After `Fixed some bugs.`). Fifth item: Cancel on the fifth-active picker refunds the play's points (designer rule change L82-03). Sixth item: past elimination flashes no longer replay after a reconnect or on the finished board (Q63, L74-17, After `Fixed some bugs.`). Seventh item: the Lot 76 copy fixes (How to play Kits, Your kit, the kit picker and its Random kit, the Online Create helper, Prophet's ability and the random-special versos; L76-03, After `Fixed some bugs.`). Eighth item: the lobby's table rules open for everyone, and the host edits them in the same sheet (L76-09; L76-12 rewrites this Lobby item in place). Sentence chips sit
   on the caster (remaining turns in red) and open catalog inspect (L65-03). Play / later caster ticks / fire flash
   the table-wide red banner. Player-visible work updates the open What’s new
   entry in the same commit. No accounts, no protocol fields. Idle hub is unlabeled (not “Not connected”). Top-right **Beta**
@@ -1764,12 +1789,14 @@ rules above are unchanged — this section only covers how the client looks.
 - **Lobby (L11-02 / L17-02 / L17-03 / L49-02 / L57-11 / L57-09):** game code + Copy (clipboard); copy result via `Dialog`;
   **Your kit** (self portrait or Random) + Choose kit Dialog (allowed kit portraits + Random;
   click a tile for description then Select). `chooseKit` payload `{ kitId }` or `'random'`.
-  **Table rules (Lot 70):** everyone sees a clock with the seconds and small kit
-  faces (excluded kits gray). Random only adds the random-kit face and hides the
-  kit picker. Only the host gets a settings icon. The popup puts a 5–180 second
-  slider on top, then All / None / Random, then kit portraits. None keeps the
-  first Classic kit. Play again keeps the rules. The tutorial path does not show
-  them. Solo uses the same panel. An untouched slider does not send a time, so
+  **Table rules (Lot 70; V7 L76-09):** everyone sees the `RulesStrip` (the clock with the
+  seconds, the Random mark, the 16 kit faces with the excluded ones greyed and labelled
+  Excluded) and taps it for the Table rules sheet: read-only for guests and walk-ins, the editor
+  for the host. The editor puts the 5–180 second slider on top (it sends once, on release), then
+  All / None / Random, then the kit toggles; every change applies live. Random only adds the
+  Random mark and hides the kit picker. None keeps the first Classic kit. Play again keeps the
+  rules. The tutorial path does not show them. Solo uses the same strip and editor and reads
+  "Server default" until the slider is released. An untouched slider does not send a time, so
   `TURN_DURATION_MS` still applies until the host moves it. Chat sits under the
   player list and stays when Play again opens the next gathering. The lines
   last until the room is gone.

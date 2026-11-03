@@ -24,9 +24,9 @@ import { KitPortrait } from '../../design/components/kit-portrait';
 import { FeedbackDialog } from '../../feedback/feedback-dialog';
 import type { RoomConnectionStatus } from '../../net/use-room-connection';
 import { ChatLog } from '../../ui/chat/chat-log';
+import { RulesStrip } from '../../ui/rules/rules-strip';
 import { KIT_PRIVACY_COPY } from '../kit-pick-copy';
 import { LobbyKitPickerDialog } from '../lobby-kit-picker-dialog';
-import { LobbyRulesPanel } from '../lobby-rules-panel';
 import { STATUS_LABELS } from '../status-labels';
 import { lobbyKitSelectionLabel } from './lobby-kit-picker';
 import {
@@ -127,22 +127,10 @@ export function LobbyScreen({
           )}
         </section>
 
-        <LobbyRulesPanel
+        <RulesStrip
           rules={rules}
-          editable={isHost}
-          onExcludedChange={(excludedKitIds) => {
-            onSetLobbyRules({ excludedKitIds, randomOnly: rules.randomOnly });
-          }}
-          onRandomOnlyChange={(randomOnly) => {
-            onSetLobbyRules({ excludedKitIds: rules.excludedKitIds, randomOnly });
-          }}
-          onTurnTimeChange={(turnTimeSeconds) => {
-            onSetLobbyRules({
-              excludedKitIds: rules.excludedKitIds,
-              randomOnly: rules.randomOnly,
-              turnTimeSeconds,
-            });
-          }}
+          className="mt-6"
+          {...(isHost ? { editor: { onChange: onSetLobbyRules } } : {})}
         />
 
         {walkInSpectator ? (

@@ -9,6 +9,7 @@ import {
   isTurnTimeSeconds,
   type LobbyKitSelection,
   type LobbyRules,
+  type SetLobbyRulesPayload,
 } from '@card-battle/shared';
 
 import type { SoloMenuSeed } from '../solo-menu-seed';
@@ -45,6 +46,19 @@ export function applySoloRulesChange(
       state.includeTurnTime || (turnTimeChanged && isTurnTimeSeconds(next.turnTimeSeconds)),
     kitSelection: pickExcluded ? 'random' : state.kitSelection,
   };
+}
+
+/**
+ * One rules editor payload merged into the local rules (L76-09, spec v7 §7.4). Only the slider's
+ * payload carries the clock, so only a slider release sets `includeTurnTime` (Q3/Q31); a kit,
+ * Random, All or None payload keeps the clock as it was, and an excluded pick falls back to Random.
+ */
+export function applySoloRulesPayload(state: SoloRulesState, payload: SetLobbyRulesPayload): SoloRulesState {
+  return applySoloRulesChange(
+    state,
+    { ...state.rules, ...payload, turnTimeSeconds: payload.turnTimeSeconds ?? state.rules.turnTimeSeconds },
+    payload.turnTimeSeconds !== undefined,
+  );
 }
 
 /** Random only launches Random but keeps the local pick. */

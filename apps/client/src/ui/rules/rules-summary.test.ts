@@ -55,4 +55,9 @@ describe('rulesSummaryText', () => {
       rulesSummaryText({ excludedKitIds: ['gambler', 'kamikaze', 'ghost'], randomOnly: true, turnTimeSeconds: 300 }),
     ).toBe('300s, Random, Excluded Kamikaze, Ghost, Gambler');
   });
+
+  it('takes the strip clock label in place of the seconds (L76-09, Server default)', () => {
+    expect(rulesSummaryText({ excludedKitIds: ['ghost'], randomOnly: false, turnTimeSeconds: 60 }, 'Server default'))
+      .toBe('Server default, Excluded Ghost');
+  });
 });

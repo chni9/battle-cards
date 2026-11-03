@@ -14,9 +14,10 @@ import { formatBotDifficulty } from '../../bots/format-bot-difficulty';
 import { Button } from '../../design/components/button';
 import { KitPortrait } from '../../design/components/kit-portrait';
 import type { RoomConnectionStatus } from '../../net/use-room-connection';
+import type { RulesEditorBinding } from '../../ui/rules/rules-editor-model';
+import { RulesStrip } from '../../ui/rules/rules-strip';
 import { lobbyKitSelectionLabel } from '../lobby/lobby-kit-picker';
 import { KIT_PICKER_LEAD } from '../kit-pick-copy';
-import { LobbyRulesPanel } from '../lobby-rules-panel';
 import { NicknameField } from './nickname-field';
 import { PathHeader } from './path-header';
 
@@ -33,7 +34,8 @@ export interface SoloPathProps {
   soloDifficulty: BotDifficulty;
   soloKitSelection: LobbyKitSelection;
   soloRules: LobbyRules;
-  onSoloRulesChange: (rules: LobbyRules, turnTimeChanged: boolean) => void;
+  /** The solo binding for the Table rules editor (L76-09): local apply, Server default, busy lock. */
+  rulesEditor: RulesEditorBinding;
   onBack: () => void;
   onNicknameChange: (value: string) => void;
   onSoloOpponentsChange: (count: SoloOpponentCount) => void;
@@ -54,7 +56,7 @@ export function SoloPath({
   soloDifficulty,
   soloKitSelection,
   soloRules,
-  onSoloRulesChange,
+  rulesEditor,
   onBack,
   onNicknameChange,
   onSoloOpponentsChange,
@@ -121,19 +123,7 @@ export function SoloPath({
           </div>
         </fieldset>
 
-        <LobbyRulesPanel
-          rules={soloRules}
-          editable
-          onExcludedChange={(excludedKitIds) => {
-            onSoloRulesChange({ ...soloRules, excludedKitIds }, false);
-          }}
-          onRandomOnlyChange={(randomOnly) => {
-            onSoloRulesChange({ ...soloRules, randomOnly }, false);
-          }}
-          onTurnTimeChange={(turnTimeSeconds) => {
-            onSoloRulesChange({ ...soloRules, turnTimeSeconds }, true);
-          }}
-        />
+        <RulesStrip rules={soloRules} editor={rulesEditor} />
 
         {soloRules.randomOnly ? null : (
         <div className="space-y-2">

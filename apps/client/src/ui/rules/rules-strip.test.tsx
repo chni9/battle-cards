@@ -1,7 +1,7 @@
 // @vitest-environment happy-dom
 /** Table rules strip (technical spec v7 §6.11, §7.4; Q15). */
 import { screen, waitFor, within } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import { getKit, KIT_IDS, type KitId, type LobbyRules } from '@card-battle/shared';
 
@@ -143,5 +143,34 @@ describe('RulesStrip', () => {
     expect(description?.textContent).toBe(summary);
     expect(strip().contains(description)).toBe(false);
     expect(screen.getByRole('button', { name: 'Table rules', description: summary })).toBe(strip());
+  });
+});
+
+describe('RulesStrip with an editor (L76-09)', () => {
+  it('opens the editor in the Table rules sheet; opening and closing send nothing', async () => {
+    const onChange = vi.fn();
+    const { user } = renderUi(<RulesStrip rules={rules()} editor={{ onChange }} />);
+    await user.click(strip());
+    expect(within(screen.getByRole('dialog', { name: 'Table rules' })).getByRole('slider', { name: 'Human turn' })).toBeTruthy();
+    await user.keyboard('{Escape}');
+    await waitFor(() => {
+      expect(screen.queryByRole('dialog')).toBeNull();
+    });
+    expect(onChange).not.toHaveBeenCalled();
+  });
+
+  it('reads Server default on the strip and in its summary while serverDefaultTime (Q3/Q31)', () => {
+    renderUi(<RulesStrip rules={rules({ randomOnly: true })} editor={{ onChange: vi.fn(), serverDefaultTime: true }} />);
+    expect(within(strip()).getByText('Server default')).toBeTruthy();
+    expect(within(strip()).queryByText('60s')).toBeNull();
+    expect(screen.getByRole('button', { name: 'Table rules', description: 'Server default, Random' })).toBe(strip());
+  });
+
+  it('shows a 300 s server default as received while the editor slider sits at 180 (Review Focus 2)', async () => {
+    const { user } = renderUi(<RulesStrip rules={rules({ turnTimeSeconds: 300 })} editor={{ onChange: vi.fn() }} />);
+    expect(within(strip()).getByText('300s')).toBeTruthy();
+    await user.click(strip());
+    const slider = within(screen.getByRole('dialog', { name: 'Table rules' })).getByRole('slider', { name: 'Human turn' });
+    expect(slider instanceof HTMLInputElement ? slider.value : '').toBe('180');
   });
 });

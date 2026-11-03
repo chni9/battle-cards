@@ -84,6 +84,10 @@ const RELEASE_NOTES_CATALOG = [
         before: 'Some help text about kits, Spy and starting an online game was out of date.',
         after: 'Fixed some bugs.',
       },
+      {
+        before: 'In the lobby, only the host could open the table rules.',
+        after: 'Everyone can open the table rules, and the host edits them there.',
+      },
     ],
   },
   {

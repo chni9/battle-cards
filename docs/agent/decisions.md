@@ -6363,3 +6363,38 @@ Source: technical spec v7 §4.2, §15 (the lobby leaves `screens/table/`); `docs
   string is listed in the PR for designer review (§10, §10.6).
 
 ---
+
+## 2026-11-03 · [P] Table rules: one sheet for everyone, the host edits it, the slider sends on release (L76-09)
+
+Source: technical spec v7 §7.4, §7.1, §11, §13 (Q3/Q31, Q4/Q18, Q8, Q15); backlog_v7 L76-09; Lot 76
+plan Appendix A.5.
+
+- **Supersedes** the host-only view in "2026-10-06 · [P] Rules chrome and lobby chat" ("Host rules
+  open from a settings control only the host sees"). Everyone in the lobby (host, seated guests,
+  walk-ins) sees the same `RulesStrip` and taps it to open the "Table rules" sheet. Guests and
+  walk-ins get the read-only sheet (Q15). The host, and the player on the solo menu, get the same
+  sheet holding `RulesEditor`. The Lot 70 order stays (the 5–180 s slider, then All / None /
+  Random, then the 16 kit toggles), with live apply and no Save or Cancel, at least one kit
+  allowed, and None keeping the first Classic kit.
+- **Supersedes** the per-step sends of the Lot 70 slider: `screens/lobby-rules-panel.tsx` sent one
+  `setLobbyRules` per input event (Appendix A `lobby-rules-dialog-live-apply`: "every slider step
+  sends an intent, which is chatty but intended"). The slider now sends once per gesture, on
+  release: pointer up or cancel, key up after a step key, blur, or a change from assistive
+  technology (`ui/primitives/slider.tsx`). The intent and its payload are unchanged. A guest's
+  strip now changes once per release instead of following the drag.
+- Kit, Random, All and None payloads still never carry `turnTimeSeconds` (it overrides the server
+  clock for the life of the room). Every payload is built in the pure
+  `ui/rules/rules-editor-model.ts`.
+- The last allowed kit is `aria-disabled`, stays focusable and is described by the visible "At
+  least one kit must stay allowed." (the existing `set-lobby-rules-no-kit` copy), so the reason is
+  reachable by keyboard (Q39). The V2 tile was natively disabled with no reason.
+- Solo (Q3/Q31): while `includeTurnTime` is false, the strip, its spoken summary and the slider
+  readout at the untouched value read "Server default". Only a slider release that changes the
+  value sets `includeTurnTime`; kit and Random edits never do. During a solo launch (Q8) every
+  editor control is disabled, but the strip still opens so the rules stay readable: in V7 the
+  strip is the summary as well as the opener, so only the controls that could change something
+  are locked.
+- The lobby keeps V2's `view.lobbyRules ?? defaultLobbyRules()` fallback; the room always sends
+  the field.
+
+---
