@@ -194,6 +194,18 @@ describe('multi-attack step focus (final review, I2)', () => {
     expectNoArenaIntent(props);
   });
 
+  it('a model reset skips an aria-disabled action: focus lands on the first action that is enabled (L74-26 review M5)', async () => {
+    const { user, rerender, props } = setup(assassinView());
+    await openMultiAttack(user);
+    // One attack left and no points: Use and Upgrade are aria-disabled (focusable with a reason), Sell is live.
+    const broke = makeArenaView({ overrides: { self: makeSelf({ kitId: 'assassin', points: 0, hand: [makeCard('basic-attack', { instanceId: 'atk-1' })] }) } });
+    rerender(<ArenaScreen {...props} view={broke} />);
+    const card = sheet('Basic attack');
+    expect(within(card).getByRole('button', { name: /^Use/ }).getAttribute('aria-disabled')).toBe('true');
+    expect(document.activeElement).toBe(within(card).getByRole('button', { name: /^Sell/ }));
+    expectNoArenaIntent(props);
+  });
+
   it('a model reset focuses the panel when the card left the hand and the sheet turned read-only', async () => {
     const { user, rerender, props } = setup(assassinView());
     await openMultiAttack(user);

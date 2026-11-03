@@ -111,8 +111,9 @@ interface StepFocus {
 }
 
 /** The first enabled match: a natively disabled button cannot take focus. */
+/** The first match that is enabled: not natively disabled, and not `aria-disabled` (L74-26: card actions stay focusable when disabled). */
 function enabledIn(root: HTMLElement | null, selector: string): HTMLElement | null {
-  return root?.querySelector<HTMLElement>(`${selector}:not([disabled])`) ?? null;
+  return root?.querySelector<HTMLElement>(`${selector}:not([disabled]):not([aria-disabled="true"])`) ?? null;
 }
 
 /** Icons sit in a `--bg-0` well on a CTA fill (DESIGN.md › Cost glyphs); the amount is a private part of the button label. */
