@@ -147,7 +147,8 @@ describe('HandFan (L74-07)', () => {
     const root = container.querySelector<HTMLElement>('[data-hand-fan]');
     expect([root?.style.getPropertyValue('--hand-strips'), root?.style.getPropertyValue('--hand-fulls'), root?.style.getPropertyValue('--hand-empties')]).toEqual(['4', '1', '1']);
     const caption = container.querySelector('[data-zone="specials"] p');
-    expect(caption?.classList.contains('w-14')).toBe(true);
+    // In px, as the budget subtracts px: a rem width would grow with a larger browser default font (review M8).
+    expect([caption?.classList.contains('w-[56px]'), caption?.classList.contains('w-14')]).toEqual([true, false]);
   });
 
   it('shows only the empty states for a walk-in, whatever the filler self holds (Q38)', () => {

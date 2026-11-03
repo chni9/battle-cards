@@ -1206,9 +1206,9 @@ Appendix A). Each Lot 74 task appends its bullet here, in task order.
   "Specials" / "None"). Cards are `Card size="hand"`: the Card root carries `data-instance-id`,
   and V7 markup never uses `data-card-row`. Every card but the last of its group sits in a slot of
   `max(44px, …)` (`STRIP_WIDTH`), so the next card overlaps it from the right; under 44 px the hand
-  scrolls inside itself. An empty group's caption is 56 px wide (`w-14`), and the strip budget takes
-  out 56 px per empty group (`--hand-empties`), so 4 to 6 cards with no specials overlap tighter
-  instead of scrolling by the caption (L74-26 gate G4). `unplayable` (and the card's accessible description) is Use disabled for
+  scrolls inside itself. An empty group's caption is 56 px wide (`w-[56px]`, px like the budget),
+  and the strip budget takes out 56 px per empty group (`--hand-empties`), so 4 to 6 cards with no
+  specials overlap tighter instead of scrolling by the caption (L74-26 gate G4). `unplayable` (and the card's accessible description) is Use disabled for
   a card-specific reason: every `DisabledReason` but `not-your-turn` / `actions-locked`, so only
   on the POV's turn. A tap calls `onOpenCard`; ArenaScreen opens the card sheet (source `hand` /
   `special`), and the selected card is the newest open hand/special card sheet

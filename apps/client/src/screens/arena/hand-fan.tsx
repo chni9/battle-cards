@@ -71,8 +71,11 @@ type HandFanStyle = CSSProperties & {
 const STRIP_WIDTH =
   'max(44px, min(var(--hand-card-w) + 8px, (100cqi - 44px - var(--hand-fulls) * var(--hand-card-w) - var(--hand-empties) * 56px) / max(var(--hand-strips), 1)))';
 
-/** 56 px, the `- var(--hand-empties) * 56px` of `STRIP_WIDTH`: wider than either V2 caption. */
-const EMPTY_GROUP_WIDTH_CLASS = 'w-14';
+/**
+ * 56 px, the `- var(--hand-empties) * 56px` of `STRIP_WIDTH`: wider than either V2 caption. In px,
+ * not `w-14` (3.5rem), so a larger browser default font cannot widen it past the budget.
+ */
+const EMPTY_GROUP_WIDTH_CLASS = 'w-[56px]';
 
 /** V2's flip: a 90 degree `rotateY` seen through a 600 px perspective. */
 const FLIP_FULL_KEYFRAMES = { transformPerspective: [600, 600], rotateY: [90, 0] };
