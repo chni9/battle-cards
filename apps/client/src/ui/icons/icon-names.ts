@@ -2,7 +2,9 @@
  * V7 icon names — technical spec v7 §5.6 (resources, statuses, UI controls, in spec order,
  * including `unspy`, the crossed eye of L58-07), then five L72 additions that later Lot 72
  * components render: `clock` and `random` (L72-16), `close` (L72-09, L72-17) and the two
- * chevrons (L72-08). L76-10 adds `action` and `attack`, the starting-card stats of a kit tile.
+ * chevrons (L72-08). Then the L76 `action`, `attack` and `check`: L76-10 adds `action` and
+ * `attack`, the starting-card stats of a kit tile, and L76-12 adds `check`, the lobby Ready mark
+ * and Ready button.
  *
  * The list lives outside `icon.tsx` so that file exports components only (react-refresh).
  */
@@ -55,6 +57,8 @@ export const ICON_NAMES = [
   // L76 additions: the kit tile's starting card counts (L76-10).
   'action',
   'attack',
+  // L76-12: the lobby Ready mark and Ready button.
+  'check',
 ] as const;
 
 export type IconName = (typeof ICON_NAMES)[number];

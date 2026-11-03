@@ -385,12 +385,13 @@ and no icon library: every glyph is inline SVG.
 | UI | `copy` | two overlapping squares | `--text` front, `--text-2` back |
 | UI | `minimize` | wide bottom bar | `--text` |
 | L72 addition | `clock` | face with ink hands; the table rules seconds (L72-16) | `--text` |
-| L72 addition | `close` | slim cross; Sheet, Dialog, Toast (L72-09) and coach hide (L72-17) | `--text` |
+| L72 addition | `close` | slim cross; Sheet, Dialog, Toast (L72-09), coach hide (L72-17) and the lobby Not ready mark (L76-12) | `--text` |
 | L72 addition | `chevron-left` | chunky chevron; Carousel (L72-08) | `--text` |
 | L72 addition | `chevron-right` | its mirror; Carousel (L72-08) | `--text` |
 | L72 addition | `random` | die with ink pips; the Random-only mark (L72-16) | `--text` |
 | L76 addition | `action` | card verso marked with a chunky star: the starting action cards of a kit tile (L76-10) | `--text-2` card, star `--cta` |
 | L76 addition | `attack` | card verso marked with a sword on the diagonal (blade, guard, grip): the starting attack cards of a kit tile (L76-10) | `--text-2` card, blade `--threat-attack`, guard and grip `--text` |
+| L76 addition | `check` | chunky check mark; the lobby Ready mark and the Ready button (L76-12) | `--cta` |
 
 The five L72 additions are not in the spec §5.6 list; they exist because the named Lot 72
 components render them. The two L76 additions (`action`, `attack`) are not in it either: the kit
@@ -399,7 +400,9 @@ tile (spec v7 §7.3) shows a kit's starting action and attack card counts, and t
 outline reaches the top and bottom of the grid, like `disconnected`) with a large mark: a pointed
 or thin shape would lose most of its fill to the 2-unit outline, so the star is chunky and the
 sword is wide. The mark carries the difference, a star or a blade, never the color alone. The
-designer reviews the drawings at the L76-18 gate.
+designer reviews the drawings at the L76-18 gate. `check` (L76-12) joins them for the lobby's
+Ready mark and Ready button; it stays inside the grid with its outline (1.5..22.5 × 4.5..21.5).
+Not ready is the existing `close` cross, so the two states differ by shape and name.
 
 ### Accessibility and use
 - **Decorative by default:** `aria-hidden="true"`, `focusable="false"`, no `<title>`. A

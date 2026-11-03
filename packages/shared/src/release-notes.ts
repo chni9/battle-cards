@@ -85,8 +85,8 @@ const RELEASE_NOTES_CATALOG = [
         after: 'Fixed some bugs.',
       },
       {
-        before: 'In the lobby, only the host could open the table rules.',
-        after: 'Everyone can open the table rules, and the host edits them there.',
+        before: 'The lobby was a plain list, and only the host could open the table rules.',
+        after: 'The lobby shows each seat in its player color, and everyone can open the table rules.',
       },
     ],
   },

@@ -1,38 +1,32 @@
 /**
  * Lobby screen — technical spec v2 §6, L11-02; bot controls L17-02 / technical spec v3 §6.
- * Seats, copyable game code, host Start / bot controls; same intents as V1 + L15 bot messages.
- * Moved into `screens/lobby/` by L76-02 (technical spec v7 §4.2); L76-12 restyles it (§7.2).
+ * Moved into `screens/lobby/` by L76-02 (technical spec v7 §4.2). L76-12 restyles it as a mini
+ * arena on the V7 ground (§7.2, §5.1–§5.3, §11 Q25, Q39). In DOM order:
+ * - the setup column: `LobbyHeader`, the table rules strip (the host edits, L76-09), `LobbyKitCard`;
+ * - the table column: `LobbySeats`, then the chat;
+ * - `LobbyActions`, sticky at the bottom of `main`.
+ * One column on a phone; from `lg`, two page columns (setup 26rem). `main` is the only scroll
+ * container (no inner list scroll). Props are unchanged; the parts decide nothing (golden rule 8).
  */
 
 import {
-  BOT_DIFFICULTIES,
   defaultLobbyRules,
-  MAX_PLAYERS,
   type BotDifficulty,
   type LobbyKitSelection,
   type LobbyStateView,
   type SetLobbyRulesPayload,
 } from '@card-battle/shared';
-import { useCallback, useState, type ReactElement } from 'react';
+import type { ReactElement } from 'react';
 
-import { formatBotDifficulty } from '../../bots/format-bot-difficulty';
-import { BotSeatLabel } from '../../design/components/bot-seat-label';
-import { Button } from '../../design/components/button';
-import { Dialog } from '../../design/components/dialog';
-import { KitPortrait } from '../../design/components/kit-portrait';
-import { FeedbackDialog } from '../../feedback/feedback-dialog';
 import type { RoomConnectionStatus } from '../../net/use-room-connection';
 import { ChatLog } from '../../ui/chat/chat-log';
+import { CHAT_LOG_LABEL } from '../../ui/chat/chat-line';
+import { CHROME_SHAPE_CLASS } from '../../ui/primitives/chrome-classes';
 import { RulesStrip } from '../../ui/rules/rules-strip';
-import { KIT_PRIVACY_COPY, RANDOM_ONLY_LOBBY_LINE } from '../kit-pick-copy';
-import { STATUS_LABELS } from '../status-labels';
-import { KitPickerSheet } from './kit-picker-sheet';
-import { lobbyKitSelectionLabel } from './lobby-kit-picker';
-import {
-  lobbyShowsReadyToggle,
-  lobbyStartEnabled,
-} from './lobby-ready';
-import { LobbyReadyCheckIcon, LobbyReadyStatusMark } from './lobby-ready-mark';
+import { LobbyActions } from './lobby-actions';
+import { LobbyHeader } from './lobby-header';
+import { LobbyKitCard } from './lobby-kit-card';
+import { LobbySeats } from './lobby-seats';
 
 export interface LobbyScreenProps {
   view: LobbyStateView;
@@ -64,337 +58,45 @@ export function LobbyScreen({
   onSendChat,
 }: LobbyScreenProps): ReactElement {
   const isHost = view.hostPlayerId === view.you;
-  const walkInSpectator = view.isSpectator === true;
-  const canLaunch = isHost && lobbyStartEnabled(view);
-  const showReadyToggle = lobbyShowsReadyToggle(view);
-  const youReady = view.players.find((player) => player.id === view.you)?.isReady === true;
-  const canAddBot = isHost && view.players.length < MAX_PLAYERS;
-  const [copyOpen, setCopyOpen] = useState(false);
-  const [copyFailed, setCopyFailed] = useState(false);
-  const [addDifficulty, setAddDifficulty] = useState<BotDifficulty>('normal');
-  const [kitPickerOpen, setKitPickerOpen] = useState(false);
-  const [feedbackOpen, setFeedbackOpen] = useState(false);
-  const [kickTarget, setKickTarget] = useState<{ id: string; nickname: string } | null>(
-    null,
-  );
-  const youNick = view.players.find((player) => player.id === view.you)?.nickname;
   const rules = view.lobbyRules ?? defaultLobbyRules();
-  // Render-time sync: Random only hides the picker, and turning it off must not reopen the picker by
-  // itself, so the open flag clears with it (technical spec v7 §7.3). L76-10.
-  if (kitPickerOpen && rules.randomOnly) {
-    setKitPickerOpen(false);
-  }
-
-  const closeCopyDialog = useCallback(() => {
-    setCopyOpen(false);
-  }, []);
-
-  const onCopyCode = useCallback(() => {
-    void (async () => {
-      try {
-        await navigator.clipboard.writeText(view.gameCode);
-        setCopyFailed(false);
-        setCopyOpen(true);
-      } catch {
-        setCopyFailed(true);
-        setCopyOpen(true);
-      }
-    })();
-  }, [view.gameCode]);
+  // Reconnect lock (plan A.4, ruling 6): L76-14 replaces this with lobbyIntentsLocked(status).
+  const locked = false;
 
   return (
-    <main className="h-full overflow-y-auto overscroll-contain bg-surface font-sans text-ink">
-      <div className="mx-auto max-w-lg px-4 py-8 md:px-6">
-        <p className="text-xs font-medium uppercase tracking-[0.14em] text-ink-muted">
-          Lobby
-        </p>
-        <h1 className="mt-2 text-3xl font-semibold tracking-tight text-ink">Card Battle</h1>
-        <p className="mt-1 text-sm text-ink-muted">{STATUS_LABELS[status]}</p>
-        {error !== null && (
-          <p className="mt-2 text-sm font-medium text-cta-red" role="alert">
-            {error}
-          </p>
-        )}
-
-        <section className="mt-8 rounded-[length:var(--radius-card)] border border-border bg-surface-raised p-4">
-          <h2 className="text-sm font-medium text-ink-muted">Game code</h2>
-          <div className="mt-2 flex flex-wrap items-center gap-3">
-            <p className="font-sans text-2xl font-semibold tracking-[0.2em] text-ink">
-              {view.gameCode}
-            </p>
-            <Button type="button" variant="orange" onClick={onCopyCode}>
-              Copy
-            </Button>
-          </div>
-          {isHost && (
-            <p className="mt-2 text-sm text-ink-muted">You are the host</p>
-          )}
-        </section>
-
-        <RulesStrip
-          rules={rules}
-          className="mt-6"
-          {...(isHost ? { editor: { onChange: onSetLobbyRules } } : {})}
-        />
-
-        {walkInSpectator ? (
-          <section className="mt-6 rounded-[length:var(--radius-card)] border border-border bg-surface-raised p-4">
-            <h2 className="text-sm font-medium text-ink-muted">Watching the lobby</h2>
-            <p className="mt-1 text-sm text-ink-muted">
-              Claim a disconnected seat if one is listed, or leave and join again later.
-            </p>
-          </section>
-        ) : rules.randomOnly ? (
-        <section className="mt-6 rounded-[length:var(--radius-card)] border border-border bg-surface-raised p-4">
-          <h2 className="text-sm font-medium text-ink-muted">Your kit</h2>
-          <p className="mt-1 text-sm text-ink-muted">{RANDOM_ONLY_LOBBY_LINE}</p>
-        </section>
-        ) : (
-        <section className="mt-6 rounded-[length:var(--radius-card)] border border-border bg-surface-raised p-4">
-          <h2 className="text-sm font-medium text-ink-muted">Your kit</h2>
-          <p className="mt-1 text-sm text-ink-muted">{KIT_PRIVACY_COPY}</p>
-          <div className="mt-3 flex flex-wrap items-center gap-3">
-            <KitPortrait
-              kitId={view.yourKitSelection === 'random' ? null : view.yourKitSelection}
-              nickname="Random kit"
-              className="w-16"
+    <main className="v7-ground relative h-full overflow-y-auto overscroll-contain font-v7-body text-v7-text">
+      <div className="mx-auto flex min-h-full w-full max-w-lg flex-col gap-4 px-4 pt-6 pb-3 lg:max-w-6xl lg:px-8">
+        <div className="flex flex-col gap-4 lg:grid lg:grid-cols-[minmax(0,26rem)_minmax(0,1fr)] lg:items-start lg:gap-6">
+          <div data-lobby-column="setup" className="flex min-w-0 flex-col gap-4">
+            <LobbyHeader gameCode={view.gameCode} status={status} error={error} isHost={isHost} />
+            <RulesStrip rules={rules} {...(isHost ? { editor: { onChange: onSetLobbyRules, disabled: locked } } : {})} />
+            <LobbyKitCard
+              selection={view.yourKitSelection}
+              rules={rules}
+              walkIn={view.isSpectator === true}
+              isHost={isHost}
+              locked={locked}
+              onChooseKit={onChooseKit}
             />
-            <div className="min-w-0 space-y-2">
-              <p className="font-medium text-ink">{lobbyKitSelectionLabel(view.yourKitSelection)}</p>
-              <Button
-                type="button"
-                variant="orange"
-                onClick={() => {
-                  setKitPickerOpen(true);
-                }}
-              >
-                Choose kit
-              </Button>
-            </div>
           </div>
-        </section>
-        )}
-
-        <section className="mt-6">
-          <h2 className="text-lg font-semibold text-ink">
-            Players ({view.players.length}/{MAX_PLAYERS})
-          </h2>
-          <ul className="mt-3 max-h-[min(36rem,58vh)] divide-y divide-border-soft overflow-y-auto rounded-[length:var(--radius-card)] border border-border bg-surface-raised">
-            {view.players.map((player) => (
-              <li
-                key={player.id}
-                data-lobby-seat={player.id}
-                className="flex min-h-11 flex-col gap-2 px-4 py-3 text-sm sm:flex-row sm:items-center sm:justify-between"
-              >
-                <div className="flex min-w-0 items-center gap-2">
-                  <LobbyReadyStatusMark isReady={player.isReady} />
-                  <span className="min-w-0 font-sans font-medium text-ink">
-                    {player.nickname}
-                    {player.id === view.you ? ' (you)' : ''}
-                  </span>
-                  {player.id === view.hostPlayerId && (
-                    <span className="text-xs font-medium uppercase tracking-wide text-ink-muted">
-                      Host
-                    </span>
-                  )}
-                  {player.isBot && player.botDifficulty !== undefined && (
-                    <BotSeatLabel difficulty={player.botDifficulty} />
-                  )}
-                </div>
-                {isHost && player.id !== view.you && (
-                  <div className="flex flex-wrap gap-2">
-                    {player.isBot &&
-                      player.botDifficulty !== undefined &&
-                      BOT_DIFFICULTIES.map((tier) => (
-                        <Button
-                          key={tier}
-                          type="button"
-                          variant={player.botDifficulty === tier ? 'green' : 'orange'}
-                          onClick={() => {
-                            onSetBotDifficulty(player.id, tier);
-                          }}
-                        >
-                          {formatBotDifficulty(tier)}
-                        </Button>
-                      ))}
-                    <Button
-                      type="button"
-                      variant="red"
-                      onClick={() => {
-                        setKickTarget({ id: player.id, nickname: player.nickname });
-                      }}
-                    >
-                      Kick
-                    </Button>
-                  </div>
-                )}
-              </li>
-            ))}
-          </ul>
-          <div className="mt-3">
-            <h3 className="text-sm font-medium text-ink-muted">Chat</h3>
-            <div className="mt-2">
-              <ChatLog
-                messages={view.chatMessages ?? []}
-                players={view.players}
-                canWrite
-                onSend={onSendChat}
-              />
-            </div>
+          <div data-lobby-column="table" className="flex min-w-0 flex-col gap-4">
+            <LobbySeats
+              view={view}
+              locked={locked}
+              onAddBot={onAddBot}
+              onKickPlayer={onKickPlayer}
+              onSetBotDifficulty={onSetBotDifficulty}
+            />
+            {/* The chat as L76-02 moved it, until L76-13's panel. */}
+            <section className={`${CHROME_SHAPE_CLASS} bg-v7-panel p-3`}>
+              <h2 className="font-v7-display text-v7-title leading-none text-v7-text">{CHAT_LOG_LABEL}</h2>
+              <div className="mt-2">
+                <ChatLog messages={view.chatMessages ?? []} players={view.players} canWrite onSend={onSendChat} />
+              </div>
+            </section>
           </div>
-        </section>
-
-        {isHost && (
-          <section className="mt-6 space-y-3">
-            <h2 className="text-sm font-medium text-ink">Add bot</h2>
-            <div className="flex flex-wrap gap-2">
-              {BOT_DIFFICULTIES.map((tier) => (
-                <Button
-                  key={tier}
-                  type="button"
-                  variant={addDifficulty === tier ? 'green' : 'orange'}
-                  disabled={!canAddBot}
-                  onClick={() => {
-                    setAddDifficulty(tier);
-                  }}
-                >
-                  {formatBotDifficulty(tier)}
-                </Button>
-              ))}
-              <Button
-                type="button"
-                variant="green"
-                disabled={!canAddBot}
-                onClick={() => {
-                  onAddBot(addDifficulty);
-                }}
-              >
-                Add bot
-              </Button>
-            </div>
-          </section>
-        )}
-
-        <div className="mt-8 flex flex-wrap gap-3">
-          {isHost && (
-            <Button type="button" variant="green" disabled={!canLaunch} onClick={onStart}>
-              Start game
-            </Button>
-          )}
-          {showReadyToggle && (
-            <Button
-              type="button"
-              variant={youReady ? 'orange' : 'green'}
-              onClick={() => {
-                onSetReady(!youReady);
-              }}
-            >
-              {youReady ? (
-                'Cancel ready'
-              ) : (
-                <>
-                  <LobbyReadyCheckIcon />
-                  Ready
-                </>
-              )}
-            </Button>
-          )}
-          {!isHost && !showReadyToggle && (
-            <p className="self-center text-sm text-ink-muted">
-              Waiting for the host to start…
-            </p>
-          )}
-          {!isHost && showReadyToggle && (
-            <p className="self-center text-sm text-ink-muted">
-              {youReady ? 'Waiting for the host to start…' : 'Press Ready when you are set.'}
-            </p>
-          )}
-          <Button type="button" variant="red" onClick={onLeave}>
-            Leave
-          </Button>
-          <Button
-            type="button"
-            variant="orange"
-            onClick={() => {
-              setFeedbackOpen(true);
-            }}
-          >
-            Feedback
-          </Button>
         </div>
+        <LobbyActions view={view} locked={locked} onStart={onStart} onSetReady={onSetReady} onLeave={onLeave} />
       </div>
-
-      <Dialog
-        open={copyOpen}
-        title={copyFailed ? 'Copy failed' : 'Code copied'}
-        onClose={closeCopyDialog}
-        actions={
-          <Button type="button" variant="green" onClick={closeCopyDialog}>
-            OK
-          </Button>
-        }
-      >
-        {copyFailed
-          ? `Could not copy automatically. Game code: ${view.gameCode}`
-          : `Share this code with friends: ${view.gameCode}`}
-      </Dialog>
-
-      <Dialog
-        open={kickTarget !== null}
-        title="Kick this player?"
-        onClose={() => {
-          setKickTarget(null);
-        }}
-        actions={
-          <>
-            <Button
-              type="button"
-              variant="orange"
-              onClick={() => {
-                setKickTarget(null);
-              }}
-            >
-              Cancel
-            </Button>
-            <Button
-              type="button"
-              variant="red"
-              onClick={() => {
-                if (kickTarget !== null) {
-                  onKickPlayer(kickTarget.id);
-                  setKickTarget(null);
-                }
-              }}
-            >
-              Kick
-            </Button>
-          </>
-        }
-      >
-        {kickTarget !== null
-          ? `${kickTarget.nickname} will leave this lobby. They can join again with the code.`
-          : null}
-      </Dialog>
-
-      <FeedbackDialog
-        open={feedbackOpen}
-        mode="manual"
-        screen="lobby"
-        gameCode={view.gameCode}
-        {...(youNick !== undefined ? { nickname: youNick } : {})}
-        onDismiss={() => {
-          setFeedbackOpen(false);
-        }}
-      />
-      <KitPickerSheet
-        open={kitPickerOpen}
-        current={view.yourKitSelection}
-        rules={rules}
-        onSelect={onChooseKit}
-        onClose={() => {
-          setKitPickerOpen(false);
-        }}
-      />
     </main>
   );
 }

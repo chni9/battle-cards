@@ -6431,3 +6431,39 @@ point); Lot 76 plan Appendix A.5 and A.9 rulings 3 and 5.
   the raw `KIT_CATALOG` value.
 
 ---
+
+## 2026-11-03 · [P] V7 lobby seats retire the L57-16 Ready chrome (L76-12)
+
+Source: technical spec v7 §7.2 (seats as a mini arena: seat colors, ready check), §5.1 (color
+tokens), §5.3 (arcade chrome Button), §5.6 (icon set); `docs/backlog_v7_test_classification.md`,
+Owner lot 76, the old-layout rows of `lobby-ready-mark.test.ts` and `lobby-ready.test.ts`.
+
+- **Supersedes** the L57-16 Ready chrome: the fixed `w-6` check / cross column in V2 tokens
+  (`text-cta-green-deep` / `text-cta-red`, `lobby-ready-mark.tsx`), and the green Ready / orange
+  Cancel ready buttons (`variant={youReady ? 'orange' : 'green'}` with `LobbyReadyCheckIcon`).
+- **Now:** each seat card starts with a `ui/icons` mark, `check` (Ready) or `close` (Not ready),
+  named by `lobbyReadyLabel`, before the seat-hued avatar and nickname. Ready is a primary
+  Button with the `check` icon; Cancel ready is secondary. The state reads by shape and name,
+  not by color alone (§11).
+- **Retired tests:** `screens/lobby/lobby-ready-mark.test.ts` and
+  `screens/lobby/lobby-screen.ready-chrome.test.ts`, deleted with `lobby-ready-mark.tsx`. Their
+  product assertions stay as rendered tests in `screens/lobby/lobby-screen.test.tsx` (L76-02):
+  each seat's Ready / Not ready mark sits before the nickname, and Ready / Cancel ready send
+  `setReady`.
+
+---
+
+## 2026-11-03 · [P] Under Random only the lobby host reads the solo line (L76-12)
+
+Source: technical spec v7 §7.3 (Random only replaces the Your kit card), §10.6; controller
+ruling for L76-12 (2026-11-03); `screens/kit-pick-copy.ts` (L76-10).
+
+- **Before (L76-10):** every seated viewer read `RANDOM_ONLY_LOBBY_LINE` ('The host is dealing
+  kits at random.'), the host included, under a 'Your kit' heading.
+- **Now:** `LobbyKitCard` takes `isHost`. The host deals the kits, so they read
+  `RANDOM_ONLY_SOLO_LINE` ('Kits will be dealt at random.'), the line the solo menu already uses;
+  a seated guest still reads `RANDOM_ONLY_LOBBY_LINE`. The card has no 'Your kit' heading and no
+  Choose kit. Both strings stay in `screens/kit-pick-copy.ts` for designer review (§10.6).
+- **Tests:** `screens/lobby/lobby-kit-card.test.tsx` has one case per viewer.
+
+---

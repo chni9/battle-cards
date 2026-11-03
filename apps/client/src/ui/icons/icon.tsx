@@ -291,6 +291,8 @@ const glyphs: Readonly<Record<IconName, ReactElement>> = {
       <circle cx="16" cy="16" r="0.9" fill={paint.ink} />
     </>
   ),
+  // A filled outlined check, the Ready mark (L76-12); Not ready is `close`.
+  check: <path d="M2.5 13 6 9.5l4 4L18 5.5l3.5 3.5L10 20.5z" fill={paint.cta} />,
 
   // L76 additions (L76-10): the kit tile's starting action and attack cards, one card verso each.
   // The mark is large and chunky because a pointed or thin shape loses most of its fill to the
