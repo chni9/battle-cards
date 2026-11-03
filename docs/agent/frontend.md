@@ -518,7 +518,8 @@ and are mirrored in `ui/palette.ts` and `ui/motion/motion-tokens.ts`.
 
 - **Component:** `ui/chat/ChatLog` (L72-14): transcript plus composer; `onSend` receives the
   trimmed body (the V6 log sent it untrimmed); `inputLabel`/`placeholder` override for the
-  walk-in label (L76). It replaces `screens/table/chat-log.tsx` for L74-16, L76-13 and L77-05.
+  walk-in label (the lobby panel passes 'Spectators only see this', L76-13). It replaces
+  `screens/table/chat-log.tsx` for L74-16, the lobby (L76-02; its panel L76-13) and L77-05.
   The old file stays until L75-11. Props: `messages`, `players`, `canWrite`, `onSend`.
   `ui/chat/chat-line.ts` holds `chatLineView` (round label, seat, side stream, role label) and the
   three V6 copy constants; spec v7 §10.6 adds no chat string. No unread logic (`chat-unread.ts`
@@ -1661,18 +1662,21 @@ Spec v7 §7.1–§7.5 and §7.7; plan `docs/superpowers/plans/2026-10-21-v7-lot-
   pick. Select is the only commit (`onChooseKit` in the lobby, the local pick on Home), latched
   once per kit-sheet open. It turns `aria-disabled`, with the "The host has excluded that kit…"
   reason, the moment that kit is excluded, and while `disabled` (solo busy; L76-14 reconnecting).
-  Under Random only the picker shows no sheet, the lobby clears its open flag so it never reopens
-  by itself, and the Your kit card gives way to `RANDOM_ONLY_LOBBY_LINE` (solo:
-  `RANDOM_ONLY_SOLO_LINE`). `screens/lobby-kit-picker-dialog.tsx` is deleted. The Gambler tile's
+  Under Random only the picker shows no sheet. `LobbyKitCard` (not the lobby screen) owns the
+  picker's open flag and clears it, so the picker never reopens by itself, and the Your kit card
+  gives way to a Random-only line: the host reads `RANDOM_ONLY_SOLO_LINE`, a guest
+  `RANDOM_ONLY_LOBBY_LINE` (L76-12 ruling); the solo menu reads `RANDOM_ONLY_SOLO_LINE`.
+  `screens/lobby-kit-picker-dialog.tsx` is deleted. The Gambler tile's
   Draw reads `WEIGHTED_DRAW_LABEL` "5–100" (the weighted range, not the catalog 10); every other
   stat is the raw catalog value. The Action and Attack stats use the new `action` and `attack`
   icons (`ui/icons`, DESIGN.md › Icons). A test that waits for a sheet to close waits for
-  `[data-zone="sheet-overlay"]` to leave the DOM: an exiting sheet is already `aria-hidden`, so
-  `queryByRole('dialog')` is null while its text is still there.
+  `queryByRole('dialog', { name, hidden: true })` to return null: an exiting sheet is already
+  `aria-hidden`, so a plain `queryByRole('dialog')` is null while its text is still there. It
+  never waits on the Sheet's internal `[data-zone="sheet-overlay"]` anchor.
 - `screens/lobby/lobby-screen.tsx` and its parts (L76-12, spec v7 §7.2, §5.1–§5.3, §11 Q25, Q39):
   `LobbyScreen` composes, in DOM order:
   - the setup column: `LobbyHeader`, the L76-09 `RulesStrip`, `LobbyKitCard`;
-  - the table column: `LobbySeats`, then the chat;
+  - the table column: `LobbySeats`, then `LobbyChatPanel` (L76-13);
   - `LobbyActions`.
   Root: `main.v7-ground relative h-full overflow-y-auto overscroll-contain`. At 360 px it is
   one column with one seat card per row; the host's difficulty and Kick wrap rather than
@@ -1727,6 +1731,19 @@ Spec v7 §7.1–§7.5 and §7.7; plan `docs/superpowers/plans/2026-10-21-v7-lot-
   unchanged. A new lobby test waits for a closing V7 sheet with
   `queryByRole('dialog', { name, hidden: true })` returning null (an exiting sheet is already
   `aria-hidden`), never the Sheet's internal `data-zone` anchors (controller ruling, L76-12).
+- `screens/lobby/lobby-chat-panel.tsx` (L76-13, spec v7 §7.5, §10.6 Q21): the lobby chat under
+  the seats.
+  - **Header:** a `--panel` card whose `<h2>` holds a disclosure button named "Chat"
+    (`CHAT_LOG_LABEL`; `aria-expanded`, `aria-controls`; the chevron turns down when open).
+  - **Body:** the `ui/chat` `ChatLog` (`messages={view.chatMessages ?? []}`,
+    `players={view.players}`, `canWrite`, `onSend={onSendChat}`). A walk-in's input is labelled
+    and placeholdered `WALK_IN_CHAT_LABEL` ('Spectators only see this', `lobby-copy.ts`); seated
+    players keep 'Message'.
+  - **Open state:** it starts open on every viewport and reads no viewport mode (decisions.md
+    2026-11-03). Collapsing sets `hidden` on the body and keeps `ChatLog` mounted, so the
+    transcript and an unsent draft survive. Toggling sends nothing.
+  - The client filters nothing: the server builds each reader's stream.
+  - Tests: `lobby-chat-panel.test.tsx`, which renders `LobbyScreen`.
 
 ## Design system (V2 · Lots 10+)
 

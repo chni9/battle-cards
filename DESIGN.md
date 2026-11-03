@@ -995,7 +995,9 @@ only V7 card renderer; the V2 `design/components/card.tsx` stays for the classic
 `lobby-chat-walk-in-spectator-stream`, `end-finished-chat-readonly`,
 `global-text-input-no-ios-zoom`). One `<ChatLog messages players canWrite onSend inputLabel?
 placeholder? />` is shared by the lobby (L76), the arena chat sheet (L74) and the read-only Game
-over chat (L77). The V6 `screens/table/chat-log.tsx` stays until those lots migrate.
+over chat (L77). The lobby already uses it, inside `LobbyChatPanel` (L76-13: a collapsible
+`--panel` card under the seats, open from the start); the V6 `screens/table/chat-log.tsx` stays
+until the arena and Game over migrate.
 
 - **Box:** `h-52`, `--panel-2` fill, `rounded-v7-chrome-sm`, `px-3 py-2`, no hard shadow, like
   the text input. It is a `ScrollArea` (`axis="y"`) named "Chat" (`CHAT_LOG_LABEL`, the V6 copy

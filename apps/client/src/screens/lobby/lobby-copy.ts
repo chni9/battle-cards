@@ -53,6 +53,12 @@ export const BOT_DIFFICULTY_OPTIONS: readonly SegmentedOption<BotDifficulty>[] =
   label: botSeatLabelParts(value).tier,
 }));
 
+/**
+ * The walk-in's chat input label and placeholder: a walk-in's lines go to the spectator stream
+ * only (technical spec v7 §10.6, Q21; L76-13). Seated players keep 'Message'.
+ */
+export const WALK_IN_CHAT_LABEL = 'Spectators only see this';
+
 export const START_LABEL = 'Start game';
 export const READY_BUTTON_LABEL = 'Ready';
 export const CANCEL_READY_LABEL = 'Cancel ready';

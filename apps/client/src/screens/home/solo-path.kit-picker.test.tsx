@@ -24,10 +24,10 @@ async function openSolo(props = makeHomeProps({ nickname: 'Ada' })) {
   return { ...result, props };
 }
 const grid = (): HTMLElement => screen.getByRole('dialog', { name: 'Choose kit' });
-/** Every sheet has left the DOM. `queryByRole` alone is not enough: an exiting sheet is already aria-hidden. */
+/** Every sheet has left the DOM. `hidden: true` is needed: an exiting sheet is already aria-hidden. */
 async function allClosed(): Promise<void> {
   await waitFor(() => {
-    expect(document.querySelector('[data-zone="sheet-overlay"]')).toBeNull();
+    expect(screen.queryAllByRole('dialog', { hidden: true })).toHaveLength(0);
   });
 }
 async function editRules(user: UserEvent, control: string): Promise<void> {

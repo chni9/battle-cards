@@ -6467,3 +6467,23 @@ ruling for L76-12 (2026-11-03); `screens/kit-pick-copy.ts` (L76-10).
 - **Tests:** `screens/lobby/lobby-kit-card.test.tsx` has one case per viewer.
 
 ---
+
+## 2026-11-03 · [P] The lobby chat panel starts open on every screen (L76-13)
+
+Source: technical spec v7 §7.5 ("Panel under the seats, collapsible on phones"); Appendix A
+`lobby-chat` (chat under the player list) and `chat-new-message-announcement` (the lobby has no
+unread count).
+
+- **Decision.** `LobbyChatPanel` starts expanded on every viewport and keeps its disclosure toggle
+  everywhere. It reads no viewport mode, so its first render never depends on the window size,
+  happy-dom's default included.
+- **Why open.** The lobby has no unread signal, so a panel that starts collapsed would hide every
+  line that arrives until the player opens it. The V6 lobby always showed the transcript.
+- **Collapse.** The toggle hides the body with the `hidden` attribute and keeps `ChatLog` mounted,
+  so the transcript, its scroll position and an unsent draft survive (the draft lives only while
+  `ChatLog` is mounted, decisions.md 2026-11-02, L74-23). The state is local and resets when the
+  lobby unmounts.
+- **Open question for the designer:** start collapsed on phones, with an unread mark, if the panel
+  crowds the seats at 360 px.
+
+---

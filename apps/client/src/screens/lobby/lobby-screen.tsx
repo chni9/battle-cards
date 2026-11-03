@@ -3,7 +3,7 @@
  * Moved into `screens/lobby/` by L76-02 (technical spec v7 §4.2). L76-12 restyles it as a mini
  * arena on the V7 ground (§7.2, §5.1–§5.3, §11 Q25, Q39). In DOM order:
  * - the setup column: `LobbyHeader`, the table rules strip (the host edits, L76-09), `LobbyKitCard`;
- * - the table column: `LobbySeats`, then the chat;
+ * - the table column: `LobbySeats`, then `LobbyChatPanel` (L76-13);
  * - `LobbyActions`, sticky at the bottom of `main`.
  * One column on a phone; from `lg`, two page columns (setup 26rem). `main` is the only scroll
  * container (no inner list scroll). Props are unchanged; the parts decide nothing (golden rule 8).
@@ -19,11 +19,9 @@ import {
 import type { ReactElement } from 'react';
 
 import type { RoomConnectionStatus } from '../../net/use-room-connection';
-import { ChatLog } from '../../ui/chat/chat-log';
-import { CHAT_LOG_LABEL } from '../../ui/chat/chat-line';
-import { CHROME_SHAPE_CLASS } from '../../ui/primitives/chrome-classes';
 import { RulesStrip } from '../../ui/rules/rules-strip';
 import { LobbyActions } from './lobby-actions';
+import { LobbyChatPanel } from './lobby-chat-panel';
 import { LobbyHeader } from './lobby-header';
 import { LobbyKitCard } from './lobby-kit-card';
 import { LobbySeats } from './lobby-seats';
@@ -86,13 +84,7 @@ export function LobbyScreen({
               onKickPlayer={onKickPlayer}
               onSetBotDifficulty={onSetBotDifficulty}
             />
-            {/* The chat as L76-02 moved it, until L76-13's panel. */}
-            <section className={`${CHROME_SHAPE_CLASS} bg-v7-panel p-3`}>
-              <h2 className="font-v7-display text-v7-title leading-none text-v7-text">{CHAT_LOG_LABEL}</h2>
-              <div className="mt-2">
-                <ChatLog messages={view.chatMessages ?? []} players={view.players} canWrite onSend={onSendChat} />
-              </div>
-            </section>
+            <LobbyChatPanel view={view} onSendChat={onSendChat} />
           </div>
         </div>
         <LobbyActions view={view} locked={locked} onStart={onStart} onSetReady={onSetReady} onLeave={onLeave} />
