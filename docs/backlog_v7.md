@@ -22,7 +22,7 @@ Status values: `To do` · `In progress` · `Done` · `Blocked`
 |---|---|---|
 | 72 · Foundations | 21 | 21 |
 | 73 · View-model | 13 | 13 |
-| 74 · Arena I | 26 | 25 |
+| 74 · Arena I | 26 | 26 |
 | 75 · Arena II | 12 | 0 |
 | 76 · Home and lobby | 18 | 0 |
 | 77 · Game over | 8 | 0 |
@@ -30,7 +30,7 @@ Status values: `To do` · `In progress` · `Done` · `Blocked`
 | 79 · Sound and haptics | 5 | 0 |
 | 80 · Admin | 12 | 12 |
 | 81 · Close-out | 6 | 0 |
-| **Total** | **134** | **71** |
+| **Total** | **134** | **72** |
 
 ## Designer questions still open
 
@@ -174,7 +174,7 @@ The arena behind `?ui=next` (§6, except tutorial re-anchoring, desktop / landsc
 | L74-23 | **Spectator, eliminated and Reanimating POV.** **Acceptance:** Tests cover these cases. A walk-in sees Watching, no dock, and Claim a seat while claimable seats exist; the control is hidden when there are none. Claim a seat reopens the picker after Stay. A walk-in behind an open picker sees no kit. An eliminated POV with `pendingReanimation` sees Reanimating with seated tiers. The elimination overlay does not render while a sub-choice is open and is skipped with `pendingReanimation`. The existing claim-seat source-text tests stay green. `pnpm verify` green. | M | **High** | L74-09, L74-13 | Done |
 | L74-24 | **Finished board on the arena.** **Acceptance:** Tests cover these cases. Stats reopens the stats and does nothing while Feedback is open. Confirming the flag's Return home calls `requestLeave`. Every intent callback is a no-op. No chat composer renders. A POV elimination shows the overlay, not the banner. The `end.tsx` and `feedback-surfaces` source-text tests stay green, or are classified per §12.1. `pnpm verify` green. | M | Medium | L74-14, L74-16, L74-17, L74-23 | Done |
 | L74-25 | **Reconnect banner and reject toast.** **Acceptance:** Tests cover these cases. Reconnecting renders the banner and disables Draw and Use. A `stateUpdate` with an open reject keeps the toast. Manual dismissal and timed dismissal each call `clearActionReject` once. The exhaustive `ILLEGAL_ACTION_COPY` test still passes. A rejected Spy play marks its hand card for spring-back, and reduced motion uses no shake. `pnpm verify` green. **Watch point:** While any sheet is live, `reachableIn` (`ui/primitives/sheet-focus.ts`, `use-focus-trap.ts`) keeps Tab inside the panel, so a Toast's OK button cannot be reached by keyboard. Either pass `timeoutMs` for every reject toast, or let `reachableIn` admit `[data-zone="toast"]`. | M | Medium | L74-08, L74-17 | Done |
-| L74-26 | **Lot 74 browser, parity and design gate.** **Acceptance:** frontend.md has a 'Lot 74 verified' entry with room codes and the scenario list. The PR carries the parity sweep notes, the new-string list and the design-gate result, or 'design gate not run' for sessions without Impeccable. Every defect found is fixed. `pnpm verify` green. | L | Medium | L74-01…L74-25 | To do |
+| L74-26 | **Lot 74 browser, parity and design gate.** **Acceptance:** frontend.md has a 'Lot 74 verified' entry with room codes and the scenario list. The PR carries the parity sweep notes, the new-string list and the design-gate result, or 'design gate not run' for sessions without Impeccable. Every defect found is fixed. `pnpm verify` green. | L | Medium | L74-01…L74-25 | Done |
 
 ---
 

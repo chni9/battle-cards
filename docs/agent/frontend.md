@@ -3056,3 +3056,105 @@ value, viewports 1440×900 and 390×844 in the built-in browser pane.
     `admin-games-page.test.tsx`, `admin-data-page.test.tsx`). happy-dom has no layout, so these
     tests stub the measures.
 - `pnpm verify` **3141** tests.
+
+### Lot 74 verified 2026-11-03 (browser, `TURN_DURATION_MS=300000 RECONNECT_GRACE_MS=5000`, PROTOCOL 45)
+
+Dedicated gate servers: Vite `:5273`, Colyseus `:2667`; `?ui=next`; nicks **L74Gate…**; viewports
+360×740, 375×812, 390×844, 844×390 and 1440×900 in the built-in browser pane. `dev` merged first
+(`cf556998`). Two sessions: the app stopped the gate servers between them, so every room is
+in-memory and gone. Session 1 (2026-11-02): **XXJPBR** (solo, 4 seats, Juggernaut), **QMIKTC**
+(online, three humans at 375 / 360 / 390 plus a Normal bot, a walk-in, then two re-claims after
+every pane tab reloaded). Session 2 (2026-11-03): **ZXWXKZ** (solo, 8 seats, Assassin), **UMANAX**
+(solo, 2 seats, 30 s, Random, two kits allowed; finished board), **FBUGET** (solo, 120 s),
+**BSETDF** (online host 45 s, guest at 390), **UQAQFS** (solo, Gambler), **PPVDKU** (solo,
+Duplicator at 360), **JUKWMV** (`?ui=classic`), **ZYGLRJ** (solo, 4 seats, design scan).
+
+- **G1–G2 layout and plate:** no page scroll and six regions in every room and viewport. 4 seats
+  at 360/375/390: seats inside the arena, no overlap, plate clear. 8 seats: the 4 + 3 grid fits
+  at 390; at 375 the plate overlaps the second row by 14 px and at 360 by 82 px (the grid takes
+  208 of the arena's 214 px). A press on an overlapped seat reaches it except on the plate's own
+  landing card and badges. Not fixed: needs a layout decision (see the Lot 74 PR). Not
+  exercised: the POV "Hits all" burst (no fan-out play reachable; `threat-layer.test.tsx`).
+- **G3:** the seat's initial-letter Avatar repeated the nickname; fixed, `aria-hidden`.
+- **G4:** strip 160 px with the `tile` portrait at 375 and the hand visible; the Deactivate
+  confirm opens on Cancel and returns focus to Deactivate (UQAQFS). The empty specials caption
+  (54 px) was missing from the strip budget; fixed.
+- **G5:** the dock grew 72 px on the POV's turn at 360/375 (Unspy's reason widened it); fixed,
+  then narrowed so only Unspy reserves two lines. A Duplicator's dock wraps to two clean rows at
+  360 (174 px). The Draw pulse runs while its reason slot is empty.
+- **G6 tap-tap:** ring, pulse and dim read; a top-row seat's `--mine` ring loses 1 px at the
+  arena edge; focus starts on the first valid seat; Cancel returned focus to the card, Esc did
+  not (fixed); Esc with Unspy above the bar closes only Unspy; a double tap on Cancel sends
+  nothing.
+- **G7 drag:** (b) spring-back, (c) seat drop and (d) plate drop pass ((a), (e), (f) in L74-12).
+  A window blur left the ghost up; fixed. Not exercised: (g) Regeneration / Card Transformer on
+  the plate, real-touch pan versus lift and full-motion spring-back timing (no touch device;
+  `hand-drag.test.ts`, `hand-drag-layer.test.tsx`).
+- **G8 double taps:** a hand card at 375 lands its second tap on the sheet's entrance shield;
+  Unspy, a Shop tile and Buy selected each send one; Draw sent one but its second tap opened a
+  hand card's sheet through the dock jump (fixed, re-run clean). A keyboard double Enter on a
+  hand card plays it (the shield is pointer-only, recorded). Stats on the finished board: the
+  second tap lands on V2 Game over's row (with the production row, on View board; on the right
+  third of Stats, on Play again). Not fixed: L77-02 or the designer. A sub-choice arriving under
+  a moving finger: not exercised (no bot opens one on the POV's input; `sub-choice-sheet.test`).
+- **G9:** Assassin multi-attack moves focus into the step and back to Multi-attack on Cancel
+  (ZXWXKZ). With focus on Use, the turn passing dropped focus to `body`; fixed, re-run on FBUGET.
+- **G10 long press:** not exercised (no touch device; `use-long-press.test.tsx`).
+- **G11–G12:** arrows, one plate badge per effect and 'You are being attacked' (QMIKTC). An
+  equal answer cancels both, arrows clear, no summed total.
+- **G13 Mirror:** a blocking sheet with the attack and the first target preselected; Minimize
+  collapses to a bar and sends nothing. The first attempt resolved to the preselected target
+  after Minimize then Menu, with no send log; not reproduced. Not exercised: Time's up, an
+  Invisible target (`sub-choice-sheet.test.tsx`).
+- **G14:** a forfeit with two queued attackers gives both the reward sheet at once; at 360 'A
+  card' (9 cards) keeps Confirm above Minimize and the 'Choice N' Segmented fits. The POV overlay
+  lasts 1.6 s before Game over (PPVDKU).
+- **G15 slot-drop:** not exercised (four active slots need several random specials; the merged
+  `slot-drop.test.ts` "Cancel refunds the points the play paid (L82-03)" passes).
+- **G16:** base Spy shows live numbers and no kit, Spy+ shows the kit, hand and specials, the
+  kit sheet stacks, Unspy sends one `clearSpy`, the spy eye shows (XXJPBR).
+- **G17:** a walk-in by code gets the picker over fogged kits; Stay shows the kits and the
+  Watching strip with no dock; Claim a seat reopens the picker; Sit here seats it, closes the
+  open seat sheet and lights no POV arrow. An eliminated POV gets the Watching strip and Leave
+  table. A double tap on Claim a seat claims nothing; the second tap closes the picker.
+- **G18:** an `offline` event shows 'Reconnecting…', locks Draw and Use, keeps Forfeit and chat
+  Send, and recovers in under a second. Closing the active player's tab gives 'Paused —
+  reconnecting', then an absent auto-draw after the grace.
+- **G19:** a 30 s solo drew a 300 s bar and its Table rules read 300 s; fixed (the connection
+  keeps the lobby rules). Re-run: 120 s solo full bar, Table rules 120 s, the last 10 s red, a
+  bot turn '—', an offline event keeps the length, a reload goes Home, a 45 s host gives the guest
+  the same bar, the finished board shows 30 s, Random and 'Excluded'.
+- **G20:** an eliminated line carries '(eliminated)' and no living reader sees it; the unread
+  badge reads on the 44 px icon; four icons fit at 360; the finished board has no composer; the
+  input is 16 px. Not exercised: a '(spectator)' line, iOS zoom and the phone keyboard.
+- **G21:** a reject toast survives a state update, closes once on OK and after 6 s. Esc does
+  not close it (L74-25 design, designer question). A race reject shook nothing because the state
+  update came first (by design; `reject-toast.test.tsx`).
+- **G22:** Game over over the finished arena, View board, the feedback ask-once, a browse-only
+  Shop, the log, a read-only chat and the 'You are dead' overlay before Game over.
+- **G23:** How to play and Feedback open unclipped above the arena. One Esc during targeting ends
+  targeting and leaves Feedback open, and from the Menu sheet the first Esc closes the Menu
+  under How to play (ruling R3, L75/L76).
+- **G24:** token chips, card ghosts, the elimination beat and centred banners on 4 and 8 seats;
+  one `?ui=classic` game (JUKWMV) shows its FX unchanged.
+- **G25:** the Shop's tabs spilled at 360/375; fixed. Spy 2 / 4, Special 20, Pool Buy random,
+  upgrade-point Buy 10 / Sell 7, one buy per double tap, the sheet closes on a buy. Not
+  exercised: an empty pool, iOS `dblclick`, a long press on a tile.
+- **G26:** 844×390 and 1440×900: no page scroll, no crash (live and finished).
+- **G27:** the ticker truncates at 360/375; the sheet opens on the newest line; stuck round
+  headers let a line show above them (fixed); the log stopped following multi-line updates
+  (fixed); a 24-character nickname fits one line.
+- **Parity sweep:** 67 rows: 40 kept, 25 changed by design, 0 gaps, 2 Lot 75 scope (details in
+  the Lot 74 PR).
+- **Design gate (§12.4):** `detect` on `screens/arena/` and the 11 Lot 74 `ui/` files: 127
+  files, 0 findings (regex scan). In-page scans of a live arena (ZYGLRJ: board, Shop, card,
+  seat and Menu sheets) and of a finished board: the pre-approved `radial-spotlight-glow` on
+  `.v7-ground`, the V2 `tutorial-pulse` `dark-glow` from `index.css` (a false positive, as in
+  Lot 72) and `repeating-stripes-gradient` on the Lot 72 ground scanlines (`ui/tokens.css`), which
+  needs the designer's approval before any ignore. V2 Game over findings are L77's. Critique
+  notes are in the Lot 74 PR.
+- Fixes: `d71a88a0` seat nickname once; `dcc0d131` Esc focus back to the card; `d22ad4c4` drag
+  ends on blur; `5992405d` sticky round headers; `307e4b60` Shop tabs shrink; `a55e1fd6` dock
+  height across turns; `0dadd179` the log keeps following; `f69d1c60` a solo's chosen rules;
+  `61318175` card sheet focus as the turn passes; `4030abad` a hand with no specials;
+  `c4b783df` two reason lines only for Unspy. `pnpm verify` **3759** tests.
