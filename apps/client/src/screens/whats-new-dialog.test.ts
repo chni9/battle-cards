@@ -1,5 +1,7 @@
 /**
  * Hub What’s new wiring — L63-07.
+ * L76-01: the Home behavior is rendered in screens/home/home-screen.test.tsx; the style-only Home
+ * lines below read screens/home/home-screen.tsx until L76-04 retires them.
  */
 
 import { readFileSync } from 'node:fs';
@@ -19,16 +21,11 @@ function read(rel: string): string {
 describe('What’s new dialog (L63-07)', () => {
   it('renders the current update alone and the full log date by date', () => {
     const source = read('whats-new-dialog.tsx');
-    const home = read('home.tsx');
     expect(source).toContain('releaseNotesForScope');
     expect(source).toContain('data-whats-new-scope');
     expect(source).toContain("scope === 'history'");
     expect(source).toContain('Latest');
     expect(source).toContain('Got it');
-    expect(home).toContain("useState<WhatsNewScope>('current')");
-    expect(home).toContain("setWhatsNewScope('history')");
-    expect(home).toContain("setWhatsNewScope('current')");
-    expect(home).toContain('scope={whatsNewScope}');
     expect(latestReleaseNote().id).toBe('lot-72-v7');
     expect(releaseNotesForScope('current').map((note) => note.id)).toEqual(['lot-72-v7']);
     expect(releaseNotesForScope('history').map((note) => note.date)).toEqual([
@@ -73,27 +70,16 @@ describe('What’s new dialog (L63-07)', () => {
   });
 
   it('wires a green New control, red unread badge, and auto-open when unseen', () => {
-    const home = read('home.tsx');
-    expect(home).toContain("What's new");
-    expect(home).toContain('WhatsNewDialog');
-    expect(home).toContain('hasUnseenReleaseNotes');
-    expect(home).toContain('shouldAutoOpenWhatsNew');
-    expect(home).toContain('markLatestReleaseSeen');
-    expect(home).toContain('data-whats-new-unread');
-    expect(home).toContain('data-whats-new-button');
+    const home = read('home/home-screen.tsx');
     expect(home).toMatch(
       /<Button[\s\S]{0,400}data-whats-new-button[\s\S]{0,200}variant="green"|<Button[\s\S]{0,400}variant="green"[\s\S]{0,200}data-whats-new-button/,
     );
     expect(home).toContain('bg-cta-red');
     expect(home).not.toContain('bg-cta-green');
-    expect(home).not.toContain('Super Regeneration');
   });
 
   it('keeps What’s new as a small top-right control, not a hub action-row block', () => {
-    const home = read('home.tsx');
-    const hubStart = home.indexOf('function HubView');
-    const hub = hubStart === -1 ? '' : home.slice(hubStart);
-    expect(hub).not.toContain('onOpenWhatsNew');
+    const home = read('home/home-screen.tsx');
     expect(home).toContain('data-whats-new-button');
     expect(home).toMatch(/data-whats-new-button[\s\S]{0,400}absolute/);
   });

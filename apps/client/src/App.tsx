@@ -19,7 +19,7 @@ import { forgetChatSeen } from './screens/arena/chat-unread-store';
 import { ClaimSeatDialog } from './screens/claim-seat-dialog';
 import { claimStayLabel, shouldShowClaimPicker } from './screens/claim-seat';
 import { EndScreen } from './screens/end';
-import { HomeScreen } from './screens/home';
+import { HomeScreen } from './screens/home/home-screen';
 import { LobbyScreen } from './screens/lobby';
 import { soloMenuSeed, type SoloMenuSeed } from './screens/solo-menu-seed';
 import { STATUS_LABELS } from './screens/status-labels';

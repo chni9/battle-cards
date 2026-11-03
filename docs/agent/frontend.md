@@ -34,7 +34,7 @@ design-system record: `/DESIGN.md`. On conflict, **code > spec v7 §5
 
 | Screen | When | File |
 |---|---|---|
-| Home | No room — hub → online (create/join) or solo; How to play + What’s new + Feedback | `screens/home.tsx` + `how-to-play-dialog.tsx` + `whats-new-dialog.tsx` + `feedback/feedback-dialog.tsx` |
+| Home | No room — hub → online (create/join) or solo; How to play + What’s new + Feedback | `screens/home/home-screen.tsx` (+ `screens/home/*`) + `how-to-play-dialog.tsx` + `whats-new-dialog.tsx` + `feedback/feedback-dialog.tsx` |
 | Lobby | `phase: 'lobby'` — seats, Ready, host Start / Kick / bots, hidden kit pick, Feedback | `screens/lobby.tsx` + `lobby-kit-picker-dialog.tsx` |
 | Table | `phase: 'playing'` — felt shell, opponents arc, center-stage log, queue, timers, hand, economy | `screens/table.tsx` (+ `screens/table/*`) · `?ui=next` → `screens/arena/arena-screen.tsx` (the V7 arena; see `## Arena (V7, ?ui=next)`) |
 | End | `phase: 'finished'` — closable awards gallery; Classic **Play again**; hub leave hits ask-once; the finished board follows the same switch (`tableUi`) | `screens/end.tsx` + `game-over-dialog.tsx` + `view-model/game-over-awards.ts` |
@@ -1580,6 +1580,14 @@ Appendix A). Each Lot 74 task appends its bullet here, in task order.
   consumes the last-send record, so a later unrelated reject (chat, forfeit, claim) with no state
   update in between never shakes that card again (final review). A Draw latched before a drop
   re-arms on the rejoin's state push.
+
+## Home and lobby (V7 · Lot 76)
+
+Spec v7 §7.1–§7.5 and §7.7; plan `docs/superpowers/plans/2026-10-21-v7-lot-76-home-lobby.md`. Each bullet starts with its file and task id.
+
+- `screens/home/` (L76-01, spec v7 §4.2, §7.1): `home.tsx` split by component, with no visual or behavior change. `home-screen.tsx` (`HomeScreen`, `HomeScreenProps`; App imports it directly, no `index.ts`) holds every Home state, the New control and the four root dialogs. `home-hub.tsx`, `online-path.tsx`, `solo-path.tsx`, `tutorial-path.tsx`, `path-header.tsx`, `home-status.tsx`, `nickname-field.tsx` and `home-art.tsx` (`HomeArt`, `BetaCard`) hold no state, so Back keeps the solo picks; `home-classes.ts` holds `HOME_INPUT_CLASS`.
+- `screens/home/home-gate.ts`, `home-whats-new.ts`, `solo-rules-state.ts` (L76-01): the pure rules `HomeScreen` follows; they read no storage (`ui/help-storage.ts` and `ui/release-storage.ts` do). `howToPlayCloseOutcome`: a gated close marks seen and enters the path with no What's new check; a manual Skip / Got it marks seen, a manual dismiss does not, and both re-check What's new. `whatsNewAutoScope`: 'current' while the latest entry is unseen, for the mount, Back-to-hub and manual How to play triggers (New opens 'history' itself). `initialSoloRulesState` / `applySoloRulesChange` / `soloLaunchKitSelection`: the Play again seed is read once at mount, only an in-range slider change sends the clock (Q3/Q31), an excluded pick falls back to Random, and Random only launches Random but keeps the pick.
+- `screens/home/home-screen.test.tsx`, `test-home.ts` (L76-01, spec v7 §12.1): the rendered Home suite. `test-home.ts` has `makeHomeProps`, `expectNoHomeIntent` (the commit rule: a test that opens or closes a dialog asserts no intent), `seedHomeStorage`, `enterHomePath` and `closeHomeDialog` (it finds the V2 and the V7 backdrop). They replace the four `screens/home.*.test.ts` source-text splits and the `home.tsx` reads of `whats-new-dialog.test.ts`, whose style-only New lines read `screens/home/home-screen.tsx` until L76-04. A test that sends feedback mocks `feedback/submit-feedback`.
 
 ## Design system (V2 · Lots 10+)
 
