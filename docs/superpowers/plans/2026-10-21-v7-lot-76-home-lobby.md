@@ -2841,6 +2841,8 @@ export function KitPickerSheet(props: KitPickerSheetProps): ReactElement;
 
 // screens/lobby/kit-tile-stats.ts
 export function kitTileStats(kitId: KitId): readonly KitTileStat[];   // six entries, order below
+/** The Draw a gambling kit shows (designer 2026-11-03): the weighted payout range of rules spec §4 / Lot 64, the words of `KIT_ABILITY_COPY.gambler`. */
+export const WEIGHTED_DRAW_LABEL = '5–100';
 
 // screens/lobby/random-kit-details.tsx
 export function RandomKitDetails(): ReactElement;
@@ -2865,17 +2867,17 @@ Test hooks this task adds:
 import { getKit, KIT_IDS } from '@card-battle/shared';
 import { describe, expect, it } from 'vitest';
 
-import { kitTileStats } from './kit-tile-stats';
+import { kitTileStats, WEIGHTED_DRAW_LABEL } from './kit-tile-stats';
 
 describe('kitTileStats (L76-10)', () => {
   it('reads lives, points, upgrade points, Draw, action and attack from KIT_CATALOG for every kit', () => {
     for (const kitId of KIT_IDS) {
-      const { startingResources: res, startingCardCounts: cards } = getKit(kitId);
+      const { startingResources: res, startingCardCounts: cards, traits } = getKit(kitId);
       expect(kitTileStats(kitId), kitId).toEqual([
         { icon: 'life', label: 'Lives', value: String(res.lives) },
         { icon: 'point', label: 'Points', value: String(res.points) },
         { icon: 'upgrade', label: 'Upgrade points', value: String(res.upgradePoints) },
-        { icon: 'draw', label: 'Draw', value: String(res.draw) },
+        { icon: 'draw', label: 'Draw', value: traits.drawBustDenominator === undefined ? String(res.draw) : WEIGHTED_DRAW_LABEL },
         { icon: 'action', label: 'Action', value: String(cards.action) },
         { icon: 'attack', label: 'Attack', value: String(cards.attack) },
       ]);
@@ -2887,8 +2889,10 @@ describe('kitTileStats (L76-10)', () => {
     expect(kitTileStats('indestructible').map((stat) => stat.value)).toEqual(['18', '0', '0', '1', '4', '1']);
   });
 
-  it('shows the Gambler catalog Draw of 10 (designer question: 5–100)', () => {
-    expect(kitTileStats('gambler').find((stat) => stat.label === 'Draw')?.value).toBe('10');
+  it('shows the weighted Draw range for a gambling kit, not the catalog 10 (designer 2026-11-03)', () => {
+    expect(WEIGHTED_DRAW_LABEL).toBe('5–100');
+    expect(kitTileStats('gambler').find((stat) => stat.label === 'Draw')?.value).toBe('5–100');
+    expect(KIT_IDS.filter((kitId) => kitTileStats(kitId).some((stat) => stat.value === WEIGHTED_DRAW_LABEL))).toEqual(['gambler']);
   });
 });
 ```
@@ -3270,7 +3274,7 @@ That is 3 + 1 + 13 + 3 + 3 = 23 new tests (the last two `kit-picker-sheet` cases
 
 - [ ] **Step 3: Implement.**
   - **`kit-tile-stats.ts`** (pure; doc comment: spec v7 §7.3, §5.5, Appendix A `global-art-catalog`; the Gambler Draw is the catalog's 10, a designer question):
-    - Read `getKit(kitId)` and return, in this order: `life` / `RESOURCE_CAPTIONS.life` / lives; `point` / `RESOURCE_CAPTIONS.point` / points; `upgrade` / `RESOURCE_CAPTIONS.upgradePoint` / upgradePoints; `draw` / `'Draw'` / draw; `action` / `'Action'` / action; `attack` / `'Attack'` / attack.
+    - Read `getKit(kitId)` and return, in this order: `life` / `RESOURCE_CAPTIONS.life` / lives; `point` / `RESOURCE_CAPTIONS.point` / points; `upgrade` / `RESOURCE_CAPTIONS.upgradePoint` / upgradePoints; `draw` / `'Draw'` / `WEIGHTED_DRAW_LABEL` when `kit.traits.drawBustDenominator !== undefined` (the server's weighted-draw trigger, `apps/server/src/engine/turn/sample-draw-gain.ts` `rollDrawGain`), else the catalog draw; `action` / `'Action'` / action; `attack` / `'Attack'` / attack.
     - Every value is `String(n)`. `KitTile` keys stats by label, so the six labels are unique.
   - **`random-kit-details.tsx`:**
     - Move `RandomKitDetails` from `screens/lobby-kit-picker-dialog.tsx` with L76-03's two paragraphs verbatim, and export it.
@@ -3369,6 +3373,10 @@ point); Lot 76 plan Appendix A.5 and A.9 rulings 3 and 5.
 - **Random only** hides the picker. Its sheets close, the lobby clears its open flag so turning
   Random only off never reopens the picker by itself, and the Your kit card gives way to one
   line.
+- **Gambler's Draw reads "5–100"** on its tile (designer 2026-11-03), not the catalog `draw: 10`:
+  the server pays a weighted 5–100 Draw to any kit with `traits.drawBustDenominator`
+  (`rollDrawGain`), and the Ability copy and How to play already say so. Every other tile stat is
+  the raw `KIT_CATALOG` value.
 
 ---
 ```
@@ -3431,8 +3439,7 @@ records the picker's one disabled pattern.
 - **Stat labels reuse existing words**, spoken only: 'Lives', 'Points', 'Upgrade points' (`RESOURCE_CAPTIONS`), 'Draw', 'Action', 'Attack' (the `KitDetails` captions).
 - **Designer question:**
   - Action and attack counts get two new glyphs, `action` and `attack` (controller ruling C-1: `duplication-active` would read as a live Duplication). The designer reviews the drawings at the L76-18 gate.
-- **Designer question:**
-  - The Gambler tile shows the catalog Draw `10`. Alternative: '5–100', the weighted range in its Ability copy.
+- **Designer answer (2026-11-03): the Gambler tile shows '5–100'**, the weighted range its Ability copy and How to play already state, not the catalog `10`. The tile follows the server's trigger (`traits.drawBustDenominator`), so only Gambler shows it. The decisions.md entry of Step 5 records that this one stat is not the raw `KIT_CATALOG` value.
 - **Designer question:** the Random-only lines.
   - Lobby: 'The host is dealing kits at random.', the first sentence of the existing `choose-kit-random-only` reject.
   - Solo (new): 'Kits will be dealt at random.'
@@ -6554,7 +6561,7 @@ Defaults are implemented unless the designer answers otherwise. Each entry names
   - Solo readout. Default: shows the live seconds while dragging and "Server default" at the untouched value until a release.
 - **L76-10:**
   - Action/attack stat icons: two new glyphs `action` and `attack` (ruling C-1); the designer reviews the drawings.
-  - Gambler Draw. Default: the catalog `10`; alternative: '5–100'.
+  - Gambler Draw. **Answered 2026-11-03: '5–100'** (implemented in L76-10).
   - Random-only lines. Default: lobby 'The host is dealing kits at random.' (existing), solo 'Kits will be dealt at random.' (new).
   - The Random tile carries no stats. Alternative: the allowed-kit count, which would need a new string.
 
@@ -6574,9 +6581,9 @@ Defaults are implemented unless the designer answers otherwise. Each entry names
 #### Designer questions (with defaults)
 
 1. **Combined rules toast** (L76-15): one toast titled "Rules changed" with the body "Your pick was reset to Random." when both apply. *Default: as described.*
-2. **Random-only toggle** (L76-15): it shows "Rules changed" (no reset line); see contract issue 5. *Default: it toasts.*
+2. **Random-only toggle** (L76-15): it shows "Rules changed" (no reset line). **Answered 2026-11-03: as the default.**
 3. **Walk-ins and rule toasts** (ruling 10, Appendix B): walk-ins see the strip but get no toast. *Default: no toast.*
-4. **Claim a seat for a seated guest** who pressed Keep this seat (ruling 9, Appendix B). *Default: walk-ins only.*
+4. **Claim a seat for a seated guest** who pressed Keep this seat (ruling 9). **Answered 2026-11-03: walk-ins only.**
 5. **Kick confirm on a drop** (L76-14): it closes, versus staying open with Kick disabled. *Default: it closes.*
 6. **Lobby chat while reconnecting** is locked (ruling 6), unlike the arena's chat (L74-25). *Default: locked; the draft is kept.*
 7. **The alert dismiss** is a `close` icon named "OK" (the toast control), not a text button. *Default: the icon.*
