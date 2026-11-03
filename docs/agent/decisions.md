@@ -6296,3 +6296,22 @@ are tunable starting values); `docs/backlog_v7.md` L75-09 and L75-13.
 - **Not changed.** The seat grid, `SEAT_BOX`, `PLATE_BOX`, and the arena's behavior in Lot 74.
 
 ---
+
+## 2026-11-03 · [P] The connection-held lobby rules supersede A.9.1 / D15 (L74-26, controller ruling)
+
+Source: the Lot 74 plan, Appendix A.9.1 and ruling D15 (`docs/superpowers/plans/2026-10-21-v7-lot-74-arena-1.md`);
+the 2026-11-02 entry "The connection keeps the room's lobby rules (L74-26 gate, supersedes the
+L74-21 cache)" above; the L74-26 task review (M1) and the controller's ruling of 2026-11-03.
+
+- **Ruling.** The controller ratifies `f69d1c60`. A.9.1 / D15 put the lobby-rules cache in App
+  (`useLobbyRulesCache`, one `nextRulesCache` step per rendered view). That design is superseded:
+  the cache is `RoomConnection.lobbyRules`, set in the connection's `STATE_UPDATE` updater.
+- **Why.** App only sees `connection` snapshots that React renders, after it batches updates. A
+  solo launch's lobby views (the chosen rules) land in the same batch as the first playing view,
+  so no App-side step can observe them. The updater runs for every message, as it already does
+  for `lastTurnStarted` and the other last-message fields, so it is the one place that sees them.
+- **Scope.** The change leaves `screens/arena/` and `ui/` (L74-26 Files named only those), which
+  the review flagged; the controller accepts it as the root-cause fix. `nextRulesCache` is
+  removed with its tests (`b1ded6e5`); `cachedLobbyRules` and `tableRulesRecall` are unchanged.
+
+---
