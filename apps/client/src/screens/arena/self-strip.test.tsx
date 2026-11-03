@@ -182,6 +182,20 @@ describe('self strip and in-play card sheet in the arena (L74-09)', () => {
     expect(screen.queryByRole('dialog', { name: title })).toBeNull();
   });
 
+  it("keeps focus on the confirm's Deactivate when the turn passes under it, disabled with its reason (L74-26 review M6)", async () => {
+    const view = viewWith({ activePersistentEffects: [POISON] });
+    const { container, user, props, rerender } = renderArena(view);
+    await user.click(within(stripOf(container)).getByRole('button', { name: 'Poison, 3 card lives' }));
+    await user.click(within(screen.getByRole('dialog', { name: 'Poison' })).getByRole('button', { name: 'Deactivate' }));
+    within(screen.getByRole('dialog', { name: 'Are you sure?' })).getByRole('button', { name: 'Deactivate' }).focus();
+    rerender(<ArenaScreen {...props} view={{ ...view, currentTurnPlayerId: 'p1' }} />);
+    const confirm = within(screen.getByRole('dialog', { name: 'Are you sure?' }))
+      .getByRole('button', { name: 'Deactivate', description: DISABLED_REASON_COPY['not-your-turn'] });
+    expect([document.activeElement === confirm, confirm.getAttribute('aria-disabled')]).toEqual([true, 'true']);
+    await user.click(confirm);
+    expectNoArenaIntent(props);
+  });
+
   it('sends deactivatePersistent only from the confirm, once for a double tap, and closes both sheets (Lot 69)', async () => {
     const { container, user, props, onDeactivatePersistent } = renderArena(viewWith({ activePersistentEffects: [POISON] }));
     await user.click(within(stripOf(container)).getByRole('button', { name: 'Poison, 3 card lives' }));

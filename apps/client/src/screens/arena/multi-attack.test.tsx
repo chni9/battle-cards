@@ -206,6 +206,22 @@ describe('multi-attack step focus (final review, I2)', () => {
     expectNoArenaIntent(props);
   });
 
+  it('keeps focus on Play when the turn passes under it: Play stays focusable, disabled with its reason, and sends nothing (L74-26 review M6)', async () => {
+    const view = assassinView();
+    const { user, rerender, props } = setup(view);
+    const dialog = await openMultiAttack(user);
+    await user.click(within(dialog).getByRole('button', { name: BASIC }));
+    await user.click(seatIn(dialog, BASIC, 'p2'));
+    await user.click(within(dialog).getByRole('button', { name: STRONG }));
+    await user.click(seatIn(dialog, STRONG, 'p1'));
+    within(dialog).getByRole('button', { name: 'Play 2 attacks' }).focus();
+    rerender(<ArenaScreen {...props} view={{ ...view, currentTurnPlayerId: 'p1' }} />);
+    const play = within(sheet('Assassin multi-attack')).getByRole('button', { name: 'Play 2 attacks' });
+    expect([document.activeElement === play, play.getAttribute('aria-disabled'), reasonOf(play)]).toEqual([true, 'true', DISABLED_REASON_COPY['not-your-turn']]);
+    await user.click(play);
+    expectNoArenaIntent(props);
+  });
+
   it('a model reset focuses the panel when the card left the hand and the sheet turned read-only', async () => {
     const { user, rerender, props } = setup(assassinView());
     await openMultiAttack(user);

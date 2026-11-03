@@ -359,12 +359,13 @@ export function CardSheet(props: CardSheetProps): ReactElement {
           ? {
               actions: (
                 <div ref={actionsRef} className="flex flex-wrap items-start gap-2">
+                  {/* Focusable when disabled, with a reason always passed (empty while none): the turn
+                      passing under a focused Play keeps focus on it (L74-26 review M6, as the actions). */}
                   <Button
                     variant="primary"
                     disabled={multiAction?.enabled !== true || multiPayload === null}
-                    {...(multiAction !== undefined && multiAction.reason !== null
-                      ? { disabledReason: DISABLED_REASON_COPY[multiAction.reason] }
-                      : {})}
+                    focusableWhenDisabled
+                    disabledReason={multiAction !== undefined && multiAction.reason !== null ? DISABLED_REASON_COPY[multiAction.reason] : ''}
                     onClick={() => {
                       if (multiPayload !== null) {
                         send({ kind: 'playMultipleAttacks', payload: multiPayload });
@@ -483,9 +484,8 @@ export function CardSheet(props: CardSheetProps): ReactElement {
             <Button
               variant="danger"
               disabled={deactivate?.enabled !== true}
-              {...(deactivate !== undefined && deactivate.reason !== null
-                ? { disabledReason: DISABLED_REASON_COPY[deactivate.reason] }
-                : {})}
+              focusableWhenDisabled
+              disabledReason={deactivate !== undefined && deactivate.reason !== null ? DISABLED_REASON_COPY[deactivate.reason] : ''}
               onClick={() => {
                 setConfirming(false);
                 send({ kind: 'deactivatePersistent', payload: { effectId: model.instanceId } });
