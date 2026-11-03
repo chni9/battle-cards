@@ -6315,3 +6315,17 @@ L74-21 cache)" above; the L74-26 task review (M1) and the controller's ruling of
   removed with its tests (`b1ded6e5`); `cachedLobbyRules` and `tableRulesRecall` are unchanged.
 
 ---
+
+## 2026-11-03 · [P] Button reason lines are opt-in; only the dock reserves them (L74-26 review)
+
+- **Supersedes** the reason-line parts of "Button reasons wrap under the button, two lines
+  reserved" (2026-11-02) and "Only Unspy reserves two reason lines in the dock" (2026-11-03).
+  The gate's dock-height fix had made every `Button` reason a one-line clamp, so long card-sheet
+  reasons (the Invisible reason under Use, for example) were cut, against technical spec v7 §11
+  and Q39.
+- **Now** (`826fffb3`): `Button` keeps its pre-gate default, and the reason wraps in full. Only a
+  caller that passes `reasonLines` gets a reserved, clamped slot. The dock does so to keep one
+  height across turns: one line under Draw, Shop, Activate duplication and Stats, two under Unspy.
+- **Why:** the dock needs a stable footprint, while every other surface needs the whole reason.
+
+---

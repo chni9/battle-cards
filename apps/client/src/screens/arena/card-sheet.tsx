@@ -110,7 +110,6 @@ interface StepFocus {
   readonly target: 'rows' | 'entry';
 }
 
-/** The first enabled match: a natively disabled button cannot take focus. */
 /** The first match that is enabled: not natively disabled, and not `aria-disabled` (L74-26: card actions stay focusable when disabled). */
 function enabledIn(root: HTMLElement | null, selector: string): HTMLElement | null {
   return root?.querySelector<HTMLElement>(`${selector}:not([disabled]):not([aria-disabled="true"])`) ?? null;
