@@ -53,17 +53,26 @@ export interface HandFanProps {
   readonly rejected?: RejectCue | null;
 }
 
-type HandFanStyle = CSSProperties & { readonly '--hand-strips': string; readonly '--hand-fulls': string };
+type HandFanStyle = CSSProperties & {
+  readonly '--hand-strips': string;
+  readonly '--hand-fulls': string;
+  readonly '--hand-empties': string;
+};
 
 /**
  * Every card but the last of its group sits in a narrower slot, so the next card overlaps it from
  * the right (DOM order paints later cards on top) and its left-edge chips stay readable (spec v7
  * §5.4). The slot is at least 44 px and at most a card plus an 8 px gap. Below 44 px the hand
  * scrolls inside itself (§6.1 item 4). 44px = the scroller's 2 x 16 px padding + the 12 px group
- * gap. The widths are starting points the L74-26 browser gate checks at 360, 375 and 390 px.
+ * gap. An empty group's caption ('Specials / None', 54 px) takes `EMPTY_GROUP_WIDTH_CLASS`, which
+ * the budget also takes out, so a hand with no specials overlaps tighter instead of scrolling by
+ * the caption's width (L74-26 gate G4, checked at 360, 375 and 390 px).
  */
 const STRIP_WIDTH =
-  'max(44px, min(var(--hand-card-w) + 8px, (100cqi - 44px - var(--hand-fulls) * var(--hand-card-w)) / max(var(--hand-strips), 1)))';
+  'max(44px, min(var(--hand-card-w) + 8px, (100cqi - 44px - var(--hand-fulls) * var(--hand-card-w) - var(--hand-empties) * 56px) / max(var(--hand-strips), 1)))';
+
+/** 56 px, the `- var(--hand-empties) * 56px` of `STRIP_WIDTH`: wider than either V2 caption. */
+const EMPTY_GROUP_WIDTH_CLASS = 'w-14';
 
 /** V2's flip: a 90 degree `rotateY` seen through a 600 px perspective. */
 const FLIP_FULL_KEYFRAMES = { transformPerspective: [600, 600], rotateY: [90, 0] };
@@ -85,6 +94,7 @@ export function HandFan({ view, ctx, selectedInstanceId, onOpenCard, drag, rejec
   const style: HandFanStyle = {
     '--hand-strips': String(groups.reduce((sum, cards) => sum + Math.max(0, cards.length - 1), 0)),
     '--hand-fulls': String(groups.filter((cards) => cards.length > 0).length),
+    '--hand-empties': String(groups.filter((cards) => cards.length === 0).length),
   };
   return (
     // The container for `cqi`. `--hand-card-w` restates the Card `hand` width (spec v7 §5.4); each
@@ -129,7 +139,7 @@ function HandGroup({ zone, cards, selectedInstanceId, onOpenCard, rejected, drag
   return (
     <div data-zone={zone} data-hint-anchor={zone} className="flex items-end">
       {cards.length === 0 ? (
-        <p className="flex min-h-11 flex-col justify-center px-1 font-v7-body text-v7-caption font-bold text-v7-text-2">
+        <p className={`flex min-h-11 ${EMPTY_GROUP_WIDTH_CLASS} flex-col justify-center px-1 font-v7-body text-v7-caption font-bold text-v7-text-2`}>
           <span>{copy.label}</span>
           <span>{copy.empty}</span>
         </p>

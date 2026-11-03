@@ -137,6 +137,19 @@ describe('HandFan (L74-07)', () => {
     expect(screen.queryAllByRole('button')).toHaveLength(0);
   });
 
+  it('counts an empty group caption in the strip width, so 4 to 6 cards with no specials fit at 360 px (L74-26 gate G4)', () => {
+    // happy-dom has no layout or container queries: the strip width is CSS. Its budget took out
+    // the scroller padding, the group gap and one card per filled group, but not the empty
+    // group's 'Specials / None' caption (54 px), so the hand scrolled by that much instead of
+    // overlapping tighter. The caption now has a fixed width the budget subtracts per empty group
+    // (`--hand-empties`; happy-dom drops the `cqi` slot width itself, so the inputs are the check).
+    const { container } = renderUi(fan(viewWith({ hand: (['spy', 'tax', 'shield', 'thief', 'mirror'] as const).map((id) => makeCard(id)), specialCards: [] })));
+    const root = container.querySelector<HTMLElement>('[data-hand-fan]');
+    expect([root?.style.getPropertyValue('--hand-strips'), root?.style.getPropertyValue('--hand-fulls'), root?.style.getPropertyValue('--hand-empties')]).toEqual(['4', '1', '1']);
+    const caption = container.querySelector('[data-zone="specials"] p');
+    expect(caption?.classList.contains('w-14')).toBe(true);
+  });
+
   it('shows only the empty states for a walk-in, whatever the filler self holds (Q38)', () => {
     renderUi(fan(makeArenaView({
       pov: 'walk-in',
