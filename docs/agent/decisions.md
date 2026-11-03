@@ -6231,3 +6231,17 @@ L74-21 entry above ("Lobby-rules cache"), which this one supersedes. That entry 
   `FinishedStateView.lobbyRules`.
 
 ---
+
+## 2026-11-03 · [P] Only Unspy reserves two reason lines in the dock (L74-26 gate)
+
+Source: the 2026-11-02 entry "Button reasons wrap under the button, two lines reserved" above,
+which this one narrows (that entry stays as written); `DESIGN.md` › Button; the Lot 74 gate (G5).
+
+- **What the gate found.** With two reserved lines under every dock button, a Duplicator's dock
+  (two rows at 360 px: Draw, Shop, Unspy, then Activate duplication) grew from about 144 px to
+  192 px, and the arena shrank to 122 px under its one seat.
+- **Choice.** `Button reasonLines` (1 by default, or 2) sets both the clamp and the reserved
+  height. Only Unspy, whose 'Nobody is spying on you' takes two lines under its button, passes 2.
+  The dock keeps one height across turns, and a Duplicator's dock is 174 px at 360 px.
+
+---

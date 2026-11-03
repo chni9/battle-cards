@@ -6,8 +6,9 @@
  *
  * A disabled action says why (§11, Q39): `disabledReason` renders as visible text under the
  * button and joins its `aria-describedby`. The reason never widens the button: it wraps within
- * the button's width, clamped to two lines. `reserveReasonSlot` keeps both lines' height while
- * enabled so a reason appearing later does not shift the layout. A native disabled button
+ * the button's width, clamped to `reasonLines` lines (1 by default, 2 for a long reason).
+ * `reserveReasonSlot` keeps those lines' height while enabled so a reason appearing later does
+ * not shift the layout. A native disabled button
  * leaves the Tab order, so its reason is only reachable by sight; `focusableWhenDisabled`
  * renders `aria-disabled="true"` instead, keeps the button focusable with its reason
  * described, and swallows activation (Draw, Shop and Unspy in L74).
@@ -40,6 +41,8 @@ export interface ButtonProps extends Omit<ButtonHTMLAttributes<HTMLButtonElement
   size?: 'md' | 'lg';
   disabledReason?: string;
   reserveReasonSlot?: boolean;
+  /** How many lines the reason may take, and `reserveReasonSlot` keeps: 1 (18 px) or 2 (36 px). */
+  reasonLines?: 1 | 2;
   fullWidth?: boolean;
   className?: string;
   /** While `disabled`, stay in the Tab order as `aria-disabled` so the reason is reachable. */
@@ -54,6 +57,12 @@ function swallowActivation(event: MouseEvent<HTMLButtonElement>): void {
   event.preventDefault();
 }
 
+/** The reason's line clamp and its reserved height (the caption's 18 px line), per `reasonLines`. */
+const REASON_LINES_CLASS = {
+  1: { clamp: 'line-clamp-1', reserve: 'min-h-[18px]' },
+  2: { clamp: 'line-clamp-2', reserve: 'min-h-9' },
+} as const;
+
 export function Button({
   variant = 'primary',
   children,
@@ -61,6 +70,7 @@ export function Button({
   size = 'md',
   disabledReason,
   reserveReasonSlot = false,
+  reasonLines = 1,
   fullWidth = false,
   className,
   focusableWhenDisabled = false,
@@ -131,8 +141,8 @@ export function Button({
           (the dock at 360 and 375 px, L74-26 gate G5). */}
       <span
         data-reason-slot
-        className={`w-0 min-w-full line-clamp-2 font-v7-body text-v7-caption font-bold text-v7-text-2 ${
-          reserveReasonSlot ? 'min-h-9' : showReason ? 'min-h-4' : 'hidden'
+        className={`w-0 min-w-full ${REASON_LINES_CLASS[reasonLines].clamp} font-v7-body text-v7-caption font-bold text-v7-text-2 ${
+          reserveReasonSlot ? REASON_LINES_CLASS[reasonLines].reserve : showReason ? 'min-h-4' : 'hidden'
         }`}
         {...(showReason ? { id: reasonId } : { 'aria-hidden': 'true' as const })}
       >

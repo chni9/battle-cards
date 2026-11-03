@@ -543,9 +543,10 @@ their lot restyles them.
   motion it only dims (`brightness-90`), with no translate. A disabled button shows
   `disabledReason` as visible `--text-2` caption text under it, joined to its
   `aria-describedby` (§11). The reason never widens the button: it wraps within the button's
-  width, clamped to two lines (`line-clamp-2`). `reserveReasonSlot` keeps both lines (36 px),
-  empty and aria-hidden, so a reason that comes and goes never moves the layout (the dock at 360
-  and 375 px, L74-26 gate G5).
+  width, clamped to `reasonLines` lines (1 by default, 2 for a long reason such as Unspy's
+  'Nobody is spying on you'). `reserveReasonSlot` keeps those lines (18 or 36 px), empty and
+  aria-hidden, so a reason that comes and goes never moves the layout (the dock at 360 and
+  375 px, L74-26 gate G5).
   `className` lands on the outermost element: the button, or the wrapper holding the button
   and its reason line.
 - **Focusable disabled actions (Q39):** a natively disabled button leaves the Tab order, so its

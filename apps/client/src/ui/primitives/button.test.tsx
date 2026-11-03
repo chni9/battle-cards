@@ -79,7 +79,7 @@ describe('Button (technical spec v7 §5.3, §11)', () => {
     // its button, wrapped the dock onto a second row on the POV's turn only, and the board jumped
     // 72 px at every turn change. The reason now wraps inside the button's width, up to two lines.
     const { container, rerender } = renderUi(
-      <Button disabled disabledReason="Nobody is spying on you" reserveReasonSlot>
+      <Button disabled disabledReason="Nobody is spying on you" reserveReasonSlot reasonLines={2}>
         Unspy
       </Button>,
     );
@@ -91,11 +91,23 @@ describe('Button (technical spec v7 §5.3, §11)', () => {
       true,
     ]);
     rerender(
-      <Button disabledReason="Nobody is spying on you" reserveReasonSlot>
+      <Button disabledReason="Nobody is spying on you" reserveReasonSlot reasonLines={2}>
         Unspy
       </Button>,
     );
     expect(container.querySelector('[data-reason-slot]')?.classList.contains('min-h-9')).toBe(true);
+  });
+
+  it('a reserved slot holds one reason line by default, so a row of short reasons stays one line tall (L74-26 gate G5)', () => {
+    // Two reserved lines on every dock button made a Duplicator's two dock rows 40 px taller at
+    // 360 px and squeezed the arena under its seat; only Unspy's reason needs two lines.
+    const { container } = renderUi(
+      <Button disabled disabledReason="Not your turn" reserveReasonSlot>
+        Draw
+      </Button>,
+    );
+    const slot = container.querySelector('[data-reason-slot]');
+    expect(['line-clamp-1', 'min-h-[18px]', 'min-h-9'].map((name) => slot?.classList.contains(name))).toEqual([true, true, false]);
   });
 
   it('a focusable action keeps its element and its focus when a reason appears under it (L74-26 gate G9)', () => {

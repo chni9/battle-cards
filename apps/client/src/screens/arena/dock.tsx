@@ -140,6 +140,9 @@ export function Dock({
           variant="quiet"
           icon="unspy"
           data-unspy=""
+          // "Nobody is spying on you" takes two lines under the button; every other dock reason
+          // fits on one (L74-26 gate G5).
+          reasonLines={2}
           aria-label={unspyAriaLabel(unspy.cost)}
           title={unspyAriaLabel(unspy.cost)}
           disabled={!unspy.enabled}
