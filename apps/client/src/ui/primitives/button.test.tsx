@@ -98,6 +98,23 @@ describe('Button (technical spec v7 §5.3, §11)', () => {
     expect(container.querySelector('[data-reason-slot]')?.classList.contains('min-h-9')).toBe(true);
   });
 
+  it('a focusable action keeps its element and its focus when a reason appears under it (L74-26 gate G9)', () => {
+    const { rerender } = renderUi(
+      <Button focusableWhenDisabled disabledReason="">
+        Use
+      </Button>,
+    );
+    const before = screen.getByRole('button', { name: 'Use' });
+    before.focus();
+    rerender(
+      <Button focusableWhenDisabled disabled disabledReason="Not your turn">
+        Use
+      </Button>,
+    );
+    const after = screen.getByRole('button', { name: 'Use', description: 'Not your turn' });
+    expect([after === before, document.activeElement === after, after.getAttribute('aria-disabled')]).toEqual([true, true, 'true']);
+  });
+
   it('keeps a caller aria-describedby next to the reason id', () => {
     renderUi(
       <Button disabled disabledReason="Not your turn" aria-describedby="shop-help">

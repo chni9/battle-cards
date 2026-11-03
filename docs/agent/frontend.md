@@ -1235,8 +1235,10 @@ Appendix A). Each Lot 74 task appends its bullet here, in task order.
   in model order. Use (`primary`, "Use" plus the play cost as a `−` `CostAmount`), Upgrade
   (`secondary`, `−1` upgrade point) and Sell (`quiet`, `+` the catalog `sellYield`), each tagged
   `data-card-action`. A disabled action shows `DISABLED_REASON_COPY[reason]` under it (`Button
-  disabledReason`); there is no shared "Actions locked" line. A Use routed `send` commits
-  `playCard {instanceId}` and closes the sheet; a Use routed `target` calls
+  disabledReason`); there is no shared "Actions locked" line. Actions are `focusableWhenDisabled`
+  with a reason always passed (empty while enabled), so when the turn passes or a sub-choice
+  opens with focus on Use, focus stays on it and Tab stays in the sheet (L74-26 gate G9). A Use
+  routed `send` commits `playCard {instanceId}` and closes the sheet; a Use routed `target` calls
   `onBeginTargeting({ instanceId, seatIds })` (L74-10 collapses the sheet into targeting) and
   sends nothing; Regeneration and Card Transformer pick their tile in the sheet first (L74-10).
   A sheet commits at most once per view, so a double tap sends one intent; the guard re-arms

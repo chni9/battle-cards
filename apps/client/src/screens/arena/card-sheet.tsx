@@ -250,10 +250,15 @@ export function CardSheet(props: CardSheetProps): ReactElement {
 
   function renderAction(action: CardAction): ReactElement | null {
     const availability = action.kind === 'use' && regenerationTile !== undefined ? regenerationTile : action;
+    // `focusableWhenDisabled`: an action that turns disabled under the focus (the turn passed, a
+    // sub-choice opened) keeps it, with its reason described, so focus never falls to `body` and Tab
+    // stays in the sheet (L74-26 gate G9). The Button swallows its activation.
     const shared = {
       'data-card-action': action.kind,
       disabled: !availability.enabled,
-      ...(availability.reason !== null ? { disabledReason: DISABLED_REASON_COPY[availability.reason] } : {}),
+      focusableWhenDisabled: true,
+      // Always a reason (empty while enabled), so the Button keeps one tree as the reason comes and goes.
+      disabledReason: availability.reason !== null ? DISABLED_REASON_COPY[availability.reason] : '',
     };
     switch (action.kind) {
       case 'use': {

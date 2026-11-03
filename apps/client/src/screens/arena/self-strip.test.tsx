@@ -241,7 +241,7 @@ describe('self strip and in-play card sheet in the arena (L74-09)', () => {
     await user.click(within(stripOf(container)).getByRole('button', { name: 'Poison, 3 card lives' }));
     const deactivate = within(screen.getByRole('dialog', { name: 'Poison' }))
       .getByRole('button', { name: 'Deactivate', description: DISABLED_REASON_COPY['actions-locked'] });
-    expect(deactivate.hasAttribute('disabled')).toBe(true);
+    expect(deactivate.getAttribute('aria-disabled')).toBe('true');
     await user.click(deactivate);
     expect(screen.queryByRole('dialog', { name: 'Are you sure?' })).toBeNull();
     expectNoArenaIntent(props);
@@ -258,7 +258,7 @@ describe('self strip and in-play card sheet in the arena (L74-09)', () => {
     const poison = screen.getByRole('dialog', { name: 'Poison' });
     for (const name of [UPGRADE, 'Deactivate']) {
       expect(within(poison).getByRole('button', { name, description: DISABLED_REASON_COPY['not-your-turn'] })
-        .hasAttribute('disabled')).toBe(true);
+        .getAttribute('aria-disabled')).toBe('true');
     }
     await user.keyboard('{Escape}');
     for (const name of ['Shield', 'Sentence'] as const) {
@@ -278,7 +278,7 @@ describe('self strip and in-play card sheet in the arena (L74-09)', () => {
     await user.click(within(stripOf(container)).getByRole('button', { name: 'Shield' }));
     expect(within(screen.getByRole('dialog', { name: 'Shield' }))
       .getByRole('button', { name: UPGRADE, description: DISABLED_REASON_COPY['actions-locked'] })
-      .hasAttribute('disabled')).toBe(true);
+      .getAttribute('aria-disabled')).toBe('true');
   });
 
   it('offers no Upgrade on an opponent base Shield while the own base Shield offers it (Q37 regression)', async () => {

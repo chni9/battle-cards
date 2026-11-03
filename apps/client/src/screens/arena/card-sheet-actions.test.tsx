@@ -35,7 +35,7 @@ async function openCard(user: UserEvent, group: 'Hand' | 'Specials', card: strin
 }
 
 function expectDisabled(sheet: HTMLElement, name: string, reason: string): void {
-  expect(within(sheet).getByRole('button', { name, description: reason }).hasAttribute('disabled')).toBe(true);
+  expect(within(sheet).getByRole('button', { name, description: reason }).getAttribute('aria-disabled')).toBe('true');
 }
 
 describe('card sheet actions (L74-08)', () => {
@@ -78,7 +78,7 @@ describe('card sheet actions (L74-08)', () => {
     }));
     const sheet = await openCard(user, 'Hand', 'Basic attack, 1 damage', 'Basic attack');
     expectDisabled(sheet, 'Use minus 1 pt', DISABLED_REASON_COPY.invisibility);
-    expect(within(sheet).getByRole('button', { name: 'Upgrade minus 1 upgrade point' }).hasAttribute('disabled')).toBe(false);
+    expect(within(sheet).getByRole('button', { name: 'Upgrade minus 1 upgrade point' }).getAttribute('aria-disabled')).toBeNull();
     await user.click(within(sheet).getByRole('button', { name: 'Sell plus 1 pt' }));
     expect(vi.mocked(props.onSellCard).mock.calls).toStrictEqual([['basic-attack-1']]);
     expect(props.onPlayCard).not.toHaveBeenCalled();
@@ -104,6 +104,21 @@ describe('card sheet actions (L74-08)', () => {
     expectNoArenaIntent(props);
   });
 
+  it('keeps focus on Use when the turn passes under it: Use stays focusable, disabled with its reason, and sends nothing (L74-26 gate G9)', async () => {
+    const view = viewWith({ points: 8, hand: [makeCard('tax')] });
+    const { user, props, rerender } = renderArena(view);
+    const sheet = await openCard(user, 'Hand', 'Tax', 'Tax');
+    const use = within(sheet).getByRole('button', { name: /^Use/ });
+    use.focus();
+    const offTurn = { ...view, currentTurnPlayerId: 'p1' };
+    rerender(<ArenaScreen {...props} view={offTurn} />);
+    const after = within(screen.getByRole('dialog', { name: 'Tax' })).getByRole('button', { name: /^Use/, description: DISABLED_REASON_COPY['not-your-turn'] });
+    expect(document.activeElement).toBe(after);
+    expect(after.getAttribute('aria-disabled')).toBe('true');
+    await user.click(after);
+    expectNoArenaIntent(props);
+  });
+
   it('sends nothing when the sheet opens and closes (§6.6.4)', async () => {
     const { user, props } = renderArena(viewWith({ points: 10, hand: [makeCard('spy')] }));
     await openCard(user, 'Hand', 'Spy', 'Spy');
@@ -116,7 +131,7 @@ describe('card sheet actions (L74-08)', () => {
     const { user, props } = renderArena(viewWith({ points: 2, hand: [makeCard('spy')] }));
     const sheet = await openCard(user, 'Hand', 'Spy', 'Spy');
     const use = within(sheet).getByRole('button', { name: 'Use minus 2 pts' });
-    expect(use.hasAttribute('disabled')).toBe(false);
+    expect(use.getAttribute('aria-disabled')).toBeNull();
     await user.click(use);
     expectNoArenaIntent(props);
   });

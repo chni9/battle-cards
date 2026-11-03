@@ -75,7 +75,10 @@ export function Button({
   const isDisabled = disabled === true;
   const ariaDisabled = isDisabled && focusableWhenDisabled;
   const showReason = isDisabled && disabledReason !== undefined && disabledReason !== '';
-  const wrapped = showReason || reserveReasonSlot;
+  // A focusable action that can carry a reason keeps one element tree: wrapping it only once the
+  // reason shows would remount the button and drop its focus to `body` (L74-26 gate G9).
+  const keepsReasonSlot = focusableWhenDisabled && disabledReason !== undefined;
+  const wrapped = showReason || reserveReasonSlot || keepsReasonSlot;
   const describedBy = [callerDescribedBy, showReason ? reasonId : undefined]
     .filter((id) => id !== undefined && id !== '')
     .join(' ');
@@ -129,7 +132,7 @@ export function Button({
       <span
         data-reason-slot
         className={`w-0 min-w-full line-clamp-2 font-v7-body text-v7-caption font-bold text-v7-text-2 ${
-          reserveReasonSlot ? 'min-h-9' : 'min-h-4'
+          reserveReasonSlot ? 'min-h-9' : showReason ? 'min-h-4' : 'hidden'
         }`}
         {...(showReason ? { id: reasonId } : { 'aria-hidden': 'true' as const })}
       >

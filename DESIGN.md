@@ -553,7 +553,10 @@ their lot restyles them.
   users (Draw, Shop and Unspy in L74), the caller passes `disabled` with
   `focusableWhenDisabled`. The button then renders `aria-disabled="true"` instead of
   `disabled`, stays focusable with its reason described, swallows activation (click, Enter,
-  Space) and has no press.
+  Space) and has no press. A focusable action given a `disabledReason` (empty while enabled)
+  keeps one element tree, its reason line hidden until it shows, so a reason that appears
+  under the focus never remounts the button and drops focus to `body` (the card sheet's
+  actions, L74-26 gate G9).
 - **Icon wells:** on the three CTA fills an icon always sits in a round `--bg-0` well
   (`ICON_WELL_CLASS`), whatever its name, so no icon can meet a fill within CIEDE2000 20 of its
   body (Icons › Accessibility and use) and a later icon cannot either. On `quiet` the icon sits
