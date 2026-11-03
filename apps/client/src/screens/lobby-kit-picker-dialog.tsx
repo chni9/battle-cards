@@ -1,7 +1,9 @@
 /**
  * Lobby / solo kit picker — PROTOCOL_VERSION 30 / L49-02.
- * Grid of portraits; click opens description then Select. Opponents never see the pick.
- * Kit body: `ui/kit/KitDetails` (L72-15) since L76-02; L76-10 replaces this dialog.
+ * Grid of portraits; click opens description then Select. Opponents see the pick only with an
+ * upgraded Spy or Spy Thief, or once its player is eliminated (technical spec v7 §10.1, L76-03).
+ * Kit body: `ui/kit/KitDetails` (L72-15) since L76-02; L76-10 replaces this dialog and moves
+ * `RandomKitDetails` verbatim.
  */
 
 import { getKit, type KitId, type LobbyKitSelection } from '@card-battle/shared';
@@ -11,6 +13,7 @@ import { getOpponentPlaceholderUrl } from '../ui/asset-lookup';
 import { Button } from '../design/components/button';
 import { Dialog } from '../design/components/dialog';
 import { KitPortrait } from '../design/components/kit-portrait';
+import { KIT_PICKER_LEAD, RANDOM_KIT_ASSIGN_COPY, RANDOM_KIT_PRIVACY_COPY } from './kit-pick-copy';
 import {
   LOBBY_KIT_PICKER_SELECTIONS,
   lobbyKitSelectionLabel,
@@ -113,9 +116,7 @@ function KitGrid({
 }): ReactElement {
   return (
     <>
-      <p className="text-sm text-ink-muted">
-        Opponents cannot see your kit. Random is the default.
-      </p>
+      <p className="text-sm text-ink-muted">{KIT_PICKER_LEAD}</p>
       <ul className="mt-3 grid grid-cols-3 gap-2 sm:grid-cols-4 md:grid-cols-5">
         {LOBBY_KIT_PICKER_SELECTIONS.filter(
           (selection) => selection === 'random' || allowedKitIds.includes(selection),
@@ -168,13 +169,8 @@ function KitGrid({
 function RandomKitDetails(): ReactElement {
   return (
     <div className="space-y-3 text-sm text-ink">
-      <p>
-        The server assigns one of the 16 kits at random when the game starts, the same way as
-        before this picker existed.
-      </p>
-      <p className="text-ink-muted">
-        Opponents cannot see which kit you received until Spy, an equivalent, or elimination.
-      </p>
+      <p>{RANDOM_KIT_ASSIGN_COPY}</p>
+      <p className="text-ink-muted">{RANDOM_KIT_PRIVACY_COPY}</p>
     </div>
   );
 }

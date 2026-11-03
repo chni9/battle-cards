@@ -3,6 +3,7 @@ import {
   ELIMINATED_LABEL,
   EXCLUDED_LABEL,
   MINIMIZE_LABEL,
+  RANDOM_SPECIAL_CAPTION,
   TABLE_RULES_LABEL,
   carouselPositionLabel,
   eliminatedPortraitLabel,
@@ -20,6 +21,10 @@ describe('ui copy (technical spec v7 §10.6)', () => {
 
   it('names the house-rules strip and its sheet "Table rules" (spec v7 §6.11, §7.4)', () => {
     expect(TABLE_RULES_LABEL).toBe('Table rules');
+  });
+
+  it('captions a random starting special "Random special" (spec v7 §10.1, L76-03)', () => {
+    expect(RANDOM_SPECIAL_CAPTION).toBe('Random special');
   });
 
   it('announces a carousel position as "{label}, {n} of {m}"', () => {

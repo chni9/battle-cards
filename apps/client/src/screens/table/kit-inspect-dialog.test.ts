@@ -72,7 +72,7 @@ describe('kit inspect trait sections (L30-05)', () => {
     expect(KIT_ABILITY_COPY.ghost).toMatch(/2 points/i);
     expect(KIT_ABILITY_COPY.duplicator).toMatch(/duplication/i);
     expect(KIT_ABILITY_COPY.prophet).toMatch(/2 special/i);
-    expect(KIT_ABILITY_COPY.prophet).toMatch(/Invisibility excluded/i);
+    expect(KIT_ABILITY_COPY.prophet).toBe('Starts with 2 special cards drawn at random from the circulating special pool (duplicates allowed).');
     expect(KIT_ABILITY_COPY.gambler).toMatch(/1-in-10/i);
     expect(KIT_ABILITY_COPY.gambler).toMatch(/Roulette/i);
     expect(KIT_ABILITY_COPY.gambler).toMatch(/5–100|5-100/);

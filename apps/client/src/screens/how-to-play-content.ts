@@ -1,5 +1,5 @@
 /**
- * How to play primer copy — technical spec v6 §5.1 / L51-02.
+ * How to play primer copy — technical spec v6 §5.1 / L51-02; Kits follows technical spec v7 §10.1 (L76-03).
  * First-time floor only; screenshot filenames are designer-owned.
  */
 
@@ -73,7 +73,7 @@ export const HOW_TO_PLAY_SECTIONS: readonly HowToPlaySection[] = [
   {
     id: 'kits',
     title: 'Kits',
-    body: 'Each player has a kit. It sets starting lives, points, upgrade points, and Draw, how many random action and attack cards you begin with, which special cards you hold, and sometimes a kit ability. Opponents cannot see your kit until they Spy you, or until you are eliminated. In the lobby you may pick a kit or keep Random. Gambler Draw is 5–100 (weighted; each extra point is rarer) each turn; the kit starts with 3 specials; each Draw has a 1-in-10 chance to eliminate you.',
+    body: 'Each player has a kit. It sets starting lives, points, upgrade points, and Draw, how many random action and attack cards you begin with, which special cards you hold, and sometimes a kit ability. Opponents see your kit only with an upgraded Spy or Spy Thief, or once you are eliminated. A basic Spy shows only your resources. In the lobby you may pick any kit the host has not excluded, or keep Random; if the host deals kits at random, nobody picks. Gambler Draw is 5–100 (weighted; each extra point is rarer) each turn; the kit starts with 3 specials; each Draw has a 1-in-10 chance to drop you to 1 life and lose everything (you are not eliminated).',
     screenshotFile: HOW_TO_PLAY_SCREENSHOT_FILES.kits,
   },
   {

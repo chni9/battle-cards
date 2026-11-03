@@ -5,6 +5,7 @@ import type { ReactElement, SyntheticEvent } from 'react';
 import { Button } from '../../design/components/button';
 import type { RoomConnectionStatus } from '../../net/use-room-connection';
 import { HOME_INPUT_CLASS } from './home-classes';
+import { ONLINE_CREATE_HELPER } from './home-copy';
 import { NicknameField } from './nickname-field';
 import { PathHeader } from './path-header';
 
@@ -62,7 +63,7 @@ export function OnlinePath({
         <form onSubmit={onCreateSubmit} className="space-y-3">
           <h2 className="text-lg font-semibold text-ink">Create a game</h2>
           <p className="text-sm text-ink-muted">
-            Host gets a code to share. Start from the lobby when everyone is seated.
+            {ONLINE_CREATE_HELPER}
           </p>
           <Button type="submit" variant="green" disabled={!canSubmit}>
             Create

@@ -24,6 +24,7 @@ import { KitPortrait } from '../../design/components/kit-portrait';
 import { FeedbackDialog } from '../../feedback/feedback-dialog';
 import type { RoomConnectionStatus } from '../../net/use-room-connection';
 import { ChatLog } from '../../ui/chat/chat-log';
+import { KIT_PRIVACY_COPY } from '../kit-pick-copy';
 import { LobbyKitPickerDialog } from '../lobby-kit-picker-dialog';
 import { LobbyRulesPanel } from '../lobby-rules-panel';
 import { STATUS_LABELS } from '../status-labels';
@@ -154,7 +155,7 @@ export function LobbyScreen({
         ) : rules.randomOnly ? null : (
         <section className="mt-6 rounded-[length:var(--radius-card)] border border-border bg-surface-raised p-4">
           <h2 className="text-sm font-medium text-ink-muted">Your kit</h2>
-          <p className="mt-1 text-sm text-ink-muted">Hidden from opponents until Spy or death.</p>
+          <p className="mt-1 text-sm text-ink-muted">{KIT_PRIVACY_COPY}</p>
           <div className="mt-3 flex flex-wrap items-center gap-3">
             <KitPortrait
               kitId={view.yourKitSelection === 'random' ? null : view.yourKitSelection}

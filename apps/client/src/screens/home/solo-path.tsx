@@ -15,6 +15,7 @@ import { Button } from '../../design/components/button';
 import { KitPortrait } from '../../design/components/kit-portrait';
 import type { RoomConnectionStatus } from '../../net/use-room-connection';
 import { lobbyKitSelectionLabel } from '../lobby/lobby-kit-picker';
+import { KIT_PICKER_LEAD } from '../kit-pick-copy';
 import { LobbyRulesPanel } from '../lobby-rules-panel';
 import { NicknameField } from './nickname-field';
 import { PathHeader } from './path-header';
@@ -137,7 +138,7 @@ export function SoloPath({
         {soloRules.randomOnly ? null : (
         <div className="space-y-2">
           <p className="text-sm font-medium text-ink">Your kit</p>
-          <p className="text-sm text-ink-muted">Hidden from opponents. Random is the default.</p>
+          <p className="text-sm text-ink-muted">{KIT_PICKER_LEAD}</p>
           <div className="flex flex-wrap items-center gap-3">
             <KitPortrait
               kitId={soloKitSelection === 'random' ? null : soloKitSelection}

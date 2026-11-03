@@ -10,6 +10,7 @@ import {
   HOW_TO_PLAY_SECTION_IDS,
 } from './how-to-play-content';
 import { howToPlayScreenshotUrl } from './how-to-play-screenshots';
+import { KIT_PRIVACY_COPY } from './kit-pick-copy';
 
 describe('How to play content (technical spec v6 §5.1 / L51-02)', () => {
   it('lists sections in the spec order', () => {
@@ -63,6 +64,16 @@ describe('How to play content (technical spec v6 §5.1 / L51-02)', () => {
     expect(byId['shop']?.body).toMatch(/buy extra cards or upgrade points/i);
     expect(byId['shop']?.body).toMatch(/pool/i);
     expect(byId['shop']?.body).toMatch(/others do not see which card/i);
+  });
+
+  it('states the Lot 69, Lot 70 and Lot 66 kit facts (spec v7 §10.1, L76-03)', () => {
+    const kits = HOW_TO_PLAY_SECTIONS.find((section) => section.id === 'kits')?.body ?? '';
+    expect(kits).toContain(KIT_PRIVACY_COPY);
+    expect(kits).toContain('A basic Spy shows only your resources.');
+    expect(kits).toContain('pick any kit the host has not excluded, or keep Random');
+    expect(kits).toContain('if the host deals kits at random, nobody picks');
+    expect(kits).toContain('each Draw has a 1-in-10 chance to drop you to 1 life and lose everything (you are not eliminated)');
+    expect(kits).not.toMatch(/until they Spy you|pick a kit or keep Random|chance to eliminate you/);
   });
 
   it('omits delayed resolution, shop-price formula, and draw-is-not-a-card', () => {

@@ -80,6 +80,10 @@ const RELEASE_NOTES_CATALOG = [
         before: 'Reconnecting or viewing the final board replayed old elimination flashes.',
         after: 'Fixed some bugs.',
       },
+      {
+        before: 'Some help text about kits, Spy and starting an online game was out of date.',
+        after: 'Fixed some bugs.',
+      },
     ],
   },
   {

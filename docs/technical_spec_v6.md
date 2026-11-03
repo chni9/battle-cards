@@ -255,7 +255,7 @@ designer files (`delayed-resolution.png`, `table-overview.png`) stay on disk unu
 | `points` | Points | Points are the currency for almost every action: playing most cards, buying from the Shop, selling, and buying upgrade points. Draw gives you points equal to your kit's Draw value. | — |
 | `cards` | Cards | Your hand holds attack cards and action cards. Attacks deal damage to a chosen opponent. Action cards do everything else: gain resources, steal, spy, shield, or heal. Tap a card to read it, then Use, Upgrade, or Sell. | — |
 | `upgrade` | Upgrade | You can upgrade a held copy by spending 1 upgrade point. That upgrade is permanent for that copy and makes its effect stronger. The card dialog tells you what the upgrade adds. | — |
-| `kits` | Kits | Each player has a kit. It sets starting lives, points, upgrade points, and Draw, how many random action and attack cards you begin with, which special cards you hold, and sometimes a kit ability. Opponents cannot see your kit until they Spy you, or until you are eliminated. In the lobby you may pick a kit or keep Random. | `how-to-play/hidden-kit.png` |
+| `kits` | Kits | Superseded by `docs/technical_spec_v7.md` §10.1 (How to play "Kits", Q11 = B, L76-03); the live copy is `apps/client/src/screens/how-to-play-content.ts`. | `how-to-play/hidden-kit.png` |
 | `specials` | Special cards | Special cards come with your kit; you can also buy one in the Shop. Each special has one use: after you play it, it is gone. They have a play cost in points and can be upgraded like other cards. | — |
 | `shop` | Shop | Open Shop to buy extra cards or upgrade points, and to sell cards you do not need. | `how-to-play/shop.png` |
 

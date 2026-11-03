@@ -15,8 +15,10 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { renderUi } from '../../test/render';
 import { HINTS_STORAGE_KEY, HOW_TO_PLAY_SEEN_KEY, readHintState } from '../../ui/help-storage';
 import { LAST_SEEN_RELEASE_ID_KEY } from '../../ui/release-storage';
+import { KIT_PICKER_LEAD } from '../kit-pick-copy';
 import type { SoloMenuSeed } from '../solo-menu-seed';
 import { STATUS_LABELS } from '../status-labels';
+import { ONLINE_CREATE_HELPER } from './home-copy';
 import { HomeScreen, type HomeScreenProps } from './home-screen';
 import { closeHomeDialog, enterHomePath, expectNoHomeIntent, HOME_PATH_LABEL, HOME_PATHS, makeHomeProps, seedHomeStorage } from './test-home';
 
@@ -364,5 +366,22 @@ describe('Home layout (L53-07)', () => {
       expect(container.innerHTML).not.toContain('100dvh');
       if (target !== null) await user.click(screen.getByRole('button', { name: 'Back' }));
     }
+  });
+});
+
+describe('Lot 76 copy (spec v7 §10.1, L76-03)', () => {
+  it('tells the host on Online to start once every guest is Ready', async () => {
+    seedHomeStorage(SEEN);
+    const { user } = renderHome();
+    await enterHomePath(user, 'online');
+    expect(screen.getByText(ONLINE_CREATE_HELPER)).toBeTruthy();
+    expect(main().textContent).not.toContain('when everyone is seated');
+  });
+
+  it('says on the solo kit block who can see your kit', async () => {
+    seedHomeStorage(SEEN);
+    const { user } = renderHome();
+    await enterHomePath(user, 'solo');
+    expect(screen.getByText(KIT_PICKER_LEAD)).toBeTruthy();
   });
 });

@@ -6345,3 +6345,21 @@ Source: technical spec v7 §4.2, §15 (the lobby leaves `screens/table/`); `docs
   trimmed lines) and Game over (L77).
 
 ---
+
+## 2026-11-03 · [P] The Lot 76 kit copy supersedes the v6 How to play Kits row (L76-03)
+
+- **Supersedes** the `kits` row of `docs/technical_spec_v6.md` §5.1 on designer instruction 2026-10-20
+  (technical spec v7 §10, Q11 = B). The row now points at v7 §10.1; the live copy is
+  `apps/client/src/screens/how-to-play-content.ts`.
+- **Changed** (v7 §10.1, the Lot 76 rows): How to play Kits, the lobby Your kit line, the Random kit
+  preview, the Online Create helper and Prophet's ability. A kit now shows only to an upgraded Spy or
+  Spy Thief, or once its player is eliminated, and a basic Spy shows only resources (Lot 69). Kits names
+  host exclusions and dealt-at-random kits (Lot 70) and says a Gambler bust does not eliminate (Lot 66).
+  The Create helper waits for every guest's Ready (L57). Prophet no longer says "Invisibility excluded":
+  Invisibility circulates again (L58-06).
+- **Also changed, outside §10.1:** the picker lead and the solo kit line, which predate Lot 69, take the
+  same wording ("... Random is the default."). `KitDetails` shows Prophet's and Gambler's random starting
+  specials as hidden special versos captioned "Random special" (backlog L76-03 watch point). Every
+  string is listed in the PR for designer review (§10, §10.6).
+
+---

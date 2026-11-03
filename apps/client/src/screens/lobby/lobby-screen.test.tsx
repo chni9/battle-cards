@@ -13,6 +13,7 @@ import { beforeEach, describe, expect, expectTypeOf, it, vi } from 'vitest';
 
 import { submitFeedback } from '../../feedback/submit-feedback';
 import { renderUi } from '../../test/render';
+import { KIT_PRIVACY_COPY } from '../kit-pick-copy';
 import { LobbyScreen, type LobbyScreenProps } from './lobby-screen';
 import {
   expectNoLobbyIntent, guestLobbyView, hostLobbyView, isLobbyControlDisabled, LOBBY_BOT, LOBBY_GUEST,
@@ -272,5 +273,13 @@ describe('viewport (L53-07; parity global-visual-viewport-fit)', () => {
     expect(main.className.split(/\s+/)).toEqual(expect.arrayContaining(['overflow-y-auto', 'overscroll-contain']));
     expect(main.className).not.toContain('overflow-hidden');
     expect(document.body.innerHTML).not.toContain('100dvh');
+  });
+});
+
+describe('Lot 76 copy (spec v7 §10.1, L76-03)', () => {
+  it('says on Your kit who can see your kit', () => {
+    renderUi(<LobbyScreen {...makeLobbyProps({ view: guestLobbyView() })} />, { reducedMotion: true });
+    expect(screen.getByText(KIT_PRIVACY_COPY)).toBeTruthy();
+    expect(screen.queryByText(/until Spy or death/)).toBeNull();
   });
 });

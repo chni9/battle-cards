@@ -672,7 +672,7 @@ and the L73 seat layout reuse it.
 `ui/ui-copy.ts` holds only the new strings a `ui/` component needs, each listed in the PR for
 designer review (spec v7 §10.6): `EXCLUDED_LABEL` "Excluded" and `carouselPositionLabel`
 ("{label}, {n} of {m}", the Carousel status line), both L72-08, and `MINIMIZE_LABEL`
-"Minimize" (L72-09), and `TABLE_RULES_LABEL` "Table rules" (L72-16). Every other label (IconButton names, Carousel previous and
+"Minimize" (L72-09), and `TABLE_RULES_LABEL` "Table rules" (L72-16), and `RANDOM_SPECIAL_CAPTION` "Random special" (L76-03). Every other label (IconButton names, Carousel previous and
 next, the KitTile info control, the BadgeGroup `overflowLabel`) comes from the caller's
 existing copy.
 
@@ -1084,9 +1084,10 @@ the classic files and their duplicated copy stay until L75 and L76.
   left edge), so every thumb in the sheet, the hand's included, shares one left edge. Instance ids are `kitSpecialCardKey(cardId, index)` (index keeps
   Specialist's two Card Transformers apart), `always-upgraded:<cardId>` and
   `immune-to:<cardId>`, so they appear as `data-instance-id`; the Card's gold "+" badge
-  replaces the V2 "↑". An empty trait group says "None"; Prophet's empty special list stays
-  empty (he starts with two random specials, told in Ability). No face is a button: the sheet
-  around the details owns Select.
+  replaces the V2 "↑". An empty trait group says "None". A kit with `randomStartingSpecialCount` (Prophet 2,
+  Gambler 2) adds that many hidden special versos (`Card face="hidden" family="special"`, gold
+  rim) after its fixed specials, each captioned `RANDOM_SPECIAL_CAPTION` "Random special", with no
+  cost (L76-03, spec v7 §10.1). No face is a button: the sheet around the details owns Select.
 - **Costs:** a thumb prints no cost chip (L72-12), so a special's play cost is a signed
   `CostAmount` under its caption, lined up across a row; Draw and the upgrade-point Buy and Sell
   prices are `CostAmount` too, so every amount is an icon, a number and a spoken text. L72-21
@@ -1098,7 +1099,7 @@ the classic files and their duplicated copy stay until L75 and L76.
   on a `--bg-0` face (not shipped): pale lilac lenses, hub and tile, none a hole.
 - **Anchors:** `data-kit-id`, `data-kit-name`, `data-kit-section="<id>"`, `data-kit-stat="draw" |
   "upgrade-point-buy" | "upgrade-point-sell"`, `data-hand-family="action" | "attack"`,
-  `data-special-key`, `data-card-caption`.
+  `data-special-key`, `data-random-special`, `data-card-caption`.
 - **Gallery:** the `/dev/ui` section `kit` (`ui/kit/kit.gallery.tsx`): the four faces, the four
   sizes, every kit at `tile`, and the details of Scientific, Specialist, Gambler and Prophet.
 
