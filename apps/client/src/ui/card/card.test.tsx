@@ -228,11 +228,14 @@ describe('activation (spec v7 §6.6.5)', () => {
     expect(onActivate).toHaveBeenNthCalledWith(2, 'h-7');
   });
 
-  it('marks selection with aria-pressed and keeps an unplayable face activatable', async () => {
+  it('marks selection with aria-pressed only when the caller passes selected, and keeps an unplayable face activatable', async () => {
     const onActivate = vi.fn();
     const { container, rerender, user } = renderUi(
       <Card size="hand" instance={inst('tax')} onActivate={onActivate} />,
     );
+    expect(el(container, UP).hasAttribute('aria-pressed')).toBe(false);
+
+    rerender(<Card size="hand" instance={inst('tax')} onActivate={onActivate} selected={false} />);
     expect(el(container, UP).getAttribute('aria-pressed')).toBe('false');
 
     rerender(<Card size="hand" instance={inst('tax')} onActivate={onActivate} selected unplayable />);
@@ -241,6 +244,17 @@ describe('activation (spec v7 §6.6.5)', () => {
     expect(root.getAttribute('data-unplayable')).toBe('true');
     await user.click(root);
     expect(onActivate).toHaveBeenCalledWith('inst-tax');
+  });
+
+  it('links a caller description to the face on both root forms (L74-07)', () => {
+    const { getByRole, rerender } = renderUi(
+      <Card size="hand" instance={inst('tax')} onActivate={vi.fn()} unplayable description="Not enough lives" />,
+    );
+    expect(getByRole('button', { name: 'Tax', description: 'Not enough lives' })).not.toBeNull();
+    rerender(<Card size="sheet" instance={inst('tax')} description="Not enough lives" />);
+    expect(getByRole('article', { name: 'Tax', description: 'Not enough lives' })).not.toBeNull();
+    rerender(<Card size="hand" instance={inst('tax')} onActivate={vi.fn()} />);
+    expect(getByRole('button', { name: 'Tax' }).hasAttribute('aria-describedby')).toBe(false);
   });
 
   it('renders an article, not a button, without onActivate', () => {

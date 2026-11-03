@@ -19,11 +19,16 @@
  *   ancestor (the arena, the L78 board shake) cannot re-anchor it. It is `pointer-events: none`
  *   and never takes focus or a press. Mount it once per arena (L74-17) so its regions exist
  *   before the first cue.
+ * - The root (`data-zone="table-banners"`) is sized to the live visual viewport box
+ *   (`useVisualViewportBox`), like Sheet and Toast, never `inset-0`: a banner stays in the box
+ *   the player sees, above the phone keyboard (L74-17 watch point).
  * - The slab is flat outlined chrome, with no drop shadow: that means "not pressable" here
  *   (Badge), so a banner never reads as a CTA or danger button. L78-11 owns the band look.
  * - Entrance only, over `--dur-slow` on `--ease-entrance`; the next item mounts exactly at
  *   `TABLE_BANNER_MS`, with no exit (L78 owns banner juice). Reduced motion keeps the same
  *   text with a fade only: no slam, scale or tilt (§8.3).
+ * - `deadCue={false}` drops the You are dead cue while the watch still advances, so a dropped
+ *   death never fires later: the arena's POV elimination overlay replaces it (L74-23, D12).
  */
 
 import { motion } from 'motion/react';
@@ -46,6 +51,7 @@ import { durationS, EASE_ENTRANCE } from '../motion/motion-tokens';
 import { motionPropsFor, type V7MotionSpec } from '../motion/reduced-motion';
 import { usePrefersReducedMotion } from '../motion/use-prefers-reduced-motion';
 import { V7_COLORS } from '../palette';
+import { useVisualViewportBox } from '../use-visual-viewport-box';
 import { CHROME_OUTLINE_CLASS, motionAttribute } from '../primitives/chrome-classes';
 import {
   BANNER_LANE_LIVE_MODE,
@@ -68,6 +74,8 @@ export interface TableBannerHostProps {
   you: string;
   /** Seat hex color for turn / win chrome (`v7SeatColor`); `--cta` when absent. */
   seatColor?: string;
+  /** False drops the You are dead cue (the arena's POV elimination overlay replaces it, L74-23). Default true. */
+  deadCue?: boolean;
 }
 
 const SLAM_TRANSITION = { duration: durationS('slow'), ease: EASE_ENTRANCE } as const;
@@ -192,8 +200,10 @@ export function TableBannerHost({
   nicknameOf,
   you,
   seatColor,
+  deadCue = true,
 }: TableBannerHostProps): ReactElement {
   const reduced = usePrefersReducedMotion();
+  const box = useVisualViewportBox();
   const watch = useRef(emptyTableBannerWatch());
   const sentenceWatch = useRef(emptySentenceBannerWatch());
   const wipeWatch = useRef(emptySentenceBannerWatch());
@@ -205,13 +215,14 @@ export function TableBannerHost({
   useEffect(() => {
     const { cues, next } = nextTableBannerCues(watch.current, { isMyTurn, isEliminated, youWon, pendingEffects, you });
     watch.current = next;
-    if (cues.length === 0) return;
-    const items = bannerItemsForCues(cues, seq.current);
+    const shown = deadCue ? cues : cues.filter((cue) => cue !== 'dead');
+    if (shown.length === 0) return;
+    const items = bannerItemsForCues(shown, seq.current);
     seq.current += items.length;
     // Synchronous enqueue (L51-06): a deferred enqueue is cleared by React Strict Mode's
     // effect replay, which dropped the first-paint You are dead / You won! cues.
     enqueueCues(items);
-  }, [isMyTurn, isEliminated, youWon, pendingEffects, you, enqueueCues]);
+  }, [isMyTurn, isEliminated, youWon, pendingEffects, you, deadCue, enqueueCues]);
 
   useEffect(() => {
     const { lines, next } = nextSentenceBannerLines(sentenceWatch.current, {
@@ -244,8 +255,16 @@ export function TableBannerHost({
 
   return createPortal(
     <div
-      className="pointer-events-none fixed inset-0 flex flex-col items-center justify-center px-4"
-      style={{ zIndex: Z_INDEX.banner }}
+      data-zone="table-banners"
+      className="pointer-events-none flex flex-col items-center justify-center px-4"
+      style={{
+        position: 'fixed',
+        top: box.offsetTop,
+        left: box.offsetLeft,
+        width: box.width,
+        height: box.height,
+        zIndex: Z_INDEX.banner,
+      }}
     >
       {BANNER_LANES.map((lane) => (
         <BannerRegion key={lane} lane={lane} item={heads[lane]} seatColor={seatColor} reduced={reduced} />

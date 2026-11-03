@@ -74,6 +74,76 @@ describe('Button (technical spec v7 §5.3, §11)', () => {
     expect(screen.getByRole('button', { name: 'Buy' }).hasAttribute('aria-describedby')).toBe(false);
   });
 
+  it('a reason never widens its button, and the reserved slot holds two lines either way (L74-26 gate G5, G8)', () => {
+    // happy-dom has no layout. At 375 px the dock's Unspy reason "Nobody is spying on you" widened
+    // its button, wrapped the dock onto a second row on the POV's turn only, and the board jumped
+    // 72 px at every turn change. The reason now wraps inside the button's width, up to two lines.
+    const { container, rerender } = renderUi(
+      <Button disabled disabledReason="Nobody is spying on you" reserveReasonSlot reasonLines={2}>
+        Unspy
+      </Button>,
+    );
+    const shown = container.querySelector('[data-reason-slot]');
+    expect(['w-0', 'min-w-full', 'line-clamp-2', 'min-h-9'].map((name) => shown?.classList.contains(name))).toEqual([
+      true,
+      true,
+      true,
+      true,
+    ]);
+    rerender(
+      <Button disabledReason="Nobody is spying on you" reserveReasonSlot reasonLines={2}>
+        Unspy
+      </Button>,
+    );
+    expect(container.querySelector('[data-reason-slot]')?.classList.contains('min-h-9')).toBe(true);
+  });
+
+  it('a reserved slot with reasonLines={1} holds one reason line, so a row of short reasons stays one line tall (L74-26 gate G5)', () => {
+    // Two reserved lines on every dock button made a Duplicator's two dock rows 40 px taller at
+    // 360 px and squeezed the arena under its seat; only Unspy's reason needs two lines.
+    const { container } = renderUi(
+      <Button disabled disabledReason="Not your turn" reserveReasonSlot reasonLines={1}>
+        Draw
+      </Button>,
+    );
+    const slot = container.querySelector('[data-reason-slot]');
+    expect(['line-clamp-1', 'min-h-[18px]', 'min-h-9'].map((name) => slot?.classList.contains(name))).toEqual([true, true, false]);
+  });
+
+  it('a focusable action keeps its element and its focus when a reason appears under it (L74-26 gate G9)', () => {
+    const { rerender } = renderUi(
+      <Button focusableWhenDisabled disabledReason="">
+        Use
+      </Button>,
+    );
+    const before = screen.getByRole('button', { name: 'Use' });
+    before.focus();
+    rerender(
+      <Button focusableWhenDisabled disabled disabledReason="Not your turn">
+        Use
+      </Button>,
+    );
+    const after = screen.getByRole('button', { name: 'Use', description: 'Not your turn' });
+    expect([after === before, document.activeElement === after, after.getAttribute('aria-disabled')]).toEqual([true, true, 'true']);
+  });
+
+  it('without reasonLines a reason wraps and may widen its button, unclamped, as before the gate (§11, Q39; L74-26 review I1)', () => {
+    const { container, rerender } = renderUi(
+      <Button disabled disabledReason="No action or attack card in hand to transform.">
+        Use
+      </Button>,
+    );
+    const clampOrZeroWidth = (): string[] =>
+      [...(container.querySelector('[data-reason-slot]')?.classList ?? [])].filter((name) => name.startsWith('line-clamp') || name === 'w-0' || name === 'min-w-full');
+    expect(clampOrZeroWidth()).toEqual([]);
+    rerender(
+      <Button disabledReason="No action or attack card in hand to transform." reserveReasonSlot>
+        Use
+      </Button>,
+    );
+    expect([clampOrZeroWidth(), container.querySelector('[data-reason-slot]')?.classList.contains('min-h-4')]).toEqual([[], true]);
+  });
+
   it('keeps a caller aria-describedby next to the reason id', () => {
     renderUi(
       <Button disabled disabledReason="Not your turn" aria-describedby="shop-help">

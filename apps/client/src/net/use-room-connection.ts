@@ -132,6 +132,23 @@ export interface RoomConnection {
    * App keeps Home visible so Lobby does not flash.
    */
   soloLaunchPending: boolean;
+  /**
+   * This room's last lobby rules (technical spec v7 §6.10 source (1), §6.11; L74-21): the playing
+   * view carries none. Kept from every lobby STATE_UPDATE as it arrives, not per render: a solo
+   * launch sends its rules, the bots and START_GAME at once, and React may render only the first
+   * playing view of that burst (L74-26 gate G19). A reconnect keeps it; every new room resets it.
+   */
+  lobbyRules: LobbyRulesOfRoom | null;
+}
+
+/**
+ * The rules a room's lobby last sent, with the room code they belong to. It mirrors
+ * `view-model/rules-recall.ts` `RulesCache` field for field, so `cachedLobbyRules` takes it, without
+ * `net/` importing the view-model.
+ */
+export interface LobbyRulesOfRoom {
+  readonly gameCode: string;
+  readonly rules: LobbyRules;
 }
 
 export interface StartSoloGameOptions {
@@ -155,6 +172,7 @@ const INITIAL: RoomConnection = {
   lastActionResolved: null,
   subChoice: null,
   soloLaunchPending: false,
+  lobbyRules: null,
 };
 
 export interface UseRoomConnectionResult extends RoomConnection {
@@ -238,6 +256,10 @@ export function useRoomConnection(): UseRoomConnectionResult {
           gameCode: payload.gameCode,
           soloLaunchPending:
             previous.soloLaunchPending && payload.phase !== 'playing',
+          lobbyRules:
+            payload.phase === 'lobby' && payload.lobbyRules !== undefined
+              ? { gameCode: payload.gameCode, rules: payload.lobbyRules }
+              : previous.lobbyRules,
         }));
       }
     });

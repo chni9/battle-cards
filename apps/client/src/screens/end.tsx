@@ -13,7 +13,7 @@ import { useEffect, useState, type ReactElement } from 'react';
 
 import { hasAskedFeedback, markFeedbackAsked } from '../feedback/asked-storage';
 import { FeedbackDialog } from '../feedback/feedback-dialog';
-import type { ActionRejectPayload } from '../net/use-room-connection';
+import type { ActionRejectPayload, RoomConnectionStatus } from '../net/use-room-connection';
 import {
   canOpenEndManualFeedback,
   canOpenEndStatsFeedback,
@@ -29,7 +29,7 @@ import {
 } from './end-feedback';
 import { ArenaScreen } from './arena/arena-screen';
 import { GameOverDialog } from './game-over-dialog';
-import { TableScreen } from './table';
+import { TableScreen, type TableScreenProps } from './table';
 import type { TableUi } from '../ui-switch';
 import { TABLE_BANNER_MS } from '../view-model/table-banner';
 
@@ -43,6 +43,8 @@ export interface EndScreenProps {
   onPlayAgain?: () => void;
   /** Table switch decision from App (technical spec v7 §4.4); classic when omitted. L75 removes it. */
   tableUi?: TableUi;
+  /** L74-25: the raw connection status for the arena board; 'connected' when omitted. */
+  connectionStatus?: RoomConnectionStatus;
 }
 
 const noop = (): void => {
@@ -58,6 +60,7 @@ export function EndScreen({
   onLeave,
   onPlayAgain,
   tableUi = 'classic',
+  connectionStatus = 'connected',
 }: EndScreenProps): ReactElement {
   const [bannerElapsed, setBannerElapsed] = useState(false);
   const [statsDismissed, setStatsDismissed] = useState(false);
@@ -139,44 +142,55 @@ export function EndScreen({
     };
   }, []);
 
-  const Board = tableUi === 'next' ? ArenaScreen : TableScreen;
+  // Each board mounts in its own branch, so `ArenaScreenProps` may widen while `TableScreen` keeps its
+  // props (L74-21). The two attributes stay JSX on both: `end.feedback-surfaces.test.ts` reads them.
+  const finishedBoard: Omit<TableScreenProps, 'onOpenFeedback' | 'onLeave'> = {
+    view: view.finalTable,
+    actionReject,
+    onDismissActionReject,
+    statusLabel,
+    nowMs,
+    deadlineMs: null,
+    lastActionResolved: null,
+    subChoice: null,
+    readOnly: true,
+    youWon,
+    onShowStats: () => {
+      if (!canReopenEndStats({ feedbackOpen })) {
+        return;
+      }
+      setStatsDismissed(false);
+    },
+    onDraw: noop,
+    onPlayCard: noop,
+    onPlayMultipleAttacks: noop,
+    onResolveSubChoice: noop,
+    onBuyCard: noop,
+    onSellCard: noop,
+    onUpgradeCard: noop,
+    onBuyUpgradePoint: noop,
+    onBuySpecialCard: noop,
+    onBuyPoolCard: noop,
+    onClearSpy: noop,
+    onSellUpgradePoint: noop,
+    onForfeit: noop,
+    onSendChat: noop,
+  };
 
   return (
     <>
-      <Board
-        view={view.finalTable}
-        actionReject={actionReject}
-        onDismissActionReject={onDismissActionReject}
-        statusLabel={statusLabel}
-        nowMs={nowMs}
-        deadlineMs={null}
-        lastActionResolved={null}
-        subChoice={null}
-        readOnly
-        youWon={youWon}
-        onOpenFeedback={onOpenManualFeedback}
-        onShowStats={() => {
-          if (!canReopenEndStats({ feedbackOpen })) {
-            return;
-          }
-          setStatsDismissed(false);
-        }}
-        onDraw={noop}
-        onPlayCard={noop}
-        onPlayMultipleAttacks={noop}
-        onResolveSubChoice={noop}
-        onBuyCard={noop}
-        onSellCard={noop}
-        onUpgradeCard={noop}
-        onBuyUpgradePoint={noop}
-        onBuySpecialCard={noop}
-        onBuyPoolCard={noop}
-        onClearSpy={noop}
-        onSellUpgradePoint={noop}
-        onLeave={requestLeave}
-        onForfeit={noop}
-        onSendChat={noop}
-      />
+      {tableUi === 'next' ? (
+        <ArenaScreen
+          {...finishedBoard}
+          lastTurnStarted={null}
+          cachedLobbyRules={view.lobbyRules ?? null}
+          connectionStatus={connectionStatus}
+          onOpenFeedback={onOpenManualFeedback}
+          onLeave={requestLeave}
+        />
+      ) : (
+        <TableScreen {...finishedBoard} onOpenFeedback={onOpenManualFeedback} onLeave={requestLeave} />
+      )}
       <GameOverDialog
         open={statsOpen}
         view={view}

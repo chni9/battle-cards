@@ -76,6 +76,10 @@ const RELEASE_NOTES_CATALOG = [
         before: 'Cancelling the fifth-active picker kept the points you paid for the card.',
         after: 'Cancelling the fifth-active picker refunds the points you paid.',
       },
+      {
+        before: 'Reconnecting or viewing the final board replayed old elimination flashes.',
+        after: 'Fixed some bugs.',
+      },
     ],
   },
   {

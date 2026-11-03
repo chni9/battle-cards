@@ -36,7 +36,7 @@ design-system record: `/DESIGN.md`. On conflict, **code > spec v7 §5
 |---|---|---|
 | Home | No room — hub → online (create/join) or solo; How to play + What’s new + Feedback | `screens/home.tsx` + `how-to-play-dialog.tsx` + `whats-new-dialog.tsx` + `feedback/feedback-dialog.tsx` |
 | Lobby | `phase: 'lobby'` — seats, Ready, host Start / Kick / bots, hidden kit pick, Feedback | `screens/lobby.tsx` + `lobby-kit-picker-dialog.tsx` |
-| Table | `phase: 'playing'` — felt shell, opponents arc, center-stage log, queue, timers, hand, economy | `screens/table.tsx` (+ `screens/table/*`) · `?ui=next` → `screens/arena/arena-screen.tsx` (renders `TableScreen` until L74-01) |
+| Table | `phase: 'playing'` — felt shell, opponents arc, center-stage log, queue, timers, hand, economy | `screens/table.tsx` (+ `screens/table/*`) · `?ui=next` → `screens/arena/arena-screen.tsx` (the V7 arena; see `## Arena (V7, ?ui=next)`) |
 | End | `phase: 'finished'` — closable awards gallery; Classic **Play again**; hub leave hits ask-once; the finished board follows the same switch (`tableUi`) | `screens/end.tsx` + `game-over-dialog.tsx` + `view-model/game-over-awards.ts` |
 | Claim | Overlay when `claimableSeats` is non-empty — sit or stay spectating | `screens/claim-seat-dialog.tsx` |
 | Admin | `pathname === '/admin'` — password-gated designer analytics; not a game phase; no hub link (Lot 61) | `screens/admin/admin-app.tsx` |
@@ -403,20 +403,16 @@ and are mirrored in `ui/palette.ts` and `ui/motion/motion-tokens.ts`.
   opener to the next trap when it is released mid-cycle. `focusIntoTrap(container)` moves
   focus into an open trap the way its activation would. Sheet wires all of it; another caller
   can pass only `active`.
-- **L74 carry-overs (not code yet):**
-  - collapsing a read-only sheet for targeting releases its trap, but nothing moves focus to the
-    caller's `collapsedBar`: L74 owns targeting focus (§6.6.5);
-  - under the B2 ruling, an older expanded read-only sheet (Seat) under a collapsed targeting
-    sheet becomes the live modal sheet; L74 decides whether entering targeting closes or
-    collapses covering read-only sheets;
+- **L74 carry-overs:**
+  - targeting focus, covering sheets and the bar double tap are settled by L74-10 (Arena
+    section): focus goes to the first valid seat, entering targeting closes every other
+    read-only sheet, and `useTapGuard` ignores seat taps and dock commits for `--dur-base`
+    after targeting ends;
   - `#root` stays non-inert (deferred), so a programmatic `.focus()` can still leave a modal
     sheet;
   - a click on an exiting overlay or on the transition shield still bubbles through the React
     tree to the Sheet's ancestors (portal bubbling): never render a Sheet inside a clickable
-    ancestor, or stop propagation there;
-  - closing a collapsed or minimized sheet unmounts its bar at once, with no shield, so a double
-    tap on a `collapsedBar` control that ends targeting can land on the dock: the targeting flow
-    owns that (shield or debounce).
+    ancestor, or stop propagation there.
 - **Files** (`ui/primitives/`): `sheet-stack.ts` (pure state: paint order, Esc target,
   inertness, z-index), `sheet-stack-context.ts` (the store, `useSheetStackStore`,
   `useSheetStackState`), `sheet-stack-provider.tsx`, `sheet-placement.ts`, `use-focus-trap.ts`,
@@ -485,7 +481,9 @@ and are mirrored in `ui/palette.ts` and `ui/motion/motion-tokens.ts`.
   ", N damage", the counter label). Thumbs print no name and no cost chip (art-only thumbs), so
   their name is the aria-label and a native `title`.
 - **The caller decides state:** `unplayable` (POV's turn, card-specific reason; the face stays
-  activatable), `selected`, and `counter` (`{ kind: 'card-lives' | 'turns', amount }`). The glow
+  activatable), `selected` (it alone sets `aria-pressed`, L74-07), `description` (the accessible
+  description; the hand passes the unplayable reason) and `counter`
+  (`{ kind: 'card-lives' | 'turns', amount }`). The glow
   and the counter badge follow `counter` only, so Curse and the combat Shield get no glow. Where
   a family is itself secret, pass a neutral `family` to the hidden face (V2 used the action verso
   for unspied plays); the component cannot know.
@@ -584,10 +582,11 @@ and are mirrored in `ui/palette.ts` and `ui/motion/motion-tokens.ts`.
   never writes its own `alt`. With `onClick` the portrait is one button named by `ariaLabel`
   or that name; the face inside is decorative, so a screen reader hears the button only, and a
   caller that needs a state heard ("eliminated") puts it in `ariaLabel`.
-- **Classic width rules:** `index.css` still sizes a portrait inside `[data-zone="opponent-seat"]`
-  and `[data-zone="private-zone"]` (2.35rem and 3rem, unlayered, so they beat the size classes).
-  A V7 surface must not reuse those zone names around a `KitPortrait` before L75 removes the
-  rules, or the portrait would not keep its `size`.
+- **Classic width rules:** in landscape `index.css` still sizes a V2 portrait inside
+  `[data-zone="opponent-seat"]` (2.35rem; scoped to `.table-shell` and the classic
+  `[data-zone="opponents-dialog-row"]`, L74-04) and `[data-zone="private-zone"]` (3rem; scoped to
+  `.table-shell`, L74-09). The rules are unlayered, but the arena's seats and self strip sit
+  outside both scopes and keep their `KitPortrait` `size`; L75 deletes the rules with the old table.
 - **Layering:** `ui/kit/` never imports `design/` or `screens/`; it takes `ui/`, `view-model/` and
   `@card-battle/shared` only. The hidden-verso classes the code faces share with the Card live
   in `ui/card/card-classes.ts`.
@@ -603,7 +602,8 @@ and are mirrored in `ui/palette.ts` and `ui/motion/motion-tokens.ts`.
 - **Sections:** `kit-details-sections.ts` holds the ids in display order, their titles and
   `KIT_TRAIT_SECTION_FOR`, a `Record` keyed by `KIT_TRAIT_SECTION_KEYS`: a new `KitTraits` key
   fails typecheck, then the L30-05 test, until it has a rendered section. A new section id goes
-  in the table and in `kit-details.tsx`; the test pins the order.
+  in the table and in `kit-details.tsx`; the test pins the order. Each group is a `<section>`
+  headed by its `<h3>` with no accessible name, so it is not a region landmark (L74-02).
 - **Cards inside the details:** thumb `Card`s with synthetic instance ids
   (`kitSpecialCardKey(cardId, index)`, `always-upgraded:<id>`, `immune-to:<id>`); the starting
   hand is two hidden thumbs. A thumb prints no name and no cost chip, so the details add a
@@ -640,9 +640,10 @@ and are mirrored in `ui/palette.ts` and `ui/motion/motion-tokens.ts`.
   and `FinishedStateView.lobbyRules` in L77 (spec v7 §6.11). The data comes from
   `view-model/rules-recall.ts` (L73-12): `rulesRecall(view)` for a lobby or finished view, and
   `tableRulesRecall(cache, view)` on the table. The cache is the last `lobbyRules` seen in this
-  room, kept in memory: call `nextRulesCache(cache, view)` on every view change (a new room
-  code drops it). `cachedLobbyRules(cache, view)` is the same rules as `turnClock`'s length
-  source. A `RulesRecall` is a `LobbyRules`, so it passes as `rules`. A `null` recall means
+  room, kept in memory as `RoomConnection.lobbyRules`, set in the connection's STATE_UPDATE
+  updater so no batched lobby view is missed, and reset with every new room or leave (L74-26).
+  `cachedLobbyRules(cache, view)` checks the room code and is the same rules as `turnClock`'s
+  length source. A `RulesRecall` is a `LobbyRules`, so it passes as `rules`. A `null` recall means
   the rules are unknown (a reload mid-game) or the room is a tutorial: the caller hides the
   strip, and the tutorial never mounts it. The component invents no default.
 - **Seconds are shown as received:** the server-effective `turnTimeSeconds` follows
@@ -722,7 +723,8 @@ and are mirrored in `ui/palette.ts` and `ui/motion/motion-tokens.ts`.
   `BANNER_LANE_LIVE_MODE`). The classic table keeps `screens/table/your-turn-flash.tsx` until L75.
   The host portals to `document.body` at `Z_INDEX.banner`, like Sheet and Toast, so a
   transformed arena or the L78 board shake cannot re-anchor it or trap it under the sheets.
-  L74-17 mounts it once per arena so its regions exist before the first cue.
+  L74-17 mounts it once per arena so its regions exist before the first cue, and sizes its root
+  (`data-zone="table-banners"`) to the visual-viewport box, never `inset-0`.
 - **Slab:** flat outlined chrome (`CHROME_OUTLINE_CLASS` plus `rounded-v7-chrome`), never
   `CHROME_SHAPE_CLASS`: the hard drop shadow would make a click-through banner read as a CTA or
   danger button. L78-11 owns the band look.
@@ -1017,6 +1019,568 @@ its payloads and `PROTOCOL_VERSION` do not change.
     `Log tail`. A null log tail reads `Log tail: —` like the other null fields, with no empty
     region (L80-12). The legacy `screens/inbox.tsx` is gone (L80-09).
 
+## Arena (V7, ?ui=next)
+
+Technical spec v7 §6 and §4.4; the Lot 74 plan (`docs/superpowers/plans/2026-10-21-v7-lot-74-arena-1.md`,
+Appendix A). Each Lot 74 task appends its bullet here, in task order.
+
+- `screens/arena/arena-screen.tsx` (L74-01, spec v7 §4.4): the switch. `App.tsx` (playing) and
+  `EndScreen` (finished board, `tableUi`) mount `ArenaScreen` when `resolveTableUi(...)` is
+  `'next'`: `?ui=next` was set and the room is Classic. The default and tutorial rooms keep
+  `TableScreen`. `ArenaScreenProps` extends `TableScreenProps` (L74-21), so App and EndScreen
+  mount each board in its own branch and `TableScreen` keeps its props.
+- Regions (L74-01, §6.1, Q60): `ARENA_REGIONS` (`arena-regions.ts`) top to bottom: `top-bar`,
+  `ticker`, `arena`, `self-strip`, `hand`, `dock`. Each is a `data-arena-region` element that
+  always renders. Each shows its content or an empty state, except a live walk-in's dock, which
+  renders bare (Q38; its self strip is the Watching strip, L74-23; on the finished board that dock
+  is Stats alone, L74-24). The root is
+  `<main data-zone="table" data-arena="next">`, `.v7-ground`, `h-full w-full overflow-hidden` of
+  `#root`. It has no `vh`, `dvh` or `w-screen` and never page-scrolls (L53-07); only the hand
+  scrolls, inside itself.
+- Anchors (L74-01, §6.12): regions keep the V2 `data-zone` names that `fx/`, hints and the tutorial
+  query.
+  - `top-bar`: `timers` with `data-hint-anchor="your-turn"` (the clock slot).
+  - `ticker`: `log-collapsed`.
+  - `arena`: `felt`, holding `opponents` and `pending` with `incoming`.
+  - `self-strip`: `private-zone` with `data-player-id={view.you}` (a walk-in too), holding
+    `resources` with `resources` (a walk-in's Watching strip has none, L74-23).
+  - `hand`: `card-band`, holding `hand` with `hand` and `specials` with `specials`.
+  - `dock`: `dock`.
+  Never use `data-card-row`: `index.css` forces nowrap on it.
+- Action lock (L74-01, §4.3, Appendix A.2): `ArenaScreen` computes `ctx = { subChoice,
+  readOnly }` and `actionLock(view, ctx)` once per render and passes models down as props.
+  There is no React context for game data. The root exposes the lock as `data-action-lock`
+  (`none` | `not-your-turn` | `actions-locked`).
+- Import rule (L74-01): `screens/arena/` imports only `ui/`, `view-model/`, `fx/`, `net/`
+  (types), `help/`, `feedback/` and `screens/status-labels`, `screens/illegal-action-copy` and
+  `screens/how-to-play-dialog`. It never imports `screens/table/` or `design/`; the one exception
+  is the `TableScreenProps` type that `ArenaScreenProps` extends. A pure helper still living there moves, with its
+  tests, in the task that first needs it.
+- `screens/arena/arena-sheets.ts` (L74-02, spec v7 §6.7, Q49): one pure reducer holds the
+  read-only sheets.
+  - `open` lists them oldest first; the `Sheet` stack paints the newest two.
+  - `openArenaSheet` moves an already-open sheet to the end instead of copying it.
+  - `closeArenaSheet` moves a sheet to `closing`. The last two closed sheets stay mounted with
+    `open={false}`, so the Sheet press shield covers their exit and a double tap never lands on
+    the arena underneath.
+  - `arenaSheetKey` is `card:<face instance id>`, `kit:<kitId>` or `seat:<playerId>` (L74-05).
+    Every arena `Sheet` carries it as `data-arena-sheet`.
+  - Render `arenaSheetEntries(state)` as direct children of the arena root. Never put a sheet
+    inside a clickable element: React portals bubble clicks.
+- `screens/arena/card-sheet.tsx` + `card-sheet-source.ts` (L74-02, §6.6.1, §5.4, L56-05): the
+  read-only card sheet.
+  - `CardSheetSource` is `hand`, `special`, `in-play` (an `InPlayThumb`, re-read from the live
+    view while open), `spy-reveal`, `queue`, `log`, `pool` (a public pool face, key
+    `card:<instanceId>`) or `shop` (`card:shop-<cardId>`, at the kit's `alwaysUpgraded` tier;
+    L74-14). There is no reward source: a read-only sheet paints under the blocking reward sheet
+    (L74-18).
+  - `liveCardRefFor(source, view)` gives the `cardActions` ref (L74-08): a held card is re-read
+    from the view, and every other source is `cardRefFor(source)`. `sheetInstanceFor` gives the
+    face, with synthetic `queue-<effectId>` and `log-<cardId>-<up|base>` ids.
+  - The sheet shows the face at `sheet` size and `CardEffectCopy`, then the V2 context:
+    `Active` with a `Card lives` or `Turns left` badge, or `Spy reveal — inspect only`. Queue
+    and log cards show nothing more.
+  - The activated look is the `counter` glow, for a persistent's card lives or Invisibility
+    turns only. Shield and Sentence never get `counter`; a Sentence's turns show as the
+    `Turns left` badge (plan Appendix A ruling 1).
+- `screens/arena/kit-sheet.tsx` (L74-02, §6.6.5, Q46): `KitDetails` in a read-only bottom sheet
+  titled with the kit name. It has every section, including one for each `KitTraits` field (L30-05).
+- `ui/motion/use-long-press.ts` (L74-02, §6.6.5): `useLongPress` (450 ms, cancelled past 8 px,
+  swallows the click that ends the press, never a keyboard click). A face outside the hand is a
+  `Card` with `onActivate` (a button: Enter or click); after Part 1 only the seat-sheet thumbs
+  (`seat-sheet.tsx`) also spread these handlers, so tap and long-press open the same read-only
+  sheet and send nothing. The self-strip thumbs, the plate's landing card, badges and chips take
+  a tap only: the log sheet's card names add no long-press (L74-15), and the rest, the plate's
+  landing card included, is an L74-26 gate item.
+- `screens/arena/top-bar.tsx` + `top-bar-model.ts` + `leave-confirm-sheet.tsx` (L74-03, spec v7
+  §6.1 item 1, §6.12; plan Appendix A rulings 2 and 3).
+  - Contents: the round (`Round N`, from `tableRound`, the same count as the log and chat),
+    the turn banner (`Your turn`, `{Nick}'s turn` with the nickname in its seat hue on
+    `--panel`, or `—`), the active seat's Block line (V2 copy) and the `data-zone="timers"`
+    clock slot, which L74-21 fills with the turn clock.
+  - Visible icons, left to right: Chat (L74-16), Feedback `!` (44 px, aria-label `Feedback`,
+    no word), the flag, and Menu.
+  - Feedback: the live arena owns its `FeedbackDialog` (`screen="table"`); the finished board
+    calls `onOpenFeedback` instead.
+  - Menu sheet (`menu-sheet.tsx`, owner-local in `TopBar`; L74-15): How to play
+    (`HowToPlayDialog`; Skip and Got it mark it seen, Esc does not), Action log (L74-15), Table
+    rules (L74-22, only while the rules are known) and `Code {code} · {connection}` with Copy
+    (`Code copied` / `Copy failed`).
+  - The flag opens `LeaveConfirmSheet` (V7 `Dialog`) for the live
+    `tableFlagIntent(...)`, which carries `isSpectator`.
+    - Forfeit calls `onForfeit` and keeps the socket.
+    - Leave table (eliminated or walk-in) and Return home (finished board) call `onLeave`.
+    - The first tap only opens the confirm. Stay has initial focus. Stay, Esc and the
+      backdrop send nothing, and a second tap during the exit sends nothing.
+- `screens/arena/arena-seats.tsx`, `opponent-seat.tsx`, `use-arena-layout-box.ts`,
+  `seat-geometry.ts`, `seat-badges.ts` (L74-04, spec v7 §6.2–§6.4, §11): `ArenaScreen` measures
+  the arena region with `useArenaLayoutBox` (the visible viewport, plus a `ResizeObserver` on
+  the region; 0×0 before the first measure, so the first layout is a grid) and renders
+  `seats(view, box)`. Every seat sits absolutely at `seatCenters(layout, arena)` (the arc
+  placements, or grid rows laid out by the same pure helper the arrows use) and is drawn at
+  `SEAT_BOX.portrait` in every mode until L75. A seat is one button named by the full nickname
+  over the anatomy:
+  - the name in its seat hue, truncated and `aria-hidden` (the button carries it);
+  - a `KitPortrait` thumb or the seat-hue initial `Avatar`, the `Avatar` wrapped `aria-hidden` so
+    the nickname is spoken once (L74-26 gate G3);
+  - a lives pill and a points / upgrade points / shield column (`?` when hidden, a
+    `data-resource-kind` on each);
+  - two status badges and `+n` (`seatBadgeView`).
+  Bot and connection show as icons, with their words for screen readers; the seat sheet shows
+  them in full. The anatomy takes no pointer, so the button's `title` is the one tooltip: the
+  full nickname, then the connection label and the bot words (`botSeatLabelText`,
+  `ui/seat/bot-seat-label-text.ts`), joined with ` · `. Actives and Sentences are badges here,
+  and their thumbs live in the seat sheet. Anchors: `data-zone="opponent-seat"`,
+  `data-player-id`, `data-seat`, `data-seat-index`, `data-tier`, `data-eliminated`,
+  `data-active-seat`, `data-tapped-seat`, `data-hint-anchor="hidden-kit"` (unspied and
+  base-Spied, Q66), `data-zone="opponent-portrait"` and `data-spy-eye` on the eye badge. Seats
+  render the `SeatModel` and never re-derive a tier.
+- `screens/arena/seat-sheet.tsx`, `threat-copy.ts` (L74-05, spec v7 §6.3, §6.5, §6.6.5, §11 Q46):
+  a seat tap opens the seat sheet. It is the read-only `{ kind: 'seat', playerId }` entry of
+  `arena-sheets.ts` (key `seat:<id>`), titled by the nickname or "{nick} (eliminated)". It
+  shows:
+  - the kit, a button to the kit sheet, only when the `SeatModel` avatar is a kit (Spy+, a death
+    reveal or the spectator overlay);
+  - `BotSeatLabel` and the connection badge in full;
+  - the four resources as `Pill`s (`?` stays `unknown`);
+  - every status badge (`seatBadgeView`);
+  - the seat's public pending effects, incoming then outgoing, each once (a self-queued Suicide
+    counts as incoming), as buttons to the queue inspect with the V2 chip words
+    (`pendingEffectCopy`);
+  - the seat's in-play thumbs (Shield, persistents, ticking Sentences; card lives or turns on
+    the card, Sentence turns as a line);
+  - under Spy+ or a reveal, the hand and specials.
+  A thumb opens the read-only card sheet on tap or long-press (`in-play` / `spy-reveal`
+  sources). The newest open seat sheet is the "tapped" seat (`openSeatId`): its seat gets the
+  `--cta` ring, and L74-06 lights its arrows. Opening the sheet sends nothing.
+- `ArenaScreen` sheet host (L74-05, plan Appendix A.5): `useState` over `arena-sheets.ts`,
+  `openSheet` / `closeSheet`, and one `CardSheet` / `KitSheet` / `SeatSheet` per
+  `arenaSheetEntries(sheets)` entry (`open={entry.open}`, keyed by `key`) as the last children of
+  `<main>`, never inside a clickable element. It lands with the seat sheet, the first opener, and
+  stays the only reducer host. A few sheets are owner-local instead; the next bullet says which.
+- **Who owns which sheet** (Lot 74 Part 1 final review, ruling R3; decisions.md 2026-10-30). A
+  Part 2 brief that adds a sheet picks one of these three, and says which:
+  - **Reducer-hosted** (`arena-sheets.ts`, rendered by the host above): card, kit and seat.
+    Opening one ends targeting (targeting is exclusive), and the sheet stack's Esc rule closes
+    the top one. Part 2's Shop (L74-14), Log (L74-15), Chat (L74-16) and Table rules (L74-22)
+    join the reducer as `ArenaSheet` variants, each with its `arenaSheetKey` case (the `never`
+    default makes a missing case a type error).
+  - **Owner-local** (the owner's own `open` state, a `Sheet` / `Dialog` rendered by the owner):
+    the TopBar menu and leave confirm, and the Dock's Unspy picker. Opening one does not end
+    targeting. While it is the live sheet it takes Esc first through the sheet stack, and the
+    arena's targeting Esc stands down (`liveSheetId` is not null).
+  - **Outside the stack until L75 / L76:** the V2 `HowToPlayDialog` and `FeedbackDialog` the
+    TopBar opens (V2 `Dialog`, no portal). The sheet stack does not see them, so during
+    targeting one Esc both ends targeting and closes the dialog (ledger 50, the L74-26 gate).
+- `screens/arena/threat-layer.tsx`, `central-plate.tsx`, `threat-geometry.ts`,
+  `plate-model.ts` (L74-06, spec v7 §6.1 item 2, §6.5, §11): `ThreatLayer` renders
+  `threats(view, subChoice)`, statically (motion is L78), as an `aria-hidden`, press-through
+  layer.
+  - **Arrows:** one arrow and one label per pending effect, never a sum. Arrows between one
+    seat pair fan side by side in either direction (`threatArrows`). Incoming arrows end at the
+    plate in their threat tone, outgoing ones are `--mine`, and third-party ones take the source
+    seat hue with a tone ring on the label. In grid mode only the POV's arrows draw, plus the
+    tapped seat's.
+  - **Hits-all plays:** one "Hits all" burst on the source plus a badge on each target seat
+    (`fanOutMarks`).
+  - **Mirror:** a redirected effect carries the Mirror / Super Mirror name; while a Mirror prompt
+    is open, eligible ids get `data-mirror-eligible` on arrows and plate badges.
+  - **Tapped seat:** the open seat sheet's arrows light up and the rest dim.
+  - **Central plate:** `CentralPlate` keeps `data-zone="pending"` and
+    `data-hint-anchor="incoming"`. It holds:
+    - the landing spot (the newest public `playCard`, or a multi-attack's first attack), a face
+      button that opens the `log` card sheet;
+    - the POV's incoming effects as ≥ 22 px badge buttons that open the queue inspect;
+    - recurring chips (owner, catalog rate, "Paused" / "Ending" in words) that open the in-play
+      card sheet.
+    The root is `pointer-events-none` and only those three take presses, so the plate's empty
+    area never swallows a tap on a grid seat it overlaps (final review, Minor 3).
+  - **FX anchors:** plate badges, arrow labels and hits-all badges carry `data-pending-id`. The
+    arena's elements come first in the DOM, so they anchor the resolution flash.
+  - **Reachability:** every public pending effect stays reachable, on the plate or in a seat
+    sheet.
+- `screens/arena/hand-fan.tsx` + `hand-fan-model.ts` (L74-07, spec v7 §5.4, §6.1 item 4): the
+  `hand` region (`data-zone="card-band"`) holds one horizontal `ScrollArea` with two groups,
+  `data-zone="hand"` (attacks, then actions, each in hand order; `<ul aria-label="Hand">`) and
+  `data-zone="specials"` (gold rims, after a 12 px gap; `<ul aria-label="Specials">`), each with
+  its `data-hint-anchor`. An empty group shows the V2 caption and text ("Hand" / "Empty",
+  "Specials" / "None"). Cards are `Card size="hand"`: the Card root carries `data-instance-id`,
+  and V7 markup never uses `data-card-row`. Every card but the last of its group sits in a slot of
+  `max(44px, …)` (`STRIP_WIDTH`), so the next card overlaps it from the right; under 44 px the hand
+  scrolls inside itself. An empty group's caption is 56 px wide (`w-[56px]`, px like the budget),
+  and the strip budget takes out 56 px per empty group (`--hand-empties`), so 4 to 6 cards with no
+  specials overlap tighter instead of scrolling by the caption (L74-26 gate G4). `unplayable` (and the card's accessible description) is Use disabled for
+  a card-specific reason: every `DisabledReason` but `not-your-turn` / `actions-locked`, so only
+  on the POV's turn. A tap calls `onOpenCard`; ArenaScreen opens the card sheet (source `hand` /
+  `special`), and the selected card is the newest open hand/special card sheet
+  (`selectedHandInstanceId`). There is no entrance motion. An upgrade replays a 90° flip
+  (`data-upgrade-flip` counts the flips), or a 120 ms fade under reduced motion (designer Q13),
+  animated in place (`useAnimate`, never a `key` remount), so keyboard focus stays on the card.
+- `screens/arena/arena-commit.ts` (L74-08, spec v7 §6.6.4, Lot 74 Appendix A.6):
+  `createArenaCommit(handlers)` is the only exit for every `ArenaIntent`. `ArenaScreen` builds it
+  once per render from its props and passes `commit` down; no component calls an intent handler
+  (`onPlayCard`, `onSellCard`, …) directly. Leave, forfeit and chat are App-level actions: the
+  `TopBar` (and later the chat sheet) calls `onLeave` / `onForfeit` / `onSendChat` directly,
+  outside the helper; L75 handles the tutorial Skip separately. `playCard` forwards only the
+  defined option keys, and a missing optional handler (`onDeactivatePersistent`,
+  `onActivateDuplication`) makes the intent a no-op. It never checks legality.
+  `createArenaCommit(handlers, hooks?)` (L74-17): `hooks.onSent(intent, context)` runs after the
+  send with the caller's `CommitContext` (or `{}`), and `hooks.allow` can veto a send (L74-25
+  while reconnecting; L75 `allowTutorialSend`). A caller with no context calls `commit(intent)`
+  with one argument. `ArenaCommit` is `(intent, context?) => boolean` (Part 2 final review): false
+  when `allow` vetoes or the optional handler is absent (no `onSent` then), true once the intent
+  went out. Every latch, sheet close and targeting end keys on it: `dockCommit` returns it, the
+  Shop buy and the sub-choice answer latch on it, the card sheet latches and closes on it, a target
+  tap ends targeting on it, and `dispatchDrop` reports `'returned'` on false, so the card springs
+  back.
+- `screens/arena/card-sheet.tsx` actions + `card-sheet-actions.ts` (L74-08, spec v7 §6.6.1,
+  §6.6.2, §11): the row comes from `cardActions(view, liveCardRefFor(source, view), ctx).actions`,
+  in model order. Use (`primary`, "Use" plus the play cost as a `−` `CostAmount`), Upgrade
+  (`secondary`, `−1` upgrade point) and Sell (`quiet`, `+` the catalog `sellYield`), each tagged
+  `data-card-action`. A disabled action shows `DISABLED_REASON_COPY[reason]` under it (`Button
+  disabledReason`); there is no shared "Actions locked" line. Actions, the multi-attack Play and
+  the Deactivate confirm's Deactivate are `focusableWhenDisabled` with a reason always passed
+  (empty while enabled), so when the turn passes or a sub-choice opens with focus on one, focus
+  stays on it and Tab stays in the sheet (L74-26 gate G9, review M6). A Use
+  routed `send` commits `playCard {instanceId}` and closes the sheet; a Use routed `target` calls
+  `onBeginTargeting({ instanceId, seatIds })` (L74-10 collapses the sheet into targeting) and
+  sends nothing; Regeneration and Card Transformer pick their tile in the sheet first (L74-10).
+  A sheet commits at most once per view, so a double tap sends one intent; the guard re-arms
+  each time the sheet opens (a closed sheet stays mounted and is reused on reopen). A
+  hand or special card that left `view.self` turns its open sheet read-only (`liveCardRefFor`),
+  so no intent can name a stale instance.
+- `screens/arena/self-strip.tsx` (L74-09, spec v7 §6.1 item 3, §6.6.1, §11 Q37 / Q40): renders
+  `selfStrip(view, ctx)` (computed once in ArenaScreen) inside the `private-zone` region. It shows
+  the own `KitPortrait` (`tile`, a button "Inspect your kit" that opens the kit sheet) and
+  `data-zone="resources"` (`data-hint-anchor="resources"`) with four `Pill`s in the order life
+  (`lg`, the Vital rule), shield, point, upgradePoint, each with `data-resource-kind` and a visible
+  caption (`RESOURCE_CAPTIONS`, L43-01), then "Shield ↑" when upgraded. Next come the flow badges
+  in model order ("Block · N left" or "Block · attacks banned", "Invisible" with turns,
+  "Reanimating"), the connection label and "Duplication active" (the Activate duplication button
+  is the dock's, L74-13). Last is
+  `<ul aria-label="Active cards">`, the `Card size="thumb"` thumbs: `counter` only for card lives
+  and Invisibility turns; never on Shield or Sentence, whose turns left are a separate "Turns left"
+  badge (ruling 1). A thumb opens the card sheet with source `in-play`. There, Upgrade sends the
+  model `instanceId` (effect id, `active-shield`, Sentence id), and Deactivate (`danger`) opens the
+  Lot 69 confirm (`Dialog`, "Are you sure?") over the sheet: Esc or Cancel close only the confirm,
+  and only its Deactivate sends `deactivatePersistent {effectId}`. The confirm shows only over
+  the open sheet and resets when the sheet opens again, so a confirm left up when its persistent
+  expired never pops up by itself. A walk-in gets the Watching strip instead (L74-23). `index.css` scopes the landscape private-zone portrait width rule to `.table-shell`.
+- `screens/arena/targeting.tsx`, `targeting-model.ts`, `pre-send-choice.tsx`, `pre-send-model.ts`,
+  `use-tap-guard.ts` (L74-10, spec v7 §6.6.2, §6.6.5): Use on a card routed `target` calls
+  `startTargeting` (`arena-sheets.ts`), which collapses its card sheet into `TargetingBar`
+  ('Choose a target' + Cancel) and closes every other read-only sheet; opening any sheet ends
+  targeting, so it is exclusive. `liveTargeting` re-reads `cardActions` (through
+  `liveCardRefFor`) every render: the
+  model's seats become buttons named '{nickname}, target' (`data-target-seat="valid"`, `--mine`
+  ring, pulse at full motion), every other seat is `aria-disabled` and inert
+  (`data-target-seat="invalid"`), and focus moves to the first valid seat in DOM order. A valid
+  tap commits `playCard {instanceId, targetPlayerId}` at once and closes the sheet; Cancel and Esc
+  (the arena's `document` listener, which acts only while no expanded sheet is live) close it,
+  send nothing and return focus to the hand card (Esc blurs the focused seat first, so the closing
+  sheet restores its opener; L74-26 gate G6). When the card leaves the hand, the turn passes or a sub-choice opens,
+  targeting ends and the sheet closes. For `TAP_GUARD_MS` (`--dur-base`) after targeting ends,
+  seat taps (and, from L74-13, dock commits) are ignored, because the bar unmounts with no
+  shield. Regeneration tiles 1–4 ('1 life' preselected, the checked tile takes initial focus)
+  and Card Transformer consume tiles (first preselected; no group when nothing qualifies, Use's
+  reason says why) are picked in the sheet; Use then sends `quantity` / `consumeInstanceId`.
+- `screens/arena/multi-attack.tsx`, `multi-attack-selection.ts`, `seat-choice-button.tsx`
+  (L74-11, spec v7 §6.6.1, §6.6.2, §13 Q44): the card sheet shows **Multi-attack** only when
+  `cardActions(...).actions` holds it (a kit with several attacks per turn, a hand shared attack,
+  at least two in hand; never MEGA ATTACK). It turns the sheet into the 'Assassin multi-attack'
+  step: one row per model row in hand order, each a card toggle (`aria-pressed`) and, once
+  toggled, a group of the row's attack seats (`SeatChoiceButton`; a riposte corpse reads
+  '{nick}, eliminated'). No row has a default target, and several rows may pick one seat. 'Play
+  N attacks' needs two toggled rows that each have a target; it sends one `playMultipleAttacks`
+  in hand order through the commit and closes the sheet. Cancel returns to the card and drops
+  the selection (Q44); after Esc, the backdrop or any close, reopening the card starts on the card
+  step with nothing selected (the reused, still-mounted sheet resets when it opens again). A step
+  swap unmounts the focused button, so the sheet moves focus itself (final review, I2): to the
+  first row toggle on entry, and on Cancel or a model reset to the Multi-attack entry, else the
+  first enabled action, else the panel. Focus never falls to `body`, outside the Tab trap.
+- `screens/arena/hand-drag.ts`, `use-hand-drag.ts`, `hand-drag-layer.tsx` (L74-12, spec v7
+  §6.6.3–§6.6.5): drag is a shortcut. Hand and special cards carry `touch-action: pan-x`, so a
+  horizontal swipe is the hand's native scroll; a move more vertical than horizontal past 8 px
+  (`classifyHandGesture`) lifts a ghost portaled to `document.body` (`data-zone="hand-drag-ghost"`,
+  `Z_INDEX.dragGhost`, `pointer-events: none`). A drag starts only when `canStartHandDrag` holds: the
+  model's `canDrag` (never off-turn or locked) and no targeting; L75 adds the tour and Look
+  gate. Zones are measured once at lift (`measureDropZones`: `data-zone="opponent-seat"` +
+  `data-player-id`, `data-zone="pending"`, the Sell zone). Valid seats and the plate carry
+  `data-drop="valid|over"`; the Sell zone (`data-zone="sell-drop"`) shows only for a sellable
+  card, above the hand on the side opposite the drag origin. On release the card's model is
+  recomputed and `dispatchDrop` commits the `dropTarget` intent, opens the card sheet for a
+  pre-send choice (nothing sent), or springs the card back (instantly under reduced motion). The
+  click that ends a drag never opens the sheet, but a keyboard click (`detail` 0) is never
+  swallowed. A release while a sheet is live (one a second finger opened mid-drag) springs back
+  and sends nothing (final review, Minor 2 and 5). Switching away mid-drag (window `blur`, or
+  `visibilitychange` to hidden) cancels it the same way, so no ghost stays up when the pointerup
+  never arrives (L74-26 gate G7).
+- L74-12 browser check (2026-10-28, solo Assassin vs 3 Normal bots, `?ui=next`, 180 s turns,
+  built-in browser at 375×812 then 390×844; mouse drags plus scripted pointer sequences for
+  two-segment gestures). Passed:
+  - (a) a mostly horizontal move neither lifts nor opens the sheet; the slot is `touch-action:
+    pan-x`, the hand scroller overflows on its own (495 px in 375 px; a wheel scroll moves it
+    120 px) and the page never scrolls (`scrollWidth` = viewport width);
+  - (b) a vertical lift past 8 px shows the portal ghost under the pointer, marks the slot
+    `data-lifted`, and a release on empty felt springs back with nothing sent;
+  - (c) a playable Basic attack lights every seat `data-drop="valid"` (plate not lit), the
+    hovered seat `over`, and the drop queues the attack (points −1, outgoing arrow label);
+  - (e) the Sell zone appears on the side opposite the drag start, 96×72, 16 px from the
+    edge and 8 px above the hand (390×844), clear of the seats and the plate; a drop sells
+    the card (Strong attack +2, Absorber +1);
+  - (f) off-turn nothing lifts and no zone lights (`data-action-lock="not-your-turn"`); a tap
+    opens the read-only sheet with its reasons.
+  - Not exercised: (d) a plate-only drop (no affordable untargeted card in this game; no
+    Draw before L74-13) and (g) a Regeneration / Card Transformer plate drop — both
+    unit-tested in `hand-drag.test.ts` / `hand-drag-layer.test.tsx`. Real-touch pan versus
+    lift and the full-motion spring-back timing (the pane may throttle animation) go to the
+    L74-26 gate on a phone.
+- `screens/arena/dock.tsx`, `unspy-sheet.tsx`, `dock-model.ts` (L74-13, spec v7 §6.1 item 5, §6.12,
+  §11): renders `selfStrip(view, ctx).dock` in the dock region. Draw (`--cta`, `--danger` when
+  `hot`, i.e. above `DRAW_HOT_ABOVE`) shows '+N' with the point icon and no word; its aria-label and
+  title are V2's `Draw, plus N pt(s)`; it pulses in place (`useAnimate`, so focus stays) at each own
+  turn start and payout change, never under reduced motion, and sends `drawCard`. Shop keeps its
+  word label and `data-hint-anchor="shop"` and opens the Shop sheet (L74-14), browse-only off-turn
+  and on the finished board. Unspy (quiet, crossed eye, '−10', `data-unspy`) is always rendered for
+  a seated or Reanimating POV and disabled with its reason; it opens `UnspySheet` ('Choose who is
+  spying you.', `unspy.spyIds`, a single spy preselected) where Confirm sends `clearSpy` and Cancel,
+  Esc or the backdrop reset the pick. Activate duplication shows while `dock.duplication` is set and
+  sends `activateDuplication`; the self strip keeps only 'Duplication active'. An eliminated
+  Watching POV keeps the disabled dock without Unspy (A.8 ruling 7); a live walk-in has no controls
+  (Q38), and on the finished board its dock is Stats alone (L74-24). Every send goes through the
+  commit, and for `TAP_GUARD_MS` after targeting ends the dock sends nothing. Draw and Activate
+  duplication send once per view (`useCommitOnce`, next bullet), and Unspy's Confirm closes its
+  sheet only when its send went out. The `use-room-connection.clear-spy` source-text row now has its
+  behavior tests: `net/use-room-connection.clear-spy.behavior.test.ts` (`renderHook` over a mocked
+  `@colyseus/sdk` room, the L74-03 pattern) and `screens/arena/dock.test.tsx`.
+- `screens/arena/use-commit-once.ts` (Lot 74 Part 1 final review, I3 and ruling R2; spec v7 §1,
+  §6.6.4): the latch for a commit button that stays on screen after it sends. `useCommitOnce({
+  view, reject })` returns `once(control, send)`; call `once('<control>', () => commit(intent))`
+  from the click handler.
+  - `send` returns whether the send went out, and only a real send latches. The dock's
+    `DockCommit` returns false while the targeting tap guard swallows a send, and otherwise the
+    commit's own result, so a swallowed or vetoed tap leaves the button live.
+  - Latches are per control name: Unspy's Confirm never blocks a quick Draw after it.
+  - A new view identity (any state update, a new `turnSequence` included) or a new
+    `actionReject` re-arms every latch: a rejected send may arrive with no state update.
+  - Users: the dock's Draw and Activate duplication, and every Shop buy (L74-14, one
+    `shop` control). L74-18 (the sub-choice Confirm) reuses it instead of hand-rolling another latch.
+- `screens/arena/shop-sheet.tsx`, `shop-sheet-model.ts` (L74-14, spec v7 §6.8, §6.6.4, §6.6.5,
+  §13 Q50): the dock's Shop opens the reducer-hosted `{ kind: 'shop', tab? }` sheet (key `shop`;
+  ignored for `TAP_GUARD_MS` after targeting ends, like a seat), a full-height read-only `Sheet`
+  titled "Shop" that renders `shop(view, ctx)` and decides nothing. Tabs Cards / Special / Pool /
+  Upgrade points; it opens on the reducer's `tab`, else the model's `initialTab`, and resets its
+  tab and selection on every opening.
+  - Cards: V2's price blurb, then one tile per shared card (`data-shop-tile`): a decorative
+    `Card size="tile"` at the kit's `alwaysUpgraded` tier with its play-cost chip, and V2's name
+    `{name}[ upgraded], {price}[, cannot afford]`. Under the card, a price row (`flex-wrap`, so a
+    long price wraps) holds the buy price (`data-shop-price`) then the 44 px `Inspect {name}`
+    button, so nothing covers a card chip. A tap selects (`aria-pressed`, the `--cta` outline;
+    Basic attack by default), the footer's Buy selected sends `buyCard {cardId}`, and a double
+    tap on an affordable tile buys it at once (`onDoubleClick`, `touch-manipulation`).
+    Long-press or Inspect opens the read-only `{ kind: 'shop' }` card sheet.
+  - Special: Buy special at `SPECIAL_CARD_PURCHASE_POINTS` (L73's one client price). Pool:
+    `Pool (N)`, V2's "visible to every player" explainer, public faces that open the
+    `{ kind: 'pool' }` card sheet, "The pool is empty.", Buy random at the public `poolBuyCost`.
+    Upgrade points: the heading with the upgrade icon and no balance, Buy and Sell priced from
+    the kit at render.
+  - The footer holds the open tab's buys (`data-shop-action`), each disabled with its reason,
+    then Close. Off-turn, locked and on the finished board every buy is disabled and every tile
+    is `aria-disabled` (never native `disabled`): it stays in the Tab order at full colour, its
+    tap and double tap do nothing, and its long-press still inspects. Every tab, face and
+    Inspect stays usable. Every buy goes through `commit`, sends at most once
+    per view across the whole Shop (`useCommitOnce`, control `shop`) and closes the sheet.
+- `screens/arena/log-ticker.tsx`, `log-sheet.tsx`, `log-line.tsx`, `log-sheet-model.ts`,
+  `menu-sheet.tsx` (L74-15, spec v7 §6.1, §6.9; L56-05): the ticker region is one 44 px button on
+  `--panel` (`data-zone="log-collapsed"`, the FX log endpoint) with the newest public line
+  (`log(view).ticker`, truncated) or "No actions yet", named `Action log: {line}`. A tap, or
+  Menu → Action log, opens the reducer-hosted `{ kind: 'log' }` sheet (key `log`), a read-only
+  bottom `Sheet` titled "Action log" whose list is `data-zone="action-log-panel"` (the preferred
+  FX endpoint while open).
+  - Lines group by `log(view).rounds` under sticky `Round N` headers (`tableRound`, the chat's
+    count; `-top-3` so a stuck header covers the sheet body's 12 px top padding, L74-26 gate G27)
+    and render `log.ts` segments: nicknames in their seat hue (`PlayerName`), listed damage
+    as the number and the life icon (spoken "{n} damage"), resource nets as sign and number in
+    `--text` plus the resource icon (spoken by `resourceSegment`; `+?` reads "concealed points
+    gain"), and inspectable card names as text buttons (44 px hit height) that open the
+    `{ kind: 'log' }` card sheet with no footer.
+  - Draw, buy, sell, elimination, reward and Sentence lines stay text, and a fogged pool buy reads
+    "bought a card from the pool". No filter, search, Why or export (the DEV Excel stays on Game
+    over). The sheet opens on the newest line and follows new lines only within 48 px of the
+    bottom. Only a scroll event that moved `scrollTop` re-decides that (`followLogScroll`): Chrome
+    also fires one after a multi-line update lands, before the re-stick, and it used to stop the
+    follow (L74-26 gate G27).
+  - TopBar's menu body moved to `menu-sheet.tsx` (`MenuSheet`, still owner-local; plan A.9.4).
+- `screens/arena/chat-sheet.tsx`, `chat-unread-store.ts` (L74-16, spec v7 §6.1 item 1, §6.9,
+  §13 Q48): Chat is the first icon of the top bar's right row (`chat`, aria-label `Chat` or
+  `Chat, N unread`, the `IconButton` count badge). It opens the reducer-hosted `{ kind: 'chat' }`
+  sheet (key `chat`), a read-only bottom `Sheet` titled "Chat" around the L72 `ChatLog`: the room
+  transcript with `Lobby` / `Round N` stamps, side lines italic with `(eliminated)` /
+  `(spectator)`, the newest line on open, and a 16 px `Message` field capped at
+  `CHAT_BODY_MAX_LENGTH`. Enter or Send calls `onSendChat` (App-level, not an `ArenaIntent`)
+  with the trimmed body; whitespace-only sends nothing. The finished board (`readOnly`) shows
+  no composer. Unread lives outside the arena in `chat-unread-store.ts`, a page-lifetime store
+  keyed by `gameCode` (`useSyncExternalStore`), so a reconnect remount and the live → finished
+  switch keep it. The first sight of a room counts the lines already there as seen (V2), the seen
+  count follows the transcript while the sheet is open, so any close marks every line seen, and
+  `chatUnreadCount` counts the rest. A transcript shorter than the seen count (a walk-in claimed a
+  seat) re-seeds at the shorter count. `forgetChatSeen(gameCode)` makes the next render treat the
+  room as first seen: `App.tsx` calls it from an effect keyed on the room's lobby phase and code
+  (L74-21), so a rematch starts with the lobby lines seen. App needs no prop for the count.
+- `screens/arena/arena-screen.tsx` shell, `fx/use-table-fx-triggers.ts`,
+  `view-model/fx-triggers.ts`, `fx/use-resource-flash.ts`, `own-intent-fx.ts`, `resource-flash.tsx`
+  (L74-17, spec v7 §6.12, §8.1, §8.3, Q63): `ArenaScreen` is a shell,
+  `<TableFxProvider><ArenaScreenInner/></TableFxProvider>` like `TableScreen`, so the `fx/` overlay
+  draws over the arena. `ArenaScreenInner` mounts `TableBannerHost` once, on the visual-viewport
+  box. One hook, `useTableFxTriggers`, holds the FX triggers both boards use (moved out of
+  `screens/table.tsx`; its decisions are pure in `view-model/fx-triggers.ts`): the resolution flash,
+  the elimination beat, public-log chips and card ghosts, the reward pulse on the dock, the threat
+  outline and the source-seat cue. Elimination beats are seeded on mount, so a reconnect or the
+  finished board replays none (Q63); the beat element carries `data-fx="elimination-beat"`. This
+  also fixed the default table: What's new `lot-72-v7`, fourth item. Own-intent ghosts leave from
+  the commit helper (`onSent` → `ownIntentFxFor`): the card sheet sends `{ instanceId }` for a held
+  card, the target tap `{ instanceId }`, and a drop `{ instanceId, dropPoint }`, so the flight
+  starts where the card was released. The POV's own log play flies nothing (§6.6.2). Arena resource
+  values flash and float through `useResourceFlash`, V2 `ResourceIcon`'s logic: the POV listens as
+  `self` and flies its own Δ, seats listen by player id and never fly. The flash is a 2 px
+  `--upgrade` / `--danger` outline (`data-resource-flash`), with +N / −N floats under full motion
+  only. An effect with no arena `data-pending-id` (a grid third-party effect with no tapped seat, a
+  dropped adjacent arrow) flashes its outcome on the plate: `queryPendingFlashAnchor` falls back to
+  `[data-zone="pending"]`. Intents never await FX (Lot 14).
+- `screens/arena/sub-choice/` host (L74-18, spec v7 §6.7, §13 Q55 / Q58 / Q59, §14.2):
+  `SubChoiceSheet` renders `props.subChoice` as one blocking bottom `Sheet`
+  (`data-arena-sheet="sub-choice"`, `data-sub-choice={kind}`), outside the read-only reducer,
+  after the read-only host. Titles and 'On expiry: …' hints are V2's (`sub-choice-model.ts`; the
+  reward hint draws 2× 4 lives with `CostAmount`; slot-drop names you or the slot owner), the line
+  ends with 'Ns left', then "Time's up" at 0 s with every control live, and a 'Sub-choice timer'
+  progressbar drains over `CLIENT_SUB_CHOICE_MS`. The reward sheet carries
+  `data-hint-anchor="reward"`. Esc, backdrop and swipe do nothing; the primitive's Minimize
+  collapses it to a bar above every sheet while `ctx.subChoice` keeps every intent locked. The
+  host keeps the last payload, so the sheet plays its exit and press shield when `subChoice`
+  clears. The picker is keyed by the host's opening count plus `subChoicePromptKey`: a resend of
+  the same prompt keeps the picker and its selection (a minimized sheet stays minimized), while a
+  prompt that arrives after a clear mounts a fresh picker and opens expanded.
+  Pickers return `frame({ body, actions })` and answer through `send`: one `resolveSubChoice`
+  through the commit per payload (`useCommitOnce` on the payload and `actionReject`). `locked`
+  (L74-25 sets it while reconnecting) disables every commit button with 'Actions locked' and
+  makes `send` a no-op, so the latch never latches a lost send; Minimize stays usable. Opening it
+  needs no code for targeting or a drag: the lock ends targeting, empties the drop zones, and a
+  release under the live sheet springs back. Card tiles are `ChoiceCardTile` (an `aria-pressed`
+  button named by the caller around a decorative `tile` Card; greyed tiles are `aria-disabled`
+  with their reason). Mirror lists the eligible pending attacks ("{source}'s {card} → you",
+  damage × multiplier) and the living opponents, Invisible included (`SeatChoiceButton`), both
+  preselected; a pick a resend drops falls back to the first. Reward has two `Segmented`
+  radiogroups ('Choice 1' lives, 'Choice 2' points) and, for 'A card', a grid that greys the
+  other choice's card and any card the prompt offered before but no longer does, with the
+  `ILLEGAL_ACTION_COPY` reward-card bodies as reasons (Q55); Choice 2 starts on the first card
+  Choice 1 does not hold. An 'A card' pick with no free card left, because the other choice holds
+  every offered card, blocks Confirm with the 'already chosen' reason, not 'unavailable' (final
+  review). Nothing shows another seat's open prompt (§14.2).
+- `screens/arena/sub-choice/steal-choice.tsx`, `pool-choice.tsx`, `special-choice.tsx`,
+  `kit-choice.tsx` (L74-19, spec v7 §6.7, §6.3, §11): the other select + Confirm pickers on the
+  L74-18 host, with V2's copy and payloads. Steal shows a face only where the victim's Spy+ hand
+  or specials reveal it, else the attack verso named and captioned 'Hidden card' with no
+  instance id anywhere in the DOM (a base Spy picks blind, Q54); the first card is preselected.
+  Pool shows the eligible pool cards with nothing preselected, greys the unselected tiles at
+  `maxCount`, and enables 'Confirm recovery' only at exactly `maxCount` (ids in tap order; a pick
+  a resend no longer offers drops out for good and stays out if a later resend offers it again).
+  Special shows the server's `eligibleCardIds` by catalog name, the first preselected (the server
+  leaves Card Transformer out). The Reanimation kit picker uses `KitTile` (portrait, name,
+  `aria-pressed`), the first preselected, and renders for an eliminated POV. Each Confirm honours
+  the host's `locked` ('Actions locked').
+- `screens/arena/sub-choice/slot-drop-choice.tsx` (L74-20, spec v7 §6.7, §13 Q42 / Q56, §14.3):
+  slot-drop is select + Drop. One tile per `eligibleSlots` (V2 captions '{card} (shield)' /
+  '{card} (sentence)'; the server never lists Curse), nothing preselected; a tap only selects,
+  'Drop' sends `{kind: 'slot-drop', slotId}`, and 'Cancel' sends `{kind: 'slot-drop', cancel:
+  true}`, never Esc or the backdrop. `slotOwnerPlayerId` picks the copy: your own slots, or the
+  Curse caster picking among the victim's; the expiry hint names you or the victim. A line under
+  the tiles, which also describes Cancel, states its outcome in each case, as read from the
+  server's `cancelSlotDrop` (decisions.md, L74-20 entry). A pick a resend no longer offers is
+  dropped in the render phase, so a later resend that offers the slot again cannot revive it and
+  enable Drop. Drop and Cancel honour the host's `locked` ('Actions locked'); a tile tap still
+  selects.
+- `screens/arena/turn-clock.tsx`, `use-turn-started-record.ts`; `App.tsx`, `net/use-room-connection.ts`,
+  `screens/end.tsx` (L74-21, spec v7 §4.1, §6.10, §6.11): the top bar's `timers` slot renders
+  `turnClock()` (L73-13): a `timer-label` line ('42s', '—', 'Paused — reconnecting', 'Absent —
+  auto-draw') and a 'Turn timer' progressbar that carries `aria-valuenow` only when the turn length
+  is known. The length is the cached host `turnTimeSeconds`, else the first `TURN_STARTED` of this
+  `turnSequence` (a resume keeps it), else none (seconds only). The last 10 s turn label and fill
+  `--danger`; under reduced motion the fill jumps. The arena records a `TURN_STARTED` sighting when
+  `lastTurnStarted` changes identity, with the current view's `turnSequence` and `props.nowMs`
+  (App's 250 ms tick). The countdown keeps running during a post-action sub-choice, as V2's did.
+  The connection keeps the room's last lobby rules (`RoomConnection.lobbyRules`, taken from every
+  lobby `STATE_UPDATE` as it arrives and reset by every new room or leave; L74-26 moved it out of
+  App's per-render cache, which missed the solo launch's rules when React rendered only the first
+  playing view of that burst) and App passes `cachedLobbyRules(lobbyRules, view)`; EndScreen passes
+  `FinishedStateView.lobbyRules`. Both mount `ArenaScreen` and `TableScreen` in their own branch.
+  App also calls `forgetChatSeen(gameCode)` from an effect keyed on the room's lobby phase and code,
+  after the lobby has rendered, so a rematch's arena starts with the lobby chat lines seen (the
+  L74-16 store; never from a message handler, where a mounted arena would seed the count again).
+- Table rules recall (L74-22, spec v7 §6.11, §7.4): Menu → Table rules (`rules` icon, after
+  Action log) opens the reducer-hosted `{ kind: 'rules' }` sheet (key `rules`), the L72
+  `RulesSheet`: the human turn time, the Random mark and all 16 kits, each excluded one named
+  "Excluded". The source is `ArenaScreenProps.cachedLobbyRules`: App's in-memory cache of this
+  room's last lobby rules on the live board (`cachedLobbyRules`, L74-21) and
+  `view.lobbyRules ?? null` (`FinishedStateView.lobbyRules`) from `EndScreen` on the finished
+  board; the arena shapes it with `tableRulesRecall` (Classic only). The entry is hidden while it
+  is null (a reload mid-game, a walk-in who never saw the lobby). No protocol change.
+- `screens/arena/spectator-strip.tsx`, `spectator-model.ts`, `pov-elimination-overlay.tsx`,
+  `use-pov-elimination.ts` (L74-23, spec v7 §6.3, §6.12, §7.2, §10.6):
+  - A walk-in's self strip is the Watching strip: 'Watching', V2's private-zone line ('Watching
+    this table. …' once a Spy overlay is on the view, else 'Hands stay hidden until you stay
+    spectating or sit.'), **Leave table** and, while `claimableSeats` is non-empty, **Claim a
+    seat**. It has no `resources` zone and, on a live board, no dock (Q38; the finished board's dock is
+    Stats alone, L74-24). Claim a seat calls `onReopenClaim`:
+    App clears the picker's dismissed key and `ClaimSeatDialog` shows again beside the board.
+    Kit fog behind the picker is the server's (L57-16).
+  - An eliminated Watching POV keeps its strip and disabled dock (A.8 ruling 7) under the same
+    header, with V2's 'You are a spectator. Actions are locked while rewards (if any) resolve.'.
+    A Reanimating POV keeps the seated strip, labeled by its 'Reanimating' badge, and the seated
+    tiers. On the finished board neither header line nor Leave shows (the flag is Return home).
+  - Leave table bumps `TopBar`'s `confirmRequest`, which opens the flag's leave confirm. The
+    confirm's latch is per open (an epoch), so one press sends one leave.
+  - POV elimination: when the POV becomes Watching, and on a first paint already Watching,
+    'You are dead' shows over the arena region for `TABLE_BANNER_MS` (`data-pov-elimination`, a
+    polite status that takes no press or focus; static until L78). It never renders while a
+    sub-choice is open and is skipped with `pendingReanimation`. The arena's `TableBannerHost`
+    gets `deadCue={false}`, so the banner's 'You are dead' never shows beside it.
+  - A seat sheet whose player is no longer an opponent (a walk-in claimed that seat) closes
+    (`closeStaleSeatSheets`), so `openSeatId` never names the POV. A new POV (`view.you` or
+    `isSpectator` changes) closes the card, kit and seat sheets through their exit and ends
+    targeting (`closeCapturedArenaSheets`), so no sheet captured from the old POV's view stays on
+    screen. Chat, log, Shop and rules re-render from the live view, so they stay open and an
+    unsent chat draft survives a claim (Part 2 final review).
+- `screens/arena/dock.tsx`, `dock-model.ts`; `screens/end.finished-board.test.tsx` (L74-24, spec v7
+  §4.4, §6.12): the finished board. `EndScreen` mounts the arena on `finalTable` behind `?ui=next`
+  (never in tutorial) with `readOnly`: every intent locked, the clock '—', Shop browse-only, and
+  inspect, log and read-only chat (no composer). The dock adds **Stats** (`primary`, V2's word)
+  from `dock.stats`; it calls `onShowStats`, which reopens Game over and does nothing while
+  Feedback is open (`canReopenEndStats`). `dockHasControls` counts Stats, so a walk-in's finished
+  dock is Stats alone. The flag is Return home: its confirm calls EndScreen's `requestLeave`
+  (ask-once, L57-03). `!` calls `onOpenManualFeedback`, which opens only while Game over is
+  closed. First paint: a POV win gets the 'You won!' banner and a POV elimination the POV
+  elimination overlay (L74-23), both gone when Game over opens at `TABLE_BANNER_MS`. The L74-17
+  seeding replays no past elimination beat, and the L74-16 unread store keeps its count across
+  the live → finished switch.
+- `screens/arena/reconnect-banner.tsx`, `reject-toast.tsx`, `reject-model.ts` (L74-25, spec v7
+  §6.6.2, §6.12, §8.3): `ArenaScreenProps.connectionStatus` is the raw `RoomConnectionStatus`; App
+  passes it to the arena and to `EndScreen`. While it is `'reconnecting'`: the top-bar region shows
+  the non-blocking `Reconnecting…` banner (an always-mounted polite `role="status"` region);
+  `ActionContext.reconnecting` makes `actionLock` return `actions-locked`, so the card sheet,
+  targeting, drag, dock and shop lock; the sub-choice commit buttons lock (`SubChoiceSheet locked`);
+  and the commit helper's `allow` drops any send. Leave table, Forfeit, Return home, chat, Claim a
+  seat and Stay stay available, because `@colyseus/sdk` buffers them and replays them on rejoin, and
+  leaving must stay possible. Server rejects show `RejectToast` (the V7 `Toast`, `tone="error"`,
+  title and body from `resolveIllegalActionCopy`, OK) instead of the V2 modal. It closes on OK or
+  after `REJECT_TOAST_MS` (6 s), each calling `onDismissActionReject` once. A state update never
+  dismisses it. The timeout answers the toast watch point: a live sheet's focus trap keeps Tab off
+  its OK. The hand card the rejected send spent (`onSent`'s `CommitContext`, the last send, no state
+  update since) shakes in its slot, or flashes `--danger` under reduced motion; its wrapper counts
+  the spring-backs in `data-reject-shakes`, as `data-upgrade-flip` counts the flips. The reject
+  consumes the last-send record, so a later unrelated reject (chat, forfeit, claim) with no state
+  update in between never shakes that card again (final review). A Draw latched before a drop
+  re-arms on the rejoin's state push.
+
 ## Design system (V2 · Lots 10+)
 
 Tokens and shared components live under `apps/client/src/`. Intents, payloads, and visibility
@@ -1114,7 +1678,7 @@ rules above are unchanged — this section only covers how the client looks.
   `main`: private Draw, invisible players are not targets, Sentence chip
   inspect, hand layout stays put, point chips cap at 50, your kit portrait
   is one step larger, and the action log shows icon-only resource nets
-  (unspied card sales hide the payout; unspied shop buys hide the price; resolve lines show each seat’s gain or loss). `lot-68` (2026-09-29) shipped Ghost Tax+, Shield+ vs Imposition, and fixed some bugs. `lot-69` stays as written. `lot-71` (2026-10-06) shipped on `main`: Spy Thief chooses one opponent (the upgrade hits every living opponent), and forfeiting or leaving the table pays kill rewards at the same time to queued attackers unless one player is left. Active Poison does not. The host can hide kits, deal kits at random, and set human turns from 5 to 180 seconds; players chat in the lobby and at the table until the room closes, and eliminated players and spectators share a separate chat. A Ghost's points from lost lives show as +? until that Ghost is spied. `lot-72` (2026-10-07: active-slot drop cancel; no Poison tick during Block; the lobby host never passes to a bot) shipped on `main` (promote #79) before V7 Lot 72 merged. **V7 (technical spec v7 §10.4):** `lot-72-v7` (2026-10-26, "New look") is the open V7 entry; each V7 player-facing PR appends one Before / After item per screen area during the promotion freeze. New ids never reuse an existing id: seen-state (`ui/release-storage.ts`) is keyed by id. First item: the §10.5 catalog-text fix (After `Fixed some bugs.`). Second item: the classic tutorial's resources tip no longer shows a stray life icon (After `Fixed some bugs.`). Third item: the turn timer after a fifth-active picker cancel (server fix L82-01, After `Fixed some bugs.`). Fourth item: the played card no longer also lands in the pool after a fifth-active picker (server fix L82-02, After `Fixed some bugs.`). Fifth item: Cancel on the fifth-active picker refunds the play's points (designer rule change L82-03). Sentence chips sit
+  (unspied card sales hide the payout; unspied shop buys hide the price; resolve lines show each seat’s gain or loss). `lot-68` (2026-09-29) shipped Ghost Tax+, Shield+ vs Imposition, and fixed some bugs. `lot-69` stays as written. `lot-71` (2026-10-06) shipped on `main`: Spy Thief chooses one opponent (the upgrade hits every living opponent), and forfeiting or leaving the table pays kill rewards at the same time to queued attackers unless one player is left. Active Poison does not. The host can hide kits, deal kits at random, and set human turns from 5 to 180 seconds; players chat in the lobby and at the table until the room closes, and eliminated players and spectators share a separate chat. A Ghost's points from lost lives show as +? until that Ghost is spied. `lot-72` (2026-10-07: active-slot drop cancel; no Poison tick during Block; the lobby host never passes to a bot) shipped on `main` (promote #79) before V7 Lot 72 merged. **V7 (technical spec v7 §10.4):** `lot-72-v7` (2026-10-26, "New look") is the open V7 entry; each V7 player-facing PR appends one Before / After item per screen area during the promotion freeze. New ids never reuse an existing id: seen-state (`ui/release-storage.ts`) is keyed by id. First item: the §10.5 catalog-text fix (After `Fixed some bugs.`). Second item: the classic tutorial's resources tip no longer shows a stray life icon (After `Fixed some bugs.`). Third item: the turn timer after a fifth-active picker cancel (server fix L82-01, After `Fixed some bugs.`). Fourth item: the played card no longer also lands in the pool after a fifth-active picker (server fix L82-02, After `Fixed some bugs.`). Fifth item: Cancel on the fifth-active picker refunds the play's points (designer rule change L82-03). Sixth item: past elimination flashes no longer replay after a reconnect or on the finished board (Q63, L74-17, After `Fixed some bugs.`). Sentence chips sit
   on the caster (remaining turns in red) and open catalog inspect (L65-03). Play / later caster ticks / fire flash
   the table-wide red banner. Player-visible work updates the open What’s new
   entry in the same commit. No accounts, no protocol fields. Idle hub is unlabeled (not “Not connected”). Top-right **Beta**
@@ -1196,7 +1760,7 @@ rules above are unchanged — this section only covers how the client looks.
   Opponent actives sit beside the kit portrait (`activeShield` + persistents). The V2 table
   shows no Incoming / felt chip for Imposition or Points Generator: the unwired
   `persistent-incoming.ts` was deleted in L73-05 (spec v7 §13 #35). V7 recurring chips come
-  from `view-model/recurring-chips.ts` (View-model layer above).
+  from `view-model/recurring-chips.ts` (View-model layer above) and render on the arena's central plate (L74-06).
 - **Elimination:** one generic treatment on `KitPortrait` — desaturate + “Eliminated” badge.
   No `*(dead).png` paths.
 - **Table (L12):** felt shell in `screens/table/` — opponents arc, pending strip, **center-stage
@@ -1544,7 +2108,7 @@ rules above are unchanged — this section only covers how the client looks.
   value applies; applied once per page load (`useState` initializer in `GameApp`); tutorial
   rooms always get classic. Read only by `App.tsx` (playing) and `EndScreen` (`tableUi`),
   each via `const Board = … ? ArenaScreen : TableScreen` so source-text literals stay single.
-  `ArenaScreen` renders `TableScreen` until L74-01. Storage access is `try/catch` and a
+  `ArenaScreen` is the V7 arena since L74-01 (`## Arena (V7, ?ui=next)`). Storage access is `try/catch` and a
   blocked store degrades to classic (or to the param for that load); the param is never
   stripped from the URL.
 - **Client storage keys** (no accounts; every helper guards the storage accessor in try/catch,
@@ -2494,3 +3058,130 @@ value, viewports 1440×900 and 390×844 in the built-in browser pane.
     `admin-games-page.test.tsx`, `admin-data-page.test.tsx`). happy-dom has no layout, so these
     tests stub the measures.
 - `pnpm verify` **3141** tests.
+
+### Lot 74 verified 2026-11-03 (browser, `TURN_DURATION_MS=300000 RECONNECT_GRACE_MS=5000`, PROTOCOL 45)
+
+Dedicated gate servers: Vite `:5273`, Colyseus `:2667`; `?ui=next`; nicks **L74Gate…**; viewports
+360×740, 375×812, 390×844, 844×390 and 1440×900 in the built-in browser pane. `dev` merged first
+(`cf556998`). The app stopped the gate servers between sessions, so every room is in-memory and
+gone. Session 1 (2026-11-02): **XXJPBR** (solo, 4 seats, Juggernaut), **QMIKTC** (online, three
+humans at 375 / 360 / 390 plus a Normal bot, a walk-in, then two re-claims after every pane tab
+reloaded). Session 2 (2026-11-03): **ZXWXKZ** (solo, 8 seats, Assassin), **UMANAX** (solo, 2
+seats, 30 s, Random, two kits allowed; finished board), **FBUGET** (solo, 120 s), **BSETDF**
+(online host 45 s, guest at 390), **UQAQFS** (solo, Gambler), **PPVDKU** (solo, Duplicator at
+360), **JUKWMV** (`?ui=classic`), **ZYGLRJ** (solo, 4 seats, design scan). Session 3, the review
+fix round (2026-11-03): **JPPWCR** (solo, 2 seats at 360 and 375; finished board at 844×390
+and 1440×900).
+
+- **G1–G2 layout and plate:** no page scroll and six regions in every room and viewport. 4 seats
+  at 360/375/390: seats inside the arena, no overlap, plate clear. 8 seats: the 4 + 3 grid fits
+  at 390; at 375 the plate overlaps the second row by 14 px and at 360 by 82 px (the grid takes
+  208 of the arena's 214 px), as a Duplicator's two-row dock does to a 2-seat table at 360. A
+  press on an overlapped seat reaches it except on the plate's own landing card and badges.
+  Designer 2026-11-03 "later": Lot 74 ships it as is, and L75-13 fits the grid before the flip.
+  Not exercised: the POV "Hits all" burst (no fan-out play reachable; `threat-layer.test.tsx`)
+  and stub arrows between grid neighbours (Q20 draws none; `threat-geometry.test.ts`).
+- **G3:** the seat's initial-letter Avatar repeated the nickname; fixed, `aria-hidden`.
+- **G4:** strip 160 px with the `tile` portrait at 375 and the hand visible; the Deactivate
+  confirm opens on Cancel and returns focus to Deactivate (UQAQFS). The empty specials caption
+  (54 px) was missing from the strip budget; fixed, the caption now `w-[56px]`.
+- **G5:** the dock grew 72 px on the POV's turn at 360/375 (Unspy's reason widened it); fixed.
+  The dock opts into one reason line (two under Unspy), and every other Button reason wraps in
+  full as before (review I1). A Duplicator's dock wraps to two clean rows at 360 (174 px). The
+  Draw pulse runs while its reason slot is empty. Re-checked at 360 and 375 (JPPWCR): 'Not your
+  turn' under Draw and Unspy, 'Nobody is spying on you' under Unspy, and the Shop and card sheet
+  'Not enough points' / 'No upgrade points' all show in full.
+- **G6 tap-tap:** ring, pulse and dim read; a top-row seat's `--mine` ring loses 1 px at the
+  arena edge; focus starts on the first valid seat; Cancel returned focus to the card, Esc did
+  not (fixed); Esc with Unspy above the bar closes only Unspy; a double tap on Cancel sends
+  nothing.
+- **G7 drag:** (b) spring-back, (c) seat drop and (d) plate drop pass ((a), (e), (f) in L74-12).
+  A window blur left the ghost up; fixed. Not exercised: (g) Regeneration / Card Transformer on
+  the plate, real-touch pan versus lift and full-motion spring-back timing (no touch device;
+  `hand-drag.test.ts`, `hand-drag-layer.test.tsx`).
+- **G8 double taps:** a hand card at 375 lands its second tap on the sheet's entrance shield;
+  Unspy, a Shop tile and Buy selected each send one; Draw sent one but its second tap opened a
+  hand card's sheet through the dock jump (fixed, re-run clean). A keyboard double Enter on a
+  hand card plays it (the shield is pointer-only, recorded). Stats on the finished board: the
+  second tap landed on V2 Game over's action row; `54567e7d` (designer 2026-11-03) shields Game
+  over for `DUR_BASE_MS` after it opens. Not exercised: the hand-card double tap at 360, and a
+  sub-choice arriving under a moving finger (no bot opens one on the POV's input;
+  `sub-choice-sheet.test.tsx`).
+- **G9:** Assassin multi-attack moves focus into the step and back to Multi-attack on Cancel
+  (ZXWXKZ). With focus on Use, the turn passing dropped focus to `body`; fixed, re-run on FBUGET.
+  The multi-attack Play and the Deactivate confirm had the same bug; fixed (review M6).
+- **G10 long press:** not exercised (no touch device; `use-long-press.test.tsx`).
+- **G11–G12:** arrows, one plate badge per effect and 'You are being attacked' (QMIKTC). An
+  equal answer cancels both, arrows clear, no summed total. Not exercised: the resolution flash
+  on the badge (not captured; `use-table-fx-triggers.test.ts`).
+- **G13 Mirror:** a blocking sheet with the attack and the first target preselected; Minimize
+  collapses to a bar and sends nothing. The first attempt resolved to the preselected target
+  after Minimize then Menu, with no send log; not reproduced. Not exercised: Time's up, an
+  Invisible target (`sub-choice-sheet.test.tsx`).
+- **G14:** a forfeit with two queued attackers gives both the reward sheet at once; at 360 'A
+  card' (9 cards) keeps Confirm above Minimize and the 'Choice N' Segmented fits. The POV overlay
+  lasts 1.6 s before Game over (PPVDKU).
+- **G15 slot-drop:** not exercised (four active slots need several random specials; the merged
+  `slot-drop.test.ts` "Cancel refunds the points the play paid (L82-03)" passes). Also not
+  exercised: the locked slot-drop footer lines (L74-20 item; `slot-drop-choice.test.tsx`).
+- **G16:** base Spy shows live numbers and no kit, Spy+ shows the kit, hand and specials, the
+  kit sheet stacks, Unspy sends one `clearSpy`, the spy eye shows (XXJPBR).
+- **G17:** a walk-in by code gets the picker over fogged kits; Stay shows the kits and the
+  Watching strip with no dock; Claim a seat reopens the picker; Sit here seats it, closes the
+  open seat sheet and lights no POV arrow. An eliminated POV gets the Watching strip and Leave
+  table. A double tap on Claim a seat claims nothing; the second tap closes the picker. Not
+  exercised: Reanimating, the Reanimation kit grid at 360 (L74-19 item) and a sub-choice that
+  opens and clears within the banner window (L74-23 item) (`pickers.test.tsx`, `spectator.test.tsx`).
+- **G18:** an `offline` event shows 'Reconnecting…', locks Draw and Use, keeps Forfeit and chat
+  Send, and recovers in under a second. Closing the active player's tab gives 'Paused —
+  reconnecting', then an absent auto-draw after the grace. Not exercised: the sub-choice Confirm
+  lock, Claim a seat during a reconnect and the null-room Draw latch (`reconnect-banner.test.tsx`,
+  `commit-veto.test.tsx`).
+- **G19:** a 30 s solo drew a 300 s bar and its Table rules read 300 s; fixed (the connection
+  keeps the lobby rules). Re-run: 120 s solo full bar, Table rules 120 s in a bottom sheet (top
+  67 px at 375×812), the last 10 s red, a bot turn '—', an offline event keeps the length, a
+  reload goes Home, a 45 s host gives the guest the same bar, the finished board shows 30 s,
+  Random and 'Excluded'.
+- **G20:** an eliminated line carries '(eliminated)' and no living reader sees it; the unread
+  badge reads on the 44 px icon; four icons fit at 360; the finished board has no composer; the
+  input is 16 px. Not exercised: a '(spectator)' line, iOS zoom and the phone keyboard
+  (`chat-sheet.test.tsx`, `text-field.test.tsx`).
+- **G21:** a reject toast survives a state update, closes once on OK and after 6 s. Esc does
+  not close it (L74-25 design, designer question). A race reject shook nothing because the state
+  update came first (by design; `reject-toast.test.tsx`).
+- **G22:** Game over over the finished arena, View board, the feedback ask-once, a browse-only
+  Shop, the log, a read-only chat and the 'You are dead' overlay before Game over.
+- **G23:** How to play and Feedback open unclipped above the arena. One Esc during targeting ends
+  targeting and leaves Feedback open, and from the Menu sheet the first Esc closes the Menu
+  under How to play (ruling R3, L75/L76).
+- **G24:** token chips, card ghosts, the elimination beat and centred banners on 4 and 8 seats;
+  one `?ui=classic` game (JUKWMV) shows its FX unchanged. Not exercised: an own ghost starting at
+  the drop point, S9 (a portaled sheet showing the same `data-instance-id`), banners with the
+  chat keyboard open and float clipping in the seat value column (`arena-own-fx.test.tsx`,
+  `use-table-fx-triggers.test.ts`).
+- **G25:** the Shop's tabs spilled at 360/375; fixed. Spy 2 / 4, Special 20, Pool Buy random,
+  upgrade-point Buy 10 / Sell 7, one buy per double tap, the sheet closes on a buy. Not
+  exercised: an empty pool, iOS `dblclick`, a long press on a tile (`shop-sheet.test.tsx`).
+- **G26:** no page scroll and no crash at 844×390 and 1440×900 on the live board (ZXWXKZ) and the
+  finished board (JPPWCR).
+- **G27:** the ticker truncates at 360/375; the sheet opens on the newest line; stuck round
+  headers let a line show above them (fixed); the log stopped following multi-line updates
+  (fixed); a 24-character nickname fits one line.
+- **Parity sweep:** 67 rows: 40 kept, 25 changed by design, 0 gaps, 2 Lot 75 scope (details in
+  the Lot 74 PR).
+- **Design gate (§12.4):** `detect` on `screens/arena/` and the 11 Lot 74 `ui/` files: 127
+  files, 0 findings (regex scan). In-page scans of a live arena (ZYGLRJ: board, Shop, card,
+  seat and Menu sheets) and of a finished board: the pre-approved `radial-spotlight-glow` on
+  `.v7-ground`, the V2 `tutorial-pulse` `dark-glow` from `index.css` (a false positive, as in
+  Lot 72) and `repeating-stripes-gradient` on the Lot 72 ground scanlines (`ui/tokens.css`), which
+  needs the designer's approval before any ignore. V2 Game over findings are L77's. Critique
+  notes are in the Lot 74 PR.
+- Fixes: `d71a88a0` seat nickname once; `dcc0d131` Esc focus back to the card; `d22ad4c4` drag
+  ends on blur; `5992405d` sticky round headers; `307e4b60` Shop tabs shrink; `a55e1fd6` dock
+  height across turns; `0dadd179` the log keeps following; `f69d1c60` a solo's chosen rules
+  (ratified, `94b36b4d`); `61318175` card sheet focus as the turn passes; `4030abad` a hand with
+  no specials; `c4b783df` two reason lines only for Unspy; `54567e7d` Game over shielded from a
+  double tap (designer 2026-11-03). Review fixes: `826fffb3` a reason clamps only where it opts
+  in; `fd6dbea0` step exit skips aria-disabled actions; `356a4153` Play and the confirm keep focus
+  as the turn passes; `b23dc48c` the empty caption in px; `541f19af` the visibility spy restored;
+  `b1ded6e5` the dead rules cache step removed. `pnpm verify` **3770** tests.

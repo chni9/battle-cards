@@ -511,6 +511,53 @@ describe('Sheet shield timer (fix round 4)', () => {
   });
 });
 
+describe('Sheet entrance shield (Lot 74 Part 1 final review, ruling R1; §1, §6.6.4)', () => {
+  const entranceShield = (): HTMLElement | null => document.querySelector<HTMLElement>('[data-zone="sheet-entrance-shield"]');
+  it('covers the panel with a no-op shield for DUR_BASE_MS after it opens, and leaves focus alone', () => {
+    vi.useFakeTimers();
+    const ui = (open: boolean): ReactElement => <Ro title="Card" open={open}><button type="button">Use</button></Ro>;
+    const { rerender } = renderUi(ui(false), { advanceTimers: vi.advanceTimersByTime });
+    expect(entranceShield()).toBeNull();
+    rerender(ui(true));
+    const shield = entranceShield();
+    // happy-dom has no hit testing: the shield is the last, absolutely placed child of the panel,
+    // over every control, and a real second tap lands on it (the L74-26 gate taps it on a phone).
+    expect(shield?.parentElement).toBe(dialog('Card'));
+    expect(dialog('Card').lastElementChild).toBe(shield);
+    expect([shield?.style.position, shield?.style.inset, shield?.getAttribute('aria-hidden')]).toEqual(['absolute', '0', 'true']);
+    expect(focused()).toBe(button('Use'));
+    advance(DUR_BASE_MS - 1);
+    expect(entranceShield()).not.toBeNull();
+    advance(1);
+    expect(entranceShield()).toBeNull();
+    expect(focused()).toBe(button('Use'));
+  });
+  it('stands under reduced motion too, and again when a blocking sheet is resent', () => {
+    vi.useFakeTimers();
+    const ui = (open: boolean): ReactElement => <Sheet open={open} mode="blocking" title="Choose a reward"><button type="button">4 lives</button></Sheet>;
+    const { rerender } = renderUi(ui(true), { reducedMotion: true, advanceTimers: vi.advanceTimersByTime });
+    expect(entranceShield()?.closest('[role="dialog"]')).toBe(dialog('Choose a reward'));
+    advance(DUR_BASE_MS);
+    expect(entranceShield()).toBeNull();
+    rerender(ui(false));
+    rerender(ui(true));
+    expect(entranceShield()).not.toBeNull();
+    advance(DUR_BASE_MS);
+    expect(entranceShield()).toBeNull();
+  });
+  it('does nothing when pressed: the sheet stays open and focus stays put', async () => {
+    vi.useFakeTimers();
+    const onClose = vi.fn();
+    const { user } = renderUi(<Ro title="Card" onClose={onClose}><button type="button">Use</button></Ro>, { advanceTimers: vi.advanceTimersByTime });
+    const shield = entranceShield();
+    if (shield === null) { throw new Error('no entrance shield'); }
+    expect(fireEvent.mouseDown(shield)).toBe(false);
+    await user.click(shield);
+    expect(onClose).not.toHaveBeenCalled();
+    expect([dialog('Card').isConnected, focused()]).toEqual([true, button('Use')]);
+  });
+});
+
 describe('Sheet opener chain (fix round 2)', () => {
   it('re-parents an opener when the sheet that held it closes first (a: Card closes under Kit)', () => {
     const ui = (cardOpen: boolean, kitOpen: boolean): ReactElement => <><button type="button">Open card</button>

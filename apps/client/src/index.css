@@ -192,11 +192,13 @@
     box-shadow: none;
   }
 
-  [data-zone="opponent-seat"] [data-zone="kit-portrait"] {
+  .table-shell [data-zone="opponent-seat"] [data-zone="kit-portrait"],
+  [data-zone="opponents-dialog-row"] [data-zone="opponent-seat"] [data-zone="kit-portrait"] {
     width: 2.35rem;
   }
 
-  [data-zone="private-zone"] [data-zone="kit-portrait"] {
+  /* V2 table only (L74-09): the arena self strip keeps its KitPortrait size. */
+  .table-shell [data-zone="private-zone"] [data-zone="kit-portrait"] {
     width: 3rem;
   }
 

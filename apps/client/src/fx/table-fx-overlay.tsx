@@ -368,6 +368,7 @@ export function TableFxOverlay(): ReactElement {
             return (
               <motion.div
                 key={event.id}
+                data-fx="elimination-beat"
                 className="absolute rounded-[length:var(--radius-card)] border-2 border-cta-red bg-cta-red/15"
                 style={{
                   left: rect.left - 4,

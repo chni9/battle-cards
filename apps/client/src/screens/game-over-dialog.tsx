@@ -1,6 +1,8 @@
 /**
  * Closable game-over stats dialog — designer 2026-08-06 / Lot 60 gallery.
  * Sits over the finished board (`FinishedStateView.finalTable`); Esc / overlay dismiss.
+ * For `DUR_BASE_MS` after it opens every press is ignored, so the second tap of a double tap on
+ * the arena dock's Stats cannot land on it (designer 2026-11-03; `docs/agent/decisions.md`).
  */
 
 import {
@@ -16,6 +18,7 @@ import { Dialog } from '../design/components/dialog';
 import { KitPortrait } from '../design/components/kit-portrait';
 import { PlayerName } from '../design/components/player-name';
 import { ResourceIcon } from '../design/components/resource-icon';
+import { DUR_BASE_MS } from '../ui/motion/motion-tokens';
 import {
   seatIndexOf,
   seatZoneStyle,
@@ -42,6 +45,7 @@ import {
   showActionLogDownload,
   showPlayAgain,
 } from './game-over-copy';
+import { useEntranceGate } from './use-entrance-gate';
 
 export interface GameOverDialogProps {
   open: boolean;
@@ -160,10 +164,10 @@ function AwardTile({
 export function GameOverDialog({
   open,
   view,
-  onClose,
-  onLeave,
-  onPlayAgain,
-  onOpenFeedback,
+  onClose: closeNow,
+  onLeave: leaveNow,
+  onPlayAgain: playAgainNow,
+  onOpenFeedback: openFeedbackNow,
 }: GameOverDialogProps): ReactElement {
   const winnerNick = nickOf(view, view.winnerPlayerId);
   const youWon = view.winnerPlayerId === view.you;
@@ -174,6 +178,20 @@ export function GameOverDialog({
   const [exportBusy, setExportBusy] = useState(false);
   const [exportError, setExportError] = useState<string | null>(null);
   const allowExcel = showActionLogDownload(import.meta.env.DEV);
+  const entranceOpen = useEntranceGate(open, DUR_BASE_MS);
+  // Every action and both dismissals (overlay, Esc) go through the shield. The props keep their
+  // names below as these shielded handlers, so the JSX reads as before.
+  const afterEntrance =
+    (handler: () => void): (() => void) =>
+    () => {
+      if (entranceOpen) {
+        handler();
+      }
+    };
+  const onClose = afterEntrance(closeNow);
+  const onLeave = afterEntrance(leaveNow);
+  const onPlayAgain = playAgainNow === undefined ? undefined : afterEntrance(playAgainNow);
+  const onOpenFeedback = afterEntrance(openFeedbackNow);
 
   async function onExportLog(): Promise<void> {
     setExportBusy(true);
@@ -204,9 +222,9 @@ export function GameOverDialog({
               type="button"
               variant="purple"
               disabled={exportBusy}
-              onClick={() => {
+              onClick={afterEntrance(() => {
                 void onExportLog();
-              }}
+              })}
             >
               {exportBusy ? 'Building Excel…' : DOWNLOAD_ACTION_LOG_LABEL}
             </Button>

@@ -310,15 +310,33 @@ export function measureTokenFlyout(
 }
 
 /**
+ * A card-ghost rect centred on a viewport point: the drop point of a dragged card (L74-17).
+ */
+function originRect(origin: { readonly x: number; readonly y: number }): DomRectLite {
+  return {
+    left: origin.x - DECK_CARD_FLYOUT_WIDTH / 2,
+    top: origin.y - DECK_CARD_FLYOUT_HEIGHT / 2,
+    width: DECK_CARD_FLYOUT_WIDTH,
+    height: DECK_CARD_FLYOUT_HEIGHT,
+  };
+}
+
+/**
  * Played card: hand/seat → felt pending center (L51-16).
  * Same destination as buy/sell ghosts. Playing is a card leaving the hand;
  * L51-13 dropped the oversized log flyout, not the transfer itself.
+ * `origin`: the drop point of a dragged card (L74-17); it replaces the instance lookup.
  */
 export function measurePlayCardGhost(
   playerId: string,
   artUrl: string,
   instanceId?: string,
+  origin?: { readonly x: number; readonly y: number },
 ): { artUrl: string; from: DomRectLite; to: DomRectLite } | null {
+  if (origin !== undefined) {
+    const to = measureFeltCenterRect();
+    return to === null ? null : { artUrl, from: originRect(origin), to };
+  }
   const instanceRect =
     instanceId === undefined
       ? null
@@ -374,22 +392,34 @@ export function measureBuySpecialFlyout(): {
   };
 }
 
-/** Sell card: held instance → felt center (L51-13). */
+/**
+ * Sell card: held instance → felt center (L51-13).
+ * `origin`: the drop point of a dragged card (L74-17); it replaces the instance lookup.
+ */
 export function measureSellCardFlyout(
   instanceId: string,
   cardId: CardId,
   isUpgraded: boolean,
+  origin?: { readonly x: number; readonly y: number },
 ): { artUrl: string; from: DomRectLite; to: DomRectLite } | null {
-  const origin =
-    rectOf(document.querySelector(`[data-instance-id="${CSS.escape(instanceId)}"]`)) ??
-    rectOf(document.querySelector('[data-zone="hand"]'));
+  const held =
+    origin !== undefined
+      ? null
+      : (rectOf(document.querySelector(`[data-instance-id="${CSS.escape(instanceId)}"]`)) ??
+        rectOf(document.querySelector('[data-zone="hand"]')));
+  const from =
+    origin !== undefined
+      ? originRect(origin)
+      : held === null
+        ? null
+        : sizedRect(held, DECK_CARD_FLYOUT_WIDTH, DECK_CARD_FLYOUT_HEIGHT);
   const to = measureFeltCenterRect();
-  if (origin === null || to === null) {
+  if (from === null || to === null) {
     return null;
   }
   return {
     artUrl: getCardArtUrl(cardId, { isUpgraded }),
-    from: sizedRect(origin, DECK_CARD_FLYOUT_WIDTH, DECK_CARD_FLYOUT_HEIGHT),
+    from,
     to,
   };
 }

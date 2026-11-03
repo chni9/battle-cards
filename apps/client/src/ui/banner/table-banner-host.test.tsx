@@ -221,6 +221,18 @@ describe('TableBannerHost (L72-18)', () => {
     expect(screen.getAllByText(TURN)).toHaveLength(1);
     off(ATK);
   });
+
+  it('drops You are dead when deadCue is false, on first mount and on the edge, and keeps the other cues (L74-23)', () => {
+    const first = renderUi(host({ isEliminated: true, deadCue: false }));
+    none(first);
+    first.unmount();
+    const live = renderUi(host({ isMyTurn: true, deadCue: false }));
+    on(TURN);
+    live.rerender(host({ isEliminated: true, deadCue: false }));
+    advance(MS);
+    off(DEAD);
+    none(live);
+  });
 });
 
 describe('TableBannerHost under StrictMode (L51-06)', () => {
@@ -250,5 +262,20 @@ describe('TableBannerHost under StrictMode (L51-06)', () => {
     expect(screen.getAllByText(TURN)).toHaveLength(1);
     advance(1); off(TURN);
     advance(MS); off(TURN);
+  });
+});
+
+describe('TableBannerHost visual viewport (L74-17 watch point)', () => {
+  afterEach(() => { vi.unstubAllGlobals(); });
+  it('sits in the visualViewport box, never inset-0, and follows the phone keyboard', () => {
+    class FakeVisualViewport extends EventTarget { offsetTop = 0; offsetLeft = 0; width = 390; height = 844; }
+    const viewport = new FakeVisualViewport();
+    vi.stubGlobal('visualViewport', viewport);
+    renderUi(host({ isMyTurn: true }));
+    const root = document.querySelector<HTMLElement>('[data-zone="table-banners"]');
+    expect([root?.style.position, root?.style.width, root?.style.height]).toEqual(['fixed', '390px', '844px']);
+    expect(root?.className ?? '').not.toMatch(/\binset-0\b/);
+    act(() => { viewport.offsetTop = 120; viewport.height = 480; viewport.dispatchEvent(new Event('resize')); });
+    expect([root?.style.top, root?.style.height]).toEqual(['120px', '480px']);
   });
 });

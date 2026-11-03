@@ -8,8 +8,9 @@
  * surfaces; that file and its duplicated copy stay until L75 and L76.
  *
  * - **Sections:** a header (the sheet portrait and the kit name), then the groups of
- *   `KIT_DETAILS_SECTION_IDS`, each a labelled `<section data-kit-section>` with an `<h3>`, in
- *   that order (the test pins it). The ability group renders only for a kit with
+ *   `KIT_DETAILS_SECTION_IDS`, each a `<section data-kit-section>` headed by an `<h3>`, in
+ *   that order (the test pins it). The sections carry no accessible name, so a sheet does not
+ *   expose up to nine region landmarks (L74-02). The ability group renders only for a kit with
  *   `KIT_ABILITY_COPY`. All visible copy is the V6 copy, verbatim.
  * - **Cards:** the starting hand is one hidden thumb per family (an action and an attack verso)
  *   with its count, so no "N action · M attack" prose; special and trait cards are thumb
@@ -24,7 +25,7 @@
  */
 
 import { getCard, getKit, upgradePointBuyCost, upgradePointSellYield, type CardId, type KitId } from '@card-battle/shared';
-import { useId, type ReactElement, type ReactNode } from 'react';
+import type { ReactElement, ReactNode } from 'react';
 import { KIT_ABILITY_COPY } from '../../view-model/kit-inspect-traits';
 import { kitSpecialCardKey } from '../../view-model/kit-special-card-key';
 import { Card } from '../card/card';
@@ -48,10 +49,9 @@ const CAPTION_CLASS = 'font-v7-body text-v7-caption font-bold text-v7-text-2';
 const AMOUNT_CLASS = 'font-v7-body text-v7-body font-extrabold text-v7-text';
 
 function Group({ id, children }: { id: KitDetailsSectionId; children: ReactNode }): ReactElement {
-  const headingId = useId();
   return (
-    <section data-kit-section={id} aria-labelledby={headingId} className="rounded-v7-chrome-sm bg-v7-panel-2 p-3">
-      <h3 id={headingId} className="font-v7-display text-v7-body text-v7-text">
+    <section data-kit-section={id} className="rounded-v7-chrome-sm bg-v7-panel-2 p-3">
+      <h3 className="font-v7-display text-v7-body text-v7-text">
         {KIT_DETAILS_SECTION_TITLES[id]}
       </h3>
       <div className="mt-2">{children}</div>

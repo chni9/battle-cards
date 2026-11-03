@@ -29,6 +29,8 @@ export interface RulesSheetProps {
   open: boolean;
   rules: LobbyRules;
   onClose: () => void;
+  /** Lands on the `Sheet` panel. The arena passes `data-arena-sheet` (L74-22). */
+  dataAttributes?: Readonly<Record<`data-${string}`, string>>;
 }
 
 /**
@@ -38,7 +40,7 @@ export interface RulesSheetProps {
  */
 const KIT_GRID_CLASS = 'grid grid-cols-[repeat(auto-fill,minmax(5.5rem,1fr))] gap-x-2 gap-y-4';
 
-export function RulesSheet({ open, rules, onClose }: RulesSheetProps): ReactElement | null {
+export function RulesSheet({ open, rules, onClose, dataAttributes }: RulesSheetProps): ReactElement | null {
   return (
     <Sheet
       mode="read-only"
@@ -46,6 +48,7 @@ export function RulesSheet({ open, rules, onClose }: RulesSheetProps): ReactElem
       title={TABLE_RULES_LABEL}
       placement="auto"
       onClose={onClose}
+      {...(dataAttributes !== undefined ? { dataAttributes } : {})}
       actions={
         <Button variant="secondary" onClick={onClose}>
           Close

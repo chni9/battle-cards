@@ -497,6 +497,15 @@ name, bot label and connection badge in Seat identity.
   root carries `data-motion="reduced" | "full"`, and CSS animation or press classes are
   applied only when full. No sheen sweep, pulse, shake, particles, flying cards or slam; the
   same numbers and labels remain, so no information is carried by motion alone.
+- **Long-press** (`ui/motion/use-long-press.ts`, L74-02, spec v7 §6.6.5): `useLongPress({
+  onLongPress, disabled? })` returns pointer handlers for the face it opens. A primary-button
+  press held for `LONG_PRESS_MS` (450 ms) fires once. Moving the pointer more than
+  `LONG_PRESS_MOVE_PX` (8 px), releasing, cancelling or leaving cancels it. `onClickCapture`
+  swallows the click that ends a long press, so a tap action never follows it; a keyboard or
+  assistive-technology click (`detail` 0) is never swallowed and clears a stale press. It applies
+  outside the hand only (the hand reads a vertical move as a drag), opens the same read-only
+  sheet that Enter or a click opens on the face, and never sends an intent. Motion preference
+  does not change it.
 
 ## Primitives (apps/client/src/ui/primitives/, L72-08)
 
@@ -533,7 +542,13 @@ their lot restyles them.
   button drops `--chrome-press-y` (3px) and loses its shadow over `--dur-fast`; under reduced
   motion it only dims (`brightness-90`), with no translate. A disabled button shows
   `disabledReason` as visible `--text-2` caption text under it, joined to its
-  `aria-describedby` (§11); `reserveReasonSlot` keeps that line, empty and aria-hidden.
+  `aria-describedby` (§11). By default the reason wraps freely and may widen its button, so it
+  always shows in full (Q39). `reasonLines` (1 or 2) is an opt-in for a fixed footprint: the
+  reason then never widens the button and is clamped to those lines, and `reserveReasonSlot`
+  keeps them (18 or 36 px), empty and aria-hidden. The dock opts in, one line under Draw, Shop,
+  Activate duplication and Stats and two under Unspy ('Nobody is spying on you'), so a reason
+  that comes and goes never moves it (360 and 375 px, L74-26 gate G5). Without `reasonLines`,
+  `reserveReasonSlot` keeps one 16 px line.
   `className` lands on the outermost element: the button, or the wrapper holding the button
   and its reason line.
 - **Focusable disabled actions (Q39):** a natively disabled button leaves the Tab order, so its
@@ -541,7 +556,10 @@ their lot restyles them.
   users (Draw, Shop and Unspy in L74), the caller passes `disabled` with
   `focusableWhenDisabled`. The button then renders `aria-disabled="true"` instead of
   `disabled`, stays focusable with its reason described, swallows activation (click, Enter,
-  Space) and has no press.
+  Space) and has no press. A focusable action given a `disabledReason` (empty while enabled)
+  keeps one element tree, its reason line hidden until it shows, so a reason that appears
+  under the focus never remounts the button and drops focus to `body` (the card sheet's
+  actions, L74-26 gate G9).
 - **Icon wells:** on the three CTA fills an icon always sits in a round `--bg-0` well
   (`ICON_WELL_CLASS`), whatever its name, so no icon can meet a fill within CIEDE2000 20 of its
   body (Icons › Accessibility and use) and a later icon cannot either. On `quiet` the icon sits
@@ -571,7 +589,10 @@ their lot restyles them.
   tabindex. ArrowLeft and ArrowRight move and select (wrapping, skipping disabled tabs), Home
   and End jump to the first and last enabled tab; one labelled tabpanel. Ids come from
   `idPrefix` (`{prefix}-tab-{id}`, `{prefix}-panel`) or `useId`. A selected tab that is
-  disabled takes the locked look (`--text-2` fill), as in a locked Segmented.
+  disabled takes the locked look (`--text-2` fill), as in a locked Segmented. Tabs may shrink: in
+  a track narrower than its labels (the Shop's four tabs at 360 and 375 px), a tab narrows to its
+  longest word and its label wraps onto a second line inside the 44 px tab, so the track never
+  spills past its container (L74-26 gate G25).
 - **Segmented:** a radiogroup of `aria-checked` radios, the checked one `--cta`. Arrow keys on
   both axes move and select; `disabled` locks the group (`aria-disabled`). Tabs and Segmented
   share `roving-focus.ts`. Both ignore Alt, Ctrl and Meta chords (`hasCommandModifier`), which
@@ -675,11 +696,14 @@ shipped string.
 (`sheet-stack.ts`, pure; `sheet-stack-context.ts`, the store) that implements spec v7 §6.7.
 The V2 rule "one Esc closes every open Dialog" does not apply to V7 surfaces.
 
-- **Layers** (`ui/layers.ts`, `Z_INDEX`): `sheet` 50, `sheetBar` 80, `banner` 90, `toast` 95.
+- **Layers** (`ui/layers.ts`, `Z_INDEX`): `dragGhost` 40, `sheet` 50, `sheetBar` 80, `banner` 90, `toast` 95.
   Sheets and Toast portal to `document.body`, so the layers are global, and a caller's
   `<form>` or transformed ancestor never captures them. Inside a layer the stack assigns
   `sheet + n` to everything on the sheet layer and `sheetBar + n` to Minimize bars, clamped
   below the next layer.
+- **Drag ghost** (`Z_INDEX.dragGhost`, L74-12, spec v7 §6.6.5): the arena's hand-drag ghost and
+  Sell zone are the one overlay outside Sheet / Dialog / Toast: a `pointer-events: none` portal
+  to `document.body`, mounted only during a drag, below every sheet.
 - **Paint order**, bottom to top: expanded read-only sheets, caller-collapsed read-only bars
   (L74 targeting), expanded blocking sheets, Minimize bars of blocking sheets. A blocking
   sub-choice always sits on top of every other sheet, whatever opened first (§6.7: "any other
@@ -719,7 +743,13 @@ The V2 rule "one Esc closes every open Dialog" does not apply to V7 surfaces.
   presses in that window: the bar shows at once, but a double tap neither re-expands nor
   re-minimizes. A sheet that mounts already collapsed raises no shield. A closing toast stays
   click-through instead: it covers a small area, and blocking the dock under it would be less
-  predictable.
+  predictable. **Entrance** (Lot 74 Part 1 final review, ruling R1): every time a panel enters
+  (it opens, reopens, or a resent blocking sheet arrives on its own), a transparent,
+  `aria-hidden` no-op shield covers the panel, actions and Minimize included, for `--dur-base`,
+  under reduced motion too, because it guards a double tap, not an animation. Its mousedown never
+  moves focus, and focus lands as it would without it. So the second tap of the double tap that
+  opened a card sheet, or a tap already in flight when a sub-choice arrives, never lands on Use,
+  Upgrade or a preselected Confirm. The backdrop around the panel keeps its usual behavior.
 - **Blocking sheets** have no `onClose`, no handle, and ignore Esc, backdrop and swipe. The
   only way out besides answering is **Minimize** (`MINIMIZE_LABEL`, a new §10.6 string listed
   in the Lot 72 PR for designer review; Q59), a quiet Button placed last in the panel so initial
@@ -827,12 +857,16 @@ rendered as it is; the copy fixes of §10.5 are L72-13's.
 `global-art-lot63-gambler-roulette`, `active-persistent-thumbs`, `sentence-chips`). It is the
 only V7 card renderer; the V2 `design/components/card.tsx` stays for the classic screens.
 
-- **API:** `<Card size instance damageMultiplier? counter? selected? unplayable? onActivate?
-  className? dataAttributes? />`, or `<Card face="hidden" family size … />` for a Spy hand
-  without identity. `size` is `hand | lifted | sheet | thumb | tile` (`CARD_SIZES`). With
-  `onActivate` the root is a `<button type="button">` with `aria-pressed={selected}` (click,
-  Enter and Space call back with the instance id; a hidden face calls back with no argument);
-  without it, an `<article>`. The accessible name is `cardFaceLabel`: "Strong attack upgraded,
+- **API:** `<Card size instance damageMultiplier? counter? selected? unplayable? description?
+  onActivate? className? dataAttributes? />`, or `<Card face="hidden" family size … />` for a Spy
+  hand without identity. `size` is `hand | lifted | sheet | thumb | tile` (`CARD_SIZES`). With
+  `onActivate` the root is a `<button type="button">` (click, Enter and Space call back with the
+  instance id; a hidden face calls back with no argument); without it, an `<article>`. The button
+  carries `aria-pressed` only when the caller passes `selected` (the hand's selection): a face that
+  only opens a sheet (thumbs, log, queue, pool) passes none, so it never reads as a toggle (L74-07).
+  `description` becomes the face's accessible description on either root form (`aria-describedby`
+  to a hidden node); the hand passes the unplayable reason, `DISABLED_REASON_COPY[reason]`.
+  The accessible name is `cardFaceLabel`: "Strong attack upgraded,
   4 damage", "Poison, 3 card lives", "Invisibility, 1 turn remaining"; a hidden face is "Hidden
   card". Thumbs also carry it as a native `title`, since they print no name. The caller decides
   `unplayable` and `counter`; an unplayable face stays activatable. The caller's `className`
@@ -1034,8 +1068,9 @@ the classic files and their duplicated copy stay until L75 and L76.
   face inside is decorative (`alt=""`, code faces `aria-hidden`). Without `onClick` the root is
   a `<span>`.
 - **KitDetails:** `<KitDetails kitId />`: a header (the `sheet` portrait and the kit name,
-  `data-kit-name`), then up to nine `<section data-kit-section>` groups on `--panel-2` with a
-  Lilita One `<h3>` each, in the order of `KIT_DETAILS_SECTION_IDS`: starting resources,
+  `data-kit-name`), then up to nine `<section data-kit-section>` groups on `--panel-2`, each headed
+  by a Lilita One `<h3>` and carrying no accessible name, so a sheet exposes headings, not up to
+  nine region landmarks (L74-02), in the order of `KIT_DETAILS_SECTION_IDS`: starting resources,
   starting hand, special cards, always upgraded, immune to, attacks per turn, upgrade points,
   draw risk, and ability (only for a kit with `KIT_ABILITY_COPY`). Every value is read from
   `KIT_CATALOG`, never from the art (the old Gambler PNG prints "?" for a Draw the catalog sets
@@ -1102,16 +1137,17 @@ editor stay until L76.
 - **Excluded kit (Q15):** `opacity-40 grayscale` on the portrait only, plus a visible "Excluded"
   caption (`EXCLUDED_LABEL`) in `--text-2`, Nunito 800 at 11px (`text-v7-micro`), at full
   opacity, so the state is never carried by dimming alone.
-- **Sheet:** `<RulesSheet open rules onClose />` is a read-only `Sheet` (placement `auto`: a
-  bottom sheet on phones, centered on desktop; Esc, backdrop and swipe-down close it, only the
-  top sheet takes Esc) titled "Table rules". Its only button is Close (`secondary`), which also
-  takes the initial focus; it has no editable control and no `aria-pressed`. The body is the
-  clock, "Human turn" and the seconds; the Random mark when set; then a list of all 16 kits in
-  auto-fill columns of at least 5.5rem (3 columns on a 320px phone, 4 on the 28rem desktop
-  panel, so "Indestructible" fits without a breakpoint). Each item is an `aria-hidden` thumb
-  portrait (dimmed when excluded), the kit name in `--text-2` at 12px and, when excluded,
-  "Excluded". When the 16 kits do not fit the height, the sheet body scrolls as the labelled
-  keyboard region of the Sheet contract, and focus still starts on Close.
+- **Sheet:** `<RulesSheet open rules onClose dataAttributes? />` is a read-only `Sheet` titled
+  "Table rules" (placement `auto`: a bottom sheet on phones, centered on desktop; Esc, backdrop and
+  swipe-down close it, only the top sheet takes Esc). `dataAttributes` lands on the panel, as on
+  `Sheet`; the arena passes `data-arena-sheet="rules"` (L74-22). Its only button is Close
+  (`secondary`), which also takes the initial focus; it has no editable control and no
+  `aria-pressed`. The body is the clock, "Human turn" and the seconds; the Random mark when set;
+  then a list of all 16 kits in auto-fill columns of at least 5.5rem (3 columns on a 320px phone, 4
+  on the 28rem desktop panel, so "Indestructible" fits without a breakpoint). Each item is an
+  `aria-hidden` thumb portrait (dimmed when excluded), the kit name in `--text-2` at 12px and, when
+  excluded, "Excluded". When the 16 kits do not fit the height, the sheet body scrolls as the
+  labelled keyboard region of the Sheet contract, and focus still starts on Close.
 - **Anchors:** `data-kit-id` and `data-excluded="true" | "false"` on every kit face (a `<span>` in
   the strip, an `<li>` in the sheet). New hooks; no preserved anchor changes. `KitDetails` also
   carries `data-kit-id`, so a query for one kit scopes to its container (the strip, the sheet
@@ -1210,10 +1246,12 @@ stay until L75, which hosts the new panel.
 `ui/banner/table-banner-host.tsx`, `banner-items.ts`, `banner-demo.tsx` (DEV) and
 `banner.gallery.tsx` (spec v7 §6.12, §8.1, §8.3; Appendix A `table-banners`,
 `end-finished-board-shell`, `global-motion-reduced-motion`). `<TableBannerHost isMyTurn
-isEliminated youWon pendingEffects sentenceAnnouncements actionLog nicknameOf you seatColor? />`
+isEliminated youWon pendingEffects sentenceAnnouncements actionLog nicknameOf you seatColor? deadCue? />`
 takes the props of `TableBannerFlash` (`screens/table/your-turn-flash.tsx`), which the classic
 table keeps until L75; L74-17 mounts the host in the arena. Which cue fires stays in
-`view-model/table-banner.ts`.
+`view-model/table-banner.ts`. `deadCue={false}` drops the You are dead cue, while the watch still
+advances so it never fires later. The arena passes it because its POV elimination overlay
+(L74-23) replaces that cue; the classic table keeps it.
 
 - **Lanes and timing:** three lanes, cue (Your turn, You are being attacked, You are dead, You
   won!), Sentence (L63-03) and own Gambler wipe (L67-01). Each lane queues `BannerItem`s
@@ -1239,12 +1277,13 @@ table keeps until L75; L74-17 mounts the host in the arena. Which cue fires stay
   always `--text-on-cta`, at 4.5:1 or better on every fill (`banner-items.test.ts`): 13.70:1 on
   `--cta`, 5.79:1 on `--threat-attack`, 5.97:1 on `--danger`, 6.50:1 to 14.59:1 on the seat
   hues. A seat hue never shares a slab with `--life` or a `--threat-*` color.
-- **Layer:** the root portals to `document.body`, like Sheet and Toast, and is
-  `fixed inset-0`, `pointer-events: none`, on `Z_INDEX.banner` (90): above sheets (50) and
-  Minimize bars (80), below toasts (95), all compared at body level. A transformed or isolated
-  ancestor (the arena, the L78 board shake) can neither re-anchor it nor trap it under the
-  sheets. It never takes focus or a press. Mount it once per arena so its regions exist before
-  the first cue.
+- **Layer:** like Sheet and Toast, the root portals to `document.body` and is `position: fixed`
+  at the live `visualViewport` box (`useVisualViewportBox`; never `inset-0`, so a banner never
+  sits under the phone keyboard, L74-17). It is `data-zone="table-banners"`, `pointer-events:
+  none`, on `Z_INDEX.banner` (90): above sheets (50) and Minimize bars (80), below toasts (95),
+  all compared at body level. A transformed or isolated ancestor (the arena, the L78 board
+  shake) can neither re-anchor it nor trap it under the sheets. It never takes focus or a press.
+  Mount it once per arena so its regions exist before the first cue.
 - **Motion:** entrance only, over `--dur-slow` on `--ease-entrance`: Your turn and You won!
   scale 0.85 to 1 and rise 12px; attacked and You are dead scale 0.72 to 1.06 and rise 12px;
   Sentence and wipe scale 0.62 to 1.04, rise 18px and untilt from -4deg. No exit: the next
@@ -1290,6 +1329,9 @@ stay until L74, L76 and L77 switch their imports; new code imports only `ui/seat
   `bot` icon, "Bot" in `--text-2` and the tier in `--text`, on `--panel`. The dot is
   `aria-hidden`. The children carry no whitespace text nodes, so `textContent` is exactly
   `Bot·Easy`. No role and no `aria-label`: the visible text is the spoken text, as in V2.
+  Its words come from the pure `bot-seat-label-text.ts` (`botSeatLabelParts`, and
+  `botSeatLabelText` = "Bot · Hard" as plain text), which the arena seat reads for its `title`
+  because the Lot 74 import rule bars `bots/` (L74-04, plan ruling 8 exception for `ui/seat/`).
 - **ConnectionBadge:** copy and the 3 / 5 thresholds unchanged (`connectionBadgeLabel`):
   "eliminated", "disconnected — grace", "absent N/3", "idle timeouts N/5", and no badge for a
   connected seat with no timeouts. Eliminated is `--text` on `--bg-0` with the `eliminated`

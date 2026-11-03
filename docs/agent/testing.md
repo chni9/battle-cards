@@ -138,6 +138,31 @@ walk-in). L73-12 adds `makeLobbyView` and `makeFinishedView` (the finished view 
 `gameCode`, `players`, `playKind` and `tutorialIndex` from its `finalTable`); pass
 `lobbyRules: null` to omit the rules, as the wire does for a tutorial finish.
 
+## Arena fixtures (V7 · L74-01)
+
+`apps/client/src/screens/arena/test-view.ts` builds what every arena component test renders;
+tests import it and shipped code never does.
+
+- `makeArenaView({ seatCount, tiers, pov, overrides })` is a `makeTableView` table of 2–8
+  seats: `me`, then `p1`…`p7`, in turn order.
+- `tiers` gives each opponent a spec v7 §6.3 tier, built from the wire fields only:
+  - `base-spy`: `spied` with `ARENA_SPIED_RESOURCES` (7 lives, 12 points, 1 upgrade point,
+    2 shield) and no kit.
+  - `spy-plus`: the same, plus kit `tactician`, a hand of `<id>-basic-attack` and `<id>-spy`,
+    and no specials.
+  - `eliminated`: `isEliminated` plus `makeEliminationReveal()`.
+- `pov`:
+  - `seated`.
+  - `eliminated`.
+  - `reanimating`: eliminated, plus `pendingReanimation`.
+  - `walk-in`: `you: 'watcher'` and `isSpectator`; every seat is a non-POV seat.
+- `makeArenaProps(overrides?)` gives every `ArenaScreenProps` callback a `vi.fn()`. It sets no
+  `readOnly`, `youWon`, `onShowStats` or `onOpenFeedback`.
+- `arenaSpies(props)` returns the 17 intent spies (`ARENA_INTENT_PROPS`). A test that renders
+  `ArenaScreen` and opens, selects or lifts something calls `expectNoArenaIntent(props)`, which
+  asserts that none of them ran (commit rule, spec v7 §6.6.4). It is the only "nothing sent"
+  helper; below `ArenaScreen`, tests assert on the `commit` or callback `vi.fn()` they pass.
+
 ## Seeded randomness
 
 Every draw goes through the injected generator: card distribution, Sentence, special card

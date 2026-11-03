@@ -6,7 +6,8 @@
  * `LobbyRules`, so it passes straight to `RulesStrip` / `RulesSheet` as `rules` (L72-16).
  *
  * The cache holds the last lobby rules seen and the room they belong to. It lives in memory
- * only (Lot 74 keeps it in App state), so a reload mid-game leaves no rules to recall: callers
+ * only (`RoomConnection.lobbyRules`, set from every lobby STATE_UPDATE as it arrives, L74-26), so
+ * a reload mid-game leaves no rules to recall: callers
  * hide the strip on `null`, and this module invents no default. The server sends
  * `lobbyRules` on lobby and finished views only (PROTOCOL_VERSION 45), never on a playing view,
  * which is why the table needs the cache at all.
@@ -19,7 +20,6 @@ import {
   type LobbyRules,
   type LobbyStateView,
   type PlayingStateView,
-  type StateView,
 } from '@card-battle/shared';
 
 /** Spec v7 §6.11 / §7.6. A `LobbyRules`, so it passes straight to `RulesStrip` / `RulesSheet` (L72-16). */
@@ -28,7 +28,7 @@ export interface RulesRecall extends LobbyRules {
   readonly allowedKitIds: readonly KitId[];
 }
 
-/** The cache step's state: the last lobby rules seen and the room they belong to. */
+/** The last lobby rules seen and the room they belong to (`RoomConnection.lobbyRules` has this shape). */
 export interface RulesCache {
   readonly gameCode: string;
   readonly rules: LobbyRules;
@@ -55,23 +55,6 @@ function recallOf(rules: LobbyRules): RulesRecall {
 export function rulesRecall(view: LobbyStateView | FinishedStateView): RulesRecall | null {
   if (view.phase === 'finished' && view.playKind === 'tutorial') return null;
   return view.lobbyRules === undefined ? null : recallOf(view.lobbyRules);
-}
-
-/**
- * The next cache for the view that just arrived (spec v7 §6.11). Pure state in, state out, so
- * Lot 74 owns only the `useState`.
- */
-export function nextRulesCache(cache: RulesCache | null, view: StateView | null): RulesCache | null {
-  // A null view carries no room code to compare, and a reconnect keeps the table view
-  // (frontend.md "does not clear the table view"); the next room's first view drops a stale entry.
-  if (view === null) return cache;
-  // Every lobby view of a room replaces the cache, Play again included: the host may have edited
-  // the rules between games.
-  if (view.phase === 'lobby' && view.lobbyRules !== undefined) {
-    return { gameCode: view.gameCode, rules: view.lobbyRules };
-  }
-  // Same object for the same room, so React skips the update; another room drops it.
-  return cache?.gameCode === view.gameCode ? cache : null;
 }
 
 /**

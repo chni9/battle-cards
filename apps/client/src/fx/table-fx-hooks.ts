@@ -17,9 +17,6 @@ export interface TableFxContextValue {
   /** Enqueue a presentational FX. Returns void — never await. */
   enqueue: (event: TableFxInput) => void;
   events: readonly TableFxEvent[];
-  /** Sticky Mirror highlight ids while the prompt is open (L14-04). */
-  mirrorHighlightIds: readonly string[];
-  setMirrorHighlightIds: (ids: readonly string[]) => void;
 }
 
 export const TableFxContext = createContext<TableFxContextValue | null>(null);

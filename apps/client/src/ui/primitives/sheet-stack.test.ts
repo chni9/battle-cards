@@ -61,7 +61,7 @@ describe('sheet stack inertness and layers', () => {
     const s = min(openAll(ro('card'), ro('kit'), bl('reward'), bl('steal')), 'steal');
     expect(['card', 'kit', 'reward', 'steal', 'missing'].map((id) => sheetZIndex(s, id)))
       .toEqual([Z_INDEX.sheet, Z_INDEX.sheet + 1, Z_INDEX.sheet + 2, Z_INDEX.sheetBar, Z_INDEX.sheet]);
-    expect(Z_INDEX).toEqual({ sheet: 50, sheetBar: 80, banner: 90, toast: 95 });
+    expect(Z_INDEX).toEqual({ dragGhost: 40, sheet: 50, sheetBar: 80, banner: 90, toast: 95 });
   });
   it('returns the same state when an update changes nothing', () => {
     const s = openAll(ro('card'));

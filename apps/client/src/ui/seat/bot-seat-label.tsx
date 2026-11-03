@@ -4,7 +4,8 @@
  * on V7 surfaces; the V2 file stays for the V2 table and lobby until L74 and L76 switch their
  * imports.
  *
- * Reads "Bot · {Easy|Normal|Hard}" (`formatBotDifficulty`): a decorative `bot` icon, the word
+ * Reads "Bot · {Easy|Normal|Hard}" (`botSeatLabelParts`, over `formatBotDifficulty`; the same
+ * words as plain text are `botSeatLabelText`): a decorative `bot` icon, the word
  * in `--text-2` on `--panel`, and the tier in `--text`. The root has no role and no
  * `aria-label`, so the visible text is the spoken text, as in V2 (the dot is `aria-hidden`).
  * The children have no whitespace text nodes, so `textContent` is exactly `Bot·Easy` for
@@ -16,8 +17,8 @@
 
 import type { BotDifficulty } from '@card-battle/shared';
 import type { ReactElement } from 'react';
-import { formatBotDifficulty } from '../../bots/format-bot-difficulty';
 import { Icon } from '../icons/icon';
+import { botSeatLabelParts } from './bot-seat-label-text';
 
 export interface BotSeatLabelProps {
   difficulty: BotDifficulty;
@@ -29,12 +30,13 @@ const CHIP_CLASS =
   'inline-flex items-center gap-1 rounded-v7-chrome-sm px-1.5 py-0.5 font-v7-body text-v7-micro font-extrabold uppercase tracking-wide';
 
 export function BotSeatLabel({ difficulty, className = '' }: BotSeatLabelProps): ReactElement {
+  const { word, tier } = botSeatLabelParts(difficulty);
   return (
     <span className={[CHIP_CLASS, 'bg-v7-panel text-v7-text-2', className].filter((part) => part !== '').join(' ')}>
       <Icon name="bot" size={12} className="shrink-0" />
-      <span>Bot</span>
+      <span>{word}</span>
       <span aria-hidden="true">·</span>
-      <span className="normal-case tracking-normal text-v7-text">{formatBotDifficulty(difficulty)}</span>
+      <span className="normal-case tracking-normal text-v7-text">{tier}</span>
     </span>
   );
 }

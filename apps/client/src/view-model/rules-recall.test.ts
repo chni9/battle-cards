@@ -4,7 +4,6 @@ import { KIT_IDS, type LobbyRules } from '@card-battle/shared';
 
 import {
   cachedLobbyRules,
-  nextRulesCache,
   rulesRecall,
   tableRulesRecall,
   type RulesCache,
@@ -47,33 +46,6 @@ describe('rulesRecall (spec v7 §6.11, §7.6)', () => {
     expect(rulesRecall(makeLobbyView())).toEqual({
       excludedKitIds: [], randomOnly: false, turnTimeSeconds: 60, allowedKitIds: [...KIT_IDS],
     });
-  });
-});
-
-describe('nextRulesCache (spec v7 §6.11)', () => {
-  const lobby1 = makeLobbyView({ gameCode: 'ROOM1', lobbyRules: TWO_OUT_30 });
-
-  it('a new room code clears the cache', () => {
-    const cache = nextRulesCache(null, lobby1);
-    expect(cache).toEqual({ gameCode: 'ROOM1', rules: TWO_OUT_30 });
-    expect(nextRulesCache(cache, room('ROOM2'))).toBeNull();
-    expect(nextRulesCache(cache, makeLobbyView({ gameCode: 'ROOM2', lobbyRules: GAMBLER_OUT_45 })))
-      .toEqual({ gameCode: 'ROOM2', rules: GAMBLER_OUT_45 });
-  });
-
-  it('each lobby view of the room replaces it, Play again included', () => {
-    const playing = nextRulesCache(nextRulesCache(null, lobby1), room('ROOM1'));
-    const finished = nextRulesCache(playing, makeFinishedView({ finalTable: room('ROOM1') }));
-    expect(nextRulesCache(finished, makeLobbyView({ gameCode: 'ROOM1', lobbyRules: GAMBLER_OUT_45 })))
-      .toEqual({ gameCode: 'ROOM1', rules: GAMBLER_OUT_45 });
-  });
-
-  it('keeps the same cache for a playing or finished view of the room and for no view', () => {
-    const cache = nextRulesCache(null, lobby1);
-    expect(nextRulesCache(cache, room('ROOM1'))).toBe(cache);
-    expect(nextRulesCache(cache, makeFinishedView({ finalTable: room('ROOM1'), lobbyRules: GAMBLER_OUT_45 })))
-      .toBe(cache);
-    expect(nextRulesCache(cache, null)).toBe(cache);
   });
 });
 
