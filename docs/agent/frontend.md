@@ -3063,27 +3063,34 @@ value, viewports 1440×900 and 390×844 in the built-in browser pane.
 
 Dedicated gate servers: Vite `:5273`, Colyseus `:2667`; `?ui=next`; nicks **L74Gate…**; viewports
 360×740, 375×812, 390×844, 844×390 and 1440×900 in the built-in browser pane. `dev` merged first
-(`cf556998`). Two sessions: the app stopped the gate servers between them, so every room is
-in-memory and gone. Session 1 (2026-11-02): **XXJPBR** (solo, 4 seats, Juggernaut), **QMIKTC**
-(online, three humans at 375 / 360 / 390 plus a Normal bot, a walk-in, then two re-claims after
-every pane tab reloaded). Session 2 (2026-11-03): **ZXWXKZ** (solo, 8 seats, Assassin), **UMANAX**
-(solo, 2 seats, 30 s, Random, two kits allowed; finished board), **FBUGET** (solo, 120 s),
-**BSETDF** (online host 45 s, guest at 390), **UQAQFS** (solo, Gambler), **PPVDKU** (solo,
-Duplicator at 360), **JUKWMV** (`?ui=classic`), **ZYGLRJ** (solo, 4 seats, design scan).
+(`cf556998`). The app stopped the gate servers between sessions, so every room is in-memory and
+gone. Session 1 (2026-11-02): **XXJPBR** (solo, 4 seats, Juggernaut), **QMIKTC** (online, three
+humans at 375 / 360 / 390 plus a Normal bot, a walk-in, then two re-claims after every pane tab
+reloaded). Session 2 (2026-11-03): **ZXWXKZ** (solo, 8 seats, Assassin), **UMANAX** (solo, 2
+seats, 30 s, Random, two kits allowed; finished board), **FBUGET** (solo, 120 s), **BSETDF**
+(online host 45 s, guest at 390), **UQAQFS** (solo, Gambler), **PPVDKU** (solo, Duplicator at
+360), **JUKWMV** (`?ui=classic`), **ZYGLRJ** (solo, 4 seats, design scan). Session 3, the review
+fix round (2026-11-03): **JPPWCR** (solo, 2 seats at 360 and 375; finished board at 844×390
+and 1440×900).
 
 - **G1–G2 layout and plate:** no page scroll and six regions in every room and viewport. 4 seats
   at 360/375/390: seats inside the arena, no overlap, plate clear. 8 seats: the 4 + 3 grid fits
   at 390; at 375 the plate overlaps the second row by 14 px and at 360 by 82 px (the grid takes
-  208 of the arena's 214 px). A press on an overlapped seat reaches it except on the plate's own
-  landing card and badges. Not fixed: needs a layout decision (see the Lot 74 PR). Not
-  exercised: the POV "Hits all" burst (no fan-out play reachable; `threat-layer.test.tsx`).
+  208 of the arena's 214 px), as a Duplicator's two-row dock does to a 2-seat table at 360. A
+  press on an overlapped seat reaches it except on the plate's own landing card and badges.
+  Designer 2026-11-03 "later": Lot 74 ships it as is, and L75-13 fits the grid before the flip.
+  Not exercised: the POV "Hits all" burst (no fan-out play reachable; `threat-layer.test.tsx`)
+  and stub arrows between grid neighbours (Q20 draws none; `threat-geometry.test.ts`).
 - **G3:** the seat's initial-letter Avatar repeated the nickname; fixed, `aria-hidden`.
 - **G4:** strip 160 px with the `tile` portrait at 375 and the hand visible; the Deactivate
   confirm opens on Cancel and returns focus to Deactivate (UQAQFS). The empty specials caption
-  (54 px) was missing from the strip budget; fixed.
-- **G5:** the dock grew 72 px on the POV's turn at 360/375 (Unspy's reason widened it); fixed,
-  then narrowed so only Unspy reserves two lines. A Duplicator's dock wraps to two clean rows at
-  360 (174 px). The Draw pulse runs while its reason slot is empty.
+  (54 px) was missing from the strip budget; fixed, the caption now `w-[56px]`.
+- **G5:** the dock grew 72 px on the POV's turn at 360/375 (Unspy's reason widened it); fixed.
+  The dock opts into one reason line (two under Unspy), and every other Button reason wraps in
+  full as before (review I1). A Duplicator's dock wraps to two clean rows at 360 (174 px). The
+  Draw pulse runs while its reason slot is empty. Re-checked at 360 and 375 (JPPWCR): 'Not your
+  turn' under Draw and Unspy, 'Nobody is spying on you' under Unspy, and the Shop and card sheet
+  'Not enough points' / 'No upgrade points' all show in full.
 - **G6 tap-tap:** ring, pulse and dim read; a top-row seat's `--mine` ring loses 1 px at the
   arena edge; focus starts on the first valid seat; Cancel returned focus to the card, Esc did
   not (fixed); Esc with Unspy above the bar closes only Unspy; a double tap on Cancel sends
@@ -3096,18 +3103,17 @@ Duplicator at 360), **JUKWMV** (`?ui=classic`), **ZYGLRJ** (solo, 4 seats, desig
   Unspy, a Shop tile and Buy selected each send one; Draw sent one but its second tap opened a
   hand card's sheet through the dock jump (fixed, re-run clean). A keyboard double Enter on a
   hand card plays it (the shield is pointer-only, recorded). Stats on the finished board: the
-  second tap lands on V2 Game over's row (with the production row, on View board; on the right
-  third of Stats, on Play again). The Stats double tap is fixed after the gate (designer
-  2026-11-03, "protect now"): `fix(arena): shield Game over from a double tap (L74-26)` makes
-  Game over ignore every press for 220 ms after it opens (`screens/use-entrance-gate.ts`,
-  `game-over-dialog.entrance.test.tsx`), and L77-02 replaces it with the V7 Sheet's own shield. A
-  sub-choice arriving under a moving finger: not exercised (no bot opens one on the POV's input;
-  `sub-choice-sheet.test`).
+  second tap landed on V2 Game over's action row; `54567e7d` (designer 2026-11-03) shields Game
+  over for `DUR_BASE_MS` after it opens. Not exercised: the hand-card double tap at 360, and a
+  sub-choice arriving under a moving finger (no bot opens one on the POV's input;
+  `sub-choice-sheet.test.tsx`).
 - **G9:** Assassin multi-attack moves focus into the step and back to Multi-attack on Cancel
   (ZXWXKZ). With focus on Use, the turn passing dropped focus to `body`; fixed, re-run on FBUGET.
+  The multi-attack Play and the Deactivate confirm had the same bug; fixed (review M6).
 - **G10 long press:** not exercised (no touch device; `use-long-press.test.tsx`).
 - **G11–G12:** arrows, one plate badge per effect and 'You are being attacked' (QMIKTC). An
-  equal answer cancels both, arrows clear, no summed total.
+  equal answer cancels both, arrows clear, no summed total. Not exercised: the resolution flash
+  on the badge (not captured; `use-table-fx-triggers.test.ts`).
 - **G13 Mirror:** a blocking sheet with the attack and the first target preselected; Minimize
   collapses to a bar and sends nothing. The first attempt resolved to the preselected target
   after Minimize then Menu, with no send log; not reproduced. Not exercised: Time's up, an
@@ -3116,23 +3122,30 @@ Duplicator at 360), **JUKWMV** (`?ui=classic`), **ZYGLRJ** (solo, 4 seats, desig
   card' (9 cards) keeps Confirm above Minimize and the 'Choice N' Segmented fits. The POV overlay
   lasts 1.6 s before Game over (PPVDKU).
 - **G15 slot-drop:** not exercised (four active slots need several random specials; the merged
-  `slot-drop.test.ts` "Cancel refunds the points the play paid (L82-03)" passes).
+  `slot-drop.test.ts` "Cancel refunds the points the play paid (L82-03)" passes). Also not
+  exercised: the locked slot-drop footer lines (L74-20 item; `slot-drop-choice.test.tsx`).
 - **G16:** base Spy shows live numbers and no kit, Spy+ shows the kit, hand and specials, the
   kit sheet stacks, Unspy sends one `clearSpy`, the spy eye shows (XXJPBR).
 - **G17:** a walk-in by code gets the picker over fogged kits; Stay shows the kits and the
   Watching strip with no dock; Claim a seat reopens the picker; Sit here seats it, closes the
   open seat sheet and lights no POV arrow. An eliminated POV gets the Watching strip and Leave
-  table. A double tap on Claim a seat claims nothing; the second tap closes the picker.
+  table. A double tap on Claim a seat claims nothing; the second tap closes the picker. Not
+  exercised: Reanimating, the Reanimation kit grid at 360 (L74-19 item) and a sub-choice that
+  opens and clears within the banner window (L74-23 item) (`pickers.test.tsx`, `spectator.test.tsx`).
 - **G18:** an `offline` event shows 'Reconnecting…', locks Draw and Use, keeps Forfeit and chat
   Send, and recovers in under a second. Closing the active player's tab gives 'Paused —
-  reconnecting', then an absent auto-draw after the grace.
+  reconnecting', then an absent auto-draw after the grace. Not exercised: the sub-choice Confirm
+  lock, Claim a seat during a reconnect and the null-room Draw latch (`reconnect-banner.test.tsx`,
+  `commit-veto.test.tsx`).
 - **G19:** a 30 s solo drew a 300 s bar and its Table rules read 300 s; fixed (the connection
-  keeps the lobby rules). Re-run: 120 s solo full bar, Table rules 120 s, the last 10 s red, a
-  bot turn '—', an offline event keeps the length, a reload goes Home, a 45 s host gives the guest
-  the same bar, the finished board shows 30 s, Random and 'Excluded'.
+  keeps the lobby rules). Re-run: 120 s solo full bar, Table rules 120 s in a bottom sheet (top
+  67 px at 375×812), the last 10 s red, a bot turn '—', an offline event keeps the length, a
+  reload goes Home, a 45 s host gives the guest the same bar, the finished board shows 30 s,
+  Random and 'Excluded'.
 - **G20:** an eliminated line carries '(eliminated)' and no living reader sees it; the unread
   badge reads on the 44 px icon; four icons fit at 360; the finished board has no composer; the
-  input is 16 px. Not exercised: a '(spectator)' line, iOS zoom and the phone keyboard.
+  input is 16 px. Not exercised: a '(spectator)' line, iOS zoom and the phone keyboard
+  (`chat-sheet.test.tsx`, `text-field.test.tsx`).
 - **G21:** a reject toast survives a state update, closes once on OK and after 6 s. Esc does
   not close it (L74-25 design, designer question). A race reject shook nothing because the state
   update came first (by design; `reject-toast.test.tsx`).
@@ -3142,11 +3155,15 @@ Duplicator at 360), **JUKWMV** (`?ui=classic`), **ZYGLRJ** (solo, 4 seats, desig
   targeting and leaves Feedback open, and from the Menu sheet the first Esc closes the Menu
   under How to play (ruling R3, L75/L76).
 - **G24:** token chips, card ghosts, the elimination beat and centred banners on 4 and 8 seats;
-  one `?ui=classic` game (JUKWMV) shows its FX unchanged.
+  one `?ui=classic` game (JUKWMV) shows its FX unchanged. Not exercised: an own ghost starting at
+  the drop point, S9 (a portaled sheet showing the same `data-instance-id`), banners with the
+  chat keyboard open and float clipping in the seat value column (`arena-own-fx.test.tsx`,
+  `use-table-fx-triggers.test.ts`).
 - **G25:** the Shop's tabs spilled at 360/375; fixed. Spy 2 / 4, Special 20, Pool Buy random,
   upgrade-point Buy 10 / Sell 7, one buy per double tap, the sheet closes on a buy. Not
-  exercised: an empty pool, iOS `dblclick`, a long press on a tile.
-- **G26:** 844×390 and 1440×900: no page scroll, no crash (live and finished).
+  exercised: an empty pool, iOS `dblclick`, a long press on a tile (`shop-sheet.test.tsx`).
+- **G26:** no page scroll and no crash at 844×390 and 1440×900 on the live board (ZXWXKZ) and the
+  finished board (JPPWCR).
 - **G27:** the ticker truncates at 360/375; the sheet opens on the newest line; stuck round
   headers let a line show above them (fixed); the log stopped following multi-line updates
   (fixed); a 24-character nickname fits one line.
@@ -3161,6 +3178,10 @@ Duplicator at 360), **JUKWMV** (`?ui=classic`), **ZYGLRJ** (solo, 4 seats, desig
   notes are in the Lot 74 PR.
 - Fixes: `d71a88a0` seat nickname once; `dcc0d131` Esc focus back to the card; `d22ad4c4` drag
   ends on blur; `5992405d` sticky round headers; `307e4b60` Shop tabs shrink; `a55e1fd6` dock
-  height across turns; `0dadd179` the log keeps following; `f69d1c60` a solo's chosen rules;
-  `61318175` card sheet focus as the turn passes; `4030abad` a hand with no specials;
-  `c4b783df` two reason lines only for Unspy. `pnpm verify` **3759** tests.
+  height across turns; `0dadd179` the log keeps following; `f69d1c60` a solo's chosen rules
+  (ratified, `94b36b4d`); `61318175` card sheet focus as the turn passes; `4030abad` a hand with
+  no specials; `c4b783df` two reason lines only for Unspy; `54567e7d` Game over shielded from a
+  double tap (designer 2026-11-03). Review fixes: `826fffb3` a reason clamps only where it opts
+  in; `fd6dbea0` step exit skips aria-disabled actions; `356a4153` Play and the confirm keep focus
+  as the turn passes; `b23dc48c` the empty caption in px; `541f19af` the visibility spy restored;
+  `b1ded6e5` the dead rules cache step removed. `pnpm verify` **3770** tests.
