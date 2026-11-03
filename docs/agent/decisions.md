@@ -6487,3 +6487,39 @@ unread count).
   crowds the seats at 360 px.
 
 ---
+
+## 2026-11-03 · [P] Lobby rejects: OK dismiss and phase-change clear; the reconnecting lock (L76-14)
+
+Source: technical spec v7 §4.1, §7.2, §7.7, §13 (Q26, Q29); Appendix A `lobby-inline-reject-alert`,
+`lobby-sticky-reject-alert`, `reject-state-carryover`, `lobby-header-status`; Lot 76 plan A.9
+rulings 4, 6, 7 and 8.
+
+- **Supersedes, across phase changes only,** item 5 of "Lot 39 Table UX polish" (2026-08-10):
+  "`stateUpdate` must not clear `actionReject`". Within a phase it still holds: a bot or peer
+  update never closes a reject. A view phase change between two phases (lobby, playing,
+  finished) now clears the shared reject, so a lobby reject no longer opens on the first table
+  frame and an End reject no longer reaches the rematch lobby (parity `reject-state-carryover`).
+  A change to or from no room (Home) never clears: "You were kicked." and a solo-launch failure
+  must still show on Home.
+- **Where.** `GameApp` in `App.tsx`, with React's "adjust state while rendering" pattern
+  (`screens/reject-phase.ts` decides). It runs before the next screen commits, so neither the
+  classic `IllegalActionDialog` nor the arena `RejectToast` mounts with the stale reject; an effect
+  would paint it for a frame first. It updates `GameApp`'s own state (the hook runs there). The
+  hook's API is unchanged (§4.1).
+- **Dismiss.** The lobby alert stays an inline `role="alert"` line (§7.7; the lobby's one toast is
+  the L76-15 rules notice). A quiet `close` `IconButton` named "OK", the arena reject toast's
+  control, sits beside it, outside the live region, so only the message is announced. It calls
+  `clearActionReject`.
+- **Alert chrome.** The wrapper keeps L76-12's inset `--danger` ring, not a `border-l-4` stripe:
+  the Impeccable `side-tab` finding is a defect on shipped V7 files (§12.4), the same ruling as
+  "Feedback status badge replaces the side stripe" (2026-10-28, L80-09). The alert is still told
+  by its words, its `role="alert"` and the ring, never by the ring alone.
+- **Reconnecting lock.** While `status === 'reconnecting'` the lobby disables Start, Ready / Cancel
+  ready, Add bot and its difficulty, a bot's difficulty, Kick (an open Kick confirm closes), Select
+  this kit, every rules editor control, and chat Send and Enter (`ChatLog sendLocked`: Send stays
+  focusable, the draft stays). Leave, Copy, Feedback, the alert's OK, opening the rules sheet and
+  Choose kit stay live. The lobby locks chat where the arena does not (L74-25): §7.2 disables
+  every lobby control that sends an intent, and the SDK would replay a buffered lobby intent
+  against a state the player has not seen.
+
+---

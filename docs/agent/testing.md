@@ -163,6 +163,15 @@ tests import it and shipped code never does.
   asserts that none of them ran (commit rule, spec v7 §6.6.4). It is the only "nothing sent"
   helper; below `ArenaScreen`, tests assert on the `commit` or callback `vi.fn()` they pass.
 
+## Room connection fake (V7 · L76-14)
+
+`apps/client/src/test/fake-room-connection.ts` `fakeRoomConnection(view, extra?)` returns a full
+`UseRoomConnectionResult`: status `connected`, no error or reject, the last-message fields null,
+`lobbyRules` from a lobby view, and a `vi.fn()` for every command (`leaveGame` resolves). App-level
+tests hoist a holder with `vi.hoisted`, `vi.mock('./net/use-room-connection')` to return it, set
+it before `renderUi(<App />)` and again before each `rerender(<App />)` (`App.lobby.test.tsx`).
+Shipped code never imports it.
+
 ## Seeded randomness
 
 Every draw goes through the injected generator: card distribution, Sentence, special card

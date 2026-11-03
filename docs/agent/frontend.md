@@ -520,7 +520,7 @@ and are mirrored in `ui/palette.ts` and `ui/motion/motion-tokens.ts`.
   trimmed body (the V6 log sent it untrimmed); `inputLabel`/`placeholder` override for the
   walk-in label (the lobby panel passes 'Spectators only see this', L76-13). It replaces
   `screens/table/chat-log.tsx` for L74-16, the lobby (L76-02; its panel L76-13) and L77-05.
-  The old file stays until L75-11. Props: `messages`, `players`, `canWrite`, `onSend`.
+  The old file stays until L75-11. Props: `messages`, `players`, `canWrite`, `onSend`, `inputLabel?`, `placeholder?`, `sendLocked?` (L76-14).
   `ui/chat/chat-line.ts` holds `chatLineView` (round label, seat, side stream, role label) and the
   three V6 copy constants; spec v7 §10.6 adds no chat string. No unread logic (`chat-unread.ts`
   is L73/L74).
@@ -529,9 +529,11 @@ and are mirrored in `ui/palette.ts` and `ui/motion/motion-tokens.ts`.
   is dropped with no reset; the form resets after a send; no composer when `canWrite` is false.
   The transcript opens on the newest line and then sticks to the bottom only while the reader is
   within 24 px of it (designer 2026-10-26, `decisions.md`); the reader's own send always scrolls
-  down. Send is never disabled
-  (nothing tracks an empty field, and a native `disabled` would leave the Tab order). Shift+Enter
-  sends too, because the field is a single-line `<input>`.
+  down. Send is never disabled for an empty field
+  (nothing tracks one, and a native `disabled` would leave the Tab order). Shift+Enter
+  sends too, because the field is a single-line `<input>`. `sendLocked` (L76-14, the
+  reconnecting lobby) is the one lock: Send turns `aria-disabled` (`focusableWhenDisabled`),
+  neither Send nor Enter sends, and the draft stays. The arena passes nothing.
 - **Announcements** (`chat-new-message-announcement`): the transcript is a polite `role="log"`,
   mounted before the first line, and lines are keyed by `ChatMessageView.order`, so each new line
   is announced once and a re-render never reads the log back. Do not move the role onto the `<ul>`
@@ -1701,7 +1703,7 @@ Spec v7 §7.1–§7.5 and §7.7; plan `docs/superpowers/plans/2026-10-21-v7-lot-
   per-open epoch latch sends one `kickPlayer` on a double click. The owner closes the confirm for
   good when its seat leaves `view.players` or the lobby locks (Review Focus 4).
 - `lobby-header.tsx`: the eyebrow, title and `STATUS_LABELS` line, the inline `role="alert"`
-  error (L76-14 adds the dismiss), and the Game code card. The card has Copy
+  error (with its OK dismiss, L76-14), and the Game code card. The card has Copy
   (`navigator.clipboard.writeText`) and the V7 copy-result Dialog ('Code copied' / 'Copy failed';
   both bodies keep the code) with `data-lobby-sheet="copy-result"`, and 'You are the host'.
 - `lobby-kit-card.tsx`: one of three cards:
@@ -1716,7 +1718,7 @@ Spec v7 §7.1–§7.5 and §7.7; plan `docs/superpowers/plans/2026-10-21-v7-lot-
   reject words), Ready (primary with the `check` icon) / Cancel ready (secondary) as one button,
   the hints, Leave (danger, immediate) and Feedback (quiet, `feedback` icon). Feedback opens the
   V2 manual `FeedbackDialog` (screen 'lobby', code, nickname) until L76-07.
-- `locked` (plan A.4, ruling 6; always `false` until L76-14 sets `lobbyIntentsLocked(status)`):
+- `locked` (plan A.4, ruling 6; `LobbyScreen` sets it to `lobbyIntentsLocked(status)` from L76-14):
   - `LobbySeats`, `LobbyKitCard` and `LobbyActions` take it, and so does the editor binding
     (`disabled`).
   - It disables Start, Ready / Cancel ready, Add bot and every difficulty (focusable where a
@@ -1744,6 +1746,30 @@ Spec v7 §7.1–§7.5 and §7.7; plan `docs/superpowers/plans/2026-10-21-v7-lot-
     transcript and an unsent draft survive. Toggling sends nothing.
   - The client filters nothing: the server builds each reader's stream.
   - Tests: `lobby-chat-panel.test.tsx`, which renders `LobbyScreen`.
+- `screens/lobby/lobby-lock.ts`, `lobby-screen.tsx` (L76-14, spec v7 §7.2, Q29; A.9 rulings 6 and 8):
+  `lobbyIntentsLocked(status)` is true only for `'reconnecting'`. While it is, the lobby disables
+  every control that sends an intent: Start, Ready / Cancel ready, Add bot and its difficulty, a
+  bot's difficulty, Kick (an open Kick confirm closes, nothing sent), Select this kit, every rules
+  editor control (`RulesEditorBinding.disabled`) and chat Send and Enter (`ChatLog sendLocked`).
+  Leave, Copy, Feedback, the alert's OK, opening the rules sheet and Choose kit (the picker opens
+  to browse) stay live. The status line is a polite `role="status"` region, so 'Reconnecting…' is
+  announced. Unlike the arena (L74-25), lobby chat locks too: §7.2 locks every lobby intent.
+- `screens/lobby/lobby-header.tsx` (L76-14, spec v7 §7.2, §7.7, Q26; A.9 ruling 4): the reject
+  stays an inline `role="alert"` line (lobby errors are never a toast). A quiet `close`
+  `IconButton` named "OK" (`LOBBY_DISMISS_LABEL`, the arena reject toast's control) sits beside it
+  in `[data-lobby-alert]`, outside the live region, so only the message is announced. OK calls
+  `onDismissError` (App: `clearActionReject`), sends no intent and stays live while reconnecting.
+  The wrapper keeps the L76-12 `--danger` inset ring: a `border-l-4` stripe is the Impeccable
+  `side-tab` finding (spec v7 §12.4; decisions.md 2026-10-28).
+- `screens/reject-phase.ts`, `App.tsx` (L76-14, A.9 ruling 7; decisions.md supersedes the L39
+  carry-over across phases): `GameApp` clears the shared reject (`error` + `actionReject`) when
+  the view phase changes between two phases (lobby, playing, finished), with React's "adjust state
+  while rendering" pattern, so the next screen never mounts with the old reject. A change to or
+  from Home (`view === null`) never clears ("You were kicked.", a solo-launch failure). Within a
+  phase nothing changed: a state update never clears it (L39-06).
+- `test/fake-room-connection.ts`, `App.lobby.test.tsx` (L76-14): `fakeRoomConnection(view, extra?)`
+  is a full `UseRoomConnectionResult` with a `vi.fn()` per member; App-level lobby tests
+  `vi.mock('./net/use-room-connection')` with it (`docs/agent/testing.md`).
 
 ## Design system (V2 · Lots 10+)
 
@@ -2108,7 +2134,8 @@ rules above are unchanged — this section only covers how the client looks.
     parses into `actionReject` and opens `IllegalActionDialog` (title/body from
     `illegal-action-copy.ts`, Esc / overlay / OK dismiss via `clearActionReject`). Timers
     strip no longer shows a red reject line. Lobby/home keep the inline alert string.
-    `stateUpdate` must **not** clear `actionReject` (bot sync would dismiss mid-read).
+    `stateUpdate` must **not** clear `actionReject` (bot sync would dismiss mid-read); a view
+    **phase** change does, from L76-14 (App, `screens/reject-phase.ts`; decisions.md).
     When cleared, unmount the dialog (do not leave `Dialog` at `open={false}`) so
     AnimatePresence cannot leave a stuck blocking overlay.
   - **Seat colors (L39-03 / L55-01):** client-only palette `--color-seat-0…7` (blue / red /
@@ -2184,6 +2211,11 @@ rules above are unchanged — this section only covers how the client looks.
   hands are visible when a `spied` overlay is on the view. `claimSeat` remaps onto
   that `player.id`.
   Lobby accidental drop **reserves** the seat until Kick, Leave, or claim/rejoin.
+  The shared reject (`error` + `actionReject`) clears on a dismiss (the lobby alert's OK, the
+  table's OK or toast), a drop, a reconnect, `GAME_OVER`, a leave, and from L76-14 when App sees
+  the view phase change between two phases (never to or from Home). While `status` is
+  `reconnecting` the lobby locks its intent controls (`lobbyIntentsLocked`, L76-14) and the arena
+  its game input (L74-25); the hook never checks `status`.
 - Mid-game **flag Forfeit** confirms then sends `FORFEIT` (socket stays). Spectator **Leave**
   (`leaveTable`, including walk-in `isSpectator`) calls `leaveGame()`. Finished-board
   **Return home** (flag or Game over) and tutorial

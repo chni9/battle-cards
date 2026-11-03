@@ -23,6 +23,8 @@ export function copyResultBody(gameCode: string, failed: boolean): string {
   return failed ? `Could not copy automatically. Game code: ${gameCode}` : `Share this code with friends: ${gameCode}`;
 }
 export const HOST_LINE = 'You are the host';
+/** The alert's dismiss: the V2 dialogs' and the arena reject toast's word (no new §10.6 string). L76-14. */
+export const LOBBY_DISMISS_LABEL = 'OK';
 
 export const YOUR_KIT_TITLE = 'Your kit';
 export const CHOOSE_KIT_LABEL = 'Choose kit';

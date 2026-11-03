@@ -2,7 +2,8 @@
  * Lobby test helpers (plan Appendix A.3, L76-02). They hold the three seats every lobby test uses,
  * the host, guest and walk-in views, `LobbyScreen` props with a `vi.fn()` per callback, the
  * commit-rule check (technical spec v7 §6.6.4, plan header "Commit rule for the lobby") and the
- * A.4 test hooks. Tests only.
+ * A.4 test hooks. `onDismissError` is not an intent, so `LOBBY_INTENT_PROPS` leaves it out (L76-14).
+ * Tests only.
  */
 import type { LobbySeatView, LobbyStateView } from '@card-battle/shared';
 import { expect, vi } from 'vitest';
@@ -35,6 +36,7 @@ export function makeLobbyProps(overrides: Partial<LobbyScreenProps> = {}): Lobby
     view: hostLobbyView(),
     status: 'connected',
     error: null,
+    onDismissError: vi.fn(),
     onStart: vi.fn(),
     onLeave: vi.fn(),
     onAddBot: vi.fn(),

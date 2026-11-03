@@ -1,9 +1,11 @@
 /**
  * The lobby header and game code card (technical spec v7 §7.2; parity `lobby-header-status`,
  * `lobby-game-code`): the eyebrow, title and connection status, the inline `role="alert"` error
- * (§7.7; L76-14 adds its dismiss), and the code with Copy and its V7 result dialog. Both result
- * bodies keep the code, so a failed copy still shows it. It holds no intent control, so it takes
- * no `locked`. L76-12.
+ * (§7.7) with its OK dismiss (L76-14), and the code with Copy and its V7 result dialog. Both
+ * result bodies keep the code, so a failed copy still shows it. The status line is a polite
+ * `role="status"` region, so 'Reconnecting…' is announced as the arena's `ReconnectBanner` does.
+ * The OK sits outside the `role="alert"` node, so only the message is announced. It holds no
+ * intent control, so it takes no `locked`: nothing in it locks (A.9 ruling 6). L76-12, L76-14.
  */
 
 import { useId, useState, type ReactElement } from 'react';
@@ -12,6 +14,7 @@ import type { RoomConnectionStatus } from '../../net/use-room-connection';
 import { Button } from '../../ui/primitives/button';
 import { CHROME_SHAPE_CLASS, CHROME_SHAPE_SM_CLASS } from '../../ui/primitives/chrome-classes';
 import { Dialog } from '../../ui/primitives/dialog';
+import { IconButton } from '../../ui/primitives/icon-button';
 import { STATUS_LABELS } from '../status-labels';
 import {
   COPY_FAILED_TITLE,
@@ -21,6 +24,7 @@ import {
   copyResultBody,
   GAME_CODE_LABEL,
   HOST_LINE,
+  LOBBY_DISMISS_LABEL,
   LOBBY_EYEBROW,
   LOBBY_TITLE,
 } from './lobby-copy';
@@ -31,9 +35,11 @@ export interface LobbyHeaderProps {
   readonly error: string | null;
   /** Shows 'You are the host' under the code. */
   readonly isHost: boolean;
+  /** The alert's OK (A.9 ruling 4): App's clearActionReject through LobbyScreen. */
+  readonly onDismissError: () => void;
 }
 
-export function LobbyHeader({ gameCode, status, error, isHost }: LobbyHeaderProps): ReactElement {
+export function LobbyHeader({ gameCode, status, error, isHost, onDismissError }: LobbyHeaderProps): ReactElement {
   const codeId = useId();
   const [copyOpen, setCopyOpen] = useState(false);
   const [copyFailed, setCopyFailed] = useState(false);
@@ -59,14 +65,19 @@ export function LobbyHeader({ gameCode, status, error, isHost }: LobbyHeaderProp
       <header className="flex flex-col gap-1">
         <p className="font-v7-body text-v7-caption font-extrabold uppercase tracking-[0.14em] text-v7-text-2">{LOBBY_EYEBROW}</p>
         <h1 className="font-v7-display text-v7-display leading-none text-v7-text">{LOBBY_TITLE}</h1>
-        <p className="font-v7-body text-v7-body font-bold text-v7-text-2">{STATUS_LABELS[status]}</p>
+        <p role="status" className="font-v7-body text-v7-body font-bold text-v7-text-2">
+          {STATUS_LABELS[status]}
+        </p>
         {error !== null ? (
-          <p
-            role="alert"
-            className={`${CHROME_SHAPE_SM_CLASS} bg-v7-panel-2 px-3 py-2 font-v7-body text-v7-body font-bold text-v7-text ring-2 ring-inset ring-v7-danger`}
+          <div
+            data-lobby-alert
+            className={`mt-2 flex items-start gap-2 bg-v7-panel-2 py-1 pr-1 pl-3 ring-2 ring-inset ring-v7-danger ${CHROME_SHAPE_SM_CLASS}`}
           >
-            {error}
-          </p>
+            <p role="alert" className="min-w-0 flex-1 py-2.5 font-v7-body text-v7-body font-bold text-v7-text">
+              {error}
+            </p>
+            <IconButton aria-label={LOBBY_DISMISS_LABEL} icon="close" variant="quiet" onClick={onDismissError} />
+          </div>
         ) : null}
       </header>
       <section aria-labelledby={codeId} className={`${CHROME_SHAPE_CLASS} bg-v7-panel p-4`}>

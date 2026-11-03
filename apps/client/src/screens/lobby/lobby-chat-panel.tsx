@@ -8,7 +8,9 @@
  * unsent draft survive (`ChatLog` resticks a reader to the bottom when the body shows). The
  * section has no accessible name on purpose: a named section is a region "Chat", and the
  * transcript's `ScrollArea` already is one. The client filters nothing: `view.chatMessages` is the
- * recipient's own stream (golden rule 4). L76-13.
+ * recipient's own stream (golden rule 4). L76-13. L76-14: `locked` (reconnecting, A.9 ruling 6)
+ * reaches `ChatLog` as `sendLocked`, so Send and Enter send nothing and the draft stays; `canWrite`
+ * stays true, because hiding the composer would drop the draft.
  */
 
 import type { LobbyStateView } from '@card-battle/shared';
@@ -22,10 +24,12 @@ import { WALK_IN_CHAT_LABEL } from './lobby-copy';
 
 export interface LobbyChatPanelProps {
   readonly view: LobbyStateView;
+  /** Reconnecting: Send and Enter send nothing and the draft stays (`ChatLog sendLocked`). */
+  readonly locked: boolean;
   readonly onSendChat: (body: string) => void;
 }
 
-export function LobbyChatPanel({ view, onSendChat }: LobbyChatPanelProps): ReactElement {
+export function LobbyChatPanel({ view, locked, onSendChat }: LobbyChatPanelProps): ReactElement {
   const [open, setOpen] = useState(true);
   const bodyId = useId();
   const walkIn = view.isSpectator === true;
@@ -55,6 +59,7 @@ export function LobbyChatPanel({ view, onSendChat }: LobbyChatPanelProps): React
           players={view.players}
           canWrite
           onSend={onSendChat}
+          sendLocked={locked}
           {...(walkIn ? { inputLabel: WALK_IN_CHAT_LABEL, placeholder: WALK_IN_CHAT_LABEL } : {})}
         />
       </div>

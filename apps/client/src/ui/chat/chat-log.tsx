@@ -27,6 +27,9 @@
  * uncontrolled and sends the trimmed body, dropping an empty one without a reset. Send is never
  * disabled: there is no empty-state to track on an uncontrolled field, a native `disabled` would
  * drop the button from the Tab order, and the parity row `chat-compose-enter` keeps it enabled.
+ * `sendLocked` (L76-14, the reconnecting lobby; A.9 ruling 8) is the one lock: Send turns
+ * `aria-disabled` and stays in the Tab order, and the submit handler returns before it reads the
+ * field, so neither Send nor Enter sends and the draft stays.
  */
 
 import { CHAT_BODY_MAX_LENGTH, type ChatMessageView } from '@card-battle/shared';
@@ -56,6 +59,11 @@ export interface ChatLogProps {
   /** The input's accessible name; the lobby passes the walk-in label (L76). */
   inputLabel?: string;
   placeholder?: string;
+  /**
+   * The reconnecting lobby (L76-14, spec v7 §7.2, A.9 ruling 8): Send keeps its place and its Tab stop
+   * as `aria-disabled`, and neither Send nor Enter calls `onSend`; the draft stays. The arena passes nothing.
+   */
+  sendLocked?: boolean;
 }
 
 export function ChatLog({
@@ -65,6 +73,7 @@ export function ChatLog({
   onSend,
   inputLabel = CHAT_INPUT_LABEL,
   placeholder = CHAT_INPUT_LABEL,
+  sendLocked = false,
 }: ChatLogProps): ReactElement {
   const scroller = useRef<HTMLDivElement>(null);
   const content = useRef<HTMLDivElement>(null);
@@ -113,6 +122,11 @@ export function ChatLog({
 
   const send = (event: SyntheticEvent<HTMLFormElement>): void => {
     event.preventDefault();
+
+    if (sendLocked) {
+      return;
+    }
+
     const form = event.currentTarget;
     const raw = new FormData(form).get('chat-body');
     const body = typeof raw === 'string' ? raw.trim() : '';
@@ -159,7 +173,7 @@ export function ChatLog({
             maxLength={CHAT_BODY_MAX_LENGTH}
             className="min-w-0 flex-1"
           />
-          <Button type="submit" variant="primary">
+          <Button type="submit" variant="primary" disabled={sendLocked} focusableWhenDisabled>
             {CHAT_SEND_LABEL}
           </Button>
         </form>
