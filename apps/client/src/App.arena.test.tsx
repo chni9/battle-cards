@@ -34,6 +34,7 @@ function connectionFor(view: StateView | null, extra: Partial<UseRoomConnectionR
   return {
     status: 'connected', view, error: null, actionReject: null, gameCode: view?.gameCode ?? null,
     lastTurnStarted: null, lastActionPlayed: null, lastActionResolved: null, subChoice: null, soloLaunchPending: false,
+    lobbyRules: view?.phase === 'lobby' && view.lobbyRules !== undefined ? { gameCode: view.gameCode, rules: view.lobbyRules } : null,
     createGame: vi.fn(), joinGame: vi.fn(), leaveGame: vi.fn(() => Promise.resolve()), forfeit: vi.fn(),
     clearActionReject: vi.fn(), startGame: vi.fn(), startSoloGame: vi.fn(), startTutorialGame: vi.fn(),
     addBot: vi.fn(), removeBot: vi.fn(), kickPlayer: vi.fn(), playAgain: vi.fn(), claimSeat: vi.fn(),
@@ -59,20 +60,22 @@ beforeEach(() => {
 });
 
 describe('App and the arena', () => {
-  it("hands the arena the room's lobby rules after START_GAME, and forgets them on leave (§6.10, §6.11, L74-21)", async () => {
-    fake.connection = connectionFor(makeLobbyView({ gameCode: 'ROOM01', lobbyRules: { ...defaultLobbyRules(), turnTimeSeconds: 180 } }));
-    const { rerender, user } = renderUi(<App />, { advanceTimers: vi.advanceTimersByTime, reducedMotion: true });
+  // The connection keeps the rules per STATE_UPDATE and resets them on leave
+  // (`net/use-room-connection.lobby-rules.behavior.test.ts`, L74-26 gate G19); App hands this room's on.
+  it("hands the arena the connection's lobby rules for this room only (§6.10, §6.11, L74-21, L74-26)", async () => {
+    const rules = { gameCode: 'ROOM01', rules: { ...defaultLobbyRules(), turnTimeSeconds: 180 } };
     const leaveGame = vi.fn(() => Promise.resolve());
-    fake.connection = connectionFor(
-      makeArenaView({ pov: 'eliminated', overrides: { gameCode: 'ROOM01', currentTurnPlayerId: 'p1', turnDeadlineMs: T0 + 180_000 } }),
-      { leaveGame },
-    );
-    rerender(<App />);
+    const table = (gameCode: string) =>
+      makeArenaView({ pov: 'eliminated', overrides: { gameCode, currentTurnPlayerId: 'p1', turnDeadlineMs: T0 + 180_000 } });
+    fake.connection = connectionFor(table('ROOM01'), { leaveGame, lobbyRules: rules });
+    const { rerender, user } = renderUi(<App />, { advanceTimers: vi.advanceTimersByTime, reducedMotion: true });
     const bar = (): Element | null => region('top-bar').querySelector('[role="progressbar"][aria-label="Turn timer"]');
     expect(bar()?.getAttribute('aria-valuenow')).toBe('100');
     await user.click(within(region('top-bar')).getByRole('button', { name: 'Leave table' }));
     await user.click(within(screen.getByRole('dialog', { name: 'Leave the table?' })).getByRole('button', { name: 'Leave' }));
     expect(leaveGame).toHaveBeenCalledTimes(1);
+    fake.connection = connectionFor(table('ROOM02'), { leaveGame, lobbyRules: rules });
+    rerender(<App />);
     expect(bar()?.hasAttribute('aria-valuenow')).toBe(false);
   });
 

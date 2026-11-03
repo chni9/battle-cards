@@ -6208,3 +6208,26 @@ Source: technical spec v7 §11 (Q39) and §6.1 item 5; `DESIGN.md` › Button; t
   or one line with an ellipsis? Default: two lines.
 
 ---
+
+## 2026-11-02 · [P] The connection keeps the room's lobby rules (L74-26 gate, supersedes the L74-21 cache)
+
+Source: technical spec v7 §6.10 source (1), §6.11; the Lot 74 gate (L74-26, G19); the 2026-11-02
+L74-21 entry above ("Lobby-rules cache"), which this one supersedes. That entry stays as written.
+
+- **What the gate found.** A solo started with a 30 s turn from the rules gear showed a bar at
+  7 % with 21 s left, and Menu → Table rules read 300 s, every kit allowed and Random off. The solo
+  launch sends SET_LOBBY_RULES, the bots and START_GAME at once, so the lobby views with the
+  chosen rules land back to back with the first playing view. React rendered only that playing
+  view, and App's `useLobbyRulesCache`, which stepped once per rendered view, kept the room's
+  first lobby view: the server defaults.
+- **Choice.** `RoomConnection.lobbyRules` (`{ gameCode, rules }`) is set in the `STATE_UPDATE`
+  updater from every lobby view as it arrives, so no view is skipped. It resets with every new
+  room and every leave (`INITIAL`), and a reconnect keeps it. App passes
+  `cachedLobbyRules(lobbyRules, view)`, which still checks the room code and the Classic play
+  kind. `use-lobby-rules-cache.ts` and its test are removed; its cases (kept into play, another
+  room gives nothing, Play again's edited rules, a leave forgets) are behavior tests of the
+  connection hook now (`net/use-room-connection.lobby-rules.behavior.test.ts`).
+- **Not changed.** The protocol, the server and the finished board, which reads
+  `FinishedStateView.lobbyRules`.
+
+---

@@ -1493,7 +1493,7 @@ Appendix A). Each Lot 74 task appends its bullet here, in task order.
   dropped in the render phase, so a later resend that offers the slot again cannot revive it and
   enable Drop. Drop and Cancel honour the host's `locked` ('Actions locked'); a tile tap still
   selects.
-- `screens/arena/turn-clock.tsx`, `use-turn-started-record.ts`; `App.tsx`, `use-lobby-rules-cache.ts`,
+- `screens/arena/turn-clock.tsx`, `use-turn-started-record.ts`; `App.tsx`, `net/use-room-connection.ts`,
   `screens/end.tsx` (L74-21, spec v7 §4.1, §6.10, §6.11): the top bar's `timers` slot renders
   `turnClock()` (L73-13): a `timer-label` line ('42s', '—', 'Paused — reconnecting', 'Absent —
   auto-draw') and a 'Turn timer' progressbar that carries `aria-valuenow` only when the turn length
@@ -1502,8 +1502,10 @@ Appendix A). Each Lot 74 task appends its bullet here, in task order.
   `--danger`; under reduced motion the fill jumps. The arena records a `TURN_STARTED` sighting when
   `lastTurnStarted` changes identity, with the current view's `turnSequence` and `props.nowMs`
   (App's 250 ms tick). The countdown keeps running during a post-action sub-choice, as V2's did.
-  App keeps the room's last lobby rules (`useLobbyRulesCache`: one `nextRulesCache` step per new
-  view, cleared by every leave) and passes `cachedLobbyRules(cache, view)`; EndScreen passes
+  The connection keeps the room's last lobby rules (`RoomConnection.lobbyRules`, taken from every
+  lobby `STATE_UPDATE` as it arrives and reset by every new room or leave; L74-26 moved it out of
+  App's per-render cache, which missed the solo launch's rules when React rendered only the first
+  playing view of that burst) and App passes `cachedLobbyRules(lobbyRules, view)`; EndScreen passes
   `FinishedStateView.lobbyRules`. Both mount `ArenaScreen` and `TableScreen` in their own branch.
   App also calls `forgetChatSeen(gameCode)` from an effect keyed on the room's lobby phase and code,
   after the lobby has rendered, so a rematch's arena starts with the lobby chat lines seen (the

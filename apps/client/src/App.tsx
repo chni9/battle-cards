@@ -30,7 +30,6 @@ import {
   parseUiSwitchParam,
   resolveTableUi,
 } from './ui-switch';
-import { useLobbyRulesCache } from './use-lobby-rules-cache';
 import { cachedLobbyRules } from './view-model/rules-recall';
 
 const UiGallery = import.meta.env.DEV
@@ -99,12 +98,11 @@ function GameApp() {
     lastTurnStarted,
     lastActionResolved,
     subChoice,
+    lobbyRules,
   } = connection;
-  // This room's last lobby rules (L74-21, spec v7 §6.10, §6.11): the playing view carries none.
-  const lobbyRulesCache = useLobbyRulesCache(view);
-  // Every leave forgets them: a null view alone keeps them (`nextRulesCache`).
+  // `lobbyRules` is this room's last lobby rules (L74-21, spec v7 §6.10, §6.11): the playing view
+  // carries none. The connection keeps them per STATE_UPDATE, and every leave resets them (L74-26).
   const leave = (): void => {
-    lobbyRulesCache.clear();
     void leaveGame();
   };
   const [nickname, setNickname] = useState('');
@@ -251,7 +249,7 @@ function GameApp() {
           <ArenaScreen
             {...boardProps}
             lastTurnStarted={lastTurnStarted}
-            cachedLobbyRules={cachedLobbyRules(lobbyRulesCache.cache, view)}
+            cachedLobbyRules={cachedLobbyRules(lobbyRules, view)}
             // The raw status (L74-25, §6.12): the arena's Reconnecting… banner and its game-input lock.
             connectionStatus={status}
             // Claim a seat (L74-23, §7.2, Q24): a walk-in only, while seats are claimable, as V2's
