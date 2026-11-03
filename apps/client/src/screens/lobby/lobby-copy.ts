@@ -36,6 +36,9 @@ export const CHOOSE_KIT_LABEL = 'Choose kit';
 export const WATCHING_TITLE = 'Watching the lobby';
 export const WATCHING_BODY = 'Claim a disconnected seat if one is listed, or leave and join again later.';
 
+/** §10.6: a walk-in's control that reopens App's claim picker after Stay (§7.2, Q24). The arena's `spectator-model.ts` has the same words; the lobby never imports `screens/arena/`. */
+export const CLAIM_SEAT_LABEL = 'Claim a seat';
+
 export function lobbyPlayersHeading(count: number): string {
   return `Players (${count}/${MAX_PLAYERS})`;
 }

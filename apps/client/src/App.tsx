@@ -302,6 +302,15 @@ function GameApp() {
           onChooseKit={chooseKit}
           onSetLobbyRules={setLobbyRules}
           onSendChat={sendChat}
+          // Claim a seat (L76-16, §7.2, Q24, A.9 ruling 9): a walk-in only, while seats are claimable,
+          // as the arena (L74-23). A null dismissed key shows the picker again for the same set.
+          {...(walkInSpectator && claimableSeats.length > 0
+            ? {
+                onReopenClaim: () => {
+                  setClaimDismissedKey(null);
+                },
+              }
+            : {})}
         />
         {claimDialog}
       </>

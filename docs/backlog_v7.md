@@ -24,13 +24,13 @@ Status values: `To do` · `In progress` · `Done` · `Blocked`
 | 73 · View-model | 13 | 13 |
 | 74 · Arena I | 26 | 26 |
 | 75 · Arena II | 13 | 0 |
-| 76 · Home and lobby | 18 | 9 |
+| 76 · Home and lobby | 18 | 10 |
 | 77 · Game over | 8 | 0 |
 | 78 · Juice | 13 | 0 |
 | 79 · Sound and haptics | 5 | 0 |
 | 80 · Admin | 12 | 12 |
 | 81 · Close-out | 6 | 0 |
-| **Total** | **135** | **81** |
+| **Total** | **135** | **82** |
 
 ## Designer questions still open
 
@@ -221,7 +221,7 @@ Home, the three paths, How to play, What's new, Feedback, the lobby with house r
 | L76-13 | **Add the lobby chat panel.** **Acceptance:** Rendered tests prove each of these. Enter sends the trimmed body and resets the input. Whitespace sends nothing. The input caps at 200. The walk-in label shows only when `isSpectator`. Collapsing keeps the transcript. `pnpm verify` green. | S | Low | Lot 72, L76-12 | Done |
 | L76-14 | **Make lobby errors dismissible and lock controls while reconnecting.** **Acceptance:** Tests prove each of these. Dismissing the alert calls `clearActionReject` once. A phase change from lobby to playing, or from finished to lobby, clears a stored reject. A state update within the same phase does not clear it. With status 'reconnecting', the listed controls are disabled and Leave is not. Table reject handling is unchanged. `pnpm verify` green. | S | Medium | L76-12 | Done |
 | L76-15 | **Toast guests when the host changes rules.** **Acceptance:** Helper tests prove each of these. No notice fires on the first view, on unchanged rules, on the guest's own Random pick, or on a Random-only toggle that keeps the pick. 'Rules changed' fires for each field change. The reset notice fires only for a newly excluded pick. A component test shows the toast to a guest and not to the host. `pnpm verify` green. | S | Low | Lot 72, L76-12 | Done |
-| L76-16 | **Restyle the claim sheet and add Claim a seat.** **Acceptance:** Rendered tests prove each of these. The copy 'Sit as a disconnected player?' and 'Nicknames are not unique…' is present. Two seats with the same nickname are both listed and neither is pre-selected. A single seat is pre-selected, and Sit here is enabled. Every dismissal path calls onStay once. A walk-in's Stay sends `staySpectating`, and a seated guest's sends nothing. Claim a seat reopens the picker for the same claimable set. The `claim-seat.ts` tests stay green. `pnpm verify` green. | M | Medium | Lot 72, L76-12 | To do |
+| L76-16 | **Restyle the claim sheet and add Claim a seat.** **Acceptance:** Rendered tests prove each of these. The copy 'Sit as a disconnected player?' and 'Nicknames are not unique…' is present. Two seats with the same nickname are both listed and neither is pre-selected. A single seat is pre-selected, and Sit here is enabled. Every dismissal path calls onStay once. A walk-in's Stay sends `staySpectating`, and a seated guest's sends nothing. Claim a seat reopens the picker for the same claimable set. The `claim-seat.ts` tests stay green. `pnpm verify` green. | M | Medium | Lot 72, L76-12 | Done |
 | L76-17 | **Add the invite link.** **Acceptance:** Tests prove each of these. The link helper builds the root URL with the code. The parse helper uppercases, caps at 6 characters and ignores a missing parameter. Share calls `navigator.share` with the link when it exists and falls back to the clipboard otherwise, and both failure paths still show the code. Loading with `?code=` puts the code in Join, and Join stays disabled until a nickname is typed. `/admin?code=` is unaffected. `pnpm verify` green. | M | Low | L76-08, L76-12 | To do |
 | L76-18 | **Run the Lot 76 browser and design gate.** **Acceptance:** Gate notes and room codes are recorded. Every defect is fixed, re-verified, and committed under its task id. `screens/home.tsx`, `lobby.tsx`, `lobby-rules-panel.tsx`, `lobby-kit-picker-dialog.tsx` and the old What's new and claim dialogs no longer exist. The design gate passes or is noted as not run per §12.4. `pnpm verify` green. The lot PR into `dev` is ready for review (§4.6). | M | Low | L76-01…L76-17 | To do |
 

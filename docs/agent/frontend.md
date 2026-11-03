@@ -38,7 +38,7 @@ design-system record: `/DESIGN.md`. On conflict, **code > spec v7 §5
 | Lobby | `phase: 'lobby'` — V7 mini arena: seats in seat colors, Ready, host Start / Kick / bots, table rules strip, hidden kit pick, chat, Feedback | `screens/lobby/lobby-screen.tsx` + `screens/lobby/*` |
 | Table | `phase: 'playing'` — felt shell, opponents arc, center-stage log, queue, timers, hand, economy | `screens/table.tsx` (+ `screens/table/*`) · `?ui=next` → `screens/arena/arena-screen.tsx` (the V7 arena; see `## Arena (V7, ?ui=next)`) |
 | End | `phase: 'finished'` — closable awards gallery; Classic **Play again**; hub leave hits ask-once; the finished board follows the same switch (`tableUi`) | `screens/end.tsx` + `game-over-dialog.tsx` + `view-model/game-over-awards.ts` |
-| Claim | Overlay when `claimableSeats` is non-empty — sit or stay spectating | `screens/claim-seat-dialog.tsx` |
+| Claim | V7 `Dialog` over Lobby, Table and End when `claimableSeats` is non-empty — sit or stay; a walk-in reopens it with **Claim a seat** (arena strip, lobby banner) | `screens/claim-seat-dialog.tsx` + `claim-seat.ts` |
 | Admin | `pathname === '/admin'` — password-gated designer analytics; not a game phase; no hub link (Lot 61) | `screens/admin/admin-app.tsx` |
 | Inbox (legacy URL) | `/inbox` redirects to `/admin/feedback`; `GET /api/inbox` unchanged | `App.tsx` (redirect only) |
 
@@ -1783,6 +1783,23 @@ Spec v7 §7.1–§7.5 and §7.7; plan `docs/superpowers/plans/2026-10-21-v7-lot-
   closes on OK or after `LOBBY_RULES_TOAST_MS` (6 s); Esc and state updates never close it. The
   server and ready state are unchanged. Lobby tests scope role queries to `main`: the Toast keeps
   two empty live regions in `document.body`.
+- `screens/claim-seat-dialog.tsx`, `claim-seat.ts` (L76-16, spec v7 §7.7, §6.7; Appendix A
+  `claim-seat-dialog`, `claim-seat-dismiss-stay`): the claim picker is a V7 `Dialog` (a bottom sheet
+  on phones, centered on desktop; Esc closes only the top sheet), with unchanged props. It shows
+  "Sit as a disconnected player?", the "Nicknames are not unique…" line, and one `aria-pressed` row
+  per claimable seat: a `v7SeatColor` dot (the seat's index in `view.players`), the nickname, and
+  "Host" on the lobby host's seat. There is no nickname auto-match: `claimSelection` pre-selects
+  only a sole seat and drops a pick that leaves the set. The actions are Stay (`secondary`,
+  `stayLabel`) and Sit here (`primary`, `focusableWhenDisabled` while nothing is picked). Esc,
+  backdrop, swipe and Stay all call `onStay`. Sit here sends once per claimable set: a ref latch
+  keyed by the seat ids, read only in its handler; a new set re-arms it. App still mounts it only
+  while the picker shows. It imports nothing from `design/`.
+- `screens/lobby/lobby-kit-card.tsx`, `lobby-screen.tsx`, `App.tsx` (L76-16, spec v7 §7.2, Q24; A.9
+  rulings 6 and 9): a lobby walk-in's "Watching the lobby" banner shows a primary **Claim a seat**
+  (`CLAIM_SEAT_LABEL`, the arena's words) while App passes `onReopenClaim`. App does so in the lobby
+  branch under the arena's condition (`walkInSpectator && claimableSeats.length > 0`); it clears the
+  dismissed key, so the picker shows again for the same set. It sends nothing and stays live while
+  reconnecting. A seated guest who kept their seat gets no control (Appendix B question).
 
 ## Design system (V2 · Lots 10+)
 
@@ -2216,8 +2233,9 @@ rules above are unchanged — this section only covers how the client looks.
   messages / leave / auto-reconnect (`room.reconnection` + `sessionStorage` token fallback).
   Same-tab reclaim during the **30s** grace does **not** need the picker. A later
   Join-with-code is a new socket: if the table is **playing**, enter as spectator first;
-  `ClaimSeatDialog` lists living disconnected seats (nickname + seat color, no auto-match)
-  with **Sit here** / **Stay spectating**. A single listed seat is pre-selected. The
+  `ClaimSeatDialog` (a V7 `Dialog` from L76-16) lists living disconnected seats (nickname +
+  seat hue, no auto-match) with **Sit here** / **Stay spectating** (a seated lobby guest:
+  **Keep this seat**). A single listed seat is pre-selected. The
   picker is **not** shown to a living seated player (host Draw stays reachable).
   Walk-in Stay sends `staySpectating` so the server unfogs kits; until then the
   table behind the picker has no Spy overlay (L57-16). Watching copy only says

@@ -2,15 +2,16 @@
 /**
  * App wiring of the lobby over a mocked room connection (technical spec v7 §4.1: the hook's API is
  * unchanged). L76-14: the reject alert's dismiss and the phase-change clear (§7.2, Q26/Q29; A.9
- * ruling 7; Review Focus 3).
+ * ruling 7; Review Focus 3). L76-16: the claim picker wiring (§7.7, §7.2, Q24; Appendix A
+ * `claim-seat-dismiss-stay`).
  */
-import { ACTION_REJECT_MESSAGE, type StateView } from '@card-battle/shared';
-import { screen, within } from '@testing-library/react';
+import { ACTION_REJECT_MESSAGE, type ClaimableSeatView, type LobbySeatView, type StateView } from '@card-battle/shared';
+import { screen, waitFor, within } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { App } from './App';
 import type { ActionRejectPayload, UseRoomConnectionResult } from './net/use-room-connection';
-import { guestLobbyView, hostLobbyView } from './screens/lobby/test-lobby';
+import { guestLobbyView, hostLobbyView, LOBBY_BOT, LOBBY_GUEST, LOBBY_HOST, walkInLobbyView } from './screens/lobby/test-lobby';
 import { fakeRoomConnection } from './test/fake-room-connection';
 import { renderUi, type RenderUiResult } from './test/render';
 import { markLatestReleaseSeen } from './ui/release-storage';
@@ -85,5 +86,58 @@ describe('App lobby rejects (§7.2, Q26/Q29, A.9 ruling 7, L76-14)', () => {
     show(result, fakeRoomConnection(null, { status: 'disconnected', error: KICKED.message, actionReject: KICKED, clearActionReject }));
     expect(clearActionReject).not.toHaveBeenCalled();
     expect(screen.getByText(KICKED.message).closest('[role="alert"]')).not.toBeNull();
+  });
+});
+
+describe('App claim picker wiring (§7.7, §7.2, Q24, L57-15, L76-16)', () => {
+  const picker = (): HTMLElement | null => screen.queryByRole('dialog', { name: 'Sit as a disconnected player?' });
+  /** A reserved human seat whose player dropped: the lobby lists it as claimable. */
+  const DEE: LobbySeatView = { id: 'dee', nickname: 'Dee', isBot: false, isReady: false };
+  const DEE_FREE: readonly ClaimableSeatView[] = [{ playerId: 'dee', nickname: 'Dee' }];
+  const seats = [LOBBY_HOST, LOBBY_GUEST, LOBBY_BOT, DEE];
+
+  it('shows no picker to a seated living player during play, so Draw stays reachable (L57-15)', () => {
+    renderApp(fakeRoomConnection(makePlayingView({ claimableSeats: [{ playerId: 'p1', nickname: 'p1' }] })));
+    expect(picker()).toBeNull();
+    expect(within(document.querySelector<HTMLElement>('[data-arena-region="dock"]') ?? document.body).getByRole('button', { name: /^Draw, plus / })).toBeDefined();
+  });
+
+  it('a lobby walk-in: Stay sends staySpectating once and hides the picker for that set, Claim a seat reopens it, Esc is Stay, and an empty set leaves no control (ruling 9)', async () => {
+    const staySpectating = vi.fn<() => void>();
+    const walkIn = (claimableSeats: readonly ClaimableSeatView[]) =>
+      fakeRoomConnection(walkInLobbyView({ players: seats, claimableSeats }), { staySpectating });
+    const result = renderApp(walkIn(DEE_FREE));
+    const open = picker();
+    if (open === null) throw new Error('the claim picker did not open');
+    await result.user.click(within(open).getByRole('button', { name: 'Stay spectating' }));
+    expect(staySpectating).toHaveBeenCalledTimes(1);
+    await waitFor(() => { expect(picker()).toBeNull(); });
+    show(result, walkIn(DEE_FREE)); // a new view, the same set: still hidden
+    expect(picker()).toBeNull();
+    await result.user.click(screen.getByRole('button', { name: 'Claim a seat' }));
+    expect(picker()).not.toBeNull();
+    expect(staySpectating).toHaveBeenCalledTimes(1);
+    await result.user.keyboard('{Escape}');
+    expect(staySpectating).toHaveBeenCalledTimes(2);
+    await waitFor(() => { expect(picker()).toBeNull(); });
+    show(result, walkIn([]));
+    expect(screen.queryByRole('button', { name: 'Claim a seat' })).toBeNull();
+    expect(picker()).toBeNull();
+  });
+
+  it("a seated non-host lobby guest's Keep this seat sends nothing and hides the picker; no Claim a seat (L57-16)", async () => {
+    const staySpectating = vi.fn<() => void>();
+    const { user } = renderApp(fakeRoomConnection(guestLobbyView({ players: seats, claimableSeats: DEE_FREE }), { staySpectating }));
+    const open = picker();
+    if (open === null) throw new Error('the claim picker did not open');
+    await user.click(within(open).getByRole('button', { name: 'Keep this seat' }));
+    await waitFor(() => { expect(picker()).toBeNull(); });
+    expect(staySpectating).not.toHaveBeenCalled();
+    expect(screen.queryByRole('button', { name: 'Claim a seat' })).toBeNull();
+  });
+
+  it('never shows the picker to the lobby host (L57-15)', () => {
+    renderApp(fakeRoomConnection(hostLobbyView({ players: seats, claimableSeats: DEE_FREE })));
+    expect(picker()).toBeNull();
   });
 });

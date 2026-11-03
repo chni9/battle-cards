@@ -1,14 +1,21 @@
 /**
- * Claim a disconnected living seat — PROTOCOL_VERSION 32 / L57-13.
- * Nickname + seat color; no auto-match. Stay spectating / keep seat is explicit.
+ * The claim picker for a disconnected living seat (technical spec v7 §7.7: a V7 sheet over the
+ * Lobby, the Table and End, where any dismissal is Stay; §6.7: Esc closes only the top sheet).
+ * PROTOCOL_VERSION 32 / L57-13: nickname and seat hue, no auto-match. L57-15: a sole seat is
+ * pre-selected. L57-16: Stay is explicit, so Esc, the backdrop, a swipe and the Stay button all
+ * call `onStay`. Plan A.9 ruling 5 (the Sit here latch) and Review Focus 5 (a pick that leaves the
+ * set). L76-16.
  */
 
 import type { ClaimableSeatView } from '@card-battle/shared';
-import { useState, type ReactElement } from 'react';
+import { useRef, useState, type ReactElement } from 'react';
 
-import { Button } from '../design/components/button';
-import { Dialog } from '../design/components/dialog';
-import { seatColorHex, seatIndexOf } from '../ui/seat-colors';
+import { v7SeatColor } from '../ui/palette';
+import { Button } from '../ui/primitives/button';
+import { CHROME_FOCUS_CLASS, CHROME_SHAPE_SM_CLASS } from '../ui/primitives/chrome-classes';
+import { Dialog } from '../ui/primitives/dialog';
+import { seatIndexOf } from '../ui/seat-colors';
+import { claimSelection } from './claim-seat';
 
 export interface ClaimSeatDialogProps {
   open: boolean;
@@ -30,11 +37,20 @@ export function ClaimSeatDialog({
   onStay,
 }: ClaimSeatDialogProps): ReactElement {
   const [picked, setPicked] = useState<string | null>(null);
-  const onlySeatId = seats.length === 1 ? seats[0]?.playerId : undefined;
-  const selectedId =
-    picked !== null && seats.some((seat) => seat.playerId === picked)
-      ? picked
-      : (onlySeatId ?? null);
+  const selectedId = claimSelection(seats, picked);
+  // One Sit here per claimable set. App keeps this dialog mounted while the server answers, so a
+  // double tap would send twice. A new set (someone else sat, a seat dropped) is a new question
+  // and re-arms it. The ref is read and written only in this handler, never during render (the
+  // React Compiler lint), as `screens/arena/top-bar.tsx` does for its confirm.
+  const seatsKey = seats.map((seat) => seat.playerId).join('|');
+  const claimedFor = useRef<string | null>(null);
+  const sitHere = (): void => {
+    if (selectedId === null || claimedFor.current === seatsKey) {
+      return;
+    }
+    claimedFor.current = seatsKey;
+    onClaim(selectedId);
+  };
 
   return (
     <Dialog
@@ -43,33 +59,21 @@ export function ClaimSeatDialog({
       onClose={onStay}
       actions={
         <>
-          <Button type="button" variant="orange" onClick={onStay}>
+          <Button variant="secondary" onClick={onStay}>
             {stayLabel}
           </Button>
-          <Button
-            type="button"
-            variant="green"
-            disabled={selectedId === null}
-            onClick={() => {
-              if (selectedId !== null) {
-                onClaim(selectedId);
-              }
-            }}
-          >
+          <Button variant="primary" disabled={selectedId === null} focusableWhenDisabled onClick={sitHere}>
             Sit here
           </Button>
         </>
       }
     >
-      <p className="text-sm text-ink">
+      <p className="font-v7-body text-v7-body font-bold text-v7-text">
         Nicknames are not unique. Pick the seat by color, or keep watching.
       </p>
-      <ul className="mt-3 space-y-2">
+      <ul className="mt-3 flex flex-col gap-2">
         {seats.map((seat) => {
-          const index = seatIndexOf(
-            { players: playerIds.map((id) => ({ id })) },
-            seat.playerId,
-          );
+          const index = seatIndexOf({ players: playerIds.map((id) => ({ id })) }, seat.playerId);
           const selected = selectedId === seat.playerId;
           const host = hostPlayerId !== undefined && seat.playerId === hostPlayerId;
 
@@ -78,26 +82,28 @@ export function ClaimSeatDialog({
               <button
                 type="button"
                 aria-pressed={selected}
+                data-claim-seat={seat.playerId}
                 onClick={() => {
                   setPicked(seat.playerId);
                 }}
                 className={[
-                  'flex min-h-11 w-full items-center gap-3 rounded-[length:var(--radius-card)] border px-3 py-2 text-left',
-                  selected
-                    ? 'border-cta-orange bg-surface ring-2 ring-cta-orange/40'
-                    : 'border-border-soft bg-surface-raised hover:border-border',
+                  'flex min-h-11 w-full items-center gap-3 bg-v7-panel-2 px-3 py-2 text-left',
+                  CHROME_SHAPE_SM_CLASS,
+                  CHROME_FOCUS_CLASS,
+                  selected ? 'ring-(length:--chrome-outline-width) ring-v7-cta' : '',
                 ].join(' ')}
               >
                 <span
-                  className="h-6 w-6 shrink-0 rounded-full border border-border"
-                  style={{ backgroundColor: seatColorHex(index ?? 0) }}
-                  aria-hidden
+                  data-claim-seat-dot=""
+                  aria-hidden="true"
+                  className="size-6 shrink-0 rounded-full border-(length:--chrome-outline-width) border-v7-ink"
+                  style={{ backgroundColor: v7SeatColor(index ?? 0) }}
                 />
-                <span className="font-medium text-ink">{seat.nickname}</span>
+                <span className="min-w-0 wrap-anywhere font-v7-display text-v7-body leading-tight text-v7-text">
+                  {seat.nickname}
+                </span>
                 {host ? (
-                  <span className="text-xs font-medium uppercase tracking-wide text-ink-muted">
-                    Host
-                  </span>
+                  <span className="font-v7-body text-v7-caption font-extrabold uppercase text-v7-text-2">Host</span>
                 ) : null}
               </button>
             </li>

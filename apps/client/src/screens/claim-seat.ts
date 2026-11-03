@@ -3,7 +3,7 @@
  * Playing seated humans do not see the picker (host Draw must stay reachable).
  */
 
-import type { PublicPlayerView } from '@card-battle/shared';
+import type { ClaimableSeatView, PublicPlayerView } from '@card-battle/shared';
 
 export function claimStayLabel(input: {
   isSpectator: boolean;
@@ -32,6 +32,22 @@ export function shouldShowClaimPicker(input: {
   }
 
   return input.phase === 'lobby' && !input.youAreHost;
+}
+
+/**
+ * The seat Sit here would claim (L57-13, L57-15): the player's pick while it is still listed, else a
+ * sole listed seat (pre-selected so Sit here works at once), else none. Never a nickname match.
+ */
+export function claimSelection(
+  seats: readonly Pick<ClaimableSeatView, 'playerId'>[],
+  picked: string | null,
+): string | null {
+  if (picked !== null && seats.some((seat) => seat.playerId === picked)) {
+    return picked;
+  }
+  const [first] = seats;
+
+  return seats.length === 1 && first !== undefined ? first.playerId : null;
 }
 
 /** Spy overlay present on the wire — L57-16 watching copy follows this fact. */

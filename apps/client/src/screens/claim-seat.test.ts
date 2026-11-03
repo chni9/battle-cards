@@ -1,16 +1,12 @@
 /**
- * Claim-seat picker copy — L57-13 / L57-15.
+ * Claim-seat picker helpers: L57-13, L57-15, L57-16. The pure suites moved unchanged from
+ * `claim-seat-dialog.test.ts` (L76-16, technical spec v7 §12.1, §12.2); the dialog's tests are
+ * `claim-seat-dialog.test.tsx`.
  */
-
-import { readFileSync } from 'node:fs';
-import { dirname, join } from 'node:path';
-import { fileURLToPath } from 'node:url';
 
 import { describe, expect, it } from 'vitest';
 
-import { claimStayLabel, shouldShowClaimPicker, walkInSeesPrivateHands } from './claim-seat';
-
-const here = dirname(fileURLToPath(import.meta.url));
+import { claimSelection, claimStayLabel, shouldShowClaimPicker, walkInSeesPrivateHands } from './claim-seat';
 
 describe('claimStayLabel (L57-13)', () => {
   it('keeps a lobby guest on their new seat and spectates otherwise', () => {
@@ -68,30 +64,6 @@ describe('shouldShowClaimPicker (L57-15)', () => {
   });
 });
 
-describe('claim seat dialog (L57-13)', () => {
-  it('lists claimable nicknames without auto-matching', () => {
-    const source = readFileSync(join(here, 'claim-seat-dialog.tsx'), 'utf8');
-    expect(source).toContain('Sit as a disconnected player?');
-    expect(source).toContain('Nicknames are not unique');
-    expect(source).toContain('onClaim');
-    expect(source).not.toContain('toLowerCase');
-  });
-
-  it('pre-selects the only claimable seat so Sit here is enabled (L57-15)', () => {
-    const source = readFileSync(join(here, 'claim-seat-dialog.tsx'), 'utf8');
-    expect(source).toContain('onlySeatId');
-    expect(source).toContain('Sit here');
-  });
-});
-
-describe('App claim picker wiring (L57-15)', () => {
-  it('gates the dialog on shouldShowClaimPicker so seated players keep Draw', () => {
-    const app = readFileSync(join(here, '../App.tsx'), 'utf8');
-    expect(app).toContain('shouldShowClaimPicker');
-    expect(app).toContain('staySpectating');
-  });
-});
-
 describe('walkInSeesPrivateHands (L57-16)', () => {
   it('follows whether any seat carries a Spy overlay', () => {
     expect(walkInSeesPrivateHands([{}])).toBe(false);
@@ -100,5 +72,18 @@ describe('walkInSeesPrivateHands (L57-16)', () => {
         { spied: { kitId: 'warrior', hand: [], specialCards: [] } },
       ]),
     ).toBe(true);
+  });
+});
+
+describe('claimSelection (L57-15, Review Focus 5)', () => {
+  it('keeps a pick while it is listed, else pre-selects a sole seat, else picks nothing', () => {
+    const ana = { playerId: 'p-ana' };
+    const bo = { playerId: 'p-bo' };
+    expect(claimSelection([ana], null)).toBe('p-ana');
+    expect(claimSelection([ana, bo], null)).toBeNull();
+    expect(claimSelection([ana, bo], 'p-bo')).toBe('p-bo');
+    expect(claimSelection([ana, bo], 'p-cy')).toBeNull(); // the pick left the set
+    expect(claimSelection([bo], 'p-cy')).toBe('p-bo');
+    expect(claimSelection([], null)).toBeNull();
   });
 });

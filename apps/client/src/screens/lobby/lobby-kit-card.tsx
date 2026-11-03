@@ -1,7 +1,8 @@
 /**
  * The lobby's kit card (technical spec v7 §7.2, §7.3; parity `lobby-your-kit`,
  * `lobby-walk-in-notice`). One of three cards:
- * - a walk-in reads the "Watching the lobby" banner (L76-16 adds Claim a seat there);
+ * - a walk-in reads the "Watching the lobby" banner, with Claim a seat while App passes
+ *   `onReopenClaim` (L76-16; it sends nothing, so it ignores `locked`, plan A.9 ruling 6);
  * - under Random only, the dealt line: the host reads `RANDOM_ONLY_SOLO_LINE`, a guest
  *   `RANDOM_ONLY_LOBBY_LINE` (controller ruling, L76-12);
  * - otherwise Your kit: the privacy line, the pick's `KitPortrait` and label, and Choose kit.
@@ -19,7 +20,7 @@ import { Button } from '../../ui/primitives/button';
 import { CHROME_SHAPE_CLASS } from '../../ui/primitives/chrome-classes';
 import { KIT_PRIVACY_COPY, RANDOM_ONLY_LOBBY_LINE, RANDOM_ONLY_SOLO_LINE } from '../kit-pick-copy';
 import { KitPickerSheet } from './kit-picker-sheet';
-import { CHOOSE_KIT_LABEL, WATCHING_BODY, WATCHING_TITLE, YOUR_KIT_TITLE } from './lobby-copy';
+import { CHOOSE_KIT_LABEL, CLAIM_SEAT_LABEL, WATCHING_BODY, WATCHING_TITLE, YOUR_KIT_TITLE } from './lobby-copy';
 import { lobbyKitSelectionLabel } from './lobby-kit-picker';
 
 export interface LobbyKitCardProps {
@@ -34,13 +35,15 @@ export interface LobbyKitCardProps {
   /** Reconnecting: Select this kit is disabled; Choose kit and the sheets stay live. */
   readonly locked: boolean;
   readonly onChooseKit: (selection: LobbyKitSelection) => void;
+  /** App's claim picker reopen (§7.2, Q24, A.9 ruling 9): present only for a walk-in while seats are claimable. */
+  readonly onReopenClaim?: () => void;
 }
 
 const CARD_CLASS = `${CHROME_SHAPE_CLASS} bg-v7-panel p-4`;
 const TITLE_CLASS = 'font-v7-display text-v7-title leading-none text-v7-text';
 const BODY_CLASS = 'font-v7-body text-v7-body text-v7-text-2';
 
-export function LobbyKitCard({ selection, rules, walkIn, isHost, locked, onChooseKit }: LobbyKitCardProps): ReactElement {
+export function LobbyKitCard({ selection, rules, walkIn, isHost, locked, onChooseKit, onReopenClaim }: LobbyKitCardProps): ReactElement {
   const titleId = useId();
   const [pickerOpen, setPickerOpen] = useState(false);
   // Render-time sync: while the card cannot show, the open flag clears, so the picker does not
@@ -54,6 +57,11 @@ export function LobbyKitCard({ selection, rules, walkIn, isHost, locked, onChoos
           {WATCHING_TITLE}
         </h2>
         <p className={`mt-2 ${BODY_CLASS}`}>{WATCHING_BODY}</p>
+        {onReopenClaim !== undefined ? (
+          <Button variant="primary" className="mt-3" onClick={onReopenClaim}>
+            {CLAIM_SEAT_LABEL}
+          </Button>
+        ) : null}
       </section>
     );
   }

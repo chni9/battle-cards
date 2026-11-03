@@ -47,6 +47,8 @@ export interface LobbyScreenProps {
   onChooseKit: (selection: LobbyKitSelection) => void;
   onSetLobbyRules: (payload: SetLobbyRulesPayload) => void;
   onSendChat: (body: string) => void;
+  /** App's claim picker reopen; present only while a walk-in has claimable seats. L76-16. */
+  onReopenClaim?: () => void;
 }
 
 /** The rules toast (L76-15): the last view this screen rendered (the next diff's "previous") and the open notice. */
@@ -69,6 +71,7 @@ export function LobbyScreen({
   onChooseKit,
   onSetLobbyRules,
   onSendChat,
+  onReopenClaim,
 }: LobbyScreenProps): ReactElement {
   const isHost = view.hostPlayerId === view.you;
   const rules = view.lobbyRules ?? defaultLobbyRules();
@@ -101,6 +104,7 @@ export function LobbyScreen({
               isHost={isHost}
               locked={locked}
               onChooseKit={onChooseKit}
+              {...(onReopenClaim !== undefined ? { onReopenClaim } : {})}
             />
           </div>
           <div data-lobby-column="table" className="flex min-w-0 flex-col gap-4">
