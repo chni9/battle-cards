@@ -640,9 +640,10 @@ and are mirrored in `ui/palette.ts` and `ui/motion/motion-tokens.ts`.
   and `FinishedStateView.lobbyRules` in L77 (spec v7 §6.11). The data comes from
   `view-model/rules-recall.ts` (L73-12): `rulesRecall(view)` for a lobby or finished view, and
   `tableRulesRecall(cache, view)` on the table. The cache is the last `lobbyRules` seen in this
-  room, kept in memory: call `nextRulesCache(cache, view)` on every view change (a new room
-  code drops it). `cachedLobbyRules(cache, view)` is the same rules as `turnClock`'s length
-  source. A `RulesRecall` is a `LobbyRules`, so it passes as `rules`. A `null` recall means
+  room, kept in memory as `RoomConnection.lobbyRules`, set in the connection's STATE_UPDATE
+  updater so no batched lobby view is missed, and reset with every new room or leave (L74-26).
+  `cachedLobbyRules(cache, view)` checks the room code and is the same rules as `turnClock`'s
+  length source. A `RulesRecall` is a `LobbyRules`, so it passes as `rules`. A `null` recall means
   the rules are unknown (a reload mid-game) or the room is a tutorial: the caller hides the
   strip, and the tutorial never mounts it. The component invents no default.
 - **Seconds are shown as received:** the server-effective `turnTimeSeconds` follows

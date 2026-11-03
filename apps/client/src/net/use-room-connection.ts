@@ -141,7 +141,11 @@ export interface RoomConnection {
   lobbyRules: LobbyRulesOfRoom | null;
 }
 
-/** The rules a room's lobby last sent, with the room code they belong to. */
+/**
+ * The rules a room's lobby last sent, with the room code they belong to. It mirrors
+ * `view-model/rules-recall.ts` `RulesCache` field for field, so `cachedLobbyRules` takes it, without
+ * `net/` importing the view-model.
+ */
 export interface LobbyRulesOfRoom {
   readonly gameCode: string;
   readonly rules: LobbyRules;
