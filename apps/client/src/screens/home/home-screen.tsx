@@ -6,7 +6,6 @@
  */
 
 import {
-  allowedKitIds,
   type BotDifficulty,
   type LobbyKitSelection,
   type LobbyRules,
@@ -26,7 +25,7 @@ import {
 } from '../../ui/help-storage';
 import { hasUnseenReleaseNotes, markLatestReleaseSeen } from '../../ui/release-storage';
 import { HowToPlayDialog, type HowToPlayCloseReason } from '../how-to-play-dialog';
-import { LobbyKitPickerDialog } from '../lobby-kit-picker-dialog';
+import { KitPickerSheet } from '../lobby/kit-picker-sheet';
 import type { SoloMenuSeed } from '../solo-menu-seed';
 import { WhatsNewDialog } from '../whats-new-dialog';
 import { BetaCard, HomeArt } from './home-art';
@@ -349,10 +348,11 @@ export function HomeScreen({
           setFeedbackOpen(false);
         }}
       />
-      <LobbyKitPickerDialog
+      <KitPickerSheet
         open={kitPickerOpen}
         current={solo.kitSelection}
-        allowedKitIds={allowedKitIds(solo.rules)}
+        rules={solo.rules}
+        disabled={busy}
         onClose={() => {
           setKitPickerOpen(false);
         }}

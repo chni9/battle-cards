@@ -5,7 +5,6 @@
  */
 
 import {
-  allowedKitIds,
   BOT_DIFFICULTIES,
   defaultLobbyRules,
   MAX_PLAYERS,
@@ -25,9 +24,9 @@ import { FeedbackDialog } from '../../feedback/feedback-dialog';
 import type { RoomConnectionStatus } from '../../net/use-room-connection';
 import { ChatLog } from '../../ui/chat/chat-log';
 import { RulesStrip } from '../../ui/rules/rules-strip';
-import { KIT_PRIVACY_COPY } from '../kit-pick-copy';
-import { LobbyKitPickerDialog } from '../lobby-kit-picker-dialog';
+import { KIT_PRIVACY_COPY, RANDOM_ONLY_LOBBY_LINE } from '../kit-pick-copy';
 import { STATUS_LABELS } from '../status-labels';
+import { KitPickerSheet } from './kit-picker-sheet';
 import { lobbyKitSelectionLabel } from './lobby-kit-picker';
 import {
   lobbyShowsReadyToggle,
@@ -80,6 +79,11 @@ export function LobbyScreen({
   );
   const youNick = view.players.find((player) => player.id === view.you)?.nickname;
   const rules = view.lobbyRules ?? defaultLobbyRules();
+  // Render-time sync: Random only hides the picker, and turning it off must not reopen the picker by
+  // itself, so the open flag clears with it (technical spec v7 §7.3). L76-10.
+  if (kitPickerOpen && rules.randomOnly) {
+    setKitPickerOpen(false);
+  }
 
   const closeCopyDialog = useCallback(() => {
     setCopyOpen(false);
@@ -140,7 +144,12 @@ export function LobbyScreen({
               Claim a disconnected seat if one is listed, or leave and join again later.
             </p>
           </section>
-        ) : rules.randomOnly ? null : (
+        ) : rules.randomOnly ? (
+        <section className="mt-6 rounded-[length:var(--radius-card)] border border-border bg-surface-raised p-4">
+          <h2 className="text-sm font-medium text-ink-muted">Your kit</h2>
+          <p className="mt-1 text-sm text-ink-muted">{RANDOM_ONLY_LOBBY_LINE}</p>
+        </section>
+        ) : (
         <section className="mt-6 rounded-[length:var(--radius-card)] border border-border bg-surface-raised p-4">
           <h2 className="text-sm font-medium text-ink-muted">Your kit</h2>
           <p className="mt-1 text-sm text-ink-muted">{KIT_PRIVACY_COPY}</p>
@@ -377,14 +386,14 @@ export function LobbyScreen({
           setFeedbackOpen(false);
         }}
       />
-      <LobbyKitPickerDialog
+      <KitPickerSheet
         open={kitPickerOpen}
         current={view.yourKitSelection}
-        allowedKitIds={allowedKitIds(rules)}
+        rules={rules}
+        onSelect={onChooseKit}
         onClose={() => {
           setKitPickerOpen(false);
         }}
-        onSelect={onChooseKit}
       />
     </main>
   );

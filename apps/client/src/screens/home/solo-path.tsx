@@ -17,7 +17,7 @@ import type { RoomConnectionStatus } from '../../net/use-room-connection';
 import type { RulesEditorBinding } from '../../ui/rules/rules-editor-model';
 import { RulesStrip } from '../../ui/rules/rules-strip';
 import { lobbyKitSelectionLabel } from '../lobby/lobby-kit-picker';
-import { KIT_PICKER_LEAD } from '../kit-pick-copy';
+import { KIT_PICKER_LEAD, RANDOM_ONLY_SOLO_LINE } from '../kit-pick-copy';
 import { NicknameField } from './nickname-field';
 import { PathHeader } from './path-header';
 
@@ -125,7 +125,12 @@ export function SoloPath({
 
         <RulesStrip rules={soloRules} editor={rulesEditor} />
 
-        {soloRules.randomOnly ? null : (
+        {soloRules.randomOnly ? (
+        <div className="space-y-2">
+          <p className="text-sm font-medium text-ink">Your kit</p>
+          <p className="text-sm text-ink-muted">{RANDOM_ONLY_SOLO_LINE}</p>
+        </div>
+        ) : (
         <div className="space-y-2">
           <p className="text-sm font-medium text-ink">Your kit</p>
           <p className="text-sm text-ink-muted">{KIT_PICKER_LEAD}</p>

@@ -6398,3 +6398,36 @@ plan Appendix A.5.
   the field.
 
 ---
+
+## 2026-11-03 · [P] The kit picker lists every kit; excluded kits are greyed and cannot open (L76-10)
+
+Source: technical spec v7 §7.3, §6.7, §11 (Q23, Q39); backlog_v7 L76-10 (Acceptance and watch
+point); Lot 76 plan Appendix A.5 and A.9 rulings 3 and 5.
+
+- **Supersedes** "only allowed kits are listed", the Lot 70 filter in
+  `screens/lobby-kit-picker-dialog.tsx`. Appendix A `home-solo-kit-picker` says "Only allowed kits
+  are listed (Lot 70 filter)", `lobby-kit-picker-dialog` says "allowed catalog kits only (excluded
+  kits are filtered out)", and frontend.md said "allowed kit portraits + Random".
+  `screens/lobby/kit-picker-sheet.tsx` lists Random, then all 16 kits in `KIT_IDS` order, in the
+  lobby and on the solo menu. An excluded kit stays in place, greyed and labelled "Excluded" (Q23),
+  so tiles no longer vanish under a guest's finger when the host edits the rules. An excluded kit
+  still cannot be chosen, and the server's `choose-kit-excluded` check is unchanged.
+- **One disabled pattern for the picker** (the L76-10 watch point; ruling 3): `KitTile` as it is.
+  An excluded tile's head is natively `disabled`: it leaves the Tab order, a tap does nothing, and
+  it cannot open the kit sheet. Its visible "Excluded" word is the reason. We did not use the
+  arena shop's `aria-disabled` tiles (2026-11-02, L74-14). Those tiles still had something to
+  show, and their long-press had to reach them. Here the rules sheet already names every excluded
+  kit, and a focusable excluded tile would lead to a Select that can never succeed.
+- **Select this kit** is the one control that can turn disabled under focus: the host excludes
+  the kit a guest is reading. It uses `Button focusableWhenDisabled`, so focus stays on it, with the
+  existing reject copy "The host has excluded that kit. Pick one that is still allowed." as its
+  visible reason. It is latched once per kit-sheet open (ruling 5).
+- **Random only** hides the picker. Its sheets close, the lobby clears its open flag so turning
+  Random only off never reopens the picker by itself, and the Your kit card gives way to one
+  line.
+- **Gambler's Draw reads "5–100"** on its tile (designer 2026-11-03), not the catalog `draw: 10`:
+  the server pays a weighted 5–100 Draw to any kit with `traits.drawBustDenominator`
+  (`rollDrawGain`), and the Ability copy and How to play already say so. Every other tile stat is
+  the raw `KIT_CATALOG` value.
+
+---

@@ -35,7 +35,7 @@ design-system record: `/DESIGN.md`. On conflict, **code > spec v7 §5
 | Screen | When | File |
 |---|---|---|
 | Home | No room — hub → online (create/join) or solo; How to play + What’s new + Feedback | `screens/home/home-screen.tsx` (+ `screens/home/*`) + `how-to-play-dialog.tsx` + `whats-new-dialog.tsx` + `feedback/feedback-dialog.tsx` |
-| Lobby | `phase: 'lobby'` — seats, Ready, host Start / Kick / bots, hidden kit pick, Feedback | `screens/lobby/lobby-screen.tsx` + `lobby-kit-picker-dialog.tsx` |
+| Lobby | `phase: 'lobby'` — seats, Ready, host Start / Kick / bots, hidden kit pick, Feedback | `screens/lobby/lobby-screen.tsx` + `lobby/kit-picker-sheet.tsx` |
 | Table | `phase: 'playing'` — felt shell, opponents arc, center-stage log, queue, timers, hand, economy | `screens/table.tsx` (+ `screens/table/*`) · `?ui=next` → `screens/arena/arena-screen.tsx` (the V7 arena; see `## Arena (V7, ?ui=next)`) |
 | End | `phase: 'finished'` — closable awards gallery; Classic **Play again**; hub leave hits ask-once; the finished board follows the same switch (`tableUi`) | `screens/end.tsx` + `game-over-dialog.tsx` + `view-model/game-over-awards.ts` |
 | Claim | Overlay when `claimableSeats` is non-empty — sit or stay spectating | `screens/claim-seat-dialog.tsx` |
@@ -1596,12 +1596,12 @@ Spec v7 §7.1–§7.5 and §7.7; plan `docs/superpowers/plans/2026-10-21-v7-lot-
   `lobby-ready-mark.tsx` and `lobby-kit-picker.ts` moved beside it with their tests; the pure
   `lobby-ready` and `lobby-kit-picker` suites are unchanged. Two imports switched to their L72
   rebuilds, so nothing in the lobby imports `screens/table/` (L75-11 may delete the old copies):
-  `ChatLog` from `ui/chat/chat-log`, and in `screens/lobby-kit-picker-dialog.tsx`, `KitDetails`
-  from `ui/kit/kit-details`. The V7 `ChatLog` trims the body before `onSend`, which the V6 log
+  `ChatLog` from `ui/chat/chat-log`, and in `screens/lobby-kit-picker-dialog.tsx` (deleted by
+  L76-10), `KitDetails` from `ui/kit/kit-details`. The V7 `ChatLog` trims the body before `onSend`, which the V6 log
   did not, so a lobby `SEND_CHAT` now carries the trimmed text (decisions.md 2026-11-03). Two
   more edits: the root `main` gained `overscroll-contain`, and each seat `<li>` carries
-  `data-lobby-seat={player.id}` (a test hook). Until L76-10, the picker's preview shows the dark
-  V7 kit body inside the light V2 dialog.
+  `data-lobby-seat={player.id}` (a test hook). L76-10 then replaced the V2 picker dialog with the
+  V7 kit picker sheet.
 - `screens/lobby/test-lobby.ts` (L76-02, plan A.3): `LOBBY_HOST` / `LOBBY_GUEST` / `LOBBY_BOT`
   (Ada, Bea, Bot Cy), `hostLobbyView` / `guestLobbyView` / `walkInLobbyView` (code `ABCDEF`),
   `makeLobbyProps` (a `vi.fn()` per callback), `expectNoLobbyIntent` (every intent callback but
@@ -1623,7 +1623,7 @@ Spec v7 §7.1–§7.5 and §7.7; plan `docs/superpowers/plans/2026-10-21-v7-lot-
   They query only by role, name and the A.4 hooks, so they outlive the L76-12 restyle. The
   style-only halves wait for L76-12: `lobby-ready-mark.test.ts` (moved) and
   `lobby-screen.ready-chrome.test.ts` (split from `lobby-ready.test.ts`).
-- `screens/how-to-play-content.ts`, `screens/kit-pick-copy.ts`, `screens/home/home-copy.ts`, `screens/lobby/lobby-screen.tsx`, `screens/lobby-kit-picker-dialog.tsx` (L76-03, spec v7 §10.1, Q11 = B): the Lot 76 stale copy rows. How to play Kits, the lobby Your kit line, the solo kit line and the picker lead read the Lot 69 rule (`KIT_PRIVACY_COPY`: a kit shows only to an upgraded Spy or Spy Thief, or once its player is eliminated; How to play adds that a basic Spy shows only resources). Kits also names host exclusions and dealt-at-random kits (Lot 70) and the Gambler bust that no longer eliminates (Lot 66). The Random kit preview says "one of the allowed kits", and the Online Create helper waits for every guest's Ready (`ONLINE_CREATE_HELPER`, L57). Strings used by several screens live in `screens/kit-pick-copy.ts`; Home strings that tests import live in `screens/home/home-copy.ts`. The v6 §5.1 `kits` row points at v7 §10.1.
+- `screens/how-to-play-content.ts`, `screens/kit-pick-copy.ts`, `screens/home/home-copy.ts`, `screens/lobby/lobby-screen.tsx`, `screens/lobby-kit-picker-dialog.tsx` (moved to `screens/lobby/random-kit-details.tsx` by L76-10) (L76-03, spec v7 §10.1, Q11 = B): the Lot 76 stale copy rows. How to play Kits, the lobby Your kit line, the solo kit line and the picker lead read the Lot 69 rule (`KIT_PRIVACY_COPY`: a kit shows only to an upgraded Spy or Spy Thief, or once its player is eliminated; How to play adds that a basic Spy shows only resources). Kits also names host exclusions and dealt-at-random kits (Lot 70) and the Gambler bust that no longer eliminates (Lot 66). The Random kit preview says "one of the allowed kits", and the Online Create helper waits for every guest's Ready (`ONLINE_CREATE_HELPER`, L57). Strings used by several screens live in `screens/kit-pick-copy.ts`; Home strings that tests import live in `screens/home/home-copy.ts`. The v6 §5.1 `kits` row points at v7 §10.1.
 - `ui/kit/kit-details.tsx`, `view-model/kit-inspect-traits.ts` (L76-03, spec v7 §10.1): a kit with `randomStartingSpecialCount` (Prophet 2, Gambler 2) shows that many hidden special versos (`data-random-special`) after its fixed specials, captioned `RANDOM_SPECIAL_CAPTION` "Random special", with no cost; the arena kit sheet and the picker inherit them. Prophet's ability drops "Invisibility excluded". `view-model/kit-inspect-traits.test.ts` holds that assertion beside the one line edited in `screens/table/kit-inspect-dialog.test.ts` (plan Appendix A.9 ruling 2).
 - `ui/rules/rules-editor.tsx`, `rules-editor-model.ts` (L76-09, spec v7 §7.4, §13 Q3/Q4/Q8/Q15/Q18/Q31):
   the host editor. `RulesStrip` and `RulesSheet` take an optional `editor: RulesEditorBinding`
@@ -1647,6 +1647,26 @@ Spec v7 §7.1–§7.5 and §7.7; plan `docs/superpowers/plans/2026-10-21-v7-lot-
   local rules (the clock only when the payload carries it) through `applySoloRulesChange`: only a
   slider release sets `includeTurnTime`, and an excluded local pick falls back to Random.
   `screens/lobby-rules-panel.tsx` is deleted.
+- `screens/lobby/kit-picker-sheet.tsx`, `kit-tile-stats.ts`, `random-kit-details.tsx`,
+  `../kit-pick-copy.ts` (L76-10, spec v7 §7.3, §6.7, Q23; decisions 2026-11-03): the kit picker the
+  lobby and the solo menu share, as two stacked read-only sheets (`data-lobby-sheet="kit-picker"`,
+  then `"kit"`). The grid, "Choose kit", lists Random then all 16 kits in
+  `LOBBY_KIT_PICKER_SELECTIONS` order as `KitTile`s (`data-kit-picker-tile` on each `<li>`; stats
+  from `kitTileStats`, read from `KIT_CATALOG`; the current pick is `aria-pressed`). An excluded kit
+  stays in place, greyed with "Excluded"; its head is natively disabled (ruling 3), so it cannot
+  open or be picked. A tile opens the kit sheet (`KitDetails`, or `RandomKitDetails` for Random)
+  with Back and Select this kit. Esc steps back one level. Back, Esc and Close never change the
+  pick. Select is the only commit (`onChooseKit` in the lobby, the local pick on Home), latched
+  once per kit-sheet open. It turns `aria-disabled`, with the "The host has excluded that kit…"
+  reason, the moment that kit is excluded, and while `disabled` (solo busy; L76-14 reconnecting).
+  Under Random only the picker shows no sheet, the lobby clears its open flag so it never reopens
+  by itself, and the Your kit card gives way to `RANDOM_ONLY_LOBBY_LINE` (solo:
+  `RANDOM_ONLY_SOLO_LINE`). `screens/lobby-kit-picker-dialog.tsx` is deleted. The Gambler tile's
+  Draw reads `WEIGHTED_DRAW_LABEL` "5–100" (the weighted range, not the catalog 10); every other
+  stat is the raw catalog value. The Action and Attack stats use the new `action` and `attack`
+  icons (`ui/icons`, DESIGN.md › Icons). A test that waits for a sheet to close waits for
+  `[data-zone="sheet-overlay"]` to leave the DOM: an exiting sheet is already `aria-hidden`, so
+  `queryByRole('dialog')` is null while its text is still there.
 
 ## Design system (V2 · Lots 10+)
 
@@ -1787,14 +1807,15 @@ rules above are unchanged — this section only covers how the client looks.
   `soloLaunchPending` skips Lobby flash. Difficulty copy via `formatBotDifficulty`
   (Easy / Normal / Hard).
 - **Lobby (L11-02 / L17-02 / L17-03 / L49-02 / L57-11 / L57-09):** game code + Copy (clipboard); copy result via `Dialog`;
-  **Your kit** (self portrait or Random) + Choose kit Dialog (allowed kit portraits + Random;
-  click a tile for description then Select). `chooseKit` payload `{ kitId }` or `'random'`.
+  **Your kit** (self portrait or Random) + Choose kit (`screens/lobby/kit-picker-sheet.tsx`, L76-10:
+  Random then all 16 kits, excluded ones greyed with Excluded and not selectable; a tile opens the
+  kit sheet, then Select). `chooseKit` payload `{ kitId }` or `'random'`.
   **Table rules (Lot 70; V7 L76-09):** everyone sees the `RulesStrip` (the clock with the
   seconds, the Random mark, the 16 kit faces with the excluded ones greyed and labelled
   Excluded) and taps it for the Table rules sheet: read-only for guests and walk-ins, the editor
   for the host. The editor puts the 5–180 second slider on top (it sends once, on release), then
   All / None / Random, then the kit toggles; every change applies live. Random only adds the
-  Random mark and hides the kit picker. None keeps the first Classic kit. Play again keeps the
+  Random mark and hides the kit picker; the Your kit card then says 'The host is dealing kits at random.' None keeps the first Classic kit. Play again keeps the
   rules. The tutorial path does not show them. Solo uses the same strip and editor and reads
   "Server default" until the slider is released. An untouched slider does not send a time, so
   `TURN_DURATION_MS` still applies until the host moves it. Chat sits under the

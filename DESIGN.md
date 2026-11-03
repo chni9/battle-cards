@@ -389,9 +389,17 @@ and no icon library: every glyph is inline SVG.
 | L72 addition | `chevron-left` | chunky chevron; Carousel (L72-08) | `--text` |
 | L72 addition | `chevron-right` | its mirror; Carousel (L72-08) | `--text` |
 | L72 addition | `random` | die with ink pips; the Random-only mark (L72-16) | `--text` |
+| L76 addition | `action` | card verso marked with a chunky star: the starting action cards of a kit tile (L76-10) | `--text-2` card, star `--cta` |
+| L76 addition | `attack` | card verso marked with a sword on the diagonal (blade, guard, grip): the starting attack cards of a kit tile (L76-10) | `--text-2` card, blade `--threat-attack`, guard and grip `--text` |
 
 The five L72 additions are not in the spec §5.6 list; they exist because the named Lot 72
-components render them.
+components render them. The two L76 additions (`action`, `attack`) are not in it either: the kit
+tile (spec v7 §7.3) shows a kit's starting action and attack card counts, and the existing
+`duplication-active` fan would read as a live Duplication. Each is one 17 by 22 card verso (its
+outline reaches the top and bottom of the grid, like `disconnected`) with a large mark: a pointed
+or thin shape would lose most of its fill to the 2-unit outline, so the star is chunky and the
+sword is wide. The mark carries the difference, a star or a blade, never the color alone. The
+designer reviews the drawings at the L76-18 gate.
 
 ### Accessibility and use
 - **Decorative by default:** `aria-hidden="true"`, `focusable="false"`, no `<title>`. A
@@ -1074,7 +1082,7 @@ the classic files and their duplicated copy stay until L75 and L76.
   starting hand, special cards, always upgraded, immune to, attacks per turn, upgrade points,
   draw risk, and ability (only for a kit with `KIT_ABILITY_COPY`). Every value is read from
   `KIT_CATALOG`, never from the art (the old Gambler PNG prints "?" for a Draw the catalog sets
-  to 10). Copy is the V6 copy, verbatim, in Nunito `--text-2`.
+  to 10). Copy is the V6 copy, verbatim (plus the L76-03 random-special caption), in Nunito `--text-2`.
 - **Starting resources and hand:** three `Pill`s (life, point, upgrade point; tone ring, value
   `--text`, caption spoken only) and a `Draw +N` chip with a signed `CostAmount`. The hand is
   one hidden thumb `Card` per family (an action and an attack verso) with its label and
