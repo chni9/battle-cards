@@ -6275,3 +6275,24 @@ technical spec v7 §1 and §6.6.4 (an accidental tap never acts), §6.12 (the fi
   Stats button, which stays as pressed.
 
 ---
+
+## 2026-11-03 · [P] The 6–8 seat plate overlap on small phones waits for L75-13 and blocks the default flip (L74-26 gate)
+
+Source: designer 2026-11-03 ("later"); the Lot 74 gate (G1–G2, `frontend.md` › Lot 74 verified);
+technical spec v7 §6.1 and §6.4 (the portrait layout, the seat grid) and §14.3 (the box constants
+are tunable starting values); `docs/backlog_v7.md` L75-09 and L75-13.
+
+- **What the gate measured.** With 8 seats the portrait arena takes a 4 + 3 grid of seats. At
+  360×740 the bottom-anchored central plate covers the second grid row by 82 px, and at 375×812 by
+  14 px (the grid takes 208 of the arena's 214 px). A Duplicator's two-row dock does the same to a
+  2-seat table at 360 px. At 390 px the 4 + 3 grid fits. Tuning `SEAT_BOX` and `PLATE_BOX`
+  (`view-model/seat-layout.ts`) cannot fit both cases.
+- **Choice.** Lot 74 ships as it is: the arena is opt-in behind `?ui=next`, so no player reaches
+  the overlap by default. The fix becomes task **L75-13**, "Fit the 6–8 seat portrait grid and the
+  plate on small phones". The layout choice (compact grid seats, a side-anchored plate, or a
+  shorter strip) is a designer decision, recorded here before any code.
+- **Blocks the flip.** L75-13 is a dependency of **L75-09** (the default flip), which must not
+  ship this overlap to every player.
+- **Not changed.** The seat grid, `SEAT_BOX`, `PLATE_BOX`, and the arena's behavior in Lot 74.
+
+---
