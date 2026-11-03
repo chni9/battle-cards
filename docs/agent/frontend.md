@@ -1401,7 +1401,9 @@ Appendix A). Each Lot 74 task appends its bullet here, in task order.
   - Draw, buy, sell, elimination, reward and Sentence lines stay text, and a fogged pool buy reads
     "bought a card from the pool". No filter, search, Why or export (the DEV Excel stays on Game
     over). The sheet opens on the newest line and follows new lines only within 48 px of the
-    bottom.
+    bottom. Only a scroll event that moved `scrollTop` re-decides that (`followLogScroll`): Chrome
+    also fires one after a multi-line update lands, before the re-stick, and it used to stop the
+    follow (L74-26 gate G27).
   - TopBar's menu body moved to `menu-sheet.tsx` (`MenuSheet`, still owner-local; plan A.9.4).
 - `screens/arena/chat-sheet.tsx`, `chat-unread-store.ts` (L74-16, spec v7 §6.1 item 1, §6.9,
   §13 Q48): Chat is the first icon of the top bar's right row (`chat`, aria-label `Chat` or

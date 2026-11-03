@@ -29,3 +29,22 @@ export interface LogScrollBox {
 export function isNearLogBottom(box: LogScrollBox): boolean {
   return box.scrollHeight - box.clientHeight - box.scrollTop < LOG_STICK_THRESHOLD_PX;
 }
+
+export interface LogFollowState {
+  /** Whether the next new line should be followed. */
+  readonly stuck: boolean;
+  /** The scrollTop the last scroll event or stick left. */
+  readonly lastTop: number;
+}
+
+/**
+ * The stick rule on a scroll event. Only a scroll that moved `scrollTop` is the reader's: Chrome
+ * also fires one after new lines land and before the sheet re-sticks, with `scrollTop` unchanged
+ * and the bottom already more than 48 px away, which would stop the log following (L74-26 G27).
+ */
+export function followLogScroll(state: LogFollowState, box: LogScrollBox): LogFollowState {
+  if (box.scrollTop === state.lastTop) {
+    return state;
+  }
+  return { stuck: isNearLogBottom(box), lastTop: box.scrollTop };
+}

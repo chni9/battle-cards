@@ -22,7 +22,7 @@ import { ACTION_LOG_OPEN_LABEL } from '../../view-model/table-copy';
 import { arenaSheetKey } from './arena-sheets';
 import type { CardSheetSource } from './card-sheet-source';
 import { LogLineSegments } from './log-line';
-import { isNearLogBottom, LOG_EMPTY_COPY } from './log-sheet-model';
+import { followLogScroll, LOG_EMPTY_COPY, type LogFollowState } from './log-sheet-model';
 
 export interface LogSheetProps {
   open: boolean;
@@ -36,14 +36,12 @@ export interface LogSheetProps {
 export function LogSheet({ open, view, model, onClose, onOpenCard }: LogSheetProps): ReactElement {
   const panel = useRef<HTMLDivElement>(null);
   /** Whether the reader is at the bottom, so the next new line should follow. Starts true: open on the newest. */
-  const stuck = useRef(true);
+  const stuck = useRef<LogFollowState>({ stuck: true, lastTop: 0 });
 
   useEffect(() => {
     if (!open) {
       return;
     }
-    // Every opening starts on the newest line.
-    stuck.current = true;
 
     const body = panel.current;
     const scroller = body?.closest<HTMLElement>('[data-zone="sheet-body"]') ?? null;
@@ -51,14 +49,17 @@ export function LogSheet({ open, view, model, onClose, onOpenCard }: LogSheetPro
     if (body === null || scroller === null) {
       return;
     }
+    // Every opening starts on the newest line.
+    stuck.current = { stuck: true, lastTop: scroller.scrollTop };
 
     const follow = (): void => {
-      stuck.current = isNearLogBottom(scroller);
+      stuck.current = followLogScroll(stuck.current, scroller);
     };
     const stick = (): void => {
-      if (stuck.current) {
+      if (stuck.current.stuck) {
         scroller.scrollTop = scroller.scrollHeight;
       }
+      stuck.current = { ...stuck.current, lastTop: scroller.scrollTop };
     };
     const observer = new ResizeObserver(stick);
 
