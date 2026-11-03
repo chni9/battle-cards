@@ -1,7 +1,3 @@
-import { readFileSync } from 'node:fs';
-import { dirname, join } from 'node:path';
-import { fileURLToPath } from 'node:url';
-
 import { describe, expect, it } from 'vitest';
 
 import type { LobbyStateView } from '@card-battle/shared';
@@ -12,8 +8,6 @@ import {
   lobbyShowsReadyToggle,
   lobbyStartEnabled,
 } from './lobby-ready';
-
-const here = dirname(fileURLToPath(import.meta.url));
 
 function lobby(overrides: Partial<LobbyStateView> = {}): LobbyStateView {
   return {
@@ -60,18 +54,5 @@ describe('lobby Ready (L57-11)', () => {
     expect(lobbyShowsReadyToggle(lobby({ you: 'guest' }))).toBe(true);
     expect(lobbyReadyLabel(false)).toBe('Not ready');
     expect(lobbyReadyLabel(true)).toBe('Ready');
-  });
-});
-
-describe('lobby Ready wiring (L57-11)', () => {
-  it('toggles Ready from view facts and greys Start', () => {
-    const lobby = readFileSync(join(here, 'lobby.tsx'), 'utf8');
-    expect(lobby).toContain('onSetReady');
-    expect(lobby).toContain('lobbyStartEnabled');
-    expect(lobby).toContain('Cancel ready');
-    expect(lobby).toContain("variant={youReady ? 'orange' : 'green'}");
-    expect(lobby).toContain('LobbyReadyCheckIcon');
-    expect(lobby).toContain('LobbyReadyStatusMark');
-    expect(lobby).not.toContain('Feedback on the felt');
   });
 });

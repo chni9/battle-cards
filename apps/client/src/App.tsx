@@ -20,7 +20,7 @@ import { ClaimSeatDialog } from './screens/claim-seat-dialog';
 import { claimStayLabel, shouldShowClaimPicker } from './screens/claim-seat';
 import { EndScreen } from './screens/end';
 import { HomeScreen } from './screens/home/home-screen';
-import { LobbyScreen } from './screens/lobby';
+import { LobbyScreen } from './screens/lobby/lobby-screen';
 import { soloMenuSeed, type SoloMenuSeed } from './screens/solo-menu-seed';
 import { STATUS_LABELS } from './screens/status-labels';
 import { TableScreen, type TableScreenProps } from './screens/table';

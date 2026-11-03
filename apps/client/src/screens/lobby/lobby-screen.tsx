@@ -1,6 +1,7 @@
 /**
  * Lobby screen — technical spec v2 §6, L11-02; bot controls L17-02 / technical spec v3 §6.
  * Seats, copyable game code, host Start / bot controls; same intents as V1 + L15 bot messages.
+ * Moved into `screens/lobby/` by L76-02 (technical spec v7 §4.2); L76-12 restyles it (§7.2).
  */
 
 import {
@@ -15,23 +16,23 @@ import {
 } from '@card-battle/shared';
 import { useCallback, useState, type ReactElement } from 'react';
 
-import { formatBotDifficulty } from '../bots/format-bot-difficulty';
-import { BotSeatLabel } from '../design/components/bot-seat-label';
-import { Button } from '../design/components/button';
-import { Dialog } from '../design/components/dialog';
-import { KitPortrait } from '../design/components/kit-portrait';
-import { FeedbackDialog } from '../feedback/feedback-dialog';
-import type { RoomConnectionStatus } from '../net/use-room-connection';
-import { LobbyKitPickerDialog } from './lobby-kit-picker-dialog';
-import { LobbyRulesPanel } from './lobby-rules-panel';
-import { ChatLog } from './table/chat-log';
+import { formatBotDifficulty } from '../../bots/format-bot-difficulty';
+import { BotSeatLabel } from '../../design/components/bot-seat-label';
+import { Button } from '../../design/components/button';
+import { Dialog } from '../../design/components/dialog';
+import { KitPortrait } from '../../design/components/kit-portrait';
+import { FeedbackDialog } from '../../feedback/feedback-dialog';
+import type { RoomConnectionStatus } from '../../net/use-room-connection';
+import { ChatLog } from '../../ui/chat/chat-log';
+import { LobbyKitPickerDialog } from '../lobby-kit-picker-dialog';
+import { LobbyRulesPanel } from '../lobby-rules-panel';
+import { STATUS_LABELS } from '../status-labels';
 import { lobbyKitSelectionLabel } from './lobby-kit-picker';
 import {
   lobbyShowsReadyToggle,
   lobbyStartEnabled,
 } from './lobby-ready';
 import { LobbyReadyCheckIcon, LobbyReadyStatusMark } from './lobby-ready-mark';
-import { STATUS_LABELS } from './status-labels';
 
 export interface LobbyScreenProps {
   view: LobbyStateView;
@@ -97,7 +98,7 @@ export function LobbyScreen({
   }, [view.gameCode]);
 
   return (
-    <main className="h-full overflow-y-auto bg-surface font-sans text-ink">
+    <main className="h-full overflow-y-auto overscroll-contain bg-surface font-sans text-ink">
       <div className="mx-auto max-w-lg px-4 py-8 md:px-6">
         <p className="text-xs font-medium uppercase tracking-[0.14em] text-ink-muted">
           Lobby
@@ -184,6 +185,7 @@ export function LobbyScreen({
             {view.players.map((player) => (
               <li
                 key={player.id}
+                data-lobby-seat={player.id}
                 className="flex min-h-11 flex-col gap-2 px-4 py-3 text-sm sm:flex-row sm:items-center sm:justify-between"
               >
                 <div className="flex min-w-0 items-center gap-2">

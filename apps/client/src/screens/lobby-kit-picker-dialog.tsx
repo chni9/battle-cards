@@ -1,6 +1,7 @@
 /**
  * Lobby / solo kit picker — PROTOCOL_VERSION 30 / L49-02.
  * Grid of portraits; click opens description then Select. Opponents never see the pick.
+ * Kit body: `ui/kit/KitDetails` (L72-15) since L76-02; L76-10 replaces this dialog.
  */
 
 import { getKit, type KitId, type LobbyKitSelection } from '@card-battle/shared';
@@ -13,8 +14,8 @@ import { KitPortrait } from '../design/components/kit-portrait';
 import {
   LOBBY_KIT_PICKER_SELECTIONS,
   lobbyKitSelectionLabel,
-} from './lobby-kit-picker';
-import { KitInspectDetails } from './table/kit-inspect-details';
+} from './lobby/lobby-kit-picker';
+import { KitDetails } from '../ui/kit/kit-details';
 
 export interface LobbyKitPickerDialogProps {
   open: boolean;
@@ -95,7 +96,7 @@ export function LobbyKitPickerDialog({
       ) : preview === 'random' ? (
         <RandomKitDetails />
       ) : (
-        <KitInspectDetails kitId={preview} />
+        <KitDetails kitId={preview} />
       )}
     </Dialog>
   );

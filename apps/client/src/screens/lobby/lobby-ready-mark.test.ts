@@ -1,5 +1,5 @@
 /**
- * Lobby Ready marks — L57-16.
+ * Lobby Ready marks — L57-16. Moved by L76-02; L76-12 retires it (plan A.7).
  */
 
 import { readFileSync } from 'node:fs';
@@ -18,7 +18,7 @@ describe('lobby Ready marks (L57-16)', () => {
     expect(mark).toContain('text-cta-red');
     expect(mark).toContain('lobbyReadyLabel');
 
-    const lobby = readFileSync(join(here, 'lobby.tsx'), 'utf8');
+    const lobby = readFileSync(join(here, 'lobby-screen.tsx'), 'utf8');
     const markIndex = lobby.indexOf('<LobbyReadyStatusMark');
     const nickIndex = lobby.indexOf('{player.nickname}');
     expect(markIndex).toBeGreaterThan(0);

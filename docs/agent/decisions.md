@@ -6329,3 +6329,19 @@ L74-21 cache)" above; the L74-26 task review (M1) and the controller's ruling of
 - **Why:** the dock needs a stable footprint, while every other surface needs the whole reason.
 
 ---
+
+## 2026-11-03 · [P] The lobby chat sends the trimmed body (L76-02)
+
+Source: technical spec v7 §4.2, §15 (the lobby leaves `screens/table/`); `docs/agent/frontend.md` Chat (`ui/chat/`, L72-14).
+
+- **Change.** L76-02 moves the lobby to the V7 `ui/chat` `ChatLog`, which trims the body before
+  `onSend` (L72-14). The V6 `screens/table/chat-log.tsx` sent the text as typed, spaces included.
+  The server stores the body as sent: `parseSendChatPayload` only rejects an empty or
+  whitespace-only body.
+- **Effect.** A lobby line loses its leading and trailing spaces. Nothing else changes: an empty
+  or whitespace-only message is still dropped on the client, and the intent, the 200-character
+  cap and the reset after a send are the same.
+- **Why.** One chat component serves the lobby, the arena chat sheet (L74-16, which already sends
+  trimmed lines) and Game over (L77).
+
+---

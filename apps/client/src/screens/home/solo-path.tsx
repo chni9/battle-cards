@@ -14,7 +14,7 @@ import { formatBotDifficulty } from '../../bots/format-bot-difficulty';
 import { Button } from '../../design/components/button';
 import { KitPortrait } from '../../design/components/kit-portrait';
 import type { RoomConnectionStatus } from '../../net/use-room-connection';
-import { lobbyKitSelectionLabel } from '../lobby-kit-picker';
+import { lobbyKitSelectionLabel } from '../lobby/lobby-kit-picker';
 import { LobbyRulesPanel } from '../lobby-rules-panel';
 import { NicknameField } from './nickname-field';
 import { PathHeader } from './path-header';
