@@ -113,6 +113,7 @@ export function Dock({
             disabled={!draw.enabled}
             focusableWhenDisabled
             reserveReasonSlot
+            reasonLines={1}
             {...reasonProps(draw.reason)}
             onClick={() => {
               once('draw', () => commit({ kind: 'drawCard' }));
@@ -128,6 +129,7 @@ export function Dock({
           icon="shop"
           data-hint-anchor="shop"
           reserveReasonSlot
+          reasonLines={1}
           disabled={onOpenShop === undefined}
           focusableWhenDisabled
           {...(onOpenShop !== undefined ? { onClick: onOpenShop } : {})}
@@ -163,6 +165,7 @@ export function Dock({
           disabled={!duplication.enabled}
           focusableWhenDisabled
           reserveReasonSlot
+          reasonLines={1}
           {...reasonProps(duplication.reason)}
           onClick={() => {
             once('activate-duplication', () => commit({ kind: 'activateDuplication' }));
@@ -172,7 +175,7 @@ export function Dock({
         </Button>
       ) : null}
       {model.stats && onShowStats !== undefined ? (
-        <Button variant="primary" reserveReasonSlot onClick={onShowStats}>
+        <Button variant="primary" reserveReasonSlot reasonLines={1} onClick={onShowStats}>
           {STATS_ACTION_LABEL}
         </Button>
       ) : null}

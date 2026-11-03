@@ -86,6 +86,15 @@ describe('Unspy (L58-07, L58-09)', () => {
     expectNoArenaIntent(props);
   });
 
+  it("reserves two reason lines under Unspy and one under Draw, so 'Nobody is spying on you' fits and the dock keeps its height (L74-26 gate G5)", () => {
+    setup(viewWith({ points: 20 }));
+    const slotOf = (button: HTMLElement): Element | null => button.parentElement?.querySelector('[data-reason-slot]') ?? null;
+    const classesOf = (button: HTMLElement): (boolean | undefined)[] =>
+      ['line-clamp-2', 'min-h-9', 'line-clamp-1', 'min-h-[18px]'].map((name) => slotOf(button)?.classList.contains(name));
+    expect(classesOf(unspy())).toEqual([true, true, false, false]);
+    expect(classesOf(draw())).toEqual([false, false, true, true]);
+  });
+
   it('preselects a single spy, and Confirm sends clearSpy once', async () => {
     const { user, onClearSpy, props } = setup(withSeat(viewWith({ points: 10 }), 'p1', SPYING));
     expect(visibleText(unspy()).trim()).toBe('−10');

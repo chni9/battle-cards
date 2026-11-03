@@ -84,6 +84,19 @@ describe('card sheet actions (L74-08)', () => {
     expect(props.onPlayCard).not.toHaveBeenCalled();
   });
 
+  it('shows a long disabled reason in full under Use: no clamp and no zero width (§11, Q39; L74-26 review I1)', async () => {
+    const { user } = renderArena(viewWith({
+      points: 5,
+      hand: [makeCard('basic-attack')],
+      activePersistentEffects: [makePersistent({ id: 'eff-invisibility', cardId: 'invisibility', counter: 3 })],
+    }));
+    const sheet = await openCard(user, 'Hand', 'Basic attack, 1 damage', 'Basic attack');
+    const reason = within(sheet).getByText(DISABLED_REASON_COPY.invisibility);
+    expect(reason.textContent).toBe("Invisible: you can't act on other players");
+    // happy-dom has no layout: the classes are what would cut the line at the button's width.
+    expect([...reason.classList].filter((name) => name.startsWith('line-clamp') || name === 'w-0')).toEqual([]);
+  });
+
   it('disables Card Transformer Use with nothing to consume, with its reason (§11)', async () => {
     const { user, props } = renderArena(viewWith({ points: 2, specialCards: [makeCard('card-transformer')] }));
     const sheet = await openCard(user, 'Specials', 'Card Transformer', 'Card Transformer');

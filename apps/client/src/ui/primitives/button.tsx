@@ -5,10 +5,11 @@
  * (`CHROME_DISABLED_CLASS`).
  *
  * A disabled action says why (§11, Q39): `disabledReason` renders as visible text under the
- * button and joins its `aria-describedby`. The reason never widens the button: it wraps within
- * the button's width, clamped to `reasonLines` lines (1 by default, 2 for a long reason).
- * `reserveReasonSlot` keeps those lines' height while enabled so a reason appearing later does
- * not shift the layout. A native disabled button
+ * button and joins its `aria-describedby`. By default the reason wraps freely and may widen its
+ * button, so it always shows in full (§11, Q39). A caller that needs a fixed footprint (the dock,
+ * L74-26 gate G5) passes `reasonLines`: the reason then never widens the button and is clamped to
+ * that many lines. `reserveReasonSlot` keeps the reason line's height while enabled (16 px, or
+ * the `reasonLines` lines) so a reason appearing later does not shift the layout. A native disabled button
  * leaves the Tab order, so its reason is only reachable by sight; `focusableWhenDisabled`
  * renders `aria-disabled="true"` instead, keeps the button focusable with its reason
  * described, and swallows activation (Draw, Shop and Unspy in L74).
@@ -41,7 +42,10 @@ export interface ButtonProps extends Omit<ButtonHTMLAttributes<HTMLButtonElement
   size?: 'md' | 'lg';
   disabledReason?: string;
   reserveReasonSlot?: boolean;
-  /** How many lines the reason may take, and `reserveReasonSlot` keeps: 1 (18 px) or 2 (36 px). */
+  /**
+   * Opt-in: the reason never widens the button and is clamped to 1 (18 px) or 2 (36 px) lines,
+   * which `reserveReasonSlot` then keeps. Without it the reason wraps freely and shows in full.
+   */
   reasonLines?: 1 | 2;
   fullWidth?: boolean;
   className?: string;
@@ -70,7 +74,7 @@ export function Button({
   size = 'md',
   disabledReason,
   reserveReasonSlot = false,
-  reasonLines = 1,
+  reasonLines,
   fullWidth = false,
   className,
   focusableWhenDisabled = false,
@@ -136,14 +140,25 @@ export function Button({
   return (
     <span className={`inline-flex flex-col items-stretch gap-1 ${fullWidth ? 'w-full' : ''} ${className ?? ''}`}>
       {button}
-      {/* `w-0 min-w-full`: the reason never widens the button, it wraps under it, up to two lines.
-          A reserved slot holds both lines, so a reason that comes and goes never moves the layout
-          (the dock at 360 and 375 px, L74-26 gate G5). */}
+      {/* With `reasonLines`, `w-0 min-w-full` keeps the reason from widening the button: it wraps
+          under it, clamped to those lines, and a reserved slot holds them, so a reason that comes
+          and goes never moves the layout (the dock at 360 and 375 px, L74-26 gate G5). Without it
+          the reason wraps freely and shows in full. */}
       <span
         data-reason-slot
-        className={`w-0 min-w-full ${REASON_LINES_CLASS[reasonLines].clamp} font-v7-body text-v7-caption font-bold text-v7-text-2 ${
-          reserveReasonSlot ? REASON_LINES_CLASS[reasonLines].reserve : showReason ? 'min-h-4' : 'hidden'
-        }`}
+        className={[
+          reasonLines === undefined ? '' : `w-0 min-w-full ${REASON_LINES_CLASS[reasonLines].clamp}`,
+          'font-v7-body text-v7-caption font-bold text-v7-text-2',
+          reserveReasonSlot
+            ? reasonLines === undefined
+              ? 'min-h-4'
+              : REASON_LINES_CLASS[reasonLines].reserve
+            : showReason
+              ? 'min-h-4'
+              : 'hidden',
+        ]
+          .filter((part) => part !== '')
+          .join(' ')}
         {...(showReason ? { id: reasonId } : { 'aria-hidden': 'true' as const })}
       >
         {showReason ? disabledReason : ''}

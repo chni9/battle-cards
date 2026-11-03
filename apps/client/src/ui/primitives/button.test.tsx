@@ -98,11 +98,11 @@ describe('Button (technical spec v7 §5.3, §11)', () => {
     expect(container.querySelector('[data-reason-slot]')?.classList.contains('min-h-9')).toBe(true);
   });
 
-  it('a reserved slot holds one reason line by default, so a row of short reasons stays one line tall (L74-26 gate G5)', () => {
+  it('a reserved slot with reasonLines={1} holds one reason line, so a row of short reasons stays one line tall (L74-26 gate G5)', () => {
     // Two reserved lines on every dock button made a Duplicator's two dock rows 40 px taller at
     // 360 px and squeezed the arena under its seat; only Unspy's reason needs two lines.
     const { container } = renderUi(
-      <Button disabled disabledReason="Not your turn" reserveReasonSlot>
+      <Button disabled disabledReason="Not your turn" reserveReasonSlot reasonLines={1}>
         Draw
       </Button>,
     );
@@ -125,6 +125,23 @@ describe('Button (technical spec v7 §5.3, §11)', () => {
     );
     const after = screen.getByRole('button', { name: 'Use', description: 'Not your turn' });
     expect([after === before, document.activeElement === after, after.getAttribute('aria-disabled')]).toEqual([true, true, 'true']);
+  });
+
+  it('without reasonLines a reason wraps and may widen its button, unclamped, as before the gate (§11, Q39; L74-26 review I1)', () => {
+    const { container, rerender } = renderUi(
+      <Button disabled disabledReason="No action or attack card in hand to transform.">
+        Use
+      </Button>,
+    );
+    const clampOrZeroWidth = (): string[] =>
+      [...(container.querySelector('[data-reason-slot]')?.classList ?? [])].filter((name) => name.startsWith('line-clamp') || name === 'w-0' || name === 'min-w-full');
+    expect(clampOrZeroWidth()).toEqual([]);
+    rerender(
+      <Button disabledReason="No action or attack card in hand to transform." reserveReasonSlot>
+        Use
+      </Button>,
+    );
+    expect([clampOrZeroWidth(), container.querySelector('[data-reason-slot]')?.classList.contains('min-h-4')]).toEqual([[], true]);
   });
 
   it('keeps a caller aria-describedby next to the reason id', () => {
