@@ -189,8 +189,11 @@ describe('drag from the hand (§6.6.3, §6.6.5)', () => {
       if (how === 'blur') {
         fireEvent.blur(window);
       } else {
-        vi.spyOn(document, 'visibilityState', 'get').mockReturnValue('hidden');
+        // Restored right away: no later test in this file may see the page hidden (review M9).
+        const hidden = vi.spyOn(document, 'visibilityState', 'get').mockReturnValue('hidden');
         fireEvent(document, new Event('visibilitychange'));
+        hidden.mockRestore();
+        expect(document.visibilityState).toBe('visible');
       }
       expect([ghost(), sellZone()]).toEqual([null, null]);
       expect(seat('p1').hasAttribute('data-drop')).toBe(false);
