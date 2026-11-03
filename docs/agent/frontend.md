@@ -3095,8 +3095,12 @@ Duplicator at 360), **JUKWMV** (`?ui=classic`), **ZYGLRJ** (solo, 4 seats, desig
   hand card's sheet through the dock jump (fixed, re-run clean). A keyboard double Enter on a
   hand card plays it (the shield is pointer-only, recorded). Stats on the finished board: the
   second tap lands on V2 Game over's row (with the production row, on View board; on the right
-  third of Stats, on Play again). Not fixed: L77-02 or the designer. A sub-choice arriving under
-  a moving finger: not exercised (no bot opens one on the POV's input; `sub-choice-sheet.test`).
+  third of Stats, on Play again). The Stats double tap is fixed after the gate (designer
+  2026-11-03, "protect now"): `fix(arena): shield Game over from a double tap (L74-26)` makes
+  Game over ignore every press for 220 ms after it opens (`screens/use-entrance-gate.ts`,
+  `game-over-dialog.entrance.test.tsx`), and L77-02 replaces it with the V7 Sheet's own shield. A
+  sub-choice arriving under a moving finger: not exercised (no bot opens one on the POV's input;
+  `sub-choice-sheet.test`).
 - **G9:** Assassin multi-attack moves focus into the step and back to Multi-attack on Cancel
   (ZXWXKZ). With focus on Use, the turn passing dropped focus to `body`; fixed, re-run on FBUGET.
 - **G10 long press:** not exercised (no touch device; `use-long-press.test.tsx`).

@@ -11,6 +11,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { markFeedbackAsked } from '../feedback/asked-storage';
 import { renderUi, type RenderUiOptions } from '../test/render';
+import { DUR_BASE_MS } from '../ui/motion/motion-tokens';
 import { TABLE_BANNER_MS } from '../view-model/table-banner';
 import { makeCard, makeFinishedView, makeSelf, type FinishedViewOverrides } from '../view-model/test-fixtures';
 import { ArenaScreen } from './arena/arena-screen';
@@ -38,6 +39,7 @@ const gameOver = (): HTMLElement | null => screen.queryByRole('dialog', { name: 
 async function closeGameOver(user: ReturnType<typeof renderUi>['user']): Promise<void> {
   const dialog = gameOver();
   if (dialog === null) throw new Error('Game over is not open');
+  elapse(DUR_BASE_MS); // the entrance shield ignores presses for DUR_BASE_MS after Game over opens
   await user.click(within(dialog).getByRole('button', { name: 'View board' }));
   await waitFor(() => {
     expect(gameOver()).toBeNull();
@@ -87,6 +89,22 @@ describe('finished board on the arena (spec v7 §6.12, L74-24)', () => {
       expect(screen.queryByRole('dialog', { name: 'Feedback' })).toBeNull();
     });
     expect(gameOver()).toBeNull();
+  });
+
+  it('keeps Game over open when the second tap of a double tap on Stats lands on View board (L74-26 gate G8)', async () => {
+    markFeedbackAsked('TEST');
+    const { user } = renderEnd(makeArenaView());
+    elapse(TABLE_BANNER_MS);
+    await closeGameOver(user);
+    await user.click(within(region('dock')).getByRole('button', { name: 'Stats' }));
+    const viewBoard = (): HTMLElement => within(gameOver() ?? document.body).getByRole('button', { name: 'View board' });
+    await user.click(viewBoard());
+    // Long enough for an unshielded close to finish its exit animation and unmount the dialog.
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(2000);
+    });
+    expect(gameOver()).not.toBeNull();
+    await closeGameOver(user);
   });
 
   it.each([

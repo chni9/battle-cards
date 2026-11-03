@@ -6245,3 +6245,33 @@ which this one narrows (that entry stays as written); `DESIGN.md` › Button; th
   The dock keeps one height across turns, and a Duplicator's dock is 174 px at 360 px.
 
 ---
+
+## 2026-11-03 · [P] Game over ignores every press for 220 ms after it opens (L74-26 gate, G8)
+
+Source: designer 2026-11-03 ("protect now"); the Lot 74 gate (G8, `frontend.md` › Lot 74 verified);
+technical spec v7 §1 and §6.6.4 (an accidental tap never acts), §6.12 (the finished board);
+`ui/primitives/sheet.tsx` (the Sheet's entrance shield, ruling R1).
+
+- **What the gate found.** On the finished arena board at 375×812, a double tap on the dock's
+  Stats reopens V2's Game over, and the second tap lands on its action row (View board, Play again,
+  the DEV-only Download action log) or on its overlay. The dialog closes, or acts, under the finger
+  that opened it.
+- **Choice.** `GameOverDialog` calls `useEntranceGate(open, DUR_BASE_MS)`
+  (`screens/use-entrance-gate.ts`: `false` for `ms` after `open` turns true, then `true`, and it
+  re-arms on every false → true edge). While it is `false` every action (View board, Feedback, Play
+  again, Return home or Play a real game, Download action log) and the `onClose` passed to `Dialog`
+  (overlay click and Esc) ignore the press. The buttons stay enabled: a disabled button would drop
+  out of the dialog's initial focus. 220 ms is the Sheet's own entrance shield, so both boards guard
+  the same window.
+- **Why in the dialog and not in `design/`.** `design/components/dialog.tsx` is the V2 primitive
+  behind every dialog of the classic table and the lobby, and V7 does not edit `design/**` until
+  L81-02 deletes it. A shield there would hold back every other V2 dialog's buttons for 220 ms,
+  and no designer decision covers that. The classic table mounts this same dialog and gets
+  the same protection; the designer accepted that.
+- **Short-lived.** L77-02 rebuilds Game over as a V7 Sheet, which brings its own entrance shield.
+  The shield in `game-over-dialog.tsx` and `use-entrance-gate.ts` then go, unless another caller
+  has taken the hook.
+- **Not changed.** The protocol, the server, the finished-board flow in `end.tsx`, and the
+  Stats button, which stays as pressed.
+
+---
