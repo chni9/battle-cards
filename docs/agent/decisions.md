@@ -6523,3 +6523,9 @@ rulings 4, 6, 7 and 8.
   against a state the player has not seen.
 
 ---
+
+## 2026-11-03 · [P] A Random-only toggle toasts 'Rules changed' without the reset line (L76-15)
+
+The L76-15 Acceptance says no notice fires "on a Random-only toggle that keeps the pick", and also that 'Rules changed' fires for each field change; spec v7 §7.4 gives guests a toast "when rules change". `randomOnly` is a rules field, and turning it on keeps `yourKitSelection` in the view (the server ignores picks at deal time). Reading: such a toggle never adds the "Your pick was reset to Random." line, but it does show 'Rules changed'. Designer answer (2026-11-03, Lot 76 plan, Appendix B, Domain D question 2): a Random-only toggle shows 'Rules changed' without the reset line, and walk-ins and the host get no toast (A.9 ruling 10).
+
+---

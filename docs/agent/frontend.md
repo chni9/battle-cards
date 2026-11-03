@@ -1770,6 +1770,19 @@ Spec v7 §7.1–§7.5 and §7.7; plan `docs/superpowers/plans/2026-10-21-v7-lot-
 - `test/fake-room-connection.ts`, `App.lobby.test.tsx` (L76-14): `fakeRoomConnection(view, extra?)`
   is a full `UseRoomConnectionResult` with a `vi.fn()` per member; App-level lobby tests
   `vi.mock('./net/use-room-connection')` with it (`docs/agent/testing.md`).
+- `screens/lobby/rules-change-notice.ts`, `lobby-rules-toast.tsx`, `lobby-screen.tsx` (L76-15, spec
+  v7 §7.4, Q16/Q17; A.9 rulings 4 and 10): a seated non-host guest gets the lobby's one `Toast`
+  (`tone="info"`, polite) when the host changes the rules: "Rules changed", plus the body "Your
+  pick was reset to Random." when the host newly excluded the guest's kit pick (the server resets
+  it, Lot 70). `lobbyRulesNotice(previous, next)` diffs two consecutive views of one room and one
+  seat (excluded kits as a set, Random only, seconds). There is none on the first view, on the
+  guest's own Random pick, or for the host and walk-ins. A Random-only toggle is a rule change and
+  never a reset (the server keeps the pick). `LobbyScreen` keeps the last view in state ("adjust
+  state while rendering", no effect, no ref). A notice that arrives while the toast is open swaps
+  its copy in place and keeps the reset line (`mergeRulesNotice`) and the running timer. The toast
+  closes on OK or after `LOBBY_RULES_TOAST_MS` (6 s); Esc and state updates never close it. The
+  server and ready state are unchanged. Lobby tests scope role queries to `main`: the Toast keeps
+  two empty live regions in `document.body`.
 
 ## Design system (V2 · Lots 10+)
 

@@ -26,6 +26,11 @@ export const HOST_LINE = 'You are the host';
 /** The alert's dismiss: the V2 dialogs' and the arena reject toast's word (no new §10.6 string). L76-14. */
 export const LOBBY_DISMISS_LABEL = 'OK';
 
+/** §10.6, Q16: the guest's toast title when the host changes a rule (L76-15). */
+export const RULES_CHANGED_TITLE = 'Rules changed';
+/** §10.6, Q17: the toast body when the host's exclusion reset the guest's pick (designer question: one toast, title + body). */
+export const PICK_RESET_BODY = 'Your pick was reset to Random.';
+
 export const YOUR_KIT_TITLE = 'Your kit';
 export const CHOOSE_KIT_LABEL = 'Choose kit';
 export const WATCHING_TITLE = 'Watching the lobby';

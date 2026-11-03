@@ -8,7 +8,8 @@
  * One column on a phone; from `lg`, two page columns (setup 26rem). `main` is the only scroll
  * container (no inner list scroll). The parts decide nothing (golden rule 8). L76-14 adds
  * `onDismissError` and the reconnecting lock: `lobbyIntentsLocked(status)` reaches every part that
- * sends an intent (technical spec v7 §7.2, Q29).
+ * sends an intent (technical spec v7 §7.2, Q29). L76-15 adds the guest's rules toast (§7.4,
+ * Q16/Q17), diffed from the previous view in state; it is the lobby's only toast.
  */
 
 import {
@@ -18,7 +19,7 @@ import {
   type LobbyStateView,
   type SetLobbyRulesPayload,
 } from '@card-battle/shared';
-import type { ReactElement } from 'react';
+import { useState, type ReactElement } from 'react';
 
 import type { RoomConnectionStatus } from '../../net/use-room-connection';
 import { RulesStrip } from '../../ui/rules/rules-strip';
@@ -27,7 +28,9 @@ import { LobbyChatPanel } from './lobby-chat-panel';
 import { LobbyHeader } from './lobby-header';
 import { LobbyKitCard } from './lobby-kit-card';
 import { lobbyIntentsLocked } from './lobby-lock';
+import { LobbyRulesToast } from './lobby-rules-toast';
 import { LobbySeats } from './lobby-seats';
+import { lobbyRulesNotice, mergeRulesNotice, type LobbyRulesNotice } from './rules-change-notice';
 
 export interface LobbyScreenProps {
   view: LobbyStateView;
@@ -44,6 +47,12 @@ export interface LobbyScreenProps {
   onChooseKit: (selection: LobbyKitSelection) => void;
   onSetLobbyRules: (payload: SetLobbyRulesPayload) => void;
   onSendChat: (body: string) => void;
+}
+
+/** The rules toast (L76-15): the last view this screen rendered (the next diff's "previous") and the open notice. */
+interface RulesNoticeState {
+  readonly seen: LobbyStateView;
+  readonly open: LobbyRulesNotice | null;
 }
 
 export function LobbyScreen({
@@ -65,6 +74,12 @@ export function LobbyScreen({
   const rules = view.lobbyRules ?? defaultLobbyRules();
   // Reconnect lock (§7.2, Q29; plan A.9 ruling 6): every control that sends an intent.
   const locked = lobbyIntentsLocked(status);
+  const [rulesNotice, setRulesNotice] = useState<RulesNoticeState>(() => ({ seen: view, open: null }));
+  if (rulesNotice.seen !== view) {
+    // React's "adjust state while rendering" pattern: each new view object is diffed exactly once, and
+    // a later view with no notice keeps the open toast (a state update never closes it).
+    setRulesNotice({ seen: view, open: mergeRulesNotice(rulesNotice.open, lobbyRulesNotice(rulesNotice.seen, view)) });
+  }
 
   return (
     <main className="v7-ground relative h-full overflow-y-auto overscroll-contain font-v7-body text-v7-text">
@@ -101,6 +116,12 @@ export function LobbyScreen({
         </div>
         <LobbyActions view={view} locked={locked} onStart={onStart} onSetReady={onSetReady} onLeave={onLeave} />
       </div>
+      <LobbyRulesToast
+        notice={rulesNotice.open}
+        onDismiss={() => {
+          setRulesNotice((current) => ({ ...current, open: null }));
+        }}
+      />
     </main>
   );
 }
