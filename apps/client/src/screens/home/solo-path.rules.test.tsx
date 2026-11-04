@@ -43,6 +43,7 @@ describe('solo table rules (L76-09)', () => {
     expectNoHomeIntent(props);
     await user.click(screen.getByRole('button', { name: 'Start solo game' }));
     expect(props.onStartSolo).toHaveBeenCalledWith(1, 'normal', 'random', { lobbyRules: defaultLobbyRules(), includeTurnTime: false });
+    expect(props.onStartSolo).toHaveBeenCalledTimes(1);
   });
 
   it('kit and Random edits apply locally and keep includeTurnTime false', async () => {
@@ -52,11 +53,13 @@ describe('solo table rules (L76-09)', () => {
     await user.click(within(sheet()).getByRole('button', { name: 'Random' }));
     expect(within(sheet()).getByRole('button', { name: 'Ghost' }).getAttribute('aria-pressed')).toBe('false');
     await closeSheet(user);
+    expectNoHomeIntent(props);
     expect(within(strip()).getByText(SERVER_DEFAULT_LABEL)).toBeTruthy();
     await user.click(screen.getByRole('button', { name: 'Start solo game' }));
     expect(props.onStartSolo).toHaveBeenCalledWith(1, 'normal', 'random', {
       lobbyRules: { excludedKitIds: ['ghost'], randomOnly: true, turnTimeSeconds: 60 }, includeTurnTime: false,
     });
+    expect(props.onStartSolo).toHaveBeenCalledTimes(1);
   });
 
   it('only a slider release flips includeTurnTime: the strip then shows the seconds and the launch sends them', async () => {
@@ -69,10 +72,12 @@ describe('solo table rules (L76-09)', () => {
     fireEvent.pointerUp(slider);
     expect(within(strip()).getByText('90s')).toBeTruthy();
     await closeSheet(user);
+    expectNoHomeIntent(props);
     await user.click(screen.getByRole('button', { name: 'Start solo game' }));
     expect(props.onStartSolo).toHaveBeenCalledWith(1, 'normal', 'random', {
       lobbyRules: { ...defaultLobbyRules(), turnTimeSeconds: 90 }, includeTurnTime: true,
     });
+    expect(props.onStartSolo).toHaveBeenCalledTimes(1);
   });
 
   it('excluding the local pick resets it to Random', async () => {
@@ -85,11 +90,13 @@ describe('solo table rules (L76-09)', () => {
     await user.click(strip());
     await user.click(within(sheet()).getByRole('button', { name: 'Assassin' }));
     await closeSheet(user);
+    expectNoHomeIntent(props);
     expect(screen.getByText('Random kit')).toBeTruthy();
     await user.click(screen.getByRole('button', { name: 'Start solo game' }));
     expect(props.onStartSolo).toHaveBeenCalledWith(1, 'normal', 'random', {
       lobbyRules: { excludedKitIds: ['assassin'], randomOnly: false, turnTimeSeconds: 60 }, includeTurnTime: true,
     });
+    expect(props.onStartSolo).toHaveBeenCalledTimes(1);
   });
 
   it('disables the editor during a solo launch while the strip still opens (Q8)', async () => {

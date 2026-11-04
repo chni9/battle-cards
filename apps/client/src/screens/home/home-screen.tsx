@@ -116,6 +116,9 @@ export function HomeScreen({
   const [kitPickerOpen, setKitPickerOpen] = useState(false);
   const [feedbackOpen, setFeedbackOpen] = useState(false);
   const reduced = usePrefersReducedMotion();
+  // Adjust state while rendering: Random only hides the picker (`KitPickerSheet` contract: the caller
+  // clears its own flag), so turning it off never reopens it (spec v7 §7.3; as `LobbyKitCard`, L76-11).
+  if (solo.rules.randomOnly && kitPickerOpen) setKitPickerOpen(false);
 
   useEffect(() => {
     if (soloMenuSeed !== undefined) {
@@ -145,9 +148,11 @@ export function HomeScreen({
   const onSoloSubmit = (event: SyntheticEvent<HTMLFormElement>): void => {
     event.preventDefault();
     if (canSubmit) {
-      onStartSolo(soloOpponents, soloDifficulty, soloLaunchKitSelection(solo), {
-        lobbyRules: solo.rules,
-        includeTurnTime: solo.includeTurnTime,
+      launchOnce('solo', () => {
+        onStartSolo(soloOpponents, soloDifficulty, soloLaunchKitSelection(solo), {
+          lobbyRules: solo.rules,
+          includeTurnTime: solo.includeTurnTime,
+        });
       });
     }
   };

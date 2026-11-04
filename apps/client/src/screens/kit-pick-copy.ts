@@ -24,3 +24,9 @@ export const RANDOM_ONLY_LOBBY_LINE = 'The host is dealing kits at random.';
 
 /** The same on the solo menu, where the player is the host (spec v7 §7.3, §10.6; designer review). L76-10. */
 export const RANDOM_ONLY_SOLO_LINE = 'Kits will be dealt at random.';
+
+/**
+ * The control that opens the kit picker and the picker sheet's title: one string for the lobby's
+ * Your kit card, the solo menu's and `KitPickerSheet` (moved from `lobby/lobby-copy.ts`, L76-11).
+ */
+export const CHOOSE_KIT_LABEL = 'Choose kit';

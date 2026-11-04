@@ -6570,3 +6570,15 @@ Source: Lot 76 plan Part 2 Review Focus 3; technical spec v7 §1 ("an accidental
 - `screens/home/home-classes.ts` (`HOME_INPUT_CLASS`, plan Appendix A.2) is deleted: Nickname and Game code are `TextField`s, and the Join code uses its new `size="lg"` (§7.1 "a large code field").
 
 ---
+
+## 2026-11-04 · [P] Solo opponents are seat radios around a mini table (L76-11)
+
+Source: technical spec v7 §7.1 ("opponents 1–7 picked by adding avatars around a mini table"), §11 (Q7: real radio semantics, Q8: busy); Lot 76 plan Appendix A.10 (the count control must fit a 328 px content width), Part 2 Review Focus 3 and 5.
+
+- A seven-option `Segmented` needs about 346 px and its options never wrap, so it would overflow a 360 px phone. The count is a radio group "Opponents" whose seven radios are the bot seats around an oval table, inside a 320×216 px stage (`screens/home/solo-table.ts`; `solo-table.test.ts` checks every 44 px seat fits and none overlap). Seat n is checked at n opponents; seats 1…n fill in their seat hue (`v7SeatColor(n)`, the index the bot will take in `view.players`), the rest are dashed empties; the player's own avatar sits at the bottom, decorative. The radios keep the labels 1–7, so no new string.
+- Keyboard: the checked seat is the only Tab stop; arrow keys move and select, wrapping (the `Segmented` model, `roving-focus.ts`); a click selects.
+- Rejected: a stepper (it needs plus and minus icons and two new labels, and has no checked state for §11), and a two-row radio row (it fits but shows no table).
+- Difficulty is `Segmented<BotDifficulty>` "Difficulty" with the lobby's `BOT_DIFFICULTY_OPTIONS`, so `screens/home` no longer imports `bots/`. Your kit (`SoloKitCard`) moves before the rules strip (§7.1 order); its Choose kit is disabled during a launch (Q8), where the lobby's stays live while reconnecting (A.9 ruling 6). Start solo game goes through the L76-08 launch latch.
+- **Test edit.** `screens/home/home-screen.test.tsx` › 'locks the solo menu while the launch is pending' finds 1, 7, Easy, Normal and Hard by role `radio`: the same controls with radio semantics (§11, Q7). Every control is still asserted disabled.
+
+---

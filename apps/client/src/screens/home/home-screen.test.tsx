@@ -428,7 +428,9 @@ describe('Solo path (spec v7 §7.1; L17-01, L67-01, Lot 70)', () => {
     seedHomeStorage(SEEN);
     renderHome({ nickname: 'Ada', soloMenuSeed: SEED, soloLaunchPending: true });
     expect(screen.getByText('Starting solo game…')).toBeTruthy();
-    expect(['Back', 'Feedback', '1', '7', 'Easy', 'Normal', 'Hard', 'Choose kit', 'Start solo game'].filter(isEnabled)).toEqual([]);
+    expect(['Back', 'Feedback', 'Choose kit', 'Start solo game'].filter(isEnabled)).toEqual([]);
+    // Opponents and Difficulty are radio groups since L76-11 (spec v7 §11, Q7): the same controls, role radio.
+    expect(['1', '7', 'Easy', 'Normal', 'Hard'].filter((name) => !screen.getByRole('radio', { name }).hasAttribute('disabled'))).toEqual([]);
     expect(screen.getByLabelText('Nickname').hasAttribute('disabled')).toBe(true);
   });
 });

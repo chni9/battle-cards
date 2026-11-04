@@ -18,9 +18,9 @@ import { Icon } from '../../ui/icons/icon';
 import { KitPortrait } from '../../ui/kit/kit-portrait';
 import { Button } from '../../ui/primitives/button';
 import { CHROME_SHAPE_CLASS } from '../../ui/primitives/chrome-classes';
-import { KIT_PRIVACY_COPY, RANDOM_ONLY_LOBBY_LINE, RANDOM_ONLY_SOLO_LINE } from '../kit-pick-copy';
+import { CHOOSE_KIT_LABEL, KIT_PRIVACY_COPY, RANDOM_ONLY_LOBBY_LINE, RANDOM_ONLY_SOLO_LINE } from '../kit-pick-copy';
 import { KitPickerSheet } from './kit-picker-sheet';
-import { CHOOSE_KIT_LABEL, CLAIM_SEAT_LABEL, WATCHING_BODY, WATCHING_TITLE, YOUR_KIT_TITLE } from './lobby-copy';
+import { CLAIM_SEAT_LABEL, WATCHING_BODY, WATCHING_TITLE, YOUR_KIT_TITLE } from './lobby-copy';
 import { lobbyKitSelectionLabel } from './lobby-kit-picker';
 
 export interface LobbyKitCardProps {

@@ -2,6 +2,7 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  CHOOSE_KIT_LABEL,
   KIT_PICKER_LEAD,
   KIT_PRIVACY_COPY,
   RANDOM_KIT_ASSIGN_COPY,
@@ -21,5 +22,9 @@ describe('kit pick copy (spec v7 §10.1, L76-03)', () => {
   it('says that Random only deals the kits, in the lobby (the host) and on the solo menu (L76-10)', () => {
     expect(RANDOM_ONLY_LOBBY_LINE).toBe('The host is dealing kits at random.');
     expect(RANDOM_ONLY_SOLO_LINE).toBe('Kits will be dealt at random.');
+  });
+
+  it('names the kit picker and the control that opens it with one string, in the lobby and on the solo menu (L76-11)', () => {
+    expect(CHOOSE_KIT_LABEL).toBe('Choose kit');
   });
 });
