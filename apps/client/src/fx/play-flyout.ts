@@ -6,6 +6,7 @@
 import type { CardId } from '@card-battle/shared';
 
 import { getCardArtUrl, getCardBackUrl, getResourceIconUrl, type ResourceKind } from '../ui/asset-lookup';
+import { readVisualViewportBox } from '../ui/visual-viewport';
 import {
   ACTION_LOG_PANEL_ZONE,
   DECK_CARD_FLYOUT_HEIGHT,
@@ -32,6 +33,22 @@ export function visibleClientRect(el: Element | null): DomRectLite | null {
 
 function rectOf(el: Element | null): DomRectLite | null {
   return visibleClientRect(el);
+}
+
+/**
+ * The part of `rect` inside the visible viewport. A rect with nothing visible is returned as it is,
+ * so an anchor that is off-screen keeps the endpoint it had.
+ */
+function clipToViewport(rect: DomRectLite | null): DomRectLite | null {
+  if (rect === null) {
+    return null;
+  }
+  const box = readVisualViewportBox();
+  const left = Math.max(rect.left, box.offsetLeft);
+  const top = Math.max(rect.top, box.offsetTop);
+  const right = Math.min(rect.left + rect.width, box.offsetLeft + box.width);
+  const bottom = Math.min(rect.top + rect.height, box.offsetTop + box.height);
+  return right > left && bottom > top ? { left, top, width: right - left, height: bottom - top } : rect;
 }
 
 /**
@@ -141,7 +158,9 @@ function rectForEndpoint(
   preferSeat: boolean,
 ): DomRectLite | null {
   if (endpoint === 'log') {
-    return rectOf(queryActionLogAnchor());
+    // The log sheet's `action-log-panel` is its content div, which can be far taller than the sheet
+    // body that scrolls it (K12): aim at the part of it the player can see.
+    return clipToViewport(rectOf(queryActionLogAnchor()));
   }
   if (preferSeat) {
     return (

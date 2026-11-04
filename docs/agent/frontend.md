@@ -1660,7 +1660,9 @@ Appendix A). Each Lot 74 task appends its bullet here, in task order.
   land on the plate (`measureFeltCenterRect`: 48×72 on `[data-plate-landing]`, else the plate, else
   the felt), never on the plate/hand midpoint. The log endpoint is the first visible of
   `action-log-panel` and `log-collapsed` (`queryFirstVisible`), so a collapsed or hidden log list
-  never swallows it; the resolution flash likewise reads the first visible element carrying the
+  never swallows it, and a chip aims at the part of that rect inside the visual viewport (the log
+  sheet's `action-log-panel` is its content div, 5147 px tall in Check 1; `clipToViewport` in
+  `fx/play-flyout.ts`); the resolution flash likewise reads the first visible element carrying the
   effect id, else the plate. The V2 collapsed-chrome fallbacks (`opponents-collapsed`, `incoming-pending`,
   `incoming-collapsed`, `measureIncomingCollapsedCue`) are retired. `TableBannerHost` reads no
   anchor and sits on the visual viewport in every mode; the overlay stays `z-[110]`, above every

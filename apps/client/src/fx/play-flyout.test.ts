@@ -15,6 +15,7 @@ import {
 } from '../ui/fx-anchors';
 import {
   measureDeckCardFlyout,
+  measureDirectedTokenFlyout,
   measureFeltCenterRect,
   measurePlayCardGhost,
   measureTargetingCue,
@@ -111,6 +112,18 @@ describe('arena FX endpoints (R6, L75-08)', () => {
     vi.spyOn(panel, 'getBoundingClientRect').mockReturnValue(new DOMRect(1110, 160, 320, 640));
     expect(queryActionLogAnchor()).toBe(panel);
     expect(queryFirstVisible(['[data-zone="nowhere"]'])).toBeNull();
+  });
+
+  it('aims a log chip at the visible part of a log taller than the screen, not at the middle of its content (K12, Check 1)', () => {
+    plateSeatAndLog();
+    // The log sheet's content div at 360x740 in Check 1: 5147 px tall, its top 4422 px above the screen.
+    anchor({ 'data-zone': 'action-log-panel' }, new DOMRect(19, -4422, 322, 5147));
+    const viewport = { top: window.visualViewport?.offsetTop ?? 0, bottom: (window.visualViewport?.offsetTop ?? 0) + (window.visualViewport?.height ?? window.innerHeight) };
+    const chip = measureDirectedTokenFlyout('point', 'log', { playerId: 'p2' });
+    const middle = chip === null ? NaN : chip.from.top + chip.from.height / 2;
+    // Unclipped, the middle of the content is at -1848 (the chip flew from off-screen).
+    expect(middle).toBeGreaterThanOrEqual(viewport.top);
+    expect(middle).toBeLessThanOrEqual(viewport.bottom);
   });
 
   it('flashes a resolution on the first visible element with the effect id, else the plate (A.7.1)', () => {
