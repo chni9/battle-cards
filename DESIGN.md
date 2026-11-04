@@ -650,7 +650,8 @@ their lot restyles them.
   prints its words in `--text` (`--danger` text is 4.38:1 on `--panel-2`), inside a polite
   live region that is always present, so an error that appears later is announced. The
   placeholder is `--text-2` at 70% opacity: 5.20:1 on `--panel-2` (`ui/contrast.ts`; 60%
-  would fall to 4.20:1), dimmer than a typed `--text` value (12.61:1).
+  would fall to 4.20:1), dimmer than a typed `--text` value (12.61:1). `size="lg"` (the Home Join
+  code, L76-08): Lilita at `--type-display` (32px) with wide tracking, 56px tall.
 - **TextArea:** the multi-line twin of TextField (the Feedback message, L76-07): the same 16px
   (`--type-input`) Nunito on `--panel-2`, chrome, hint, error live region and `aria-invalid`,
   with a 112px minimum height and a vertical resize handle. TextField renders an `<input>` only.

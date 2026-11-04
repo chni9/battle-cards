@@ -6560,3 +6560,13 @@ Source: technical spec v7 §7.7 (a 15 s client timeout re-enables dismissal with
 - **Test edit.** `screens/home/home-screen.test.tsx` › 'opens Feedback in manual mode from the hub…' finds Idea by role `radio` instead of `button`: the same control, now a radio (§11, Q71). Its assertions are unchanged.
 
 ---
+
+## 2026-11-04 · [P] Home launches each intent once per connection state (L76-08)
+
+Source: Lot 76 plan Part 2 Review Focus 3; technical spec v7 §1 ("an accidental tap never spends the turn"), §7.1, §7.7 (connection errors stay inline, retry in place); Appendix A `home-forms-enter-submit`, `global-room-connection-lifecycle`.
+
+- A double click on Create, Join, Start tutorial or Start solo game called its callback twice: `createGame` and the solo and tutorial launches await `leaveCurrent` before they set `connecting`, so a second submit can land before the buttons grey out. `useLaunchOnce` (`screens/home/use-launch-once.ts`) records, per intent, the connection epoch it last launched in. The epoch moves whenever `status`, `error` or `soloLaunchPending` changes ("adjust state while rendering"); the ref is read only in handlers (the epoch latch of `screens/arena/top-bar.tsx`, plan A.9 ruling 5).
+- Per intent, not one latch for all: a Create and a Join in the same state each go through once, as `home-screen.test.tsx` already expects. A failure (new `status` and `error`) re-arms every intent, so the player retries in place.
+- `screens/home/home-classes.ts` (`HOME_INPUT_CLASS`, plan Appendix A.2) is deleted: Nickname and Game code are `TextField`s, and the Join code uses its new `size="lg"` (§7.1 "a large code field").
+
+---

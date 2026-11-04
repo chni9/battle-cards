@@ -285,7 +285,7 @@ export function TextFieldDemo(): ReactElement {
           setNickname(event.currentTarget.value);
         }}
       />
-      <TextField label="Join code" placeholder="ABCD" autoCapitalize="characters" />
+      <TextField label="Join code" size="lg" placeholder="ABCD" autoCapitalize="characters" />
       <TextField label="Message" labelHidden placeholder="Message" />
       <TextField label="Locked" value="Read only" disabled readOnly />
     </div>

@@ -6,6 +6,8 @@
  * L76-04 (technical spec v7 §5.1, §7.1, §11 Q7/Q8): the V7 ground; a top-right row with Beta and
  * New on every mode (New disabled only while a solo game launches); the mode root fades and rises
  * through `motionPropsFor`, a fade only under reduced motion.
+ * L76-08 (Part 2 Review Focus 3): Create, Join and Start tutorial launch once per connection state
+ * through `useLaunchOnce`; Start solo game joins them in L76-11.
  */
 
 import {
@@ -47,6 +49,7 @@ import {
   type SoloRulesState,
 } from './solo-rules-state';
 import { TutorialPath } from './tutorial-path';
+import { useLaunchOnce } from './use-launch-once';
 import { WhatsNewControl } from './whats-new-control';
 
 export interface HomeScreenProps {
@@ -123,18 +126,19 @@ export function HomeScreen({
   const busy = status === 'connecting' || soloLaunchPending;
   const canSubmit = nickname.trim().length > 0 && !busy;
   const canJoin = canSubmit && joinCode.trim().length === 6;
+  const launchOnce = useLaunchOnce(status, error, soloLaunchPending);
 
   const onCreateSubmit = (event: SyntheticEvent<HTMLFormElement>): void => {
     event.preventDefault();
     if (canSubmit) {
-      onCreate();
+      launchOnce('create', onCreate);
     }
   };
 
   const onJoinSubmit = (event: SyntheticEvent<HTMLFormElement>): void => {
     event.preventDefault();
     if (canJoin) {
-      onJoin();
+      launchOnce('join', onJoin);
     }
   };
 
@@ -151,7 +155,7 @@ export function HomeScreen({
   const onTutorialSubmit = (event: SyntheticEvent<HTMLFormElement>): void => {
     event.preventDefault();
     if (canSubmit) {
-      onStartTutorial();
+      launchOnce('tutorial', onStartTutorial);
     }
   };
 

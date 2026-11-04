@@ -1,9 +1,13 @@
-/** Home Tutorial path: nickname and Start tutorial (TutorialPath): technical spec v7 §7.1; L45-04, L46-03. */
+/**
+ * Home Tutorial path: nickname and Start tutorial (TutorialPath): technical spec v7 §7.1, §5.2;
+ * L45-04, L46-03. L76-08: V7 `TextField` and `Button`; the nickname and the submit share one form,
+ * so Enter in the nickname starts the tutorial.
+ */
 
 import type { ReactElement, SyntheticEvent } from 'react';
 
-import { Button } from '../../design/components/button';
 import type { RoomConnectionStatus } from '../../net/use-room-connection';
+import { Button } from '../../ui/primitives/button';
 import { NicknameField } from './nickname-field';
 import { PathHeader } from './path-header';
 
@@ -45,13 +49,9 @@ export function TutorialPath({
         onOpenFeedback={onOpenFeedback}
       />
 
-      <form onSubmit={onTutorialSubmit} className="mt-8 space-y-6">
-        <NicknameField
-          value={nickname}
-          disabled={busy}
-          onChange={onNicknameChange}
-        />
-        <Button type="submit" variant="green" disabled={!canSubmit}>
+      <form onSubmit={onTutorialSubmit} className="mt-6 flex flex-col gap-4">
+        <NicknameField value={nickname} disabled={busy} onChange={onNicknameChange} />
+        <Button type="submit" variant="primary" disabled={!canSubmit} className="self-start">
           Start tutorial
         </Button>
       </form>
