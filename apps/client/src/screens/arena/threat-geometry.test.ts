@@ -67,6 +67,24 @@ describe('threatArrows (§6.5)', () => {
     expect(arrows.map((a) => a.geometry.d)).toEqual(['M 140 106 L 252 106', 'M 260 94 L 148 94']);
   });
 
+  it('trims at the seat edge in every mode: a desktop seat is 120 px wide, so its arrows stop 62 px from the centre, not 40 (Check 1)', () => {
+    const desktop: SeatLayout = {
+      kind: 'arc',
+      mode: 'desktop',
+      placements: [
+        { playerId: 'p1', centerX: 100, centerY: 100 },
+        { playerId: 'p2', centerX: 700, centerY: 100 },
+      ],
+    };
+    const model = modelOf([{ id: 'e1', sourcePlayerId: 'p1', targetPlayerId: 'p2', cardId: 'strong-attack' }]);
+    const [arrow] = threatArrows({ model, layout: desktop, arena: { width: 800, height: 400 }, povId: 'me', tappedSeatId: null });
+    // Half the 120 px seat is 60 px; the 2 px gap keeps the shaft and the tip outside the seat box.
+    expect(arrow?.geometry.d).toBe('M 162 100 L 630 100');
+    expect(arrow?.geometry.head).toMatch(/^M 638 100 /);
+    // The portrait and landscape seats are 76 px wide: the same 2 px gap gives the 40 px trim they always had.
+    expect(arrowsOf(modelOf([{ id: 'e1', sourcePlayerId: 'p1', targetPlayerId: 'p2', cardId: 'strong-attack' }]))[0]?.geometry.d).toBe('M 140 100 L 252 100');
+  });
+
   it('ends incoming arrows at the plate and starts outgoing ones there', () => {
     const [incoming, outgoing] = arrowsOf(modelOf([
       { id: 'e1', sourcePlayerId: 'p1', targetPlayerId: 'me', cardId: 'spy' },
