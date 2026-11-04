@@ -2,12 +2,14 @@
  * Test-only builders for Home component tests (Lot 76 plan Appendix A.3). Shipped code never imports
  * this file. `closeHomeDialog` finds the backdrop of the V2 Dialog and of the V7 Sheet / Dialog alike
  * (`dialog-overlay` / `sheet-overlay`), so Part 2's sheet rewrites keep the gate and What's new tests.
+ * 'swipe' needs `stubPhoneViewport()` (L76-05).
  */
 import { latestReleaseNote } from '@card-battle/shared';
 import { screen, waitFor, within } from '@testing-library/react';
 import type { UserEvent } from '@testing-library/user-event';
 import { expect, vi } from 'vitest';
 
+import { swipeSheetDown } from '../../test/sheet-gestures';
 import { HOW_TO_PLAY_SEEN_KEY, type HowToPlayContinueTarget } from '../../ui/help-storage';
 import { LAST_SEEN_RELEASE_ID_KEY } from '../../ui/release-storage';
 import type { HomeScreenProps } from './home-screen';
@@ -18,7 +20,7 @@ export const HOME_PATHS = ['online', 'solo', 'tutorial'] as const satisfies read
 export const HOME_PATH_LABEL: Readonly<Record<HowToPlayContinueTarget, string>> = {
   online: 'Play online', solo: 'Play solo', tutorial: 'Tutorial',
 };
-export type HomeDialogClose = 'Skip' | 'Got it' | 'Cancel' | 'Escape' | 'backdrop';
+export type HomeDialogClose = 'Skip' | 'Got it' | 'Cancel' | 'Escape' | 'backdrop' | 'swipe';
 
 /** Idle Home with no room: empty nickname and code, every callback a `vi.fn()`, no seed. */
 export function makeHomeProps(overrides: Partial<HomeScreenProps> = {}): HomeScreenProps {
@@ -51,11 +53,13 @@ export async function enterHomePath(user: UserEvent, target: HowToPlayContinueTa
   expect(screen.getByRole('heading', { level: 1 }).textContent).toBe(HOME_PATH_LABEL[target]);
 }
 
-/** Closes the named dialog one way (a footer button, Esc or the backdrop) and waits until it leaves the DOM. */
+/** Closes the named dialog one way (a footer button, Esc, the backdrop or a swipe-down) and waits until it leaves the DOM. */
 export async function closeHomeDialog(user: UserEvent, name: string, way: HomeDialogClose): Promise<void> {
   const dialog = screen.getByRole('dialog', { name });
   if (way === 'Escape') {
     await user.keyboard('{Escape}');
+  } else if (way === 'swipe') {
+    swipeSheetDown(dialog);
   } else if (way === 'backdrop') {
     const overlay = dialog.closest<HTMLElement>('[data-zone="dialog-overlay"], [data-zone="sheet-overlay"]');
     if (overlay === null) throw new Error(`${name} has no backdrop`);
@@ -63,5 +67,5 @@ export async function closeHomeDialog(user: UserEvent, name: string, way: HomeDi
   } else {
     await user.click(within(dialog).getByRole('button', { name: way }));
   }
-  await waitFor(() => { expect(screen.queryByRole('dialog', { name })).toBeNull(); });
+  await waitFor(() => { expect(screen.queryByRole('dialog', { name, hidden: true })).toBeNull(); });
 }

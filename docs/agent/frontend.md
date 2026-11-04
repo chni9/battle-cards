@@ -1818,6 +1818,21 @@ Spec v7 §7.1–§7.5 and §7.7; plan `docs/superpowers/plans/2026-10-21-v7-lot-
   `role="alert"` line on `--panel-2` with a `--danger` inset ring, under the title, not dismissible
   (§7.7). These files import nothing from `design/` or `bots/`; the Online, Tutorial and Solo bodies do
   until L76-08 and L76-11. What's new item 9 is the Home item.
+- `screens/whats-new-dialog.tsx`, `screens/use-once-per-open.ts` (L76-05, spec v7 §7.1, §7.7, §10.4;
+  L63-07, L65-05): What's new is a V7 `Dialog` (a bottom sheet on phones, centered on desktop; width
+  `2xl`; `data-home-sheet="whats-new"`) with unchanged props. The `current` scope (the auto popup)
+  shows the latest entry alone; `history` (New) shows every entry in catalog order with 'Latest' under
+  the first title. Each entry keeps its date eyebrow and title, its Before / After items
+  (`data-whats-new-item`) with a `ui/card` `Card` thumb of the base art for a `cardId` or a `ui/kit`
+  `KitPortrait` thumb for a `kitId`, and after them the New additions (`data-whats-new-section="new"`,
+  `data-whats-new-addition`). Got it, Esc, the backdrop and a swipe-down each call `onClose` once:
+  `useOncePerOpen(open)` latches every dismissal path per open (A.9 ruling 5), so Home's `closeWhatsNew`
+  marks the latest id seen once. It imports nothing from `design/`. Tests: `whats-new-dialog.sheet.test.tsx`
+  renders the real catalog (shipped entries never change, and lot-63 has items and additions);
+  `whats-new-dialog.test.ts` keeps the catalog pins that every What's new append updates.
+- `test/sheet-gestures.ts`, `screens/home/test-home.ts` (L76-05): `stubPhoneViewport()` and
+  `swipeSheetDown(dialog)` for sheet tests; `closeHomeDialog` gains `'swipe'` and waits with
+  `queryByRole('dialog', { name, hidden: true })` (an exiting sheet is already `aria-hidden`).
 
 ## Design system (V2 · Lots 10+)
 

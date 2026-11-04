@@ -11,9 +11,10 @@
  */
 import { defaultLobbyRules, latestReleaseNote, PROTOCOL_VERSION, RELEASE_NOTES, type FeedbackSubmitBody } from '@card-battle/shared';
 import { screen, waitFor, within } from '@testing-library/react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { renderUi } from '../../test/render';
+import { stubPhoneViewport } from '../../test/sheet-gestures';
 import { HINTS_STORAGE_KEY, HOW_TO_PLAY_SEEN_KEY, readHintState } from '../../ui/help-storage';
 import { LAST_SEEN_RELEASE_ID_KEY } from '../../ui/release-storage';
 import { KIT_PICKER_LEAD } from '../kit-pick-copy';
@@ -56,6 +57,7 @@ beforeEach(() => {
   feedback.submit.mockReset();
   feedback.submit.mockResolvedValue({ ok: true });
 });
+afterEach(() => { vi.unstubAllGlobals(); });
 
 describe('Home hub (spec v7 §7.1; L42-04, L51-03)', () => {
   it('shows no status line and no alert on the idle hub', () => {
@@ -269,8 +271,9 @@ describe("What's new (spec v7 §7.1; L63-07, L65-05)", () => {
     expectNoHomeIntent(props);
   });
 
-  it.each(['Got it', 'Escape', 'backdrop'] as const)(
+  it.each(['Got it', 'Escape', 'backdrop', 'swipe'] as const)(
     'a %s dismissal marks the latest entry seen and clears the unread label and dot', async (way) => {
+      if (way === 'swipe') stubPhoneViewport(); // the handle exists only on a bottom sheet
       seedHomeStorage({ howToPlaySeen: true, whatsNewSeen: false });
       const { user, props } = renderHome();
       await closeHomeDialog(user, "What's new", way);

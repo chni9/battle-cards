@@ -172,6 +172,15 @@ tests hoist a holder with `vi.hoisted`, `vi.mock('./net/use-room-connection')` t
 it before `renderUi(<App />)` and again before each `rerender(<App />)` (`App.lobby.test.tsx`).
 Shipped code never imports it.
 
+## Sheet gestures (V7 · L76-05)
+
+`apps/client/src/test/sheet-gestures.ts`: `stubPhoneViewport()` stubs a 390×844 `visualViewport`
+(`vi.stubGlobal`; undo with `vi.unstubAllGlobals()` in `afterEach`), so a `Dialog` is a bottom sheet
+with a swipe handle whatever the default window size. `swipeSheetDown(dialog)` drags that handle
+120 px down (the Sheet closes from 80 px). Wait for a closed sheet with
+`queryByRole('dialog', { name, hidden: true })` returning null: an exiting sheet is already
+`aria-hidden`. Shipped code never imports it.
+
 ## Seeded randomness
 
 Every draw goes through the injected generator: card distribution, Sentence, special card

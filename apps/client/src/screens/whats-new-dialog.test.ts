@@ -1,31 +1,12 @@
 /**
- * Hub What’s new wiring — L63-07.
- * L76-01: the Home behavior is rendered in screens/home/home-screen.test.tsx. L76-04 retired the
- * style-only Home lines (decisions.md); L76-05 rewrites the dialog half as rendered tests.
+ * What's new catalog pins (technical spec v7 §10.4; L63-07, L65-05). Every append to the open
+ * entry updates the item count here; the dialog is rendered in whats-new-dialog.sheet.test.tsx (L76-05).
  */
-
-import { readFileSync } from 'node:fs';
-import { dirname, join } from 'node:path';
-import { fileURLToPath } from 'node:url';
-
+import { latestReleaseNote, RELEASE_NOTES, releaseNotesForScope } from '@card-battle/shared';
 import { describe, expect, it } from 'vitest';
 
-import { latestReleaseNote, RELEASE_NOTES, releaseNotesForScope } from '@card-battle/shared';
-
-const here = dirname(fileURLToPath(import.meta.url));
-
-function read(rel: string): string {
-  return readFileSync(join(here, rel), 'utf8');
-}
-
-describe('What’s new dialog (L63-07)', () => {
-  it('renders the current update alone and the full log date by date', () => {
-    const source = read('whats-new-dialog.tsx');
-    expect(source).toContain('releaseNotesForScope');
-    expect(source).toContain('data-whats-new-scope');
-    expect(source).toContain("scope === 'history'");
-    expect(source).toContain('Latest');
-    expect(source).toContain('Got it');
+describe("What's new catalog (L63-07, L65-05)", () => {
+  it('keeps lot-72-v7 as the current update and dates the full log newest first', () => {
     expect(latestReleaseNote().id).toBe('lot-72-v7');
     expect(releaseNotesForScope('current').map((note) => note.id)).toEqual(['lot-72-v7']);
     expect(releaseNotesForScope('history').map((note) => note.date)).toEqual([
@@ -40,18 +21,7 @@ describe('What’s new dialog (L63-07)', () => {
     expect(RELEASE_NOTES.map((note) => note.id)[0]).toBe(latestReleaseNote().id);
   });
 
-  it('renders a New section for additions with kit or card art', () => {
-    const source = read('whats-new-dialog.tsx');
-    expect(source).toContain('data-whats-new-section="new"');
-    expect(source).toContain('>New<');
-    expect(source).toContain('note.additions');
-    expect(source).toContain('KitPortrait');
-    expect(source).toContain('<Card');
-    expect(source).toContain('note.items');
-    expect(source).toContain('item.before');
-    expect(source).toContain('item.after');
-    expect(source.indexOf('note.items')).toBeLessThan(source.indexOf('note.additions.map'));
-    expect(source).toContain('item.kitId');
+  it('pins the item and addition counts of each entry', () => {
     expect(latestReleaseNote().additions).toHaveLength(0);
     expect(latestReleaseNote().items).toHaveLength(9);
     const lot72 = RELEASE_NOTES.find((note) => note.id === 'lot-72');
@@ -61,11 +31,7 @@ describe('What’s new dialog (L63-07)', () => {
     const lot69 = RELEASE_NOTES.find((note) => note.id === 'lot-69');
     expect(lot69?.items).toHaveLength(4);
     const lot63 = RELEASE_NOTES.find((note) => note.id === 'lot-63');
-    expect(lot63?.items.map((item) => item.cardId)).toEqual([
-      'sentence',
-      'imposition',
-      'super-absorber',
-    ]);
+    expect(lot63?.items.map((item) => item.cardId)).toEqual(['sentence', 'imposition', 'super-absorber']);
     expect(lot63?.additions).toHaveLength(2);
   });
 });
