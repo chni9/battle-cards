@@ -145,19 +145,25 @@ describe('Home hub (spec v7 §7.1; L42-04, L51-03)', () => {
 
   it('keeps the card fan aria-hidden on the hub only, and still under reduced motion (§7.1, §8.3)', async () => {
     seedHomeStorage(SEEN);
-    const { user, unmount } = renderHome();
+    // A float starts at y 0, so a mount-time read cannot tell a still fan from a moving one: watch both for one window.
+    const FAN_WINDOW_MS = 1_000;
+    const floating = (): HTMLElement[] =>
+      Array.from(main().querySelectorAll<HTMLElement>('[data-home-fan-card]')).filter((card) => card.style.transform.includes('translate'));
+    // Control: at full motion the fan floats (card 0 has no delay), so the probe does see motion.
+    const fullMotion = renderUi(<HomeScreen {...makeHomeProps()} />, { reducedMotion: false });
+    expect(main().querySelector('[data-home-card-fan]')?.getAttribute('data-motion')).toBe('full');
+    await waitFor(() => { expect(floating()).not.toEqual([]); }, { timeout: FAN_WINDOW_MS });
+    fullMotion.unmount();
+    const { user } = renderHome();
     const fan = main().querySelector<HTMLElement>('[data-home-card-fan]');
     if (fan === null) throw new Error('no card fan');
     expect([fan.getAttribute('aria-hidden'), fan.getAttribute('data-motion')]).toEqual(['true', 'reduced']);
-    const cards = Array.from(fan.querySelectorAll<HTMLElement>('[data-home-fan-card]'));
-    expect(cards).toHaveLength(5);
-    expect(cards.filter((card) => card.style.transform.includes('translate'))).toEqual([]); // no float offset
+    expect(fan.querySelectorAll('[data-home-fan-card]')).toHaveLength(5);
     expect(within(main()).queryAllByRole('article')).toEqual([]); // the holo cards are hidden from assistive tech
+    await new Promise((resolve) => { setTimeout(resolve, FAN_WINDOW_MS); });
+    expect(floating()).toEqual([]); // no float offset after the whole window
     await enterHomePath(user, 'online');
     expect(main().querySelector('[data-home-card-fan]')).toBeNull();
-    unmount();
-    renderUi(<HomeScreen {...makeHomeProps()} />, { reducedMotion: false });
-    expect(main().querySelector('[data-home-card-fan]')?.getAttribute('data-motion')).toBe('full');
   });
 
   it('names the mode on its transition root and marks reduced motion there (§11 Q7)', async () => {
