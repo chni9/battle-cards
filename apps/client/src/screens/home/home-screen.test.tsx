@@ -5,8 +5,9 @@
  * `home-how-to-play-dismiss`, `home-feedback-dialog`, `global-feedback-entry-points`, `home-online-path`,
  * `home-tutorial-path`, `home-solo-path`, `solo-menu-rules`, `home-forms-enter-submit`,
  * `home-connection-status-and-errors`, `global-status-labels`, `global-visual-viewport-fit`,
- * `legacy-inbox-redirect` (L76-01). Replaces the four `screens/home.*.test.ts` source-text splits and
- * the `home.tsx` reads of `whats-new-dialog.test.ts`.
+ * `legacy-inbox-redirect`, `home-path-header`, `global-motion-reduced-motion`, `global-art-catalog`,
+ * `global-dialog-button-primitives` (L76-01, L76-04). Replaces the four `screens/home.*.test.ts`
+ * source-text splits and the `home.tsx` reads of `whats-new-dialog.test.ts`.
  */
 import { defaultLobbyRules, latestReleaseNote, PROTOCOL_VERSION, RELEASE_NOTES, type FeedbackSubmitBody } from '@card-battle/shared';
 import { screen, waitFor, within } from '@testing-library/react';
@@ -83,7 +84,7 @@ describe('Home hub (spec v7 §7.1; L42-04, L51-03)', () => {
     renderHome({ status: 'connecting' });
     expect(screen.getByText(STATUS_LABELS.connecting)).toBeTruthy();
     expect(HUB_BUTTONS.filter(isEnabled)).toEqual([]);
-    // Today New stays live while busy; L76-04 disables it during a solo launch (spec v7 §11, Q8).
+    // Only a solo launch disables New (spec v7 §11, §13 Q8; L76-04): an online connect leaves it live.
     expect(isEnabled("What's new")).toBe(true);
   });
 
@@ -110,6 +111,78 @@ describe('Home hub (spec v7 §7.1; L42-04, L51-03)', () => {
     await enterHomePath(user, 'tutorial');
     rerender(<HomeScreen {...props} soloLaunchPending />);
     expect(screen.getByText('Starting solo game…')).toBeTruthy();
+  });
+
+  it('disables New during a solo launch, keeps its unread name and dot, and frees it after (§11, Q8)', () => {
+    seedHomeStorage({ howToPlaySeen: true, whatsNewSeen: false });
+    const props = makeHomeProps({ soloLaunchPending: true });
+    const { rerender } = renderUi(<HomeScreen {...props} />, { reducedMotion: true });
+    const newButton = screen.getByRole('button', { name: "What's new (unread)" });
+    expect(newButton.hasAttribute('disabled')).toBe(true);
+    expect(newButton.querySelector('[data-whats-new-unread]')).not.toBeNull();
+    expect(HUB_BUTTONS.filter(isEnabled)).toEqual([]);
+    expect(screen.getByText('Starting solo game…')).toBeTruthy();
+    rerender(<HomeScreen {...props} soloLaunchPending={false} />);
+    expect(isEnabled("What's new (unread)")).toBe(true);
+    expectNoHomeIntent(props);
+  });
+
+  it('shows the V7 hub: the Card Battle wordmark, the Solo, Online and Tutorial tiles, then How to play and Feedback (§7.1)', () => {
+    seedHomeStorage(SEEN);
+    renderHome();
+    const wordmark = screen.getByRole('heading', { level: 1 });
+    expect(wordmark.textContent).toBe('Card Battle'); // the accessible name stays; CSS shows CARD BATTLE
+    expect(wordmark.classList.contains('uppercase')).toBe(true);
+    expect(screen.getByText('Turn-based card battle')).toBeTruthy();
+    expect(screen.getByText('New here? Open How to play once, then pick Tutorial, Online, or Solo.')).toBeTruthy();
+    // Every button in main, in DOM order: New in the corner, the three tiles, the two secondary buttons, nothing else.
+    expect(within(main()).getAllByRole('button').map((button) => button.textContent)).toEqual(
+      ['New', 'Play solo', 'Play online', 'Tutorial', 'How to play', 'Feedback'],
+    );
+    expect(['Play solo', 'Play online', 'Tutorial'].map((name) => screen.getByRole('button', { name }).getAttribute('data-home-tile')))
+      .toEqual(['solo', 'online', 'tutorial']);
+  });
+
+  it('keeps the card fan aria-hidden on the hub only, and still under reduced motion (§7.1, §8.3)', async () => {
+    seedHomeStorage(SEEN);
+    const { user, unmount } = renderHome();
+    const fan = main().querySelector<HTMLElement>('[data-home-card-fan]');
+    if (fan === null) throw new Error('no card fan');
+    expect([fan.getAttribute('aria-hidden'), fan.getAttribute('data-motion')]).toEqual(['true', 'reduced']);
+    const cards = Array.from(fan.querySelectorAll<HTMLElement>('[data-home-fan-card]'));
+    expect(cards).toHaveLength(5);
+    expect(cards.filter((card) => card.style.transform.includes('translate'))).toEqual([]); // no float offset
+    expect(within(main()).queryAllByRole('article')).toEqual([]); // the holo cards are hidden from assistive tech
+    await enterHomePath(user, 'online');
+    expect(main().querySelector('[data-home-card-fan]')).toBeNull();
+    unmount();
+    renderUi(<HomeScreen {...makeHomeProps()} />, { reducedMotion: false });
+    expect(main().querySelector('[data-home-card-fan]')?.getAttribute('data-motion')).toBe('full');
+  });
+
+  it('names the mode on its transition root and marks reduced motion there (§11 Q7)', async () => {
+    seedHomeStorage(SEEN);
+    const { user, unmount } = renderHome();
+    const modeRoot = (): Element | null => main().querySelector('[data-home-mode]');
+    expect([modeRoot()?.getAttribute('data-home-mode'), modeRoot()?.getAttribute('data-motion')]).toEqual(['hub', 'reduced']);
+    await enterHomePath(user, 'tutorial');
+    expect(modeRoot()?.getAttribute('data-home-mode')).toBe('tutorial');
+    unmount();
+    renderUi(<HomeScreen {...makeHomeProps()} />, { reducedMotion: false });
+    expect(modeRoot()?.getAttribute('data-motion')).toBe('full');
+  });
+
+  it.each(HOME_PATHS)('disables Back and Feedback on the %s path while connecting or launching', async (target) => {
+    seedHomeStorage(SEEN);
+    const props = makeHomeProps({ nickname: 'Ada' });
+    const { user, rerender } = renderUi(<HomeScreen {...props} />, { reducedMotion: true });
+    await enterHomePath(user, target);
+    expect(['Back', 'Feedback'].filter(isEnabled)).toEqual(['Back', 'Feedback']);
+    rerender(<HomeScreen {...props} status="connecting" />);
+    expect(['Back', 'Feedback'].filter(isEnabled)).toEqual([]);
+    rerender(<HomeScreen {...props} soloLaunchPending />);
+    expect(['Back', 'Feedback'].filter(isEnabled)).toEqual([]);
+    expectNoHomeIntent(props);
   });
 });
 
@@ -230,13 +303,22 @@ describe("What's new (spec v7 §7.1; L63-07, L65-05)", () => {
     expectNoHomeIntent(props);
   });
 
-  it('keeps New beside the Beta badge, outside the hub buttons', () => {
+  it('keeps New beside the Beta badge, outside the hub buttons', async () => {
     seedHomeStorage(SEEN);
-    renderHome();
+    const { user } = renderHome();
     const newButton = screen.getByRole('button', { name: "What's new" });
     expect(screen.getByText('Beta').closest('aside')?.nextElementSibling).toBe(newButton);
-    expect(newButton.parentElement).toBe(main());
+    const corner = newButton.parentElement;
+    expect(corner?.hasAttribute('data-home-corner')).toBe(true);
+    expect(corner?.parentElement).toBe(main());
     expect(screen.getByRole('button', { name: 'Play online' }).closest('section')?.contains(newButton)).toBe(false);
+    for (const target of HOME_PATHS) {
+      await enterHomePath(user, target);
+      const pathCorner = main().querySelector('[data-home-corner]');
+      expect(pathCorner?.contains(screen.getByText('Beta'))).toBe(true);
+      expect(pathCorner?.contains(screen.getByRole('button', { name: "What's new" }))).toBe(true);
+      await user.click(screen.getByRole('button', { name: 'Back' }));
+    }
   });
 });
 

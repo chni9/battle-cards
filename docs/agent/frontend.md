@@ -1800,6 +1800,24 @@ Spec v7 §7.1–§7.5 and §7.7; plan `docs/superpowers/plans/2026-10-21-v7-lot-
   branch under the arena's condition (`walkInSpectator && claimableSeats.length > 0`); it clears the
   dismissed key, so the picker shows again for the same set. It sends nothing and stays live while
   reconnecting. A seated guest who kept their seat gets no control (Appendix B question).
+- `screens/home/home-screen.tsx`, `home-hub.tsx`, `home-art.tsx`, `whats-new-control.tsx`, `path-header.tsx`,
+  `home-status.tsx` (L76-04, spec v7 §5.1–§5.3, §7.1, §11 Q7/Q8; decisions.md 2026-11-04): the V7 hub and
+  path chrome. `main` is `.v7-ground` and stays the scroll container (`relative h-full overflow-y-auto
+  overscroll-contain`, no `100dvh`). A top-right row (`data-home-corner`, every mode) holds `BetaCard`
+  (the word Beta) and `WhatsNewControl` (a quiet "New" named "What's new" or "What's new (unread)", with a
+  decorative `--cta` dot); New is disabled only while a solo game launches (Q8) and keeps its name. The
+  mode root (`data-home-mode`, `data-motion`) fades and rises through `motionPropsFor`, a fade only under
+  reduced motion. The hub, in DOM order: `HomeArt`, a fan of five base holo `Card`s (`data-home-card-fan`,
+  `aria-hidden`; each floats through `motionPropsFor` and holds still under reduced motion); the "Card
+  Battle" `<h1>` shown uppercase with an ink outline and hard shadow; the 'Turn-based card battle'
+  tagline; `HomeStatus`; the tiles in §7.1 order (Play solo, Play online, Tutorial; `data-home-tile`,
+  extracted art from `artFor`, chrome from `chrome-classes`); How to play (secondary, `help`) and Feedback
+  (quiet, `feedback`); the helper line. Every hub control is disabled while busy. `PathHeader`: quiet
+  Back (`chevron-left`) and Feedback, the 'Card Battle' eyebrow, the path `<h1>`, the subtitle,
+  `HomeStatus`. `HomeStatus`: the `homeStatusCopy` line (none when idle) and the error as an inline
+  `role="alert"` line on `--panel-2` with a `--danger` inset ring, under the title, not dismissible
+  (§7.7). These files import nothing from `design/` or `bots/`; the Online, Tutorial and Solo bodies do
+  until L76-08 and L76-11. What's new item 9 is the Home item.
 
 ## Design system (V2 · Lots 10+)
 
@@ -1849,8 +1867,8 @@ rules above are unchanged — this section only covers how the client looks.
   pulse on turn start / payout change (`MOTION_PULSE_S`); compact, no word label.
   Opponent Draw chips (L65-01) fly **one** point unless that seat is already Spyed
   (or it is your own Draw), so the count cannot identify a kit.
-- **Home (L11-01 / L17-01 + hub rework / L51-03):** branded hub first — title,
-  decorative V1 kit/card art. Two mode paths (not stacked forms): **Play online**
+- **Home (L11-01 / L17-01 + hub rework / L51-03):** branded hub first — the V7 wordmark
+  over a fan of holo cards since L76-04 (Home and lobby, V7 · Lot 76). Two mode paths (not stacked forms): **Play online**
   (nickname + create / join) and **Play solo** (nickname + opponent count 1–7 + difficulty,
   defaults 1 + Normal). Nickname is collected **inside** each path, not on the hub.
   **Feedback** (L47-03 / L47-06 / L57-05): hub control next to How to play; same Dialog on Online / Solo /
@@ -1874,8 +1892,8 @@ rules above are unchanged — this section only covers how the client looks.
   all set the key and continue into that path. Manual open: Skip / Got it set the key;
   Esc / overlay only close.   **What’s new (L63-07, L65-05):** shared `RELEASE_NOTES`
   (`packages/shared/src/release-notes.ts`, newest first, each entry dated).
-  Compact **New** is the shared `Button` `variant="green"` (`bg-cta-green-deep`,
-  same as Play online) with a **red** unread tick when
+  Compact **New** is a quiet V7 `Button` beside **Beta** (L76-04), disabled while a
+  solo game launches (Q8), with a `--cta` unread dot when
   `localStorage['card-battle.v6.lastSeenReleaseId']` is not the latest id.
   The popup that opens by itself shows **only the latest entry**. The **New**
   button lists **every** entry, date by date, newest first. How to play is not
@@ -1898,7 +1916,7 @@ rules above are unchanged — this section only covers how the client looks.
   `main`: private Draw, invisible players are not targets, Sentence chip
   inspect, hand layout stays put, point chips cap at 50, your kit portrait
   is one step larger, and the action log shows icon-only resource nets
-  (unspied card sales hide the payout; unspied shop buys hide the price; resolve lines show each seat’s gain or loss). `lot-68` (2026-09-29) shipped Ghost Tax+, Shield+ vs Imposition, and fixed some bugs. `lot-69` stays as written. `lot-71` (2026-10-06) shipped on `main`: Spy Thief chooses one opponent (the upgrade hits every living opponent), and forfeiting or leaving the table pays kill rewards at the same time to queued attackers unless one player is left. Active Poison does not. The host can hide kits, deal kits at random, and set human turns from 5 to 180 seconds; players chat in the lobby and at the table until the room closes, and eliminated players and spectators share a separate chat. A Ghost's points from lost lives show as +? until that Ghost is spied. `lot-72` (2026-10-07: active-slot drop cancel; no Poison tick during Block; the lobby host never passes to a bot) shipped on `main` (promote #79) before V7 Lot 72 merged. **V7 (technical spec v7 §10.4):** `lot-72-v7` (2026-10-26, "New look") is the open V7 entry; each V7 player-facing PR appends one Before / After item per screen area during the promotion freeze. New ids never reuse an existing id: seen-state (`ui/release-storage.ts`) is keyed by id. First item: the §10.5 catalog-text fix (After `Fixed some bugs.`). Second item: the classic tutorial's resources tip no longer shows a stray life icon (After `Fixed some bugs.`). Third item: the turn timer after a fifth-active picker cancel (server fix L82-01, After `Fixed some bugs.`). Fourth item: the played card no longer also lands in the pool after a fifth-active picker (server fix L82-02, After `Fixed some bugs.`). Fifth item: Cancel on the fifth-active picker refunds the play's points (designer rule change L82-03). Sixth item: past elimination flashes no longer replay after a reconnect or on the finished board (Q63, L74-17, After `Fixed some bugs.`). Seventh item: the Lot 76 copy fixes (How to play Kits, Your kit, the kit picker and its Random kit, the Online Create helper, Prophet's ability and the random-special versos; L76-03, After `Fixed some bugs.`). Eighth item: Lobby item (L76-09, rewritten by L76-12): the lobby shows each seat in its player color, and everyone can open the table rules. Sentence chips sit
+  (unspied card sales hide the payout; unspied shop buys hide the price; resolve lines show each seat’s gain or loss). `lot-68` (2026-09-29) shipped Ghost Tax+, Shield+ vs Imposition, and fixed some bugs. `lot-69` stays as written. `lot-71` (2026-10-06) shipped on `main`: Spy Thief chooses one opponent (the upgrade hits every living opponent), and forfeiting or leaving the table pays kill rewards at the same time to queued attackers unless one player is left. Active Poison does not. The host can hide kits, deal kits at random, and set human turns from 5 to 180 seconds; players chat in the lobby and at the table until the room closes, and eliminated players and spectators share a separate chat. A Ghost's points from lost lives show as +? until that Ghost is spied. `lot-72` (2026-10-07: active-slot drop cancel; no Poison tick during Block; the lobby host never passes to a bot) shipped on `main` (promote #79) before V7 Lot 72 merged. **V7 (technical spec v7 §10.4):** `lot-72-v7` (2026-10-26, "New look") is the open V7 entry; each V7 player-facing PR appends one Before / After item per screen area during the promotion freeze. New ids never reuse an existing id: seen-state (`ui/release-storage.ts`) is keyed by id. First item: the §10.5 catalog-text fix (After `Fixed some bugs.`). Second item: the classic tutorial's resources tip no longer shows a stray life icon (After `Fixed some bugs.`). Third item: the turn timer after a fifth-active picker cancel (server fix L82-01, After `Fixed some bugs.`). Fourth item: the played card no longer also lands in the pool after a fifth-active picker (server fix L82-02, After `Fixed some bugs.`). Fifth item: Cancel on the fifth-active picker refunds the play's points (designer rule change L82-03). Sixth item: past elimination flashes no longer replay after a reconnect or on the finished board (Q63, L74-17, After `Fixed some bugs.`). Seventh item: the Lot 76 copy fixes (How to play Kits, Your kit, the kit picker and its Random kit, the Online Create helper, Prophet's ability and the random-special versos; L76-03, After `Fixed some bugs.`). Eighth item: Lobby item (L76-09, rewritten by L76-12): the lobby shows each seat in its player color, and everyone can open the table rules. Ninth item: Home item (L76-04): Home has the new look, with a big tile for each way to play. Sentence chips sit
   on the caster (remaining turns in red) and open catalog inspect (L65-03). Play / later caster ticks / fire flash
   the table-wide red banner. Player-visible work updates the open What’s new
   entry in the same commit. No accounts, no protocol fields. Idle hub is unlabeled (not “Not connected”). Top-right **Beta**

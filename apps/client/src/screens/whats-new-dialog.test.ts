@@ -1,7 +1,7 @@
 /**
  * Hub What’s new wiring — L63-07.
- * L76-01: the Home behavior is rendered in screens/home/home-screen.test.tsx; the style-only Home
- * lines below read screens/home/home-screen.tsx until L76-04 retires them.
+ * L76-01: the Home behavior is rendered in screens/home/home-screen.test.tsx. L76-04 retired the
+ * style-only Home lines (decisions.md); L76-05 rewrites the dialog half as rendered tests.
  */
 
 import { readFileSync } from 'node:fs';
@@ -53,7 +53,7 @@ describe('What’s new dialog (L63-07)', () => {
     expect(source.indexOf('note.items')).toBeLessThan(source.indexOf('note.additions.map'));
     expect(source).toContain('item.kitId');
     expect(latestReleaseNote().additions).toHaveLength(0);
-    expect(latestReleaseNote().items).toHaveLength(8);
+    expect(latestReleaseNote().items).toHaveLength(9);
     const lot72 = RELEASE_NOTES.find((note) => note.id === 'lot-72');
     expect(lot72?.items).toHaveLength(3);
     const lot71 = RELEASE_NOTES.find((note) => note.id === 'lot-71');
@@ -67,20 +67,5 @@ describe('What’s new dialog (L63-07)', () => {
       'super-absorber',
     ]);
     expect(lot63?.additions).toHaveLength(2);
-  });
-
-  it('wires a green New control, red unread badge, and auto-open when unseen', () => {
-    const home = read('home/home-screen.tsx');
-    expect(home).toMatch(
-      /<Button[\s\S]{0,400}data-whats-new-button[\s\S]{0,200}variant="green"|<Button[\s\S]{0,400}variant="green"[\s\S]{0,200}data-whats-new-button/,
-    );
-    expect(home).toContain('bg-cta-red');
-    expect(home).not.toContain('bg-cta-green');
-  });
-
-  it('keeps What’s new as a small top-right control, not a hub action-row block', () => {
-    const home = read('home/home-screen.tsx');
-    expect(home).toContain('data-whats-new-button');
-    expect(home).toMatch(/data-whats-new-button[\s\S]{0,400}absolute/);
   });
 });

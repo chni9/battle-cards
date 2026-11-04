@@ -88,6 +88,10 @@ const RELEASE_NOTES_CATALOG = [
         before: 'The lobby was a plain list, and only the host could open the table rules.',
         after: 'The lobby shows each seat in its player color, and everyone can open the table rules.',
       },
+      {
+        before: 'Home was a plain menu.',
+        after: 'Home has the new look, with a big tile for each way to play.',
+      },
     ],
   },
   {

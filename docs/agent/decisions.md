@@ -6529,3 +6529,16 @@ rulings 4, 6, 7 and 8.
 The L76-15 Acceptance says no notice fires "on a Random-only toggle that keeps the pick", and also that 'Rules changed' fires for each field change; spec v7 §7.4 gives guests a toast "when rules change". `randomOnly` is a rules field, and turning it on keeps `yourKitSelection` in the view (the server ignores picks at deal time). Reading: such a toggle never adds the "Your pick was reset to Random." line, but it does show 'Rules changed'. Designer answer (2026-11-03, Lot 76 plan, Appendix B, Domain D question 2): a Random-only toggle shows 'Rules changed' without the reset line, and walk-ins and the host get no toast (A.9 ruling 10).
 
 ---
+
+## 2026-11-04 · [P] V7 Home New control: the V2 style checks retire, and New locks during a solo launch (L76-04)
+
+Spec v7 §5.1 replaces the V2/V6 `--cta-*` colors with the V7 tokens, and §7.1 keeps New as a small top-right control with an unread dot beside Beta. L76-04 rebuilds the hub on the V7 ground, so two source-text `it()`s of `screens/whats-new-dialog.test.ts` that pinned the V2 look retire (spec v7 §12.1, old-layout detail):
+
+- "wires a green New control, red unread badge, and auto-open when unseen": `variant="green"` within 400 characters of `data-whats-new-button`, `bg-cta-red`, no `bg-cta-green`;
+- "keeps What’s new as a small top-right control, not a hub action-row block": `data-whats-new-button` within 400 characters of `absolute`.
+
+Their product meaning stays rendered in `screens/home/home-screen.test.tsx`: the unread name and dot ('auto-opens only the latest entry when it is unseen, under an unread New', 'a %s dismissal marks the latest entry seen and clears the unread label and dot') and the placement ('keeps New beside the Beta badge, outside the hub buttons', now in the top-right row on every path).
+
+This supersedes "The New button is never disabled, even while connecting or launching" (parity `home-whats-new`): per spec v7 §11 and §13 Q8, New is disabled while a solo game launches and keeps its "What's new (unread)" name. An online create or join leaves it live; Q8 names only the solo launch.
+
+---

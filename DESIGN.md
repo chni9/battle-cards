@@ -229,7 +229,9 @@ the friendlier print on a card face. Nunito keeps long text calm and legible. Al
 self-hosted through `@fontsource` (`ui/fonts.ts`); Outfit stays in `main.tsx` until L81.
 
 ### Hierarchy
-- **Display** (Lilita One 400, 32px, `--type-display`): wordmark and the biggest numerals.
+- **Display** (Lilita One 400, 32px, `--type-display`): wordmark and the biggest numerals. The Home
+  wordmark (L76-04) is Display uppercase, 48px from `sm`, with a 3px `--ink` outline (a 6px
+  `-webkit-text-stroke` painted under the fill) and the `0 4px 0` ink hard shadow.
 - **Title** (Lilita One 400, 20px, `--type-title`): titles, buttons, seat names. Own lives are
   at least 20px.
 - **Vital** (Lilita One 400, 22px, `--type-vital`): the incoming damage badge and other vital

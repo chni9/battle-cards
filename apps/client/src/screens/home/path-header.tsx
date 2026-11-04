@@ -1,9 +1,13 @@
-/** Home path header: Back, Feedback, title, status (PathHeader): technical spec v7 §7.1; L47-03, L51-03. */
+/**
+ * Home path header: Back, Feedback, title, status (PathHeader): technical spec v7 §7.1; Appendix A
+ * `home-path-header`; L47-03, L51-03. L76-04: quiet V7 Back and Feedback (both disabled while busy),
+ * the 'Card Battle' eyebrow, the path title in Display, the subtitle and `HomeStatus`.
+ */
 
 import type { ReactElement } from 'react';
 
-import { Button } from '../../design/components/button';
 import type { RoomConnectionStatus } from '../../net/use-room-connection';
+import { Button } from '../../ui/primitives/button';
 import { HomeStatus } from './home-status';
 
 export interface PathHeaderProps {
@@ -28,27 +32,21 @@ export function PathHeader({
   onOpenFeedback,
 }: PathHeaderProps): ReactElement {
   return (
-    <div>
+    <header className="flex flex-col gap-1">
       <div className="flex flex-wrap gap-2">
-        <Button type="button" variant="orange" disabled={backDisabled} onClick={onBack}>
+        <Button variant="quiet" icon="chevron-left" disabled={backDisabled} onClick={onBack}>
           Back
         </Button>
-        <Button type="button" variant="orange" disabled={backDisabled} onClick={onOpenFeedback}>
+        <Button variant="quiet" icon="feedback" disabled={backDisabled} onClick={onOpenFeedback}>
           Feedback
         </Button>
       </div>
-      <p className="mt-6 text-xs font-medium uppercase tracking-[0.14em] text-ink-muted">
+      <p className="mt-4 font-v7-body text-v7-caption font-extrabold uppercase tracking-[0.14em] text-v7-text-2">
         Card Battle
       </p>
-      <h1 className="mt-2 font-sans text-3xl font-semibold tracking-tight text-ink md:text-4xl">
-        {title}
-      </h1>
-      <p className="mt-3 max-w-[40ch] text-base leading-relaxed text-ink-muted">{subtitle}</p>
-      <HomeStatus
-        status={status}
-        error={error}
-        soloLaunchPending={soloLaunchPending}
-      />
-    </div>
+      <h1 className="font-v7-display text-v7-display leading-none text-v7-text">{title}</h1>
+      <p className="max-w-[40ch] font-v7-body text-v7-body text-v7-text-2">{subtitle}</p>
+      <HomeStatus status={status} error={error} soloLaunchPending={soloLaunchPending} />
+    </header>
   );
 }
