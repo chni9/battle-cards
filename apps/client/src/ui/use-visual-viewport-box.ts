@@ -73,11 +73,22 @@ export function isTextEntryElement(element: Element | null): boolean {
 }
 
 function subscribeFocus(onChange: () => void): () => void {
+  // Chrome reports <body> as `document.activeElement` while a focus move is in flight: A's focusout
+  // runs before B's focusin. A move to another text field keeps the keyboard up, so reading the
+  // snapshot then would end the hold for one commit and the mode would flip under the field
+  // (Lot 75 Check 1); B's focusin reads the snapshot instead.
+  const onFocusOut = (event: FocusEvent): void => {
+    const next = event.relatedTarget;
+    if (next instanceof Element && isTextEntryElement(next)) {
+      return;
+    }
+    onChange();
+  };
   document.addEventListener('focusin', onChange);
-  document.addEventListener('focusout', onChange);
+  document.addEventListener('focusout', onFocusOut);
   return () => {
     document.removeEventListener('focusin', onChange);
-    document.removeEventListener('focusout', onChange);
+    document.removeEventListener('focusout', onFocusOut);
   };
 }
 
@@ -93,6 +104,8 @@ function textEntryFocusedServerSnapshot(): boolean {
  * True while `document.activeElement` is a text-entry element (`focusin` / `focusout`). A focused
  * field that unmounts fires no `focusout`; the next render, such as the viewport `resize` that
  * closes the keyboard, reads `document.activeElement` again, so the hold ends with the keyboard.
+ * A `focusout` whose `relatedTarget` is another text field is skipped: the keyboard stays up and
+ * the next `focusin` reads the new field.
  */
 export function useTextEntryFocused(): boolean {
   return useSyncExternalStore(subscribeFocus, textEntryFocusedSnapshot, textEntryFocusedServerSnapshot);

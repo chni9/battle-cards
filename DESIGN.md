@@ -815,7 +815,9 @@ The V2 rule "one Esc closes every open Dialog" does not apply to V7 surfaces.
 - **Keyboard** (L75-02, ruling 7, U1): `Sheet` and `Toast` follow the live `useVisualViewportBox()`,
   so they sit above a phone keyboard. `useViewportMode()` holds its mode while a text field has
   focus (`useTextEntryFocused()`, `ui/use-visual-viewport-box.ts`) and follows on blur, so the
-  arena, the coach and `Carousel` keep one mode while the player types. `Sheet`
+  arena, the coach and `Carousel` keep one mode while the player types. A move from one text field
+  to another (a `focusout` whose `relatedTarget` is a text field) keeps the hold: Chrome reports
+  `<body>` as the active element between the two events. `Sheet`
   `placement="auto"` reads the live box, so it differs from the held mode only on desktop.
 
 ## Cost glyphs and effect copy (L72-11)
