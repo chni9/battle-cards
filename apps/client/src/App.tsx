@@ -6,6 +6,7 @@
  * imported behind `import.meta.env.DEV`, so production builds carry no gallery chunk.
  * The playing table follows the temporary `?ui=next` switch (technical spec v7 §4.4 / L72-20,
  * removed in L75); tutorial rooms always keep the classic table.
+ * `?code=` pre-fills Join and opens Online once (L76-17).
  */
 
 import { defaultLobbyRules } from '@card-battle/shared';
@@ -20,6 +21,7 @@ import { ClaimSeatDialog } from './screens/claim-seat-dialog';
 import { claimStayLabel, shouldShowClaimPicker } from './screens/claim-seat';
 import { EndScreen } from './screens/end';
 import { HomeScreen } from './screens/home/home-screen';
+import { parseInviteCode, searchWithoutInviteCode } from './screens/lobby/invite-link';
 import { LobbyScreen } from './screens/lobby/lobby-screen';
 import { shouldClearRejectOnPhaseChange } from './screens/reject-phase';
 import { soloMenuSeed, type SoloMenuSeed } from './screens/solo-menu-seed';
@@ -107,7 +109,17 @@ function GameApp() {
     void leaveGame();
   };
   const [nickname, setNickname] = useState('');
-  const [joinCode, setJoinCode] = useState('');
+  // Invite link (spec v7 §7.1, §7.2; L76-17): `?code=` is read once, at mount, and seeds Join. `/admin` and
+  // `/dev/ui` return before GameApp, so they never read it. The effect below strips it from the URL, so a
+  // reload or Back does not open it again.
+  const [inviteCode] = useState(() => parseInviteCode(window.location.search));
+  // Home opens on Online only until the first room view, so a Leave or a kick lands on the hub (parity
+  // `home-online-path`). "Adjust state while rendering", as the phase-change clear below.
+  const [inviteOpensOnline, setInviteOpensOnline] = useState(inviteCode !== null);
+  if (inviteOpensOnline && view !== null) {
+    setInviteOpensOnline(false);
+  }
+  const [joinCode, setJoinCode] = useState(inviteCode ?? '');
   const [nowMs, setNowMs] = useState(() => Date.now());
   const [claimDismissedKey, setClaimDismissedKey] = useState<string | null>(null);
   const [pendingSoloMenu, setPendingSoloMenu] = useState<SoloMenuSeed | null>(null);
@@ -158,6 +170,14 @@ function GameApp() {
       forgetChatSeen(lobbyGameCode);
     }
   }, [lobbyGameCode]);
+
+  useEffect(() => {
+    if (inviteCode === null) {
+      return;
+    }
+    const { pathname, search, hash } = window.location;
+    window.history.replaceState(window.history.state, '', `${pathname}${searchWithoutInviteCode(search)}${hash}`);
+  }, [inviteCode]);
 
   useEffect(() => {
     const id = window.setInterval(() => {
@@ -353,6 +373,7 @@ function GameApp() {
             },
           }
         : {})}
+      {...(inviteOpensOnline ? { openOnline: true as const } : {})}
     />
   );
 }

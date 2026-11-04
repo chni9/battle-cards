@@ -7,13 +7,14 @@
  */
 import { ACTION_REJECT_MESSAGE, type ClaimableSeatView, type LobbySeatView, type StateView } from '@card-battle/shared';
 import { screen, waitFor, within } from '@testing-library/react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { App } from './App';
 import type { ActionRejectPayload, UseRoomConnectionResult } from './net/use-room-connection';
 import { guestLobbyView, hostLobbyView, LOBBY_BOT, LOBBY_GUEST, LOBBY_HOST, walkInLobbyView } from './screens/lobby/test-lobby';
 import { fakeRoomConnection } from './test/fake-room-connection';
 import { renderUi, type RenderUiResult } from './test/render';
+import { HOW_TO_PLAY_SEEN_KEY } from './ui/help-storage';
 import { markLatestReleaseSeen } from './ui/release-storage';
 import { makePlayingView } from './view-model/test-fixtures';
 
@@ -139,5 +140,77 @@ describe('App claim picker wiring (§7.7, §7.2, Q24, L57-15, L76-16)', () => {
   it('never shows the picker to the lobby host (L57-15)', () => {
     renderApp(fakeRoomConnection(hostLobbyView({ players: seats, claimableSeats: DEE_FREE })));
     expect(picker()).toBeNull();
+  });
+});
+
+describe('App invite link (§7.1, §7.2, L76-17; Part 2 Review Focus 4)', () => {
+  const title = (): string => screen.getByRole('heading', { level: 1 }).textContent;
+  const codeField = (): HTMLInputElement => screen.getByRole<HTMLInputElement>('textbox', { name: 'Game code' });
+  const home = (extra: Partial<UseRoomConnectionResult> = {}): UseRoomConnectionResult =>
+    fakeRoomConnection(null, { status: 'idle', ...extra });
+  beforeEach(() => {
+    sessionStorage.clear();
+    localStorage.setItem(HOW_TO_PLAY_SEEN_KEY, '1');
+  });
+  afterEach(() => {
+    history.replaceState(null, '', '/');
+  });
+
+  it('?code=abcdefgh opens Online with ABCDEF in Join, strips the parameter, and joins only after a nickname', async () => {
+    history.replaceState(null, '', '/?code=abcdefgh');
+    const joinGame = vi.fn<UseRoomConnectionResult['joinGame']>(() => Promise.resolve());
+    const { user } = renderApp(home({ joinGame }));
+    expect(title()).toBe('Play online');
+    expect(codeField().value).toBe('ABCDEF');
+    expect(window.location.search).toBe('');
+    const join = screen.getByRole('button', { name: 'Join' });
+    expect(join.hasAttribute('disabled')).toBe(true);
+    await user.type(screen.getByLabelText('Nickname'), 'Ada');
+    expect(joinGame).not.toHaveBeenCalled();
+    await user.click(join);
+    expect(joinGame.mock.calls).toEqual([['ABCDEF', 'Ada']]);
+  });
+
+  it('meets How to play first on a first visit; Skip enters Online with the code', async () => {
+    localStorage.removeItem(HOW_TO_PLAY_SEEN_KEY);
+    history.replaceState(null, '', '/?code=QWERTY');
+    const { user } = renderApp(home());
+    const howTo = screen.getByRole('dialog', { name: 'How to play' });
+    expect(title()).toBe('Card Battle');
+    await user.click(within(howTo).getByRole('button', { name: 'Skip' }));
+    vi.useRealTimers(); // happy-dom finishes the sheet's exit on a real timer (docs/agent/testing.md)
+    await waitFor(() => {
+      expect(screen.queryByRole('dialog', { name: 'How to play', hidden: true })).toBeNull();
+    });
+    expect(title()).toBe('Play online');
+    expect(codeField().value).toBe('QWERTY');
+  });
+
+  it.each(['/?code=', '/'])('%s opens the hub as usual and pre-fills nothing', async (path) => {
+    history.replaceState(null, '', path);
+    const { user } = renderApp(home());
+    expect(title()).toBe('Card Battle');
+    expect(screen.queryByRole('textbox', { name: 'Game code' })).toBeNull();
+    await user.click(screen.getByRole('button', { name: 'Play online' }));
+    expect(codeField().value).toBe('');
+  });
+
+  it('/admin?code=ABCDEF stays the admin tool and keeps its URL', () => {
+    history.replaceState(null, '', '/admin?code=ABCDEF');
+    renderApp(home());
+    expect(screen.getByRole('main').getAttribute('data-mode')).toBe('tool');
+    expect(screen.getByRole('heading', { level: 1 }).textContent).toBe('Insights');
+    expect(screen.queryByRole('textbox', { name: 'Game code' })).toBeNull();
+    expect(window.location.search).toBe('?code=ABCDEF');
+  });
+
+  it('opens Online only until the first room view: back on Home after the lobby, it is the hub', () => {
+    history.replaceState(null, '', '/?code=ABCDEF');
+    const result = renderApp(home());
+    expect(title()).toBe('Play online');
+    show(result, fakeRoomConnection(guestLobbyView()));
+    expect(screen.getByRole('button', { name: 'Leave' })).toBeTruthy();
+    show(result, home());
+    expect(title()).toBe('Card Battle');
   });
 });

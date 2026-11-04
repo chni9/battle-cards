@@ -23,6 +23,14 @@ export const COPY_RESULT_DISMISS_LABEL = 'OK';
 export function copyResultBody(gameCode: string, failed: boolean): string {
   return failed ? `Could not copy automatically. Game code: ${gameCode}` : `Share this code with friends: ${gameCode}`;
 }
+/** §7.2: the lobby code card's Web Share control (L76-17). */
+export const SHARE_LABEL = 'Share';
+/** §10.6: the result when Share falls back to copying the invite link. */
+export const LINK_COPIED_TITLE = 'Link copied';
+/** NEW (designer review): the Link copied body; the link carries the code. */
+export function linkCopiedBody(link: string): string {
+  return `Share this link with friends: ${link}`;
+}
 export const HOST_LINE = 'You are the host';
 /** The alert's dismiss: the V2 dialogs' and the arena reject toast's word (no new §10.6 string). L76-14. */
 export const LOBBY_DISMISS_LABEL = 'OK';

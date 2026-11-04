@@ -8,6 +8,8 @@
  * through `motionPropsFor`, a fade only under reduced motion.
  * L76-08 (Part 2 Review Focus 3): Create, Join and Start tutorial launch once per connection state
  * through `useLaunchOnce`; Start solo game joins them in L76-11.
+ * L76-17 (spec v7 §7.1): an invite link (`openOnline`) enters Online at mount, through the How to
+ * play soft gate (`homeMountEntry`).
  */
 
 import {
@@ -37,7 +39,7 @@ import { KitPickerSheet } from '../lobby/kit-picker-sheet';
 import type { SoloMenuSeed } from '../solo-menu-seed';
 import { WhatsNewDialog } from '../whats-new-dialog';
 import { BetaCard } from './home-art';
-import { howToPlayCloseOutcome } from './home-gate';
+import { homeMountEntry, howToPlayCloseOutcome } from './home-gate';
 import { HomeHub } from './home-hub';
 import { whatsNewAutoScope, type WhatsNewAutoTrigger } from './home-whats-new';
 import { OnlinePath } from './online-path';
@@ -72,6 +74,8 @@ export interface HomeScreenProps {
   /** Finished solo match: open this menu instead of dealing immediately. */
   soloMenuSeed?: SoloMenuSeed;
   onSoloMenuSeedApplied?: () => void;
+  /** Invite link (L76-17, spec v7 §7.1): enter Online at mount, through the How to play soft gate. App passes it until the first room view. */
+  openOnline?: true;
 }
 
 type HomeMode = 'hub' | 'online' | 'solo' | 'tutorial';
@@ -97,15 +101,24 @@ export function HomeScreen({
   onStartTutorial,
   soloMenuSeed,
   onSoloMenuSeedApplied,
+  openOnline,
 }: HomeScreenProps): ReactElement {
-  const [mode, setMode] = useState<HomeMode>(soloMenuSeed !== undefined ? 'solo' : 'hub');
-  const [howToPlayOpen, setHowToPlayOpen] = useState(false);
+  // The seed and the invite are read only at mount (gotcha 2): a later prop change moves nothing.
+  const [entry] = useState(() =>
+    homeMountEntry({
+      soloSeed: soloMenuSeed !== undefined,
+      openOnline: openOnline === true,
+      howToPlaySeen: hasSeenHowToPlay(),
+    }),
+  );
+  const [mode, setMode] = useState<HomeMode>(entry.mode);
+  const [howToPlayOpen, setHowToPlayOpen] = useState(entry.gatedTarget !== null);
   const [whatsNewScope, setWhatsNewScope] = useState<WhatsNewScope>('current');
   const [whatsNewOpen, setWhatsNewOpen] = useState(
     () => whatsNewAutoScope('mount', hasUnseenReleaseNotes()) !== null,
   );
   const [whatsNewUnread, setWhatsNewUnread] = useState(() => hasUnseenReleaseNotes());
-  const [pendingTarget, setPendingTarget] = useState<HowToPlayContinueTarget | null>(null);
+  const [pendingTarget, setPendingTarget] = useState<HowToPlayContinueTarget | null>(entry.gatedTarget);
   const [soloOpponents, setSoloOpponents] = useState<SoloOpponentCount>(
     soloMenuSeed?.opponentCount ?? 1,
   );

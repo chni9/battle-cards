@@ -6582,3 +6582,14 @@ Source: technical spec v7 §7.1 ("opponents 1–7 picked by adding avatars aroun
 - **Test edit.** `screens/home/home-screen.test.tsx` › 'locks the solo menu while the launch is pending' finds 1, 7, Easy, Normal and Hard by role `radio`: the same controls with radio semantics (§11, Q7). Every control is still asserted disabled.
 
 ---
+
+## 2026-11-04 · [P] An invite link opens Join through the soft gate, once (L76-17)
+
+Source: technical spec v7 §7.1 (`?code=XXXXXX` pre-fills Join; client only; nickname still required), §7.2 (Share: Web Share, else copy a link), §10.6 ("Link copied"), §13 Q28; Lot 76 plan L76-17 Review line, Appendix A.10, Part 2 Review Focus 4.
+
+- **Link.** `inviteLink(origin, code)` = `{origin}/?code={code}` (`screens/lobby/invite-link.ts`). Share calls `navigator.share({ url })` when the browser has it; a cancel (`AbortError`) is silent. Without Web Share, or when it fails for another reason, Share copies the link and shows "Link copied" ("Share this link with friends: {link}"); a refused clipboard shows the existing "Copy failed" with the code, so every failure still shows the code. Share sends nothing and stays live while reconnecting, as Copy.
+- **Read once.** `GameApp` reads `?code=` in a `useState` initialiser: uppercased, capped at 6, no character filter (the server validates, as for the Join field); a missing or empty value is ignored. It seeds `joinCode`, and an effect strips `code` with `history.replaceState` (other parameters, such as `ui`, stay), so a reload or Back does not open it again. `/admin` and `/dev/ui` return before `GameApp` and never read it.
+- **Online once.** App passes `openOnline` to Home only until the first room view, so a Leave or a kick lands on the hub (parity `home-online-path`: "After a kick: Home remounts on the hub"). Home enters Online through the How to play soft gate (`homeMountEntry`); a solo Play again seed still wins. Nothing joins by itself: Join stays disabled until a nickname is typed.
+- What's new at mount is unchanged: when the latest entry is unseen it opens above the gated How to play, as it does over a seeded solo menu.
+
+---

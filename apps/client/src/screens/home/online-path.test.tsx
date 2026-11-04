@@ -10,9 +10,10 @@ import { useState, type ReactElement } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { renderUi } from '../../test/render';
+import { HOW_TO_PLAY_SEEN_KEY } from '../../ui/help-storage';
 import { STATUS_LABELS } from '../status-labels';
 import { HomeScreen, type HomeScreenProps } from './home-screen';
-import { enterHomePath, expectNoHomeIntent, HOME_PATH_LABEL, makeHomeProps, seedHomeStorage } from './test-home';
+import { closeHomeDialog, enterHomePath, expectNoHomeIntent, HOME_PATH_LABEL, makeHomeProps, seedHomeStorage } from './test-home';
 
 /** App's nickname and code state, so typing reaches the fields (App.tsx owns both). */
 function StatefulHome(props: HomeScreenProps): ReactElement {
@@ -116,6 +117,21 @@ describe('Online path (spec v7 §7.1, §5.2; L57-07)', () => {
       expect(field('Nickname').value).toBe('Ada');
     }
     expect(vi.mocked(props.onNicknameChange).mock.calls.at(-1)).toEqual(['Ada']);
+    expectNoHomeIntent(props);
+  });
+});
+
+describe('invite link on Home (spec v7 §7.1; L76-17)', () => {
+  it('openOnline enters Online at mount, through the How to play gate the first time', async () => {
+    seedHomeStorage({ howToPlaySeen: false, whatsNewSeen: true });
+    const props = makeHomeProps({ joinCode: 'ABCDEF', openOnline: true });
+    const { user } = renderUi(<HomeScreen {...props} />, { reducedMotion: true });
+    expect(title()).toBe('Card Battle');
+    await closeHomeDialog(user, 'How to play', 'Escape');
+    expect(localStorage.getItem(HOW_TO_PLAY_SEEN_KEY)).toBe('1');
+    expect(title()).toBe(HOME_PATH_LABEL.online);
+    expect(field('Game code').value).toBe('ABCDEF');
+    expect(button('Join').hasAttribute('disabled')).toBe(true);
     expectNoHomeIntent(props);
   });
 });
