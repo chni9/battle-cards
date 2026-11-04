@@ -6542,3 +6542,9 @@ Their product meaning stays rendered in `screens/home/home-screen.test.tsx`: the
 This supersedes "The New button is never disabled, even while connecting or launching" (parity `home-whats-new`): per spec v7 §11 and §13 Q8, New is disabled while a solo game launches and keeps its "What's new (unread)" name. An online create or join leaves it live; Q8 names only the solo launch.
 
 ---
+
+## 2026-11-04 · [P] How to play is a card carousel with icons and card renders (L76-06)
+
+Spec v7 §7.1 asks for resource icons inline; §13 row 12 says icons and card renders; the designer chose both (2026-11-03): four slides (Cards, Upgrade, Kits, Special cards) add aria-hidden base-art renders. This supersedes the parity row `home-how-to-play-dialog` (a V2 Dialog with PNG glyph rows). `screens/how-to-play-dialog.tsx` keeps its export and `onClose(reason)` contract, so the arena TopBar and the classic table mount the V7 sheet unedited; on the classic table '?' it is now a V7 sheet in the sheet stack (Esc closes only it).
+
+---

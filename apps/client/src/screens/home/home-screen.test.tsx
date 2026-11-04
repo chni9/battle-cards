@@ -14,7 +14,7 @@ import { screen, waitFor, within } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { renderUi } from '../../test/render';
-import { stubPhoneViewport } from '../../test/sheet-gestures';
+import { stubPhoneViewport, swipeCarouselTo } from '../../test/sheet-gestures';
 import { HINTS_STORAGE_KEY, HOW_TO_PLAY_SEEN_KEY, readHintState } from '../../ui/help-storage';
 import { LAST_SEEN_RELEASE_ID_KEY } from '../../ui/release-storage';
 import { KIT_PICKER_LEAD } from '../kit-pick-copy';
@@ -474,5 +474,50 @@ describe('Lot 76 copy (spec v7 §10.1, L76-03)', () => {
     const { user } = renderHome();
     await enterHomePath(user, 'solo');
     expect(screen.getByText(KIT_PICKER_LEAD)).toBeTruthy();
+  });
+});
+
+describe('How to play carousel on Home (spec v7 §7.1; Part 2 Review Focus 1, L76-06)', () => {
+  beforeEach(() => { stubPhoneViewport(); }); // the swipe-down handle exists only on a bottom sheet
+
+  it.each(['Skip', 'Got it', 'Escape', 'backdrop', 'swipe'] as const)(
+    "a gated %s after paging marks seen and enters Play solo once, with no What's new re-check", async (way) => {
+      seedHomeStorage({ howToPlaySeen: false, whatsNewSeen: true });
+      const { user, props } = renderHome();
+      localStorage.removeItem(LAST_SEEN_RELEASE_ID_KEY); // a second, manual-looking close would open What's new
+      await user.click(screen.getByRole('button', { name: 'Play solo' }));
+      const dialog = screen.getByRole('dialog', { name: 'How to play' });
+      await user.click(within(dialog).getByRole('button', { name: 'Next' }));
+      await user.click(within(dialog).getByRole('button', { name: 'Next' }));
+      swipeCarouselTo(dialog, 5);
+      expect(within(dialog).getByRole('status').textContent).toBe('How to play, 6 of 9');
+      expect([title(), localStorage.getItem(HOW_TO_PLAY_SEEN_KEY)]).toEqual(['Card Battle', null]); // paging closes nothing
+      await closeHomeDialog(user, 'How to play', way);
+      expect([title(), localStorage.getItem(HOW_TO_PLAY_SEEN_KEY)]).toEqual(['Play solo', '1']);
+      expect(whatsNew()).toBeNull();
+      expectNoHomeIntent(props);
+    });
+
+  it("a double click on the gated Skip enters Play online once and opens no What's new", async () => {
+    seedHomeStorage({ howToPlaySeen: false, whatsNewSeen: true });
+    const { user, props } = renderHome();
+    localStorage.removeItem(LAST_SEEN_RELEASE_ID_KEY);
+    await user.click(screen.getByRole('button', { name: 'Play online' }));
+    await user.dblClick(within(screen.getByRole('dialog', { name: 'How to play' })).getByRole('button', { name: 'Skip' }));
+    await waitFor(() => { expect(screen.queryByRole('dialog', { name: 'How to play', hidden: true })).toBeNull(); });
+    expect([title(), localStorage.getItem(HOW_TO_PLAY_SEEN_KEY)]).toEqual(['Play online', '1']);
+    expect(whatsNew()).toBeNull();
+    expectNoHomeIntent(props);
+  });
+
+  it("a manual swipe-down closes without marking seen and re-checks What's new", async () => {
+    seedHomeStorage({ howToPlaySeen: false, whatsNewSeen: true });
+    const { user, props } = renderHome();
+    localStorage.removeItem(LAST_SEEN_RELEASE_ID_KEY);
+    await user.click(screen.getByRole('button', { name: 'How to play' }));
+    await closeHomeDialog(user, 'How to play', 'swipe');
+    expect([title(), localStorage.getItem(HOW_TO_PLAY_SEEN_KEY)]).toEqual(['Card Battle', null]);
+    expect(scopeOf(whatsNew())).toBe('current');
+    expectNoHomeIntent(props);
   });
 });

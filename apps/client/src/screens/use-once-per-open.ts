@@ -3,7 +3,9 @@
  * `screens/arena/top-bar.tsx`, re-implemented (never imported from `screens/arena/`). While a sheet
  * exits its handlers stay live, so a double tap or an Esc right after Got it would close it twice;
  * Home's gated How to play would then read the second close as a manual one (spec v7 §7.1). The ref
- * is read only in the returned callback (decisions.md 2026-10-28). L76-05.
+ * is read only in the returned callback (decisions.md 2026-10-28). The first call's action must make the
+ * parent set `open` to false: otherwise the latch stays set for the rest of that open and every later
+ * dismissal in it is swallowed. L76-05.
  */
 
 import { useRef, useState } from 'react';

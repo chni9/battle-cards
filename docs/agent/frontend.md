@@ -1173,12 +1173,13 @@ Appendix A). Each Lot 74 task appends its bullet here, in task order.
     join the reducer as `ArenaSheet` variants, each with its `arenaSheetKey` case (the `never`
     default makes a missing case a type error).
   - **Owner-local** (the owner's own `open` state, a `Sheet` / `Dialog` rendered by the owner):
-    the TopBar menu and leave confirm, and the Dock's Unspy picker. Opening one does not end
+    the TopBar menu, leave confirm and How to play sheet (V7 since L76-06), and the Dock's Unspy
+    picker. Opening one does not end
     targeting. While it is the live sheet it takes Esc first through the sheet stack, and the
     arena's targeting Esc stands down (`liveSheetId` is not null).
-  - **Outside the stack until L75 / L76:** the V2 `HowToPlayDialog` and `FeedbackDialog` the
-    TopBar opens (V2 `Dialog`, no portal). The sheet stack does not see them, so during
-    targeting one Esc both ends targeting and closes the dialog (ledger 50, the L74-26 gate).
+  - **Outside the stack until L76-07:** the V2 `FeedbackDialog` the TopBar opens (V2
+    `Dialog`, no portal). The sheet stack does not see it, so during targeting one Esc both ends
+    targeting and closes the dialog (ledger 50, the L74-26 gate).
 - `screens/arena/threat-layer.tsx`, `central-plate.tsx`, `threat-geometry.ts`,
   `plate-model.ts` (L74-06, spec v7 §6.1 item 2, §6.5, §11): `ThreatLayer` renders
   `threats(view, subChoice)`, statically (motion is L78), as an `aria-hidden`, press-through
@@ -1833,6 +1834,28 @@ Spec v7 §7.1–§7.5 and §7.7; plan `docs/superpowers/plans/2026-10-21-v7-lot-
 - `test/sheet-gestures.ts`, `screens/home/test-home.ts` (L76-05): `stubPhoneViewport()` and
   `swipeSheetDown(dialog)` for sheet tests; `closeHomeDialog` gains `'swipe'` and waits with
   `queryByRole('dialog', { name, hidden: true })` (an exiting sheet is already `aria-hidden`).
+- `screens/how-to-play-dialog.tsx` (L76-06, spec v7 §7.1, §5.6, §8.3; Appendix A `home-how-to-play-dialog`,
+  `home-how-to-play-dismiss`): How to play is a V7 `Dialog` (a bottom sheet on phones, centered on
+  desktop, width `xl`) holding a `Carousel` labelled "How to play" on every viewport. There is one card
+  per `HOW_TO_PLAY_SECTIONS` entry, in order (`data-how-to-play-section`, named by the section title),
+  each with the title, the body verbatim and, on Lives, Points and Upgrade, the resource icons
+  (`ui/icons` `life` Lives and `shield` Shield, `point` Points, `upgrade` Upgrade points;
+  `data-how-to-play-icons`). The body stays plain text: `EffectTextWithIcons` would turn "0 lives",
+  "1 upgrade point" and "1 life" into glyph amounts, so the copy would no longer read verbatim. Four
+  cards also carry card renders (designer 2026-11-03: icons and card renders): a
+  `data-how-to-play-renders` row under the body, `aria-hidden` (the body names the cards), of static
+  base-art `ui/card` `Card`s (`size="hand"`, `[--card-w:96px]`, never `getCardArtUrl`, at most two so a
+  card never scrolls sideways at 360 px): Basic Attack and Shield on Cards, Basic Attack base beside the
+  same card `isUpgraded` on Upgrade, one Random `KitPortrait` (`size="tile"`, no real kit is suggested)
+  on Kits, Block on Special cards. Instance ids are synthetic: `how-to-play:<cardId>[:upgraded]`. A
+  screenshot `<img>` renders only when `howToPlayScreenshotUrl` finds the designer PNG (a test of it
+  excludes the render row's own art `<img>`s). The chevrons (Previous / Next, keyboard-operable) and a
+  swipe on the track page it, the status line announces "How to play, n of 9", and paging never closes
+  it. Reduced motion pages instantly and the sheet fades only. Skip → 'skip', Got it → 'got-it', Esc,
+  backdrop and swipe-down → 'dismiss', each once per open (`useOncePerOpen`), so a gated close enters
+  its path once and never reads as a manual close. Props and `HowToPlayCloseReason` are unchanged, so
+  Home, the arena menu and the classic table '?' need no edit; on the table it is now a V7 sheet, so
+  Esc closes only it (Q49). It never sends an intent and imports nothing from `design/`.
 
 ## Design system (V2 · Lots 10+)
 
@@ -1897,7 +1920,7 @@ rules above are unchanged — this section only covers how the client looks.
   kind/topics plus contact when filled. Send uses a sync in-flight gate so two
   clicks before paint cannot insert two rows. No Inbox link on the hub.
   **Admin:** see Admin tool mode (Lot 80).
-  **How to play** (L42 / L51-02): spec §5.1 sections in order (goal, turns, lives,
+  **How to play** (L42 / L51-02; a V7 card carousel since L76-06): spec §5.1 sections in order (goal, turns, lives,
   points, cards, upgrade, kits, specials, shop — no delayed-resolution section);
   Skip + Got it both close; screenshot `<img>` only when the PNG exists under
   `src/assets/how-to-play/` (`import.meta.glob`, missing files omit the image).
@@ -1931,7 +1954,7 @@ rules above are unchanged — this section only covers how the client looks.
   `main`: private Draw, invisible players are not targets, Sentence chip
   inspect, hand layout stays put, point chips cap at 50, your kit portrait
   is one step larger, and the action log shows icon-only resource nets
-  (unspied card sales hide the payout; unspied shop buys hide the price; resolve lines show each seat’s gain or loss). `lot-68` (2026-09-29) shipped Ghost Tax+, Shield+ vs Imposition, and fixed some bugs. `lot-69` stays as written. `lot-71` (2026-10-06) shipped on `main`: Spy Thief chooses one opponent (the upgrade hits every living opponent), and forfeiting or leaving the table pays kill rewards at the same time to queued attackers unless one player is left. Active Poison does not. The host can hide kits, deal kits at random, and set human turns from 5 to 180 seconds; players chat in the lobby and at the table until the room closes, and eliminated players and spectators share a separate chat. A Ghost's points from lost lives show as +? until that Ghost is spied. `lot-72` (2026-10-07: active-slot drop cancel; no Poison tick during Block; the lobby host never passes to a bot) shipped on `main` (promote #79) before V7 Lot 72 merged. **V7 (technical spec v7 §10.4):** `lot-72-v7` (2026-10-26, "New look") is the open V7 entry; each V7 player-facing PR appends one Before / After item per screen area during the promotion freeze. New ids never reuse an existing id: seen-state (`ui/release-storage.ts`) is keyed by id. First item: the §10.5 catalog-text fix (After `Fixed some bugs.`). Second item: the classic tutorial's resources tip no longer shows a stray life icon (After `Fixed some bugs.`). Third item: the turn timer after a fifth-active picker cancel (server fix L82-01, After `Fixed some bugs.`). Fourth item: the played card no longer also lands in the pool after a fifth-active picker (server fix L82-02, After `Fixed some bugs.`). Fifth item: Cancel on the fifth-active picker refunds the play's points (designer rule change L82-03). Sixth item: past elimination flashes no longer replay after a reconnect or on the finished board (Q63, L74-17, After `Fixed some bugs.`). Seventh item: the Lot 76 copy fixes (How to play Kits, Your kit, the kit picker and its Random kit, the Online Create helper, Prophet's ability and the random-special versos; L76-03, After `Fixed some bugs.`). Eighth item: Lobby item (L76-09, rewritten by L76-12): the lobby shows each seat in its player color, and everyone can open the table rules. Ninth item: Home item (L76-04): Home has the new look, with a big tile for each way to play. Sentence chips sit
+  (unspied card sales hide the payout; unspied shop buys hide the price; resolve lines show each seat’s gain or loss). `lot-68` (2026-09-29) shipped Ghost Tax+, Shield+ vs Imposition, and fixed some bugs. `lot-69` stays as written. `lot-71` (2026-10-06) shipped on `main`: Spy Thief chooses one opponent (the upgrade hits every living opponent), and forfeiting or leaving the table pays kill rewards at the same time to queued attackers unless one player is left. Active Poison does not. The host can hide kits, deal kits at random, and set human turns from 5 to 180 seconds; players chat in the lobby and at the table until the room closes, and eliminated players and spectators share a separate chat. A Ghost's points from lost lives show as +? until that Ghost is spied. `lot-72` (2026-10-07: active-slot drop cancel; no Poison tick during Block; the lobby host never passes to a bot) shipped on `main` (promote #79) before V7 Lot 72 merged. **V7 (technical spec v7 §10.4):** `lot-72-v7` (2026-10-26, "New look") is the open V7 entry; each V7 player-facing PR appends one Before / After item per screen area during the promotion freeze. New ids never reuse an existing id: seen-state (`ui/release-storage.ts`) is keyed by id. First item: the §10.5 catalog-text fix (After `Fixed some bugs.`). Second item: the classic tutorial's resources tip no longer shows a stray life icon (After `Fixed some bugs.`). Third item: the turn timer after a fifth-active picker cancel (server fix L82-01, After `Fixed some bugs.`). Fourth item: the played card no longer also lands in the pool after a fifth-active picker (server fix L82-02, After `Fixed some bugs.`). Fifth item: Cancel on the fifth-active picker refunds the play's points (designer rule change L82-03). Sixth item: past elimination flashes no longer replay after a reconnect or on the finished board (Q63, L74-17, After `Fixed some bugs.`). Seventh item: the Lot 76 copy fixes (How to play Kits, Your kit, the kit picker and its Random kit, the Online Create helper, Prophet's ability and the random-special versos; L76-03, After `Fixed some bugs.`). Eighth item: Lobby item (L76-09, rewritten by L76-12): the lobby shows each seat in its player color, and everyone can open the table rules. Ninth item: Home item (L76-04, rewritten by L76-06): Home has the new look, and How to play is a deck of cards you swipe through. Sentence chips sit
   on the caster (remaining turns in red) and open catalog inspect (L65-03). Play / later caster ticks / fire flash
   the table-wide red banner. Player-visible work updates the open What’s new
   entry in the same commit. No accounts, no protocol fields. Idle hub is unlabeled (not “Not connected”). Top-right **Beta**

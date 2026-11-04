@@ -179,7 +179,9 @@ Shipped code never imports it.
 with a swipe handle whatever the default window size. `swipeSheetDown(dialog)` drags that handle
 120 px down (the Sheet closes from 80 px). Wait for a closed sheet with
 `queryByRole('dialog', { name, hidden: true })` returning null: an exiting sheet is already
-`aria-hidden`. Shipped code never imports it.
+`aria-hidden`. `swipeCarouselTo(dialog, index)` (L76-06) scrolls the dialog's `Carousel` track to a
+slide as a swipe would: it stubs the track's `clientWidth` (300) and a writable `scrollLeft`, then
+fires `scroll`. Shipped code never imports it.
 
 ## Seeded randomness
 
