@@ -25,6 +25,7 @@ const PRIMITIVE_TITLES = [
   'Tooltip',
   'ScrollArea',
   'TextField',
+  'TextArea',
   'Carousel',
   'KitTile',
 ];

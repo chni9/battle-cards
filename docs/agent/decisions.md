@@ -6548,3 +6548,15 @@ This supersedes "The New button is never disabled, even while connecting or laun
 Spec v7 §7.1 asks for resource icons inline; §13 row 12 says icons and card renders; the designer chose both (2026-11-03): four slides (Cards, Upgrade, Kits, Special cards) add aria-hidden base-art renders. This supersedes the parity row `home-how-to-play-dialog` (a V2 Dialog with PNG glyph rows). `screens/how-to-play-dialog.tsx` keeps its export and `onClose(reason)` contract, so the arena TopBar and the classic table mount the V7 sheet unedited; on the classic table '?' it is now a V7 sheet in the sheet stack (Esc closes only it).
 
 ---
+
+## 2026-11-04 · [P] Feedback locks dismissal while sending, times out after 15 s and ends on Sent (L76-07)
+
+Source: technical spec v7 §7.7 (a 15 s client timeout re-enables dismissal with an error; ends with "Sent"); the Lot 76 backlog review of 2026-10-21 ("Sent" closes by itself after ~1.5 s; not in §7.7, a designer question); §5.2, §10.6, §11 (Q6, Q68, Q69, Q71); Lot 76 plan L76-07 Review line, Part 2 Review Focus 2.
+
+- **Supersedes** in Appendix A `global-feedback-dialog`: "Esc / overlay dismisses as skip (ask) or cancel (manual). It is not gated by busy", "Success: the dialog closes at once with reason 'sent'. There is no confirmation toast" and "The Kind buttons carry no aria-pressed"; and in `feedback-dialog-dismiss`: "busy sending: buttons disabled, but Escape / backdrop still close". While a send is in flight the sheet is `dismissLocked` (Esc, backdrop, swipe) and Skip / Cancel are disabled.
+- **Timeout.** The dialog owns the 15 s timer (`FEEDBACK_SEND_TIMEOUT_MS`), not `submitFeedback`, so a hung fetch and a mocked one behave alike. On expiry it moves the request id on, releases the in-flight gate and shows the existing 'Could not save — try again'. A late answer to that request is ignored: no Sent, no 'sent'. The note may still have been stored, so a retry can store a second one: a duplicate row is preferred to a sheet the player cannot leave.
+- **Sent.** A success retitles the same sheet "Sent" with "Thanks for your feedback." and a focused OK. It closes after `FEEDBACK_SENT_CLOSE_MS` (1.5 s) or on OK, Esc, backdrop or swipe, and calls `onDismiss('sent')` exactly once, so no caller changes (End still marks the ask-once flag on 'sent', 1.5 s later). Every way out of Sent goes through `useOncePerOpen` (plan A.9 ruling 5; controller ruling on L76-07), so OK pressed in the same moment as the auto-close still reports once. The sheet is renamed at once, so a test that waits for the 'Feedback' dialog to close after a send still passes.
+- **Fields.** Kind is a `Segmented` radio group (Q71); the About chips keep `aria-pressed`. Message is the new `ui/primitives` `TextArea` (16 px, §5.2). There is still no `<form>`: Enter never sends. `FEEDBACK_FALLBACK_ERROR` moved to `feedback-form-copy.ts`, because a lobby test mocks `submit-feedback` without its constants.
+- **Test edit.** `screens/home/home-screen.test.tsx` › 'opens Feedback in manual mode from the hub…' finds Idea by role `radio` instead of `button`: the same control, now a radio (§11, Q71). Its assertions are unchanged.
+
+---

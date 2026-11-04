@@ -18,6 +18,7 @@ import { ScrollArea } from './scroll-area';
 import { Segmented } from './segmented';
 import { Slider } from './slider';
 import { Tabs } from './tabs';
+import { TextArea } from './text-area';
 import { TextField } from './text-field';
 import { Toggle } from './toggle';
 import { Tooltip } from './tooltip';
@@ -287,6 +288,26 @@ export function TextFieldDemo(): ReactElement {
       <TextField label="Join code" placeholder="ABCD" autoCapitalize="characters" />
       <TextField label="Message" labelHidden placeholder="Message" />
       <TextField label="Locked" value="Read only" disabled readOnly />
+    </div>
+  );
+}
+
+export function TextAreaDemo(): ReactElement {
+  const [message, setMessage] = useState('');
+  return (
+    <div className="flex max-w-sm flex-col gap-3">
+      <TextArea
+        label="Message"
+        rows={4}
+        maxLength={4000}
+        placeholder="What happened, and what did you expect?"
+        value={message}
+        onChange={(event) => {
+          setMessage(event.currentTarget.value);
+        }}
+      />
+      <TextArea label="Notes" hint="Up to 4000 characters" placeholder="Anything else?" />
+      <TextArea label="Locked" value="Read only" disabled readOnly />
     </div>
   );
 }

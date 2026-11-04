@@ -86,8 +86,8 @@ describe('release notes catalog (L63-07 / L65-05)', () => {
         after: 'The lobby shows each seat in its player color, and everyone can open the table rules.',
       },
       {
-        before: 'Home was a plain menu, and How to play was one long page.',
-        after: 'Home has the new look, and How to play is a deck of cards you swipe through.',
+        before: 'Home was a plain menu, and How to play was one long page, and Feedback closed without a word.',
+        after: 'Home has the new look, and How to play is a deck of cards you swipe through, and Feedback shows Sent once your note is saved.',
       },
     ]);
   });

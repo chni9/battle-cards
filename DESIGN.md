@@ -651,6 +651,9 @@ their lot restyles them.
   live region that is always present, so an error that appears later is announced. The
   placeholder is `--text-2` at 70% opacity: 5.20:1 on `--panel-2` (`ui/contrast.ts`; 60%
   would fall to 4.20:1), dimmer than a typed `--text` value (12.61:1).
+- **TextArea:** the multi-line twin of TextField (the Feedback message, L76-07): the same 16px
+  (`--type-input`) Nunito on `--panel-2`, chrome, hint, error live region and `aria-invalid`,
+  with a 112px minimum height and a vertical resize handle. TextField renders an `<input>` only.
 - **Carousel:** a scroll-snap track of full-width slides with chevron IconButtons, aria-hidden
   dots and a screen-reader status line, "{label}, {n} of {m}" (`role="status"`).
   - Paging scrolls smoothly, or instantly under reduced motion (§8.3). A swipe reports its
@@ -742,7 +745,9 @@ The V2 rule "one Esc closes every open Dialog" does not apply to V7 surfaces.
   swipe-down of at least 80px on the handle, all through `onClose`. A press inside the panel, or
   a drag that starts in the panel and ends on the backdrop, never closes it.
   `closeOnBackdrop={false}` removes only the backdrop path; `dismissLocked` (the Feedback send
-  lock, §7.7) removes all three. A backdrop press never moves focus out of the sheet.
+  lock, §7.7) removes all three. A backdrop press never moves focus out of the sheet. The
+  Feedback sheet (L76-07) holds that lock for at most 15 s: with no answer it unlocks and shows
+  the error. A success retitles the same sheet 'Sent', which closes by itself after 1.5 s.
 - **Press shield** (spec v7 §1 "an accidental tap never spends the turn", §6.6.4): a press
   during a sheet's exit does nothing, whether or not another sheet remains beneath. The exiting
   overlay keeps covering the whole box, hit-testable and `aria-hidden`, with handlers that check

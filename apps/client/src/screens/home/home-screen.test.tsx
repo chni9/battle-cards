@@ -339,7 +339,7 @@ describe('Feedback on Home (spec v7 §7.7; L47-03, L57-05)', () => {
     const dialog = screen.getByRole('dialog', { name: 'Feedback' });
     expect(within(dialog).getByRole('button', { name: 'Cancel' })).toBeTruthy();
     expect(within(dialog).queryByText('Skip is fine.')).toBeNull();
-    await user.click(within(dialog).getByRole('button', { name: 'Idea' }));
+    await user.click(within(dialog).getByRole('radio', { name: 'Idea' }));
     await user.type(within(dialog).getByLabelText('Message'), 'More kits');
     await user.click(within(dialog).getByRole('button', { name: 'Send' }));
     expect(feedback.submit.mock.calls).toEqual([[
