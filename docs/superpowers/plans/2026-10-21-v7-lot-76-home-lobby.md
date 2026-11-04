@@ -6843,6 +6843,14 @@ with a swipe handle whatever the default window size. `swipeSheetDown(dialog)` d
 
 ### Task L76-06: Turn How to play into a swipeable card carousel
 
+**Designer answer (2026-11-03): icons AND card renders (binding; overrides this task's "no card renders" text, its decisions entry and its designer question 4).** Four slides also show static card renders from `ui/card` `Card` (base art only, never `getCardArtUrl`), `aria-hidden` inside the slide (the slide text already names them), in a `data-how-to-play-renders` row under the body, sized with `[--card-w:…]` on each card (Card size contract), at most 2 per slide so the slide never scrolls sideways at 360 px:
+- `cards`: `basic-attack` and `shield` (an attack and an action card), `size="hand"`;
+- `upgrade`: `basic-attack` base and the same card `isUpgraded` (the holo sheen and "+" badge show what Upgrade does), `size="hand"`;
+- `kits`: one `KitPortrait kitId="random" size="tile"` (the Random choice) — no real kit, so no kit is suggested;
+- `specials`: `block`, `size="hand"`.
+Every other slide stays text + icons. Tests (add to `screens/how-to-play-dialog.test.tsx`, +2): `it('renders the card art row on the Cards, Upgrade, Kits and Special cards slides only, hidden from assistive tech')` (the four slides each hold one `[data-how-to-play-renders]` with `aria-hidden="true"` and the expected `data-card-id`s / `data-kit-face="random"`; the five others have none) and `it('shows the upgraded Basic Attack beside the base one on the Upgrade slide')` (one render carries the upgraded state: check the Card's upgraded marker the `ui/card` tests use). Instance ids are synthetic (`how-to-play:<cardId>[:upgraded]`). Replace the decisions.md entry title and text with: `## YYYY-MM-DD · [P] How to play is a card carousel with icons and card renders (L76-06)` — "Spec v7 §7.1 asks for resource icons inline; §13 row 12 says icons and card renders; the designer chose both (2026-11-03): four slides (Cards, Upgrade, Kits, Special cards) add aria-hidden base-art renders. This supersedes the parity row `home-how-to-play-dialog` (a V2 Dialog with PNG glyph rows). `screens/how-to-play-dialog.tsx` keeps its export and `onClose(reason)` contract, so the arena TopBar and the classic table mount the V7 sheet unedited; on the classic table '?' it is now a V7 sheet in the sheet stack (Esc closes only it)." Add `ui/card` and `ui/kit` imports to the Interfaces; adjust the test counts (+2).
+
+
 **Files:**
 - Modify: `apps/client/src/screens/how-to-play-dialog.tsx`, rewritten in place (export, `HowToPlayDialogProps`, `HowToPlayCloseReason` and the reasons unchanged; V7 `Dialog` + `Carousel`).
 - Test:
@@ -9435,7 +9443,7 @@ Defaults are implemented unless the designer answers otherwise. Each entry names
    - The wordmark is `--text` with a 3 px ink outline and hard shadow, 32 px on phones and 48 px from `sm`.
    - The paths show no art.
    - The New unread dot is `--cta` (the IconButton count badge), not red.
-4. **How to play card renders:** §13 Q12 says "icons and card renders"; §7.1 and the brief name only icons. Default: icons only, no card renders on the slides.
+4. **How to play card renders:** **Answered 2026-11-03: icons and card renders** (four slides; see L76-06's designer-answer block).
 5. **How to play initial focus:** the Previous chevron (the Sheet default), not Got it.
 6. **What's new item 9 copy:** L76-04 'Home was a plain menu.' → 'Home has the new look, with a big tile for each way to play.'; L76-06 rewrites it to 'Home was a plain menu, and How to play was one long page.' → 'Home has the new look, and How to play is a deck of cards you swipe through.'
 
@@ -9451,7 +9459,7 @@ Defaults are implemented unless the designer answers otherwise. Each entry names
 
 - **L76-07:** the Sent body line "Thanks for your feedback." (default) or none; the Sent sheet's OK (default: shown and focused); Sent auto-closes after 1.5 s (Review line); the 15 s timeout reuses 'Could not save — try again' (default) and ignores a late success (a retry may store a duplicate row); What's new item 9 suffixes: before "…, and Feedback closed without a word.", after "…, and Feedback shows Sent once your note is saved."
 - **L76-08:** the large Join code field is Lilita 32 px, 56 px tall, wide tracking (default).
-- **L76-11:** the opponent count is seat radios around a mini table (default) vs. a stepper or a two-row radio row; filled seats show their number on the seat hue (default) vs. a bot glyph; Your kit before the rules strip (§7.1 order, default).
+- **L76-11:** the opponent count is seat radios around a mini table (**answered 2026-11-03: seat radios around a mini table**) vs. a stepper or a two-row radio row; filled seats show their number on the seat hue (default) vs. a bot glyph; Your kit before the rules strip (§7.1 order, default).
 - **L76-17:** `navigator.share` gets the URL only (default) or also a title; the "Link copied" body "Share this link with friends: {link}" (default); a non-cancel share failure copies the link instead (default); What's new still auto-opens over an invite link's gate (default: unchanged); item 8: before "The lobby was a plain list, only the host could open the table rules, and friends had to type the code.", after "The lobby shows each seat in its player color, everyone can open the table rules, and Share sends a link that fills in the code."
 
 #### New or changed strings
