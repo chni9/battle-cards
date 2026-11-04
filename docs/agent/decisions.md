@@ -6345,3 +6345,22 @@ L74-21 cache)" above; the L74-26 task review (M1) and the controller's ruling of
 - **Follow-up.** L75-13 appends the measured numbers in a new dated entry.
 
 ---
+
+## 2026-11-04 · [P] Hint and tutorial copy fixes supersede the locked copy (L75-01)
+
+Source: technical spec v7 §10, §10.1, §10.2 (designer 2026-10-20, Q11 = B); the Lot 75 plan, ruling
+R10. Supersedes "2026-08-29 · First-game hint copy rewrite (main)": `HINT_COPY` and the tutorial
+coach and tour copy are no longer locked, typos included.
+
+- **Fixed (§10.2):** "you kit", "you hand", "stronger that", "ressources", "atteign" (the sentence
+  is rewritten as "If your lives reach 0, you are eliminated."), "uo to" and "opponent !". The space
+  before "!" in five `TUTORIAL_STEPS` bodies (indices 3, 11, 17, 27, 29) is the same typo class
+  (L75-01 Review line).
+- **Rewritten (§10.1):** `hidden-kit` and the tour Opponent step (Lot 69: kit and cards need an
+  upgraded Spy or Spy Thief, or elimination; a basic Spy shows only resources); Counter Spy (the
+  designer's sentence); `reward` (Lot 71: helping eliminate, one shared timer).
+- **Unchanged:** hint ids, titles, the selector, auto-dismiss, `your-turn`, and the single
+  `incoming-thief` body (its per-card copy is L75-07). The What's new entry `lot-72-v7` gains one
+  `Fixed some bugs.` item. Every string is listed in the PR for designer review.
+
+---

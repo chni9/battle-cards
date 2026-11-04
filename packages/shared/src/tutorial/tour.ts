@@ -87,7 +87,7 @@ export const TUTORIAL_TOUR_STEPS: readonly TutorialTourStep[] = [
     highlight: 'opponent',
     coach: {
       title: 'Opponent',
-      body: 'That seat is your opponent. You can have multiple opponents in the game. Their kit and cards stay hidden until Spy reveals them.',
+      body: 'That seat is your opponent. You can have multiple opponents in the game. You see their kit and cards only with an upgraded Spy or Spy Thief, or once they are eliminated. A basic Spy shows only their resources.',
     },
   },
   {

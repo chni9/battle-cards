@@ -1,5 +1,5 @@
 /**
- * First-real-game hint copy — technical spec v6 §5.2 / L46-01.
+ * First-real-game hint copy — technical spec v6 §5.2 / L46-01; v7 §10.1–§10.2 (L75-01).
  */
 
 import { describe, expect, it } from 'vitest';
@@ -19,7 +19,7 @@ describe('hint copy (technical spec v6 §5.2)', () => {
       'It is your turn you have to take **one** action.',
     );
     expect(HINT_COPY.draw.body).toBe(
-      '**Draw** gives you points. The number of points you can draw depends on you kit.',
+      '**Draw** gives you points. The number of points you can draw depends on your kit.',
     );
     expect(HINT_COPY.hand.body).toContain('**use**');
     expect(HINT_COPY.hand.body).toContain('**upgrade**');
@@ -52,5 +52,35 @@ describe('hint copy (technical spec v6 §5.2)', () => {
     expect(HINT_COPY.hand.title).toBe('Hand');
     expect(HINT_COPY.specials.title).toBe('Specials');
     expect(HINT_COPY.reward.title).toBe('Elimination reward');
+  });
+});
+
+describe('hint copy fixes (technical spec v7 §10.1, §10.2; L75-01)', () => {
+  const TYPOS = ['you kit', 'you hand', 'stronger that', 'ressources', 'atteign', 'uo to', 'opponent !', ' !'] as const;
+
+  it('carries none of the seven locked typos and no space before an exclamation mark (§10.2)', () => {
+    for (const id of HINT_IDS) {
+      for (const typo of TYPOS) expect(HINT_COPY[id].body).not.toContain(typo);
+    }
+    expect(HINT_COPY.hand.body).toContain('This is your hand');
+    expect(HINT_COPY.specials.body).toContain('They are stronger than normal cards.');
+    expect(HINT_COPY.resources.body).toContain('They are your resources');
+    expect(HINT_COPY.resources.body).toContain('If your lives reach 0, you are eliminated.');
+    expect(HINT_COPY['incoming-thief'].body).toContain('steal up to 10 points');
+  });
+
+  it('hidden-kit: kit and cards need an upgraded Spy, a basic Spy shows only resources (§10.1, Lot 69)', () => {
+    const body = HINT_COPY['hidden-kit'].body;
+    expect(body).toContain('upgraded Spy');
+    expect(body).toContain('Spy Thief');
+    expect(body).toContain('A basic Spy shows only their resources.');
+    expect(body).not.toContain('until you use Spy');
+  });
+
+  it('reward: picks reward helping eliminate an opponent, on one shared timer (§10.1, Lot 71)', () => {
+    const body = HINT_COPY.reward.body;
+    expect(body.startsWith('You eliminated')).toBe(false);
+    expect(body).toContain('helped eliminate');
+    expect(body).toContain('one shared timer');
   });
 });

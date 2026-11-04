@@ -275,18 +275,20 @@ Skippable overlays on the **first Classic** `playing` view per browser (`playKin
 { dismissed: HintId[]; skipAll: boolean }
 ```
 
+Copy superseded by technical spec v7 §10.1–§10.2 (designer 2026-10-20, Q11 = B; L75-01): the cells below match `HINT_COPY` after the Lot 75 fixes, and `HINT_COPY` is the source.
+
 | `HintId` | When it fires | Copy (normative; `HINT_COPY`) |
 |---|---|---|
 | `your-turn` | POV becomes active the first time | It is your turn you have to take **one** action. |
-| `draw` | First time the dock is shown | **Draw** gives you points. The number of points you can draw depends on you kit. |
-| `hand` | First time the dock is shown (after Draw) | This is you hand where you have all the cards you can use. Click a card to **use**, **upgrade**, or **sell** it for points. |
-| `specials` | First time the dock is shown (after Hand) | **Specials** are one-use cards. They are stronger that normal cards. Use them wisely. Special cards you start with depend on your kit. |
-| `resources` | Same | Here you will find lives, points, upgrade points and shield. They are your ressources that you have to manage during the game. If your number of lives atteign 0, you are eliminated. |
+| `draw` | First time the dock is shown | **Draw** gives you points. The number of points you can draw depends on your kit. |
+| `hand` | First time the dock is shown (after Draw) | This is your hand where you have all the cards you can use. Click a card to **use**, **upgrade**, or **sell** it for points. |
+| `specials` | First time the dock is shown (after Hand) | **Specials** are one-use cards. They are stronger than normal cards. Use them wisely. Special cards you start with depend on your kit. |
+| `resources` | Same | Here you will find lives, points, upgrade points and shield. They are your resources that you have to manage during the game. If your lives reach 0, you are eliminated. |
 | `incoming` | First **attack** Incoming targeting POV (not Spy, Thief, or presentation persistents) | There is an incoming **attack**! It will take effect **after you act**. You can attack back (equal cancels both; a weaker answer still hits them later), use Shield, or use Mirror. |
-| `incoming-thief` | First Thief Incoming targeting POV (`thief` or `*-thief`; not Spy) | An opponent used **Thief** on you! It will take effect **after you act**. This will steal uo to 10 points from you. You can counter it with Thief, or spend your points before it resolves. |
-| `hidden-kit` | First time an unspied opponent is visible | Here are your opponents. You cannot see their kit until you use Spy to reveal it. |
+| `incoming-thief` | First Thief Incoming targeting POV (`thief` or `*-thief`; not Spy) | An opponent used **Thief** on you! It will take effect **after you act**. This will steal up to 10 points from you. You can counter it with Thief, or spend your points before it resolves. |
+| `hidden-kit` | First time an unspied opponent is visible | Here are your opponents. You see their kit and cards only with an upgraded Spy or Spy Thief, or once they are eliminated. A basic Spy shows only their resources. |
 | `shop` | Current best remaining economy lesson on your turn (L46-02) | This is the shop. You can buy cards, special cards and upgrade points from here. |
-| `reward` | First elimination-reward sub-choice for POV | You eliminated an opponent ! You can pick **two** rewards: 4 lives, 8 points, a card from their hand, or an upgrade point. |
+| `reward` | First elimination-reward sub-choice for POV | You helped eliminate an opponent! Pick **two** rewards: 4 lives, 8 points, one of their cards, or an upgrade point. Everyone who helped picks at the same time, on one shared timer. |
 
 `leave` is **not** a first-game hint (designer 2026-08-26). The Forfeit flag keeps its own confirm copy.
 
@@ -381,7 +383,7 @@ can be the next action. That skip is tutorial overlay, not a Classic extra actio
 | 8 | Bot | `draw` | — (keep last coach) | Spy resolves after this draw. Look is a **client overlay** before index 9, not this row. |
 | 9 | Human | **sell** one Shield | Sell | Selling **removes the card from hand** and yields play-cost **points**. Sell **one** Shield, keep the other. |
 | 10 | Bot | play **Spy** → human | — |
-| 11 | Human | play **Spy** → bot (counter) | Counter Spy | Incoming Spy (red). Play Spy back. The same card aimed at the source **cancels both**. |
+| 11 | Human | play **Spy** → bot (counter) | Counter Spy | Incoming Spy (red). Play Spy back. Your upgraded Spy cancels their basic Spy and still resolves on them (technical spec v7 §10.1). |
 | 12 | Bot | `draw` | — |
 | 13 | Human | **buy an upgrade point** | Shop | Open the Shop and **buy an upgrade point** (spends **points**, grants another **upgrade point**). |
 | 14 | Bot | `draw` | — |

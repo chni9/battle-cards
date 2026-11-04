@@ -80,6 +80,7 @@ describe('release notes catalog (L63-07 / L65-05)', () => {
         after: 'Cancelling the fifth-active picker refunds the points you paid.',
       },
       { before: 'Reconnecting or viewing the final board replayed old elimination flashes.', after: 'Fixed some bugs.' },
+      { before: 'Some tips and tutorial steps had typos or outdated Spy and reward text.', after: 'Fixed some bugs.' },
     ]);
   });
 

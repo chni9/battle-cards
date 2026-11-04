@@ -45,6 +45,20 @@ describe('tutorial board tour (technical spec v6 §5.4)', () => {
     expect(flag?.coach.body).toMatch(/skip/i);
     expect(flag?.coach.body).toMatch(/not a forfeit/i);
   });
+
+  it('the Opponent step: kit and cards need an upgraded Spy, a basic Spy shows only resources (§10.1, Lot 69)', () => {
+    const body = TUTORIAL_TOUR_STEPS.find((step) => step.highlight === 'opponent')?.coach.body;
+    expect(body).toContain('upgraded Spy');
+    expect(body).toContain('A basic Spy shows only their resources.');
+    expect(body).not.toContain('until Spy reveals them');
+  });
+
+  it('no tour or Look copy has a space before an exclamation mark (§10.2)', () => {
+    for (const copy of [...TUTORIAL_TOUR_STEPS.map((step) => step.coach), TUTORIAL_LOOK_COACH]) {
+      expect(copy.title).not.toContain(' !');
+      expect(copy.body).not.toContain(' !');
+    }
+  });
 });
 
 describe('tutorial Look gate (technical spec v6 §5.4)', () => {

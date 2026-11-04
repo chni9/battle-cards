@@ -92,7 +92,7 @@ export const TUTORIAL_STEPS: readonly TutorialStep[] = [
     highlight: 'basic',
     coach: {
       title: 'Counter',
-      body: 'Incoming attack ! It is aimed at you. It will take effect after you play your own action, so you can still react. A Basic attack is incoming now — that is the red highlight. Play your Basic attack back at them. **Equal** damage cancels **both** attacks.',
+      body: 'Incoming attack! It is aimed at you. It will take effect after you play your own action, so you can still react. A Basic attack is incoming now — that is the red highlight. Play your Basic attack back at them. **Equal** damage cancels **both** attacks.',
     },
   },
   {
@@ -160,7 +160,7 @@ export const TUTORIAL_STEPS: readonly TutorialStep[] = [
     highlight: 'spy',
     coach: {
       title: 'Counter Spy',
-      body: 'A Spy is incoming now ! Play Spy back at them. The same card aimed at the source **cancels both**. You do not want your enemies to see your game plan.',
+      body: 'A Spy is incoming now! Play Spy back at them. Your upgraded Spy cancels their basic Spy and still resolves on them. You do not want your enemies to see your game plan.',
     },
   },
   {
@@ -211,7 +211,7 @@ export const TUTORIAL_STEPS: readonly TutorialStep[] = [
     highlight: 'shield',
     coach: {
       title: 'Shield',
-      body: 'A Strong attack is incoming now ! Shield stops **attack** damage by giving you **shield** points. Play Shield now. After you act, their Strong attack resolves and the Shield absorbs it. You can play Shield at any time, not only when getting attacked.',
+      body: 'A Strong attack is incoming now! Shield stops **attack** damage by giving you **shield** points. Play Shield now. After you act, their Strong attack resolves and the Shield absorbs it. You can play Shield at any time, not only when getting attacked.',
     },
   },
   {
@@ -296,7 +296,7 @@ export const TUTORIAL_STEPS: readonly TutorialStep[] = [
     highlight: 'absorber',
     coach: {
       title: 'Absorber',
-      body: 'Your opponent just lost **3 lives** ! Play Absorber on them. Absorber makes you gain the **lives** they **lost on their last turn**.',
+      body: 'Your opponent just lost **3 lives**! Play Absorber on them. Absorber makes you gain the **lives** they **lost on their last turn**.',
     },
   },
   {
@@ -313,7 +313,7 @@ export const TUTORIAL_STEPS: readonly TutorialStep[] = [
     highlight: 'basic',
     coach: {
       title: 'Finish',
-      body: 'You are being attacked by a Strong attack ! Play your upgraded Basic attack back. Your stronger upgraded Basic attack cancels their weaker Strong; yours stays active and will kill them on their turn (they have only **1 life** left).',
+      body: 'You are being attacked by a Strong attack! Play your upgraded Basic attack back. Your stronger upgraded Basic attack cancels their weaker Strong; yours stays active and will kill them on their turn (they have only **1 life** left).',
     },
   },
   {

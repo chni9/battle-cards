@@ -1580,6 +1580,13 @@ Appendix A). Each Lot 74 task appends its bullet here, in task order.
   consumes the last-send record, so a later unrelated reject (chat, forfeit, claim) with no state
   update in between never shakes that card again (final review). A Draw latched before a drop
   re-arms on the rejoin's state push.
+- `help/hint-copy.ts`; `packages/shared/src/tutorial/script.ts`, `tour.ts` (L75-01, spec v7 §10.1,
+  §10.2): the hint and tutorial copy is no longer locked. The seven §10.2 typos and the space before
+  "!" in five coach bodies are fixed. `hidden-kit` and the tour Opponent step say kit and cards need
+  an upgraded Spy or Spy Thief, or elimination, and a basic Spy shows only resources (Lot 69). Counter
+  Spy says the upgraded Spy cancels their basic Spy and still resolves; `reward` names helping
+  eliminate and the one shared timer (Lot 71). Tests read the copy through `HINT_COPY`,
+  `tutorialStepAt(n)?.coach`, `TUTORIAL_TOUR_STEPS` and `TUTORIAL_LOOK_COACH`, never a literal.
 
 ## Design system (V2 · Lots 10+)
 
@@ -1706,7 +1713,7 @@ rules above are unchanged — this section only covers how the client looks.
   shop → resources → hidden-kit. Spy stays on the Incoming strip without a hint card.
   Incoming-attack copy is spec §5.2 (equal cancels both; a weaker answer still hits them
   later — Lot 54). Do not invent `actionResolved` cancel-why copy if the wire has no
-  discriminant (spec v6 §12 #7). Copy typos in `HINT_COPY` are locked.
+  discriminant (spec v6 §12 #7). `HINT_COPY` follows technical spec v7 §10.1–§10.2 (L75-01); every copy change is listed in its PR for designer review.
   Auto-Got-it on Draw / Shop / play / portrait / hand or special inspect / attack- or
   thief-Incoming clear / confirm reward. × dismisses the same as Got it.
   Card sits next to `data-hint-anchor` (no rings); `incoming-thief` reuses Incoming.
