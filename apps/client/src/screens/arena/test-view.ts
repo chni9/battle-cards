@@ -8,8 +8,10 @@
  */
 
 import type { KitId, PlayingStateView, PublicPlayerView } from '@card-battle/shared';
+import { act } from 'react';
 import { expect, vi, type MockInstance } from 'vitest';
 
+import type { LayoutBox, Size } from '../../view-model/seat-layout';
 import { makeCard, makeEliminationReveal, makePlayer, makeTableView } from '../../view-model/test-fixtures';
 import { STATUS_LABELS } from '../status-labels';
 import type { ArenaScreenProps } from './arena-screen';
@@ -171,3 +173,120 @@ export function expectNoArenaIntent(props: ArenaScreenProps): void {
     expect(spy).not.toHaveBeenCalled();
   }
 }
+
+export interface ArenaLayoutStubOptions {
+  /** A per-element box (FX anchors, hint anchors); `undefined` falls back to the arena box. */
+  readonly rectFor?: (element: Element) => DOMRect | undefined;
+}
+
+export interface ArenaLayoutStub {
+  /** Sets the fake `visualViewport` and dispatches its `resize`: the mode follows (useVisualViewportBox). */
+  setViewport(width: number, height: number): void;
+  /** Sets the box every unmatched element reports and fires every fake ResizeObserver callback. */
+  setArena(width: number, height: number): void;
+  /** Restores visualViewport, ResizeObserver and getBoundingClientRect. Callers also run it in afterEach. */
+  restore(): void;
+}
+
+/**
+ * Call before rendering (Lot 75 plan Appendix A.10, L75-02): a fake `visualViewport` at `viewport`,
+ * `vi.stubGlobal('ResizeObserver', …)` with a fake whose callbacks `setArena` fires (happy-dom's
+ * never fires), and a `getBoundingClientRect` spy that reports `rectFor(element)` or the arena box.
+ * The `use-arena-layout-box.test.tsx` pattern, shared. `restore` is idempotent.
+ */
+export function stubArenaLayout(viewport: Size, arena: Size, options: ArenaLayoutStubOptions = {}): ArenaLayoutStub {
+  const { rectFor } = options;
+  const original = Object.getOwnPropertyDescriptor(window, 'visualViewport');
+  const fake = Object.assign(new EventTarget(), {
+    width: viewport.width,
+    height: viewport.height,
+    offsetTop: 0,
+    offsetLeft: 0,
+  });
+  Object.defineProperty(window, 'visualViewport', { configurable: true, value: fake });
+
+  const box: Size = { width: arena.width, height: arena.height };
+  const observers = new Set<FakeResizeObserver>();
+  class FakeResizeObserver {
+    constructor(private readonly callback: ResizeObserverCallback) {}
+    observe(): void {
+      observers.add(this);
+    }
+    unobserve(): void {
+      // The arena hooks observe one element each, so unobserving it ends the callbacks.
+      observers.delete(this);
+    }
+    disconnect(): void {
+      observers.delete(this);
+    }
+    fire(): void {
+      this.callback([], this);
+    }
+  }
+  vi.stubGlobal('ResizeObserver', FakeResizeObserver);
+  const rect = vi
+    .spyOn(Element.prototype, 'getBoundingClientRect')
+    .mockImplementation(function (this: Element) {
+      return rectFor?.(this) ?? new DOMRect(0, 0, box.width, box.height);
+    });
+
+  let restored = false;
+  return {
+    setViewport(width, height) {
+      act(() => {
+        fake.width = width;
+        fake.height = height;
+        fake.dispatchEvent(new Event('resize'));
+      });
+    },
+    setArena(width, height) {
+      act(() => {
+        box.width = width;
+        box.height = height;
+        for (const observer of [...observers]) observer.fire();
+      });
+    },
+    restore() {
+      if (restored) return;
+      restored = true;
+      if (original === undefined) Reflect.deleteProperty(window, 'visualViewport');
+      else Object.defineProperty(window, 'visualViewport', original);
+      rect.mockRestore();
+      observers.clear();
+      vi.unstubAllGlobals();
+    },
+  };
+}
+
+/**
+ * Named layout boxes (A.10). The arena heights are the Lot 74 gate's measured or back-solved values
+ * (L74-26 G1–G2; open-question ruling 3); the controller's browser check re-measures them. Pass one
+ * of these, never ad hoc numbers.
+ */
+export const ARENA_TEST_BOXES: {
+  readonly phone360: LayoutBox;
+  readonly phone375: LayoutBox;
+  readonly phone390: LayoutBox;
+  readonly duplicator360: LayoutBox;
+  readonly tablet: LayoutBox;
+  readonly landscape: LayoutBox;
+  readonly landscapeSmall: LayoutBox;
+  readonly desktop: LayoutBox;
+} = {
+  /** L74-26 G1, back-solved from the 82 px overlap. */
+  phone360: { viewport: { width: 360, height: 740 }, arena: { width: 360, height: 214 } },
+  /** Back-solved from the 14 px overlap. */
+  phone375: { viewport: { width: 375, height: 812 }, arena: { width: 375, height: 282 } },
+  /** Assumed: the grid fits the region; the plate does not, with 8 seats. */
+  phone390: { viewport: { width: 390, height: 844 }, arena: { width: 390, height: 300 } },
+  /** 214 − (174 − 100): the 2-seat Duplicator's two-row dock. */
+  duplicator360: { viewport: { width: 360, height: 740 }, arena: { width: 360, height: 140 } },
+  /** `seat-layout.test.ts` TABLET (portrait). */
+  tablet: { viewport: { width: 768, height: 1024 }, arena: { width: 768, height: 560 } },
+  /** Derived: 390 − ≈ 89 top row − 125.5 hand row (L75-03 rule). */
+  landscape: { viewport: { width: 844, height: 390 }, arena: { width: 844, height: 176 } },
+  /** Derived: 375 − 89 − 124. */
+  landscapeSmall: { viewport: { width: 667, height: 375 }, arena: { width: 667, height: 162 } },
+  /** `seat-layout.test.ts` DESKTOP. */
+  desktop: { viewport: { width: 1440, height: 900 }, arena: { width: 1000, height: 600 } },
+};

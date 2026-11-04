@@ -263,8 +263,12 @@ a 375 px phone.
 
 Phone portrait first (375 px, up to eight seats, no horizontal page scroll); desktop is
 derived and a landscape phone is a compact mode (spec v7 §2 Q2, §6.4). Touch targets are at
-least 44px. The layout mode comes from one rule (Primitives › Viewport modes); seat arc, grid
-and sheet placement land in later lots.
+least 44px. The layout mode comes from one rule (Primitives › Viewport modes). The arena lays
+its six regions on a CSS grid per mode (L75-02). Portrait is one column. Desktop has a
+full-width top bar over the arena, the self strip and a hand-and-dock row on the left, and a
+collapsible log column on the right (320 px, a 44 px rail when collapsed). The card, Shop and
+seat sheets are centred dialogs on desktop (`placement="auto"`), and desktop seats are drawn
+at 120×136 with a tile kit portrait.
 
 The page ground is the opt-in class **`.v7-ground`** (`ui/tokens.css`, `@layer components`):
 `--bg-0` under a `--bg-1` to `--bg-0` gradient, the two halos (`--glow-a` top left, `--glow-b`
@@ -801,6 +805,11 @@ The V2 rule "one Esc closes every open Dialog" does not apply to V7 surfaces.
 - **Motion:** the scrim fades over `--dur-fast`; a bottom panel rises 24px and a centered one
   scales from 0.98, with opacity, over `--dur-base` on the entrance ease; the toast drops 12px.
   Under reduced motion all three only fade.
+- **Keyboard** (L75-02, ruling 7, U1): `Sheet` and `Toast` follow the live `useVisualViewportBox()`,
+  so they sit above a phone keyboard. `useViewportMode()` holds its mode while a text field has
+  focus (`useTextEntryFocused()`, `ui/use-visual-viewport-box.ts`) and follows on blur, so the
+  arena, the coach and `Carousel` keep one mode while the player types. `Sheet`
+  `placement="auto"` reads the live box, so it differs from the held mode only on desktop.
 
 ## Cost glyphs and effect copy (L72-11)
 
@@ -1451,5 +1460,7 @@ values.
   one.
 - **Don't** recolor an old screen: V2 `@theme` and `:root` values stay unchanged until that
   screen's lot lands.
-- **Don't** add a detector ignore. The only one allowed is the pre-approved
-  `radial-spotlight-glow` / `dark-glow` ignore scoped to `ui/tokens.css` (spec v7 §12.4).
+- **Don't** add a detector ignore. The only ones allowed are scoped to `ui/tokens.css`: the
+  pre-approved `radial-spotlight-glow` / `dark-glow` ignore (spec v7 §12.4) and the
+  `repeating-stripes-gradient` ignore the designer approved for the ground scanlines on
+  2026-11-03 (L75-02).

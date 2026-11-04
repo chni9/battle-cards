@@ -21,7 +21,7 @@ import {
   type ThreatLabel,
   type ThreatsModel,
 } from '../../view-model/threats';
-import { SEAT_RENDER_BOX, seatCenters } from './seat-geometry';
+import { seatCenters, seatRenderBox } from './seat-geometry';
 
 /** Where an arrow leaves or reaches a seat: about half the 76 px seat. Tuned at the browser gate (§14.3). */
 export const ARROW_SEAT_TRIM_PX = 40;
@@ -189,7 +189,8 @@ export interface FanOutMark {
 export function fanOutMarks(input: Omit<ThreatGeometryInput, 'tappedSeatId'>): readonly FanOutMark[] {
   const { model, layout, arena, povId } = input;
   const anchors = anchorsOf(layout, arena, povId);
-  const { width, height } = SEAT_RENDER_BOX;
+  // The badge corner of the seat as drawn in this mode (L75-02).
+  const { width, height } = seatRenderBox(layout.mode);
   return model.fanOuts.flatMap((group) => {
     const burst = anchors.get(group.sourcePlayerId);
     if (burst === undefined) {

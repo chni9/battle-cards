@@ -373,7 +373,7 @@ export function ShopSheet({
     <Sheet
       open={open}
       mode="read-only"
-      placement="bottom"
+      placement="auto"
       height="full"
       title={SHOP_ACTION_LABEL}
       onClose={onClose}

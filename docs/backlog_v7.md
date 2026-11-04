@@ -23,14 +23,14 @@ Status values: `To do` · `In progress` · `Done` · `Blocked`
 | 72 · Foundations | 21 | 21 |
 | 73 · View-model | 13 | 13 |
 | 74 · Arena I | 26 | 26 |
-| 75 · Arena II | 13 | 1 |
+| 75 · Arena II | 13 | 2 |
 | 76 · Home and lobby | 18 | 0 |
 | 77 · Game over | 8 | 0 |
 | 78 · Juice | 13 | 0 |
 | 79 · Sound and haptics | 5 | 0 |
 | 80 · Admin | 12 | 12 |
 | 81 · Close-out | 6 | 0 |
-| **Total** | **135** | **73** |
+| **Total** | **135** | **74** |
 
 ## Designer questions still open
 
@@ -185,7 +185,7 @@ Tutorial and hints on the arena, the table copy fixes, desktop and landscape-com
 | ID | Task | Cx | Risk | Depends on | Status |
 |---|---|---|---|---|---|
 | L75-01 | **Fix stale and misspelled hint and tutorial copy.** **Acceptance:** `hint-copy.test.ts` asserts the corrected bodies: none of the seven listed typos remains, `hidden-kit` names the upgraded Spy and a basic Spy's resources, and `reward` no longer opens with 'You eliminated'. Shared tutorial tests assert the new Opponent and Counter Spy sentences and that no tour or coach body contains ' !'. Tests that pin the latest What's new id are updated. v6 spec rows, `frontend.md` and `decisions.md` change in the same commit. `pnpm verify` green. | S | Low | Lot 73 | Done |
-| L75-02 | **Render the arena desktop layout.** **Acceptance:** Component tests (happy-dom) with a 1440×900 layout box: mode `desktop`, every opponent seat rendered in the ellipse container (grid when `seats()` says so), and the log panel toggles open and closed while keeping a rendered log element when collapsed. The dock sits in the hand row. A 768×1024 box renders portrait. Browser check at 1440×900 with 2, 4 and 8 seats: no page scroll, nothing cropped. `pnpm verify` green. | M | Medium | Lot 74 | To do |
+| L75-02 | **Render the arena desktop layout.** **Acceptance:** Component tests (happy-dom) with a 1440×900 layout box: mode `desktop`, every opponent seat rendered in the ellipse container (grid when `seats()` says so), and the log panel toggles open and closed while keeping a rendered log element when collapsed. The dock sits in the hand row. A 768×1024 box renders portrait. Browser check at 1440×900 with 2, 4 and 8 seats: no page scroll, nothing cropped. `pnpm verify` green. | M | Medium | Lot 74 | Done |
 | L75-03 | **Render the arena landscape-compact layout.** **Acceptance:** A unit test covers the height-bound hand size helper. Component tests with 844×390 and 667×375 boxes: mode `landscape-compact`, seats in the band container in turn order, hand and dock in one row. A 360×740 box stays portrait. Browser check on a landscape phone with 8 seats: no page scroll, hand faces uncropped with readable chips. `pnpm verify` green. | M | Medium | Lot 74 | To do |
 | L75-04 | **Host tutorial coach, callouts, tour and Look gate.** **Acceptance:** Behavior tests use a tutorial view at index 0 in portrait, landscape-compact and desktop boxes. Each tour step marks exactly its mapped element, which exists even when empty (Q60), and Got it advances without sending an intent. Drag, Use and Draw send nothing during the tour. At index 9 every send stays blocked until the revealed opponent's seat sheet opens, then never again in that mount. The coach hides, reopens from the menu and reopens on new copy, and fake timers retitle it 'Play' after 20 s. The incoming Basic at index 3 is ringed in attack tone. The finished tutorial board has no coach. The flag opens 'Skip the tutorial?' and Skip only leaves. `pnpm verify` green. **Watch point:** `ui/layers.ts` `Z_INDEX` has no coach or hint layer, while V6 puts the coach at 110 and hints at 105, above dialogs. A coach under an open sheet would be dimmed, and a tap on it would close the sheet. Add a `coach` layer above `toast`, or record the order, before mounting the host. | L | **High** | L75-02, L75-03 | To do |
 | L75-05 | **Gate every arena commit path in the tutorial.** **Acceptance:** A table-driven behavior test covers every human index (0 and odd 1–29). At each index the highlighted control carries `data-tutorial-highlight` and the scripted intent reaches a mocked connection with the right payload. A wrong path (another card, Basic+ at index 3, buying Basic, a drop on Sell) sends nothing and shows 'This tutorial step asks for a different action.' A tutorial room under `?ui=next` renders the arena. The full tutorial (indices 0–30) is played to the win in the browser at 375×812. `pnpm verify` green. | L | **High** | L75-04 | To do |

@@ -105,6 +105,11 @@ behavior is pinned by `render.test.tsx` and `node-environment.test.ts`.
 - happy-dom has no layout: sizes, positions and resolved `clamp()` values are zero or
   unresolved. Assert structure, roles and data attributes here, and leave pixel checks to the
   browser gate (`frontend.md` · Post-lot browser gate).
+- The client happy-dom window is a 390×844 portrait phone (`vitest.config.ts`, client
+  `environmentOptions.happyDOM`; L75-02, ruling R2) with no `visualViewport`, so
+  `readVisualViewportBox()` reads 390×844. Every test that stubs no viewport is portrait, and an
+  unmeasured arena (0×0) lays seats out as a grid. All 287 client files were green with it when it
+  landed.
 - Never `Date.now()`; the caller passes `nowMs`.
 
 ## V7 test policy (technical spec v7 §12.1–§12.2)
@@ -162,6 +167,13 @@ tests import it and shipped code never does.
   `ArenaScreen` and opens, selects or lifts something calls `expectNoArenaIntent(props)`, which
   asserts that none of them ran (commit rule, spec v7 §6.6.4). It is the only "nothing sent"
   helper; below `ArenaScreen`, tests assert on the `commit` or callback `vi.fn()` they pass.
+- `stubArenaLayout(viewport, arena, { rectFor? })` (L75-02) fakes `visualViewport`,
+  `ResizeObserver` and `getBoundingClientRect` (each element reports `rectFor(element)` or the
+  arena box). `setViewport(w, h)` resizes the visible box (the layout mode follows),
+  `setArena(w, h)` fires every fake ResizeObserver, and `restore()` runs in `afterEach`. Pass an
+  `ARENA_TEST_BOXES` box (`phone360`, `phone375`, `phone390`, `duplicator360`, `tablet`,
+  `landscape`, `landscapeSmall`, `desktop`), never ad hoc numbers, and read the mode from
+  `<main data-layout-mode>` and the rows from `data-arena-row`.
 
 ## Seeded randomness
 

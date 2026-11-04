@@ -284,9 +284,10 @@ and are mirrored in `ui/palette.ts` and `ui/motion/motion-tokens.ts`.
   it goes on the lot PR for the designer's sign-off. Old screens keep `getCardArtUrl` /
   `getKitPortraitUrl` until L72-21. A new card or kit = its `ui/asset-files.ts` map entry +
   its source PNG in `images/` + a rerun of the script (then check the contact sheet).
-- **Detector:** the only Impeccable ignore is the pre-approved `radial-spotlight-glow` /
-  `dark-glow` ignore scoped to `ui/tokens.css` (spec v7 §12.4); `.impeccable/config.json` is
-  committed. Any other finding is fixed, not ignored.
+- **Detector:** the Impeccable ignores are the pre-approved `radial-spotlight-glow` /
+  `dark-glow` ignore scoped to `ui/tokens.css` (spec v7 §12.4) and the `repeating-stripes-gradient`
+  ignore on the ground scanlines, scoped to the same file (designer 2026-11-03, L75-02);
+  `.impeccable/config.json` is committed. Any other finding is fixed, not ignored.
 
 ### V7 primitives (L72-08)
 
@@ -1029,7 +1030,7 @@ Appendix A). Each Lot 74 task appends its bullet here, in task order.
   `'next'`: `?ui=next` was set and the room is Classic. The default and tutorial rooms keep
   `TableScreen`. `ArenaScreenProps` extends `TableScreenProps` (L74-21), so App and EndScreen
   mount each board in its own branch and `TableScreen` keeps its props.
-- Regions (L74-01, §6.1, Q60): `ARENA_REGIONS` (`arena-regions.ts`) top to bottom: `top-bar`,
+- Regions (L74-01, §6.1, Q60): `ARENA_REGIONS` (`arena-regions.ts`) in DOM order: `top-bar`,
   `ticker`, `arena`, `self-strip`, `hand`, `dock`. Each is a `data-arena-region` element that
   always renders. Each shows its content or an empty state, except a live walk-in's dock, which
   renders bare (Q38; its self strip is the Watching strip, L74-23; on the finished board that dock
@@ -1118,7 +1119,7 @@ Appendix A). Each Lot 74 task appends its bullet here, in task order.
   the region; 0×0 before the first measure, so the first layout is a grid) and renders
   `seats(view, box)`. Every seat sits absolutely at `seatCenters(layout, arena)` (the arc
   placements, or grid rows laid out by the same pure helper the arrows use) and is drawn at
-  `SEAT_BOX.portrait` in every mode until L75. A seat is one button named by the full nickname
+  its mode's box, `seatRenderBox(layout.mode)` (L75-02). A seat is one button named by the full nickname
   over the anatomy:
   - the name in its seat hue, truncated and `aria-hidden` (the button carries it);
   - a `KitPortrait` thumb or the seat-hue initial `Avatar`, the `Avatar` wrapped `aria-hidden` so
@@ -1587,6 +1588,32 @@ Appendix A). Each Lot 74 task appends its bullet here, in task order.
   Spy says the upgraded Spy cancels their basic Spy and still resolves; `reward` names helping
   eliminate and the one shared timer (Lot 71). Tests read the copy through `HINT_COPY`,
   `tutorialStepAt(n)?.coach`, `TUTORIAL_TOUR_STEPS` and `TUTORIAL_LOOK_COACH`, never a literal.
+- `screens/arena/arena-regions.ts`, `log-panel.tsx`, `log-rounds.tsx`, `use-log-follow.ts`,
+  `seat-geometry.ts`, `opponent-seat.tsx`, `use-arena-layout-box.ts` and
+  `ui/use-visual-viewport-box.ts` (L75-02, spec v7 §6.1, §6.4, §6.9, §7.7): one layout mode per render, `seatsModel.layout.mode` (visible height under 500 px is
+  landscape-compact, else wider than tall is desktop, else portrait), on `<main data-layout-mode>`.
+  `<main>` is a CSS grid per mode (`arenaGridStyle`); the six regions stay its direct children in
+  `ARENA_REGIONS` order, each on its own area with `data-arena-row` (`arenaRowOf`), so a mode change
+  remounts no region.
+  - Desktop: the top bar spans the width. The `ticker` region is the right-hand log column (`side`)
+    and renders `LogPanel` instead of the ticker: a 44 px toggle (`data-zone="log-collapsed"`, named
+    "Action log", `aria-expanded`) that always renders, and when expanded a 320 px scrollport
+    (`data-zone="action-log-panel"`) of the round-grouped lines (`LogRounds`, sticky `top-0` headers)
+    that follows new lines within 48 px (`useLogFollow`, shared with the log sheet). Collapsed, the
+    list unmounts. The panel opens expanded; Menu → Action log expands it and opens no sheet. The
+    dock sits right of the hand in the `hand` row.
+  - The card, Shop and seat sheets pass `placement="auto"`: centred dialogs on desktop, bottom sheets
+    elsewhere. Every other arena sheet stays `bottom`.
+  - Seats are drawn at `seatRenderBox(mode)` (`SEAT_BOX[mode]`, `data-seat-size`; desktop 120×136
+    with a tile kit portrait); the grid spacing and the fan-out badge corner follow it.
+  - The layout box holds its viewport while a text field has focus (ruling 7): a phone keyboard
+    never re-lays the table out under a sheet; the mode follows on blur. The one definition of
+    "a text field has focus" is `isTextEntryElement` / `useTextEntryFocused()` in
+    `ui/use-visual-viewport-box.ts`, and `useViewportMode()` holds its mode through it too (U1), so
+    the coach, Carousel and the hint hosts agree with the arena. `useVisualViewportBox()` stays
+    live, so sheets and toasts still follow the keyboard.
+  - Tests run in a 390×844 portrait window by default; desktop and landscape tests call
+    `stubArenaLayout` with an `ARENA_TEST_BOXES` box (`testing.md` › Arena fixtures).
 
 ## Design system (V2 · Lots 10+)
 

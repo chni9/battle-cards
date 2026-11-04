@@ -6364,3 +6364,38 @@ coach and tour copy are no longer locked, typos included.
   `Fixed some bugs.` item. Every string is listed in the PR for designer review.
 
 ---
+
+## 2026-11-04 · [P] V7 arena desktop: one grid per mode, the log column, centred sheets (L75-02)
+
+Source: technical spec v7 §6.1, §6.4, §6.9, §7.7; controller rulings R1, R2, R3 and open-question
+rulings 5 and 7 (Lot 75 plan, Appendix A.2–A.4).
+
+- **Thresholds.** The mode is `viewportModeFor` (§6.4 as amended). The L75-02 brief's "width ≥ 1024
+  and height ≥ 700" was stale: 1024×600 is desktop, and 768×1024 is portrait.
+- **One grid, no wrappers.** `<main>` switches its grid template per mode, and every region keeps its
+  element, so owner-local sheets, drafts and latches survive a rotation.
+- **Desktop log.** The panel replaces the ticker (§6.4). It opens expanded, 320 px wide, with a 44 px
+  rail when collapsed. The collapsed list unmounts, so the toggle is then the only log endpoint.
+  **Designer 2026-11-03:** expanded on mount and 320 px, kept.
+- **Centred sheets.** The card, Shop and seat sheets resolve `placement="auto"`. The Sheet primitive
+  already had it, so no `ui/` change. On desktop the Shop keeps the Sheet's 28rem width cap.
+- **Seat box per mode.** Desktop seats are drawn at 120×136, with a tile portrait (72×96) and a 40 px
+  resource column. The portrait anatomy is unchanged.
+- **Keyboard hold (ruling 7).** While a text `input`, a `textarea` or a contenteditable element has
+  focus, `useArenaLayoutBox` keeps the viewport box it had when focus arrived. The mode, and every
+  size read from the viewport, holds until blur. U1 (controller): `ui/`'s `useViewportMode()` holds
+  its mode the same way, through the shared `useTextEntryFocused()` (`ui/use-visual-viewport-box.ts`),
+  so the coach, Carousel and the hint hosts agree with the arena. `useVisualViewportBox()` stays
+  live, so a sheet or toast still sits above the keyboard. `Sheet` reads that live box for
+  `placement="auto"`, so its placement follows the keyboard, not the held mode. That is harmless:
+  `auto` is `bottom` in both portrait and landscape-compact, and the two differ only on desktop.
+- **Test window (R2).** The client happy-dom window defaults to 390×844. At `c6941bec`, all 287
+  client test files stayed green with it, so no per-file stub was needed.
+- **Ground scanlines (Q87-5, designer 2026-11-03).** The Lot 72 ground keeps its 1 px scanlines
+  every 3 px. The detector's `repeating-stripes-gradient` finding on them is ignored, scoped to
+  `ui/tokens.css` (`.impeccable/config.json`), as the two halo rules are. Spec v7 §12.4 asks for the
+  designer's approval before any other ignore, and this is it. Nothing else is ignored.
+- **Turn label (Q87-3, designer 2026-11-03).** The turn label keeps truncating at 375 px, with its
+  `title`. No change.
+
+---

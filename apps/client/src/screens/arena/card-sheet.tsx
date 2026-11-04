@@ -347,7 +347,7 @@ export function CardSheet(props: CardSheetProps): ReactElement {
       <Sheet
         open={open}
         mode="read-only"
-        placement="bottom"
+        placement="auto"
         title={multiStep !== null ? MULTI_ATTACK_TITLE : cardSheetTitle(source)}
         onClose={onClose}
         dataAttributes={{ 'data-arena-sheet': arenaSheetKey({ kind: 'card', source }) }}

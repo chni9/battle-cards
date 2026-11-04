@@ -3,8 +3,16 @@
  */
 import { describe, expect, it } from 'vitest';
 
+import { viewportModeFor } from '../../ui/viewport-mode';
 import { makeEliminationReveal } from '../../view-model/test-fixtures';
-import { ARENA_SPIED_RESOURCES, arenaSpies, expectNoArenaIntent, makeArenaProps, makeArenaView } from './test-view';
+import {
+  ARENA_SPIED_RESOURCES,
+  ARENA_TEST_BOXES,
+  arenaSpies,
+  expectNoArenaIntent,
+  makeArenaProps,
+  makeArenaView,
+} from './test-view';
 
 describe('arena test views (Appendix A.4)', () => {
   it('seats me then p1…p7 in turn order with me as the POV, 3 seats by default', () => {
@@ -72,5 +80,13 @@ describe('arena test views (Appendix A.4)', () => {
     expect(() => {
       expectNoArenaIntent(props);
     }).toThrow();
+  });
+
+  it('names each layout test box after its mode (R1)', () => {
+    const modes = Object.fromEntries(Object.entries(ARENA_TEST_BOXES).map(([name, box]) => [name, viewportModeFor(box.viewport)]));
+    expect(modes).toEqual({
+      phone360: 'portrait', phone375: 'portrait', phone390: 'portrait', duplicator360: 'portrait', tablet: 'portrait',
+      landscape: 'landscape-compact', landscapeSmall: 'landscape-compact', desktop: 'desktop',
+    });
   });
 });

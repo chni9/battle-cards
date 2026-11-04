@@ -6,9 +6,14 @@
  * Both hooks read through `useSyncExternalStore`, subscribed to `resize` and `scroll` on
  * `visualViewport` (pinch zoom and the keyboard move it) and to `resize` on `window` (the
  * fallback when `visualViewport` is null).
+ *
+ * Ruling 7 (L75-02, U1): the mode holds while a text field has focus, so the arena, the coach and
+ * every other mode reader agree and a phone keyboard never flips the layout under a sheet. The box
+ * stays live: a sheet or a toast must follow the keyboard. `isTextEntryElement` and
+ * `useTextEntryFocused()` are the one definition of "a text field has focus".
  */
 
-import { useSyncExternalStore } from 'react';
+import { useState, useSyncExternalStore } from 'react';
 import { viewportModeFor, type ViewportMode } from './viewport-mode';
 import { readVisualViewportBox, type VisualViewportBox } from './visual-viewport';
 
@@ -46,10 +51,67 @@ function modeSnapshot(): ViewportMode {
   return viewportModeFor(readVisualViewportBox());
 }
 
+/** Input types that raise no on-screen keyboard. */
+const NON_TEXT_INPUT_TYPES: ReadonlySet<string> = new Set([
+  'button',
+  'checkbox',
+  'color',
+  'file',
+  'hidden',
+  'image',
+  'radio',
+  'range',
+  'reset',
+  'submit',
+]);
+
+/** A `<textarea>`, a text-entry `<input>` (not button, checkbox, color, file, hidden, image, radio, range, reset or submit), or a contenteditable element. */
+export function isTextEntryElement(element: Element | null): boolean {
+  if (element instanceof HTMLTextAreaElement) return true;
+  if (element instanceof HTMLInputElement) return !NON_TEXT_INPUT_TYPES.has(element.type);
+  return element instanceof HTMLElement && element.isContentEditable;
+}
+
+function subscribeFocus(onChange: () => void): () => void {
+  document.addEventListener('focusin', onChange);
+  document.addEventListener('focusout', onChange);
+  return () => {
+    document.removeEventListener('focusin', onChange);
+    document.removeEventListener('focusout', onChange);
+  };
+}
+
+function textEntryFocusedSnapshot(): boolean {
+  return isTextEntryElement(document.activeElement);
+}
+
+function textEntryFocusedServerSnapshot(): boolean {
+  return false;
+}
+
+/**
+ * True while `document.activeElement` is a text-entry element (`focusin` / `focusout`). A focused
+ * field that unmounts fires no `focusout`; the next render, such as the viewport `resize` that
+ * closes the keyboard, reads `document.activeElement` again, so the hold ends with the keyboard.
+ */
+export function useTextEntryFocused(): boolean {
+  return useSyncExternalStore(subscribeFocus, textEntryFocusedSnapshot, textEntryFocusedServerSnapshot);
+}
+
 export function useVisualViewportBox(): VisualViewportBox {
   return useSyncExternalStore(subscribe, boxSnapshot);
 }
 
+/**
+ * The layout mode of the visible box. Ruling 7 (L75-02, U1): the mode holds while a text field has
+ * focus, so the arena, the coach and every other mode reader agree and a phone keyboard never flips
+ * the layout under a sheet. The box stays live: a sheet or a toast must follow the keyboard.
+ */
 export function useViewportMode(): ViewportMode {
-  return useSyncExternalStore(subscribe, modeSnapshot);
+  const live = useSyncExternalStore(subscribe, modeSnapshot);
+  const editing = useTextEntryFocused();
+  // Render-phase held state, as ui/primitives/sheet.tsx adjusts state while rendering; never an effect.
+  const [held, setHeld] = useState<ViewportMode>(live);
+  if (!editing && held !== live) setHeld(live);
+  return editing ? held : live;
 }

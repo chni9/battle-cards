@@ -3,7 +3,7 @@
  *
  * - §4.4: `App` (playing) and `EndScreen` (finished board) mount it behind the `?ui=next` switch
  *   (`ui-switch.ts`, unchanged since L72-20); the default and tutorial rooms keep `TableScreen`.
- * - §6.1 and Q60: six regions, top to bottom, that always render with their empty state. Later
+ * - §6.1 and Q60: six regions, in DOM order, that always render with their empty state. Later
  *   Lot 74 tasks render inside each region element and keep its attributes and anchors.
  * - §6.4 and L53-07: it fills `#root` with no viewport unit and never page-scrolls.
  * - §4.3 and Appendix A.2: the action lock is computed once per render and models are passed
@@ -52,6 +52,9 @@
  *   chat sheet and the Watching strip's Claim a seat stay available (S3, S11; designer 2026-11-02).
  *   Server rejects show `RejectToast`; the held card the last send spent springs back in the hand
  *   when the reject arrives before any state update since that send (`rejectCueFor`).
+ * - §6.4 (L75-02): one layout mode per render, on `data-layout-mode`; `<main>` is a grid per mode and
+ *   the regions keep their elements; desktop puts the log panel in the ticker region and centres the
+ *   card, Shop and seat sheets.
  *
  * Import rule (L74-01 brief): `screens/arena/` imports only from `ui/`, `view-model/`, `fx/`,
  * `net/` (types), `help/`, `feedback/` and the shared screen modules. It never imports
@@ -74,6 +77,7 @@ import { actionLock, type ActionContext } from '../../view-model/action-lock';
 import { selfStrip } from '../../view-model/self-strip';
 import { log } from '../../view-model/log';
 import { tableRulesRecall } from '../../view-model/rules-recall';
+import type { LayoutMode } from '../../view-model/seat-layout';
 import { seats } from '../../view-model/seats';
 import { shop } from '../../view-model/shop';
 import { povHasWon } from '../../view-model/table-banner';
@@ -81,7 +85,14 @@ import { threats } from '../../view-model/threats';
 import { turnClock } from '../../view-model/turn-clock';
 import type { TableScreenProps } from '../table';
 import { createArenaCommit } from './arena-commit';
-import { arenaRegionAttributes } from './arena-regions';
+import {
+  arenaAreaStyle,
+  arenaGridStyle,
+  arenaRegionAttributes,
+  arenaRowAttributes,
+  arenaRowOf,
+  type ArenaRegion,
+} from './arena-regions';
 import { ArenaSeats } from './arena-seats';
 import {
   arenaSheetEntries,
@@ -109,6 +120,7 @@ import { HandDragLayer } from './hand-drag-layer';
 import { HandFan } from './hand-fan';
 import { selectedHandInstanceId } from './hand-fan-model';
 import { KitSheet } from './kit-sheet';
+import { LogPanel } from './log-panel';
 import { LogSheet } from './log-sheet';
 import { LogTicker } from './log-ticker';
 import { ownIntentFxFor } from './own-intent-fx';
@@ -203,7 +215,12 @@ function ArenaScreenInner(props: ArenaScreenProps): ReactElement {
   const povSeat = seatIndexOf(view, view.you);
   const arenaRef = useRef<HTMLDivElement>(null);
   const layoutBox = useArenaLayoutBox(arenaRef);
+  // The desktop log panel (§6.4, L75-02; open-question ruling 5): expanded on mount. It lives here, so a
+  // mode change keeps it; it is not a sheet and never ends targeting.
+  const [logPanelExpanded, setLogPanelExpanded] = useState(true);
   const seatsModel = seats(view, layoutBox);
+  // The shell's single layout mode (§6.4, R1): every region's grid area and row read it.
+  const mode: LayoutMode = seatsModel.layout.mode;
   const threatModel = threats(view, props.subChoice);
   // The POV strip and, in `.dock`, its dock: computed once here, L74-13 reads `strip.dock` (Appendix A.2).
   const strip = selfStrip(view, ctx);
@@ -296,6 +313,14 @@ function ArenaScreenInner(props: ArenaScreenProps): ReactElement {
     finishTargeting();
   });
   const targeting = live !== null;
+  // A region's grid area and row in this mode (plan A.3). Only attributes change, so a mode change remounts no region.
+  const regionLayout = (region: ArenaRegion) => ({
+    ...arenaRegionAttributes(region),
+    ...arenaRowAttributes(region, mode),
+    style: arenaAreaStyle(region),
+  });
+  // A region beside the hand in one row centres on it (landscape-compact strip; landscape and desktop dock).
+  const inHandRow = (region: ArenaRegion): string => (arenaRowOf(region, mode) === 'hand' ? ' self-center' : '');
   // The dock's exit (L74-13): the same commit, silenced while the tap guard is up, so the second tap
   // of a double tap on the bar's Cancel or a target cannot land on Draw, Unspy or Activate duplication.
   // It returns the commit's own result, false under the tap guard or a veto, so the dock latches only
@@ -331,9 +356,11 @@ function ArenaScreenInner(props: ArenaScreenProps): ReactElement {
       data-zone="table"
       data-arena="next"
       data-action-lock={lock ?? 'none'}
-      className="v7-ground relative flex h-full w-full min-w-0 flex-col overflow-hidden font-v7-body text-v7-text"
+      data-layout-mode={mode}
+      style={arenaGridStyle(mode)}
+      className="v7-ground relative grid h-full w-full min-w-0 overflow-hidden font-v7-body text-v7-text"
     >
-      <div {...arenaRegionAttributes('top-bar')} className="shrink-0 px-2 pt-2">
+      <div {...regionLayout('top-bar')} className="min-w-0 px-2 pt-2">
         {/* In flow above the bar (designer 2026-11-02): it pushes the board down and covers no control (L74-25). */}
         <ReconnectBanner reconnecting={reconnecting} />
         {/* `onLeave` and `onForfeit` are App-level, not ArenaIntents (Appendix A.6): the bar calls them from its confirm.
@@ -346,7 +373,9 @@ function ArenaScreenInner(props: ArenaScreenProps): ReactElement {
           onForfeit={props.onForfeit}
           {...(props.onOpenFeedback !== undefined ? { onOpenFeedback: props.onOpenFeedback } : {})}
           onOpenLog={() => {
-            openSheet({ kind: 'log' });
+            // Desktop: the log is the panel, so Menu → Action log expands it and opens no sheet (A.4.1).
+            if (mode === 'desktop') setLogPanelExpanded(true);
+            else openSheet({ kind: 'log' });
           }}
           {...(tableRules !== null
             ? {
@@ -363,21 +392,37 @@ function ArenaScreenInner(props: ArenaScreenProps): ReactElement {
           confirmRequest={leaveRequest}
         />
       </div>
-      <div {...arenaRegionAttributes('ticker')} className="shrink-0 px-2">
-        <LogTicker
-          line={logModel.ticker}
-          view={view}
-          onOpen={() => {
-            openSheet({ kind: 'log' });
-          }}
-        />
+      <div
+        {...regionLayout('ticker')}
+        className={mode === 'desktop' ? 'flex min-h-0 flex-col px-2 pb-2' : 'min-w-0 px-2'}
+      >
+        {/* Desktop: the right-hand log column (§6.4, A.4.1). Elsewhere the one-line ticker opens the log sheet. */}
+        {mode === 'desktop' ? (
+          <LogPanel
+            expanded={logPanelExpanded}
+            view={view}
+            model={logModel}
+            onToggle={() => {
+              setLogPanelExpanded((open) => !open);
+            }}
+            onOpenCard={openCard}
+          />
+        ) : (
+          <LogTicker
+            line={logModel.ticker}
+            view={view}
+            onOpen={() => {
+              openSheet({ kind: 'log' });
+            }}
+          />
+        )}
       </div>
       {/* Measured here (L74-04): relative, overflow-hidden, no padding, so its box is the seats' positioning box (Appendix A.3). */}
       <div
         ref={arenaRef}
-        {...arenaRegionAttributes('arena')}
+        {...regionLayout('arena')}
         data-zone="felt"
-        className="relative min-h-0 flex-1 overflow-hidden"
+        className="relative min-h-0 min-w-0 overflow-hidden"
       >
         <ArenaSeats
           model={seatsModel}
@@ -410,7 +455,12 @@ function ArenaScreenInner(props: ArenaScreenProps): ReactElement {
         {/* Last in the arena region, over the seats and the plate; never over a sub-choice (§6.12, L74-23). */}
         <PovEliminationOverlay visible={povEliminationShown && props.subChoice === null} />
       </div>
-      <div {...arenaRegionAttributes('self-strip')} data-zone="private-zone" data-player-id={view.you} className="shrink-0 px-2">
+      <div
+        {...regionLayout('self-strip')}
+        data-zone="private-zone"
+        data-player-id={view.you}
+        className={`min-w-0 px-2${inHandRow('self-strip')}`}
+      >
         {strip.resources === null ? (
           <SpectatorStrip
             model={strip}
@@ -428,7 +478,7 @@ function ArenaScreenInner(props: ArenaScreenProps): ReactElement {
           />
         )}
       </div>
-      <div {...arenaRegionAttributes('hand')} data-zone="card-band" className="min-w-0 shrink-0">
+      <div {...regionLayout('hand')} data-zone="card-band" className="min-w-0">
         <HandFan
           view={view}
           ctx={ctx}
@@ -438,7 +488,7 @@ function ArenaScreenInner(props: ArenaScreenProps): ReactElement {
           rejected={rejectCue}
         />
       </div>
-      <div {...arenaRegionAttributes('dock')} data-zone="dock" className="shrink-0 px-2 pb-2">
+      <div {...regionLayout('dock')} data-zone="dock" className={`px-2 pb-2${inHandRow('dock')}`}>
         {/* A live walk-in has no controls (Q38): the region stays, empty. On the finished board its dock is Stats alone. An eliminated Watching POV keeps the disabled dock (A.8 ruling 7). */}
         {dockHasControls(strip.dock) ? (
           <Dock

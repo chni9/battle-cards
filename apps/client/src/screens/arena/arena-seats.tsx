@@ -11,6 +11,8 @@
  * set, and focus moves to the first valid seat in DOM order whenever a new card is targeted.
  *
  * During a hand drag (L74-12, §6.6.3), `dropHighlight` lights the seats that take the card.
+ *
+ * Each seat is drawn at its mode's box, `model.layout.mode` (L75-02, §6.4).
  */
 
 import { useEffect, useRef, type ReactElement } from 'react';
@@ -79,6 +81,7 @@ export function ArenaSeats({
             model={seat}
             center={center}
             tapped={center.playerId === tappedSeatId}
+            mode={model.layout.mode}
             {...(target !== null ? { target } : {})}
             {...(drop !== null ? { drop } : {})}
             onOpen={(id) => {

@@ -101,3 +101,27 @@ describe('useViewportMode (technical spec v7 §6.4)', () => {
     expect(screen.getByTestId('mode').textContent).toBe('portrait');
   });
 });
+
+function HoldProbe() {
+  const mode = useViewportMode();
+  const { width, height } = useVisualViewportBox();
+  return (
+    <div>
+      <output data-testid="mode">{mode}</output>
+      <output data-testid="box">{`${width}x${height}`}</output>
+      <input aria-label="Message" />
+    </div>
+  );
+}
+
+describe('useViewportMode keyboard hold (L75-02, ruling 7, U1)', () => {
+  it('holds its mode while a text field has focus and follows on blur; the box stays live', async () => {
+    const { user } = renderUi(<HoldProbe />);
+    const field = screen.getByRole('textbox', { name: 'Message' });
+    await user.click(field);
+    resize(390, 420); // the keyboard opens: the visible box shrinks under 500 px
+    expect([screen.getByTestId('mode').textContent, screen.getByTestId('box').textContent]).toEqual(['portrait', '390x420']);
+    act(() => { field.blur(); });
+    expect(screen.getByTestId('mode').textContent).toBe('landscape-compact');
+  });
+});

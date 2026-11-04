@@ -153,6 +153,21 @@ describe('opponent seat layout (§6.4)', () => {
     expect(seatEl('p1').hasAttribute('data-active-seat')).toBe(false);
     expect(seatEl('p3').hasAttribute('data-active-seat')).toBe(false);
   });
+
+  it('draws a desktop seat at the desktop box with a tile kit portrait; portrait keeps its box and the thumb (L75-02)', () => {
+    const DESKTOP: LayoutBox = { viewport: { width: 1440, height: 900 }, arena: { width: 1000, height: 600 } };
+    const px = (mode: 'portrait' | 'desktop'): readonly string[] => [`${String(SEAT_BOX[mode].width)}px`, `${String(SEAT_BOX[mode].height)}px`];
+    const view = makeArenaView({ seatCount: 4, tiers: { p1: 'spy-plus' } });
+    const { unmount } = renderSeats(view, DESKTOP);
+    const desk = seatEl('p1');
+    expect([desk.getAttribute('data-seat-size'), desk.style.width, desk.style.height]).toEqual(['desktop', ...px('desktop')]);
+    expect(desk.querySelector('[data-zone="kit-portrait"]')?.getAttribute('data-kit-size')).toBe('tile');
+    unmount();
+    renderSeats(view);
+    const phone = seatEl('p1');
+    expect([phone.getAttribute('data-seat-size'), phone.style.width, phone.style.height]).toEqual(['portrait', ...px('portrait')]);
+    expect(phone.querySelector('[data-zone="kit-portrait"]')?.getAttribute('data-kit-size')).toBe('thumb');
+  });
 });
 
 describe('opponent seat anatomy (§6.2)', () => {
