@@ -13,7 +13,16 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { renderUi, type RenderUiOptions } from '../../test/render';
 import { makeCard, makeSelf } from '../../view-model/test-fixtures';
 import { ArenaScreen, type ArenaScreenProps } from './arena-screen';
-import { ARENA_TEST_BOXES, expectNoArenaIntent, makeArenaProps, makeArenaView, stubArenaLayout, type ArenaLayoutStub } from './test-view';
+import {
+  ARENA_TEST_BOXES,
+  arenaSpies,
+  expectNoArenaIntent,
+  makeArenaProps,
+  makeArenaView,
+  stubArenaLayout,
+  type ArenaLayoutStub,
+  type ArenaLayoutStubOptions,
+} from './test-view';
 
 const PRIMARY = { pointerId: 1, isPrimary: true, button: 0 } as const;
 const HAND = [makeCard('spy', { instanceId: 'spy-1' }), makeCard('basic-attack', { instanceId: 'atk-1' })];
@@ -23,10 +32,24 @@ function withSeat(view: PlayingStateView, playerId: string, patch: Partial<Publi
 /** Me, p1, p2; 10 points; Spy and Basic attack in hand; p1 spies on me, so Unspy opens. */
 const crossView = (): PlayingStateView => withSeat(makeArenaView({ overrides: { self: makeSelf({ points: 10, hand: HAND }) } }), 'p1', { spyingOnYou: true });
 
+/**
+ * The rects a lift measures (`measureDropZones`): p1's seat alone holds the release point, and p2's seat
+ * sits clear of it. Under the stub's default every element reports the arena box, so both seats would
+ * hold it, `dropTarget` would resolve nothing, and a release would send nothing with or without the
+ * cancel. With these, a release at `RELEASE` plays the card on p1 unless the cancel stopped it.
+ */
+function seatRectFor(element: Element): DOMRect | undefined {
+  if (element.getAttribute('data-zone') !== 'opponent-seat') return undefined;
+  return element.getAttribute('data-player-id') === 'p1' ? new DOMRect(0, 0, 100, 100) : new DOMRect(250, 100, 76, 92);
+}
+const PRESS = { clientX: 100, clientY: 700 };
+const LIFT = { clientX: 103, clientY: 688 };
+const RELEASE = { clientX: 50, clientY: 50 };
+
 let layout: ArenaLayoutStub | null = null;
 afterEach(() => { layout?.restore(); layout = null; });
-function setup(options: RenderUiOptions = {}) {
-  const stub = stubArenaLayout(ARENA_TEST_BOXES.phone390.viewport, ARENA_TEST_BOXES.phone390.arena);
+function setup(options: RenderUiOptions = {}, layoutOptions: ArenaLayoutStubOptions = {}) {
+  const stub = stubArenaLayout(ARENA_TEST_BOXES.phone390.viewport, ARENA_TEST_BOXES.phone390.arena, layoutOptions);
   layout = stub;
   const onPlayCard = vi.fn<ArenaScreenProps['onPlayCard']>();
   const props = makeArenaProps({ view: crossView(), onPlayCard });
@@ -79,26 +102,61 @@ describe('a mode crossing mid-interaction (Review Focus 1)', () => {
     expect(onPlayCard.mock.calls).toEqual([['spy-1', { targetPlayerId: 'p1' }]]);
   });
 
-  it('a lifted drag is cancelled by a mode change and sends nothing, though its release lands on a valid seat (A.5.3)', () => {
-    const { props, stub } = setup({ reducedMotion: true });
-    fireEvent.pointerDown(within(region('hand')).getByRole('button', { name: 'Basic attack, 1 damage' }), { ...PRIMARY, clientX: 100, clientY: 700 });
-    fireEvent.pointerMove(window, { ...PRIMARY, clientX: 103, clientY: 688 });
+  it('control: without a mode change, the same press, lift and release plays the card on p1', () => {
+    const { onPlayCard, props } = setup({ reducedMotion: true }, { rectFor: seatRectFor });
+    fireEvent.pointerDown(within(region('hand')).getByRole('button', { name: 'Basic attack, 1 damage' }), { ...PRIMARY, ...PRESS });
+    fireEvent.pointerMove(window, { ...PRIMARY, ...LIFT });
+    expect(ghost()).not.toBeNull();
+    fireEvent.pointerUp(window, { ...PRIMARY, ...RELEASE });
+    expect(onPlayCard.mock.calls).toEqual([['atk-1', { targetPlayerId: 'p1' }]]);
+    expect(arenaSpies(props).filter((spy) => spy.mock.calls.length > 0)).toHaveLength(1);
+  });
+
+  it('a lifted drag is cancelled by a mode change and sends nothing, though its stale rects still hold the release (A.5.3)', () => {
+    const { props, stub } = setup({ reducedMotion: true }, { rectFor: seatRectFor });
+    fireEvent.pointerDown(within(region('hand')).getByRole('button', { name: 'Basic attack, 1 damage' }), { ...PRIMARY, ...PRESS });
+    fireEvent.pointerMove(window, { ...PRIMARY, ...LIFT });
     expect(ghost()).not.toBeNull();
     stub.setViewport(1440, 900);
     expect(ghost()).toBeNull();
-    // Every element reports the arena box here, so without the cancel this release would play the card on p1.
-    fireEvent.pointerUp(window, { ...PRIMARY, clientX: 50, clientY: 50 });
+    // p1's seat rect, measured at the lift, still holds this point: the control above sends from here.
+    fireEvent.pointerUp(window, { ...PRIMARY, ...RELEASE });
     expectNoArenaIntent(props);
   });
 
-  it('a press that has not lifted yet is dropped by a mode change: the next move lifts nothing', () => {
-    const { props, stub } = setup({ reducedMotion: true });
-    fireEvent.pointerDown(within(region('hand')).getByRole('button', { name: 'Basic attack, 1 damage' }), { ...PRIMARY, clientX: 100, clientY: 700 });
+  it('a press that has not lifted yet is dropped by a mode change: the next move lifts nothing, and a release sends nothing', () => {
+    const { props, stub } = setup({ reducedMotion: true }, { rectFor: seatRectFor });
+    fireEvent.pointerDown(within(region('hand')).getByRole('button', { name: 'Basic attack, 1 damage' }), { ...PRIMARY, ...PRESS });
     stub.setViewport(390, 420);
-    fireEvent.pointerMove(window, { ...PRIMARY, clientX: 103, clientY: 688 });
+    fireEvent.pointerMove(window, { ...PRIMARY, ...LIFT });
     expect(ghost()).toBeNull();
-    fireEvent.pointerUp(window, { ...PRIMARY, clientX: 50, clientY: 50 });
+    // Uncancelled, the move above lifts and this release plays the card on p1 (the control).
+    fireEvent.pointerUp(window, { ...PRIMARY, ...RELEASE });
     expect(ghost()).toBeNull();
+    expectNoArenaIntent(props);
+  });
+
+  it('a portrait to landscape-compact flip and back keeps the strip, the kit portrait and the pills mounted, focus included (one tree)', () => {
+    const { props, stub } = setup();
+    const strip = region('self-strip');
+    const nodes = () => ({
+      root: strip.querySelector('[data-self-strip]'),
+      kit: within(strip).getByRole('button', { name: 'Inspect your kit' }),
+      pills: Array.from(strip.querySelectorAll('[data-resource-kind]')),
+    });
+    const before = nodes();
+    expect(before.pills).toHaveLength(4);
+    act(() => { before.kit.focus(); });
+    for (const [width, height, expectedMode, expectedStrip] of [[844, 390, 'landscape-compact', 'compact'], [390, 844, 'portrait', 'full']] as const) {
+      stub.setViewport(width, height);
+      const after = nodes();
+      expect([mode(), after.root?.getAttribute('data-self-strip')]).toEqual([expectedMode, expectedStrip]);
+      expect(after.root).toBe(before.root);
+      expect(after.kit).toBe(before.kit);
+      expect(after.pills).toHaveLength(4);
+      after.pills.forEach((pill, index) => { expect(pill).toBe(before.pills[index]); });
+      expect(document.activeElement).toBe(before.kit);
+    }
     expectNoArenaIntent(props);
   });
 
