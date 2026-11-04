@@ -55,6 +55,16 @@ describe('LogPanel (§6.4, §6.9)', () => {
     expect([header?.classList.contains('top-0'), header?.classList.contains('-top-3')]).toEqual([true, false]);
   });
 
+  it('expanded: the scrollport positions its lines\' sr-only text, so <main> gains no scrollable overflow (Check 1)', () => {
+    setup(true);
+    // An `sr-only` span is absolutely positioned: its containing block is the nearest positioned
+    // ancestor. A static scrollport hands it to <main> (overflow-hidden, yet programmatically
+    // scrollable), whose scrollHeight then grew by the whole log. happy-dom computes no layout, so
+    // this pins the scrollport's own `relative` against the lines that need it.
+    expect(port()?.querySelector('.sr-only')).not.toBeNull();
+    expect(port()?.classList.contains('relative')).toBe(true);
+  });
+
   it('collapsed: only the toggle renders, so no zero-size list is left for the FX (Review Focus 5)', () => {
     setup(false);
     expect([toggle().getAttribute('aria-expanded'), port(), document.querySelector('[data-log-round]')]).toEqual(['false', null, null]);

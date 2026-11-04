@@ -10,7 +10,9 @@
  * - **Expanded**, the visible scrollport, never its taller content, carries
  *   `data-zone="action-log-panel"` (A.7). It holds the round-grouped lines (`LogRounds`, sticky
  *   `top-0` headers: the scrollport has no top padding) and follows new lines within 48 px
- *   (`useLogFollow`, shared with the log sheet).
+ *   (`useLogFollow`, shared with the log sheet). It is `relative`, so the lines' `sr-only` (absolutely
+ *   positioned) text is clipped with them: without it their containing block is `<main>`, which
+ *   gained ~3500 px of scrollable overflow and could be scrolled off-screen (Lot 75 Check 1).
  * - **Collapsed**, the list unmounts, so no zero-size `action-log-panel` is left for the FX
  *   (plan Review Focus 5); expanding again reopens on the newest line.
  * - Read-only (§6.6.4): the toggle and a card name send nothing.
@@ -71,7 +73,7 @@ export function LogPanel({ expanded, view, model, onToggle, onOpenCard }: LogPan
         <div
           id={listId}
           data-zone="action-log-panel"
-          className={`min-h-0 flex-1 overflow-y-auto bg-v7-panel px-3 pb-2 ${CHROME_SHAPE_SM_CLASS}`}
+          className={`relative min-h-0 flex-1 overflow-y-auto bg-v7-panel px-3 pb-2 ${CHROME_SHAPE_SM_CLASS}`}
         >
           <div ref={content}>
             <LogRounds view={view} model={model} onOpenCard={onOpenCard} inset="panel" />
