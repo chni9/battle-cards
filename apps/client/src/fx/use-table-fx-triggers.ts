@@ -39,7 +39,6 @@ import {
   measureBuySpecialFlyout,
   measureDeckCardFlyout,
   measureDirectedTokenFlyout,
-  measureIncomingCollapsedCue,
   measurePlayCardGhost,
   measureSellCardFlyout,
   measureTargetingCue,
@@ -345,18 +344,6 @@ export function useTableFxTriggers({ view, lastActionResolved, subChoice }: Tabl
           tone,
           from: measured.from,
           to: measured.to,
-          expiresAt,
-        });
-      }
-      const incomingCollapsed = measureIncomingCollapsedCue();
-      if (incomingCollapsed !== null) {
-        enqueue({
-          kind: 'targetingCue',
-          fromPlayerId: effect.sourcePlayerId,
-          toPlayerId: view.you,
-          tone,
-          from: incomingCollapsed,
-          to: incomingCollapsed,
           expiresAt,
         });
       }

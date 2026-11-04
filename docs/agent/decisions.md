@@ -6460,3 +6460,31 @@ quantifies; plan Appendix A.6 and Review Focus 4; the Lot 74 gate (G1, G2, G4).
   into nothing, 40 px wide, and static under reduced motion.
 
 ---
+
+## 2026-11-04 · [P] V7 FX anchors: the plate is the felt centre, the log is visible-first, collapsed chrome retires (L75-08)
+
+Source: technical spec v7 §6.1, §6.4, §6.9, §6.12; controller ruling R6 and open-question rulings 4
+and 12 (Lot 75 plan, Appendix A.7); `docs/backlog_v7_test_classification.md` (fx rows).
+
+- **Plate target.** `measureFeltCenterRect` returns a 48×72 rect on the plate's landing frame
+  (`[data-plate-landing]`, else `[data-zone="pending"]`), else on the felt, else null. The V2
+  midpoint of the plate and the card band put arena ghosts between the plate and the self strip.
+- **Visible-first log.** `queryActionLogAnchor` is `queryFirstVisible([panel, collapsed])`: a log
+  list that is mounted but zero-size (a collapsed panel, a depth-hidden log sheet) never wins.
+  `queryPendingFlashAnchor` reads the same way, so a zero-size arrow label never hides the plate
+  badge that carries the same effect id (Appendix A.7.1, "first visible").
+- **Retired:**
+  - `queryOpponentsCollapsedAnchor` and the collapsed tails of the seat and resource lookups;
+  - `measureIncomingCollapsedCue` and its second targeting cue;
+  - `OPPONENTS_COLLAPSED_ZONE`, `INCOMING_PENDING_ZONE` and `INCOMING_COLLAPSED_ZONE`;
+  - `queryIncomingAnchor` now names the plate.
+
+  They are superseded by §6.4 (landscape-compact replaces the V6 short-viewport collapse), §6.1
+  (every region always renders), §6.9 (an always-rendered log endpoint) and §6.12 (FX on arena
+  anchors). No arena element carried them, so no arena FX is lost. Under `?ui=classic` the old
+  table loses only the fallbacks for chrome it collapses, until L75-10 deletes it.
+- **Tests.** `play-flyout.test.ts` › 'aims flyouts at collapsed chrome …' (L53-07) retires, and its
+  owner moves from L75-10 to L75-08. The L51-13 source read and the overlay source read become
+  behavior tests.
+
+---

@@ -8,14 +8,11 @@
 import type { ResourceKind } from './asset-lookup';
 
 /**
- * Collapsed felt chrome still mounts a button (L53-07). Flyouts aim at that
- * button when the panel / seat / Incoming strip is unmounted.
+ * The log endpoint: the panel while it is visible, else the always-rendered ticker or toggle
+ * (`log-collapsed`). L75-08 retired the V2 collapsed opponents and Incoming zones (R6).
  */
 export const ACTION_LOG_PANEL_ZONE = 'action-log-panel';
 export const LOG_COLLAPSED_ZONE = 'log-collapsed';
-export const OPPONENTS_COLLAPSED_ZONE = 'opponents-collapsed';
-export const INCOMING_PENDING_ZONE = 'incoming-pending';
-export const INCOMING_COLLAPSED_ZONE = 'incoming-collapsed';
 
 /** Buy/sell card ghost size — small enough to read, not a full hand face (L51-13). */
 export const DECK_CARD_FLYOUT_WIDTH = 48;

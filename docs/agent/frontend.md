@@ -1652,6 +1652,19 @@ Appendix A). Each Lot 74 task appends its bullet here, in task order.
   clicks) on its right edge, and on its left edge once it is scrolled away from the start
   (`useHiddenEdges`: the admin tables' cue of L80-12, which is private to `screens/admin/`, on both
   edges). It is the same under reduced motion.
+- `fx/play-flyout.ts`, `fx/use-table-fx-triggers.ts`, `ui/fx-anchors.ts`;
+  `screens/arena/arena-fx-anchors.test.tsx` (L75-08, spec v7 §6.12, §8.1; R6): every FX endpoint
+  resolves to a rendered arena element in portrait, landscape-compact and desktop: the seat, its
+  portrait and values; the self strip, its pills and kit portrait; the hand instance and the hand
+  and specials groups; the plate landing; the pending id; the log; the dock; the felt. Card ghosts
+  land on the plate (`measureFeltCenterRect`: 48×72 on `[data-plate-landing]`, else the plate, else
+  the felt), never on the plate/hand midpoint. The log endpoint is the first visible of
+  `action-log-panel` and `log-collapsed` (`queryFirstVisible`), so a collapsed or hidden log list
+  never swallows it; the resolution flash likewise reads the first visible element carrying the
+  effect id, else the plate. The V2 collapsed-chrome fallbacks (`opponents-collapsed`, `incoming-pending`,
+  `incoming-collapsed`, `measureIncomingCollapsedCue`) are retired. `TableBannerHost` reads no
+  anchor and sits on the visual viewport in every mode; the overlay stays `z-[110]`, above every
+  `Z_INDEX` layer.
 
 ## Design system (V2 · Lots 10+)
 
@@ -1895,9 +1908,8 @@ rules above are unchanged — this section only covers how the client looks.
   stays on the felt unless leftover chrome still overflows (L53-07). Landscape `used()`
   ignores dock min-height (dock is beside chrome). When opponents collapse, leftover
   left-column height is the log (`minmax(0, 1fr)`), not two buttons with an empty slate.
-  Flyouts aim at the
-  collapsed buttons (`log-collapsed` / `opponents-collapsed` / `incoming-collapsed`) so
-  chips and pulses still play when the panel is unmounted. Collapse Dialogs must
+  Since L75-08 flyouts aim only at the
+  log button (`log-collapsed`) among the collapsed buttons. Collapse Dialogs must
   fit in the viewport with Close visible. Empty Incoming / Waiting / Specials take no flex
   space. No separate
   “Card Battle” header; code/status live in the turn strip. Opponents hug content (no empty
@@ -2057,10 +2069,9 @@ rules above are unchanged — this section only covers how the client looks.
     Travel `TOKEN_FLYOUT_DURATION_S` in `apps/client/src/fx/motion-timing.ts`
     (0.6s; raise it to slow chips — keep `FX_TTL_MS` above that × 1000).
     Reduced motion skips choreography. Do not invent Draw totals.
-    **Collapsed chrome (L53-07):** measure against `action-log-panel` **or**
-    `log-collapsed`, opponent seats **or** `opponents-collapsed`, Incoming strip
-    **or** `incoming-collapsed`. Overlay flashes use the same anchors so chips
-    and pulses still play when the panel is a button.
+    **Log endpoint (L53-07, L75-08):** the first visible of `action-log-panel` and
+    `log-collapsed`. L75-08 retired the `opponents-collapsed` and `incoming-*`
+    fallbacks (no arena element carries them); card ghosts land on the plate.
   - **CostDisplay (L39-04):** icon+number on interactive cost chrome (Use / shop / special
     buy / rewards / Sentence expiry). Button chrome adds `signed="cost" | "gain"` (− / +).
     How-to-play and action-log prose stay text via `formatCardCost`. Kit inspect and
