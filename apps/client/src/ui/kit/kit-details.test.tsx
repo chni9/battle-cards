@@ -18,6 +18,7 @@ import { KIT_ABILITY_COPY, KIT_TRAIT_SECTION_KEYS } from '../../view-model/kit-i
 import { kitSpecialCardKey } from '../../view-model/kit-special-card-key';
 import { HIDDEN_CARD_LABEL, cardCostChip, cardDamageChip, cardFaceLabel } from '../card/card-face';
 import { spokenGlyphAmount } from '../card/glyph-amount';
+import { RANDOM_SPECIAL_CAPTION } from '../ui-copy';
 import { KIT_DETAILS_SECTION_IDS, KIT_DETAILS_SECTION_TITLES, KIT_TRAIT_SECTION_FOR } from './kit-details-sections';
 import type { KitDetailsSectionId } from './kit-details-sections';
 import { KitDetails } from './kit-details';
@@ -116,6 +117,17 @@ describe('KitDetails for every kit (spec v7 §6.6.5, L30-05)', () => {
       }
     });
 
+    const randomCount = kit.randomStartingSpecialCount ?? 0;
+    const randomSlots = Array.from(specials.querySelectorAll<HTMLElement>('[data-random-special]'));
+    expect(randomSlots).toHaveLength(randomCount);
+    for (const slot of randomSlots) {
+      expect(within(slot).getByRole('article', { name: HIDDEN_CARD_LABEL }).getAttribute('data-card-family')).toBe('special');
+      expect(slot.textContent).toContain(RANDOM_SPECIAL_CAPTION);
+    }
+    // Fixed specials first, then the random ones (spec v7 §10.1, L76-03).
+    expect(Array.from(specials.querySelectorAll('[data-special-key], [data-random-special]'), (node) => node.hasAttribute('data-random-special')))
+      .toEqual([...kit.specialCards.map(() => false), ...Array.from({ length: randomCount }, () => true)]);
+
     const groups = [
       ['always-upgraded', kit.traits.alwaysUpgraded, true],
       ['immune-to', kit.traits.immuneTo, false],
@@ -195,6 +207,16 @@ describe('KitDetails spec values', () => {
     expect(container.querySelector('[data-kit-section="ability"]')).toBeNull();
   });
 
+  it("shows Prophet's two random starting specials as captioned hidden versos with no cost (spec v7 §10.1, L76-03)", () => {
+    const { container } = renderUi(<KitDetails kitId="prophet" />);
+    const specials = section(container, 'special-cards');
+    expect(within(specials).getAllByRole('article', { name: HIDDEN_CARD_LABEL })).toHaveLength(2);
+    expect(within(specials).getAllByText(RANDOM_SPECIAL_CAPTION)).toHaveLength(2);
+    expect(specials.querySelector('[data-special-key]')).toBeNull();
+    expect(specials.textContent).not.toMatch(/pts/);
+    expect(section(container, 'ability').textContent).toContain('duplicates allowed');
+  });
+
   it("renders each of Specialist's duplicate specials with its own key (L27-05)", () => {
     const errors = vi.spyOn(console, 'error').mockImplementation(() => undefined);
     const { container } = renderUi(<KitDetails kitId="specialist" />);
@@ -232,6 +254,8 @@ describe('KitDetails spec values', () => {
 
     const specials = section(container, 'special-cards');
     expect(within(specials).getByRole('article', { name: 'Roulette' })).toBeTruthy();
+    expect(within(specials).getAllByRole('article', { name: HIDDEN_CARD_LABEL })).toHaveLength(2);
+    expect(within(specials).getAllByText(RANDOM_SPECIAL_CAPTION)).toHaveLength(2);
     expect(specials.textContent).toContain('minus 10 pts');
     expect(section(container, 'draw-risk').textContent).toContain(
       '1 in 10 chance each Draw drops this player to 1 life, 0 points, 0 upgrade points, and no shield',

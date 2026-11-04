@@ -169,6 +169,24 @@ describe('ChatLog composer (spec v7 §6.9, §7.5; parity chat-compose-enter)', (
     renderUi(chat({ inputLabel: walkIn, placeholder: walkIn }));
     expect(screen.getByRole('textbox', { name: walkIn }).getAttribute('placeholder')).toBe(walkIn);
   });
+  it('sends nothing on Enter or Send while sendLocked, keeps the draft, and sends it once unlocked (L76-14, A.9 ruling 8)', async () => {
+    const { user, onSend, rerender } = setup({ sendLocked: true });
+    await user.type(input(), 'brb{Enter}');
+    await user.click(sendButton());
+    expect(onSend).not.toHaveBeenCalled();
+    expect(input().value).toBe('brb');
+    rerender(chat({ onSend, sendLocked: false }));
+    await user.type(input(), '{Enter}');
+    expect(onSend.mock.calls).toEqual([['brb']]);
+    expect(input().value).toBe('');
+  });
+  it('keeps a locked Send visible and in the Tab order: aria-disabled, never native disabled', () => {
+    renderUi(chat({ sendLocked: true }));
+    expect(sendButton().getAttribute('aria-disabled')).toBe('true');
+    expect(sendButton().hasAttribute('disabled')).toBe(false);
+    sendButton().focus();
+    expect(document.activeElement).toBe(sendButton());
+  });
 });
 
 describe('ChatLog transcript region (WCAG 2.1.1; fix round 1)', () => {

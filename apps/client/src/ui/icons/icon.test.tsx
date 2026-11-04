@@ -70,6 +70,11 @@ describe('Icon (technical spec v7 §5.6)', () => {
     expect(image.getAttribute('aria-hidden')).toBeNull();
     expect(image.querySelector('title')?.textContent).toBe('Icon fixture label');
   });
+  it('draws the ready check with a --cta body, a different shape from the not-ready close cross (L76-12)', () => {
+    const check = svgOf({ name: 'check' });
+    expect(check.querySelector(`[fill="${V7_COLORS.cta}"]`)).not.toBeNull();
+    expect(shapeOf(check)).not.toBe(shapeOf(svgOf({ name: 'close' })));
+  });
   it('treats an empty label as decorative, never as an unnamed image', () => {
     const svg = svgOf({ name: 'help', label: '' });
     expect([svg.getAttribute('aria-hidden'), svg.getAttribute('role')]).toEqual(['true', null]);

@@ -11,7 +11,8 @@
  *   `KIT_DETAILS_SECTION_IDS`, each a `<section data-kit-section>` headed by an `<h3>`, in
  *   that order (the test pins it). The sections carry no accessible name, so a sheet does not
  *   expose up to nine region landmarks (L74-02). The ability group renders only for a kit with
- *   `KIT_ABILITY_COPY`. All visible copy is the V6 copy, verbatim.
+ *   `KIT_ABILITY_COPY`. All visible copy is the V6 copy, verbatim, plus the L76-03 random-special
+ *   caption.
  * - **Cards:** the starting hand is one hidden thumb per family (an action and an attack verso)
  *   with its count, so no "N action · M attack" prose; special and trait cards are thumb
  *   `Card`s. A thumb prints no name, so each carries a visible caption. The Card's own upgraded
@@ -21,6 +22,9 @@
  * - **Costs:** a thumb prints no cost chip (L72-12), so a special's play cost is a signed
  *   `CostAmount` under its caption; Draw and the upgrade-point prices are `CostAmount` too, so
  *   every amount is an icon plus a number with spoken text.
+ * - **Random specials:** a kit with `randomStartingSpecialCount` (Prophet 2, Gambler 2) shows that many
+ *   hidden special versos after its fixed specials, each captioned `RANDOM_SPECIAL_CAPTION` and with
+ *   no cost, because the drawn card is unknown (spec v7 §10.1, L76-03; display order only).
  * - **Read-only:** no face is a button; the sheet around the details owns Select (§7.3).
  */
 
@@ -35,6 +39,7 @@ import { RESOURCE_ICON } from '../icons/icon-names';
 import { CHROME_SHAPE_SM_CLASS } from '../primitives/chrome-classes';
 import { Pill } from '../primitives/pill';
 import { RESOURCE_CAPTIONS } from '../resource-captions';
+import { RANDOM_SPECIAL_CAPTION } from '../ui-copy';
 import { KIT_DETAILS_SECTION_TITLES, type KitDetailsSectionId } from './kit-details-sections';
 import { KitPortrait } from './kit-portrait';
 
@@ -100,6 +105,7 @@ export function KitDetails({ kitId }: KitDetailsProps): ReactElement {
   const kit = getKit(kitId);
   const { startingResources: res, startingCardCounts: counts, traits } = kit;
   const abilityCopy = KIT_ABILITY_COPY[kitId];
+  const randomSpecialCount = kit.randomStartingSpecialCount ?? 0;
   const resources = [
     ['life', 'life', res.lives],
     ['point', 'point', res.points],
@@ -158,7 +164,7 @@ export function KitDetails({ kitId }: KitDetailsProps): ReactElement {
       </Group>
 
       <Group id="special-cards">
-        {kit.specialCards.length > 0 ? (
+        {kit.specialCards.length + randomSpecialCount > 0 ? (
           <ul className={LIST_CLASS}>
             {kit.specialCards.map((cardId, index) => {
               const key = kitSpecialCardKey(cardId, index);
@@ -174,6 +180,12 @@ export function KitDetails({ kitId }: KitDetailsProps): ReactElement {
                 </li>
               );
             })}
+            {Array.from({ length: randomSpecialCount }, (_, index) => (
+              <li key={`random-special:${String(index)}`} data-random-special={index} className="flex w-20 flex-col items-start gap-1">
+                <Card face="hidden" family="special" size="thumb" />
+                <span data-card-caption className={`${CAPTION_CLASS} text-left`}>{RANDOM_SPECIAL_CAPTION}</span>
+              </li>
+            ))}
           </ul>
         ) : null}
       </Group>

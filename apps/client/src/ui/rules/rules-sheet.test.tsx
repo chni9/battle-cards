@@ -105,3 +105,25 @@ describe('RulesSheet', () => {
     expect(document.activeElement).toBe(within(sheet).getByRole('button', { name: 'Close' }));
   });
 });
+
+describe('RulesSheet with an editor (L76-09, spec v7 §7.4)', () => {
+  it('holds the host editor under the same title, with Close as its only action', () => {
+    renderUi(<RulesSheet open rules={rules()} onClose={vi.fn()} editor={{ onChange: vi.fn() }} />);
+    const sheet = screen.getByRole('dialog', { name: 'Table rules' });
+    expect(within(sheet).getByRole('slider', { name: 'Human turn' })).toBeTruthy();
+    expect(within(sheet).getAllByRole('button', { pressed: true })).toHaveLength(KIT_IDS.length);
+    const actions = sheet.querySelector<HTMLElement>('[data-zone="sheet-actions"]');
+    if (actions === null) throw new Error('no actions row');
+    expect(within(actions).getAllByRole('button').map((button) => button.textContent.trim())).toEqual(['Close']);
+  });
+
+  it('closes on Escape and on Close, and closing sends nothing', async () => {
+    const onClose = vi.fn();
+    const onChange = vi.fn();
+    const { user } = renderUi(<RulesSheet open rules={rules()} onClose={onClose} editor={{ onChange }} />);
+    await user.keyboard('{Escape}');
+    await user.click(within(screen.getByRole('dialog', { name: 'Table rules' })).getByRole('button', { name: 'Close' }));
+    expect(onClose).toHaveBeenCalledTimes(2);
+    expect(onChange).not.toHaveBeenCalled();
+  });
+});

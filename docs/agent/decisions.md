@@ -6329,3 +6329,203 @@ L74-21 cache)" above; the L74-26 task review (M1) and the controller's ruling of
 - **Why:** the dock needs a stable footprint, while every other surface needs the whole reason.
 
 ---
+
+## 2026-11-03 · [P] The lobby chat sends the trimmed body (L76-02)
+
+Source: technical spec v7 §4.2, §15 (the lobby leaves `screens/table/`); `docs/agent/frontend.md` Chat (`ui/chat/`, L72-14).
+
+- **Change.** L76-02 moves the lobby to the V7 `ui/chat` `ChatLog`, which trims the body before
+  `onSend` (L72-14). The V6 `screens/table/chat-log.tsx` sent the text as typed, spaces included.
+  The server stores the body as sent: `parseSendChatPayload` only rejects an empty or
+  whitespace-only body.
+- **Effect.** A lobby line loses its leading and trailing spaces. Nothing else changes: an empty
+  or whitespace-only message is still dropped on the client, and the intent, the 200-character
+  cap and the reset after a send are the same.
+- **Why.** One chat component serves the lobby, the arena chat sheet (L74-16, which already sends
+  trimmed lines) and Game over (L77).
+
+---
+
+## 2026-11-03 · [P] The Lot 76 kit copy supersedes the v6 How to play Kits row (L76-03)
+
+- **Supersedes** the `kits` row of `docs/technical_spec_v6.md` §5.1 on designer instruction 2026-10-20
+  (technical spec v7 §10, Q11 = B). The row now points at v7 §10.1; the live copy is
+  `apps/client/src/screens/how-to-play-content.ts`.
+- **Changed** (v7 §10.1, the Lot 76 rows): How to play Kits, the lobby Your kit line, the Random kit
+  preview, the Online Create helper and Prophet's ability. A kit now shows only to an upgraded Spy or
+  Spy Thief, or once its player is eliminated, and a basic Spy shows only resources (Lot 69). Kits names
+  host exclusions and dealt-at-random kits (Lot 70) and says a Gambler bust does not eliminate (Lot 66).
+  The Create helper waits for every guest's Ready (L57). Prophet no longer says "Invisibility excluded":
+  Invisibility circulates again (L58-06).
+- **Also changed, outside §10.1:** the picker lead and the solo kit line, which predate Lot 69, take the
+  same wording ("... Random is the default."). `KitDetails` shows Prophet's and Gambler's random starting
+  specials as hidden special versos captioned "Random special" (backlog L76-03 watch point). Every
+  string is listed in the PR for designer review (§10, §10.6).
+
+---
+
+## 2026-11-03 · [P] Table rules: one sheet for everyone, the host edits it, the slider sends on release (L76-09)
+
+Source: technical spec v7 §7.4, §7.1, §11, §13 (Q3/Q31, Q4/Q18, Q8, Q15); backlog_v7 L76-09; Lot 76
+plan Appendix A.5.
+
+- **Supersedes** the host-only view in "2026-10-06 · [P] Rules chrome and lobby chat" ("Host rules
+  open from a settings control only the host sees"). Everyone in the lobby (host, seated guests,
+  walk-ins) sees the same `RulesStrip` and taps it to open the "Table rules" sheet. Guests and
+  walk-ins get the read-only sheet (Q15). The host, and the player on the solo menu, get the same
+  sheet holding `RulesEditor`. The Lot 70 order stays (the 5–180 s slider, then All / None /
+  Random, then the 16 kit toggles), with live apply and no Save or Cancel, at least one kit
+  allowed, and None keeping the first Classic kit.
+- **Supersedes** the per-step sends of the Lot 70 slider: `screens/lobby-rules-panel.tsx` sent one
+  `setLobbyRules` per input event (Appendix A `lobby-rules-dialog-live-apply`: "every slider step
+  sends an intent, which is chatty but intended"). The slider now sends once per gesture, on
+  release: pointer up or cancel, key up after a step key, blur, or a change from assistive
+  technology (`ui/primitives/slider.tsx`). The intent and its payload are unchanged. A guest's
+  strip now changes once per release instead of following the drag.
+- Kit, Random, All and None payloads still never carry `turnTimeSeconds` (it overrides the server
+  clock for the life of the room). Every payload is built in the pure
+  `ui/rules/rules-editor-model.ts`.
+- The last allowed kit is `aria-disabled`, stays focusable and is described by the visible "At
+  least one kit must stay allowed." (the existing `set-lobby-rules-no-kit` copy), so the reason is
+  reachable by keyboard (Q39). The V2 tile was natively disabled with no reason.
+- Solo (Q3/Q31): while `includeTurnTime` is false, the strip, its spoken summary and the slider
+  readout at the untouched value read "Server default". Only a slider release that changes the
+  value sets `includeTurnTime`; kit and Random edits never do. During a solo launch (Q8) every
+  editor control is disabled, but the strip still opens so the rules stay readable: in V7 the
+  strip is the summary as well as the opener, so only the controls that could change something
+  are locked.
+- The lobby keeps V2's `view.lobbyRules ?? defaultLobbyRules()` fallback; the room always sends
+  the field.
+
+---
+
+## 2026-11-03 · [P] The kit picker lists every kit; excluded kits are greyed and cannot open (L76-10)
+
+Source: technical spec v7 §7.3, §6.7, §11 (Q23, Q39); backlog_v7 L76-10 (Acceptance and watch
+point); Lot 76 plan Appendix A.5 and A.9 rulings 3 and 5.
+
+- **Supersedes** "only allowed kits are listed", the Lot 70 filter in
+  `screens/lobby-kit-picker-dialog.tsx`. Appendix A `home-solo-kit-picker` says "Only allowed kits
+  are listed (Lot 70 filter)", `lobby-kit-picker-dialog` says "allowed catalog kits only (excluded
+  kits are filtered out)", and frontend.md said "allowed kit portraits + Random".
+  `screens/lobby/kit-picker-sheet.tsx` lists Random, then all 16 kits in `KIT_IDS` order, in the
+  lobby and on the solo menu. An excluded kit stays in place, greyed and labelled "Excluded" (Q23),
+  so tiles no longer vanish under a guest's finger when the host edits the rules. An excluded kit
+  still cannot be chosen, and the server's `choose-kit-excluded` check is unchanged.
+- **One disabled pattern for the picker** (the L76-10 watch point; ruling 3): `KitTile` as it is.
+  An excluded tile's head is natively `disabled`: it leaves the Tab order, a tap does nothing, and
+  it cannot open the kit sheet. Its visible "Excluded" word is the reason. We did not use the
+  arena shop's `aria-disabled` tiles (2026-11-02, L74-14). Those tiles still had something to
+  show, and their long-press had to reach them. Here the rules sheet already names every excluded
+  kit, and a focusable excluded tile would lead to a Select that can never succeed.
+- **Select this kit** is the one control that can turn disabled under focus: the host excludes
+  the kit a guest is reading. It uses `Button focusableWhenDisabled`, so focus stays on it, with the
+  existing reject copy "The host has excluded that kit. Pick one that is still allowed." as its
+  visible reason. It is latched once per kit-sheet open (ruling 5).
+- **Random only** hides the picker. Its sheets close, the lobby clears its open flag so turning
+  Random only off never reopens the picker by itself, and the Your kit card gives way to one
+  line.
+- **Gambler's Draw reads "5–100"** on its tile (designer 2026-11-03), not the catalog `draw: 10`:
+  the server pays a weighted 5–100 Draw to any kit with `traits.drawBustDenominator`
+  (`rollDrawGain`), and the Ability copy and How to play already say so. Every other tile stat is
+  the raw `KIT_CATALOG` value.
+
+---
+
+## 2026-11-03 · [P] V7 lobby seats retire the L57-16 Ready chrome (L76-12)
+
+Source: technical spec v7 §7.2 (seats as a mini arena: seat colors, ready check), §5.1 (color
+tokens), §5.3 (arcade chrome Button), §5.6 (icon set); `docs/backlog_v7_test_classification.md`,
+Owner lot 76, the old-layout rows of `lobby-ready-mark.test.ts` and `lobby-ready.test.ts`.
+
+- **Supersedes** the L57-16 Ready chrome: the fixed `w-6` check / cross column in V2 tokens
+  (`text-cta-green-deep` / `text-cta-red`, `lobby-ready-mark.tsx`), and the green Ready / orange
+  Cancel ready buttons (`variant={youReady ? 'orange' : 'green'}` with `LobbyReadyCheckIcon`).
+- **Now:** each seat card starts with a `ui/icons` mark, `check` (Ready) or `close` (Not ready),
+  named by `lobbyReadyLabel`, before the seat-hued avatar and nickname. Ready is a primary
+  Button with the `check` icon; Cancel ready is secondary. The state reads by shape and name,
+  not by color alone (§11).
+- **Retired tests:** `screens/lobby/lobby-ready-mark.test.ts` and
+  `screens/lobby/lobby-screen.ready-chrome.test.ts`, deleted with `lobby-ready-mark.tsx`. Their
+  product assertions stay as rendered tests in `screens/lobby/lobby-screen.test.tsx` (L76-02):
+  each seat's Ready / Not ready mark sits before the nickname, and Ready / Cancel ready send
+  `setReady`.
+
+---
+
+## 2026-11-03 · [P] Under Random only the lobby host reads the solo line (L76-12)
+
+Source: technical spec v7 §7.3 (Random only replaces the Your kit card), §10.6; controller
+ruling for L76-12 (2026-11-03); `screens/kit-pick-copy.ts` (L76-10).
+
+- **Before (L76-10):** every seated viewer read `RANDOM_ONLY_LOBBY_LINE` ('The host is dealing
+  kits at random.'), the host included, under a 'Your kit' heading.
+- **Now:** `LobbyKitCard` takes `isHost`. The host deals the kits, so they read
+  `RANDOM_ONLY_SOLO_LINE` ('Kits will be dealt at random.'), the line the solo menu already uses;
+  a seated guest still reads `RANDOM_ONLY_LOBBY_LINE`. The card has no 'Your kit' heading and no
+  Choose kit. Both strings stay in `screens/kit-pick-copy.ts` for designer review (§10.6).
+- **Tests:** `screens/lobby/lobby-kit-card.test.tsx` has one case per viewer.
+
+---
+
+## 2026-11-03 · [P] The lobby chat panel starts open on every screen (L76-13)
+
+Source: technical spec v7 §7.5 ("Panel under the seats, collapsible on phones"); Appendix A
+`lobby-chat` (chat under the player list) and `chat-new-message-announcement` (the lobby has no
+unread count).
+
+- **Decision.** `LobbyChatPanel` starts expanded on every viewport and keeps its disclosure toggle
+  everywhere. It reads no viewport mode, so its first render never depends on the window size,
+  happy-dom's default included.
+- **Why open.** The lobby has no unread signal, so a panel that starts collapsed would hide every
+  line that arrives until the player opens it. The V6 lobby always showed the transcript.
+- **Collapse.** The toggle hides the body with the `hidden` attribute and keeps `ChatLog` mounted,
+  so the transcript, its scroll position and an unsent draft survive (the draft lives only while
+  `ChatLog` is mounted, decisions.md 2026-11-02, L74-23). The state is local and resets when the
+  lobby unmounts.
+- **Open question for the designer:** start collapsed on phones, with an unread mark, if the panel
+  crowds the seats at 360 px.
+
+---
+
+## 2026-11-03 · [P] Lobby rejects: OK dismiss and phase-change clear; the reconnecting lock (L76-14)
+
+Source: technical spec v7 §4.1, §7.2, §7.7, §13 (Q26, Q29); Appendix A `lobby-inline-reject-alert`,
+`lobby-sticky-reject-alert`, `reject-state-carryover`, `lobby-header-status`; Lot 76 plan A.9
+rulings 4, 6, 7 and 8.
+
+- **Supersedes, across phase changes only,** item 5 of "Lot 39 Table UX polish" (2026-08-10):
+  "`stateUpdate` must not clear `actionReject`". Within a phase it still holds: a bot or peer
+  update never closes a reject. A view phase change between two phases (lobby, playing,
+  finished) now clears the shared reject, so a lobby reject no longer opens on the first table
+  frame and an End reject no longer reaches the rematch lobby (parity `reject-state-carryover`).
+  A change to or from no room (Home) never clears: "You were kicked." and a solo-launch failure
+  must still show on Home.
+- **Where.** `GameApp` in `App.tsx`, with React's "adjust state while rendering" pattern
+  (`screens/reject-phase.ts` decides). It runs before the next screen commits, so neither the
+  classic `IllegalActionDialog` nor the arena `RejectToast` mounts with the stale reject; an effect
+  would paint it for a frame first. It updates `GameApp`'s own state (the hook runs there). The
+  hook's API is unchanged (§4.1).
+- **Dismiss.** The lobby alert stays an inline `role="alert"` line (§7.7; the lobby's one toast is
+  the L76-15 rules notice). A quiet `close` `IconButton` named "OK", the arena reject toast's
+  control, sits beside it, outside the live region, so only the message is announced. It calls
+  `clearActionReject`.
+- **Alert chrome.** The wrapper keeps L76-12's inset `--danger` ring, not a `border-l-4` stripe:
+  the Impeccable `side-tab` finding is a defect on shipped V7 files (§12.4), the same ruling as
+  "Feedback status badge replaces the side stripe" (2026-10-28, L80-09). The alert is still told
+  by its words, its `role="alert"` and the ring, never by the ring alone.
+- **Reconnecting lock.** While `status === 'reconnecting'` the lobby disables Start, Ready / Cancel
+  ready, Add bot and its difficulty, a bot's difficulty, Kick (an open Kick confirm closes), Select
+  this kit, every rules editor control, and chat Send and Enter (`ChatLog sendLocked`: Send stays
+  focusable, the draft stays). Leave, Copy, Feedback, the alert's OK, opening the rules sheet and
+  Choose kit stay live. The lobby locks chat where the arena does not (L74-25): §7.2 disables
+  every lobby control that sends an intent, and the SDK would replay a buffered lobby intent
+  against a state the player has not seen.
+
+---
+
+## 2026-11-03 · [P] A Random-only toggle toasts 'Rules changed' without the reset line (L76-15)
+
+The L76-15 Acceptance says no notice fires "on a Random-only toggle that keeps the pick", and also that 'Rules changed' fires for each field change; spec v7 §7.4 gives guests a toast "when rules change". `randomOnly` is a rules field, and turning it on keeps `yourKitSelection` in the view (the server ignores picks at deal time). Reading: such a toggle never adds the "Your pick was reset to Random." line, but it does show 'Rules changed'. Designer answer (2026-11-03, Lot 76 plan, Appendix B, Domain D question 2): a Random-only toggle shows 'Rules changed' without the reset line, and walk-ins and the host get no toast (A.9 ruling 10).
+
+---

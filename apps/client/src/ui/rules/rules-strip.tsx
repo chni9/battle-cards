@@ -31,6 +31,10 @@
  * tutorial): the strip never invents defaults and the tutorial never mounts it (§7.4, §6.11).
  * The press drops it by `--chrome-press-y` at full motion and only dims it under reduced
  * motion (§5.7); `data-motion` says which.
+ *
+ * With `editor` (the host, the solo menu: L76-09, §7.4) the same sheet holds `RulesEditor`, and
+ * with `editor.serverDefaultTime` the clock and the spoken summary read "Server default"; the
+ * strip itself is never disabled, so the rules stay readable while busy or reconnecting.
  */
 
 import type { LobbyRules } from '@card-battle/shared';
@@ -45,12 +49,15 @@ import {
   motionAttribute,
 } from '../primitives/chrome-classes';
 import { EXCLUDED_LABEL, TABLE_RULES_LABEL } from '../ui-copy';
+import { turnTimeLabel, type RulesEditorBinding } from './rules-editor-model';
 import { RulesSheet } from './rules-sheet';
-import { formatTurnTimeSeconds, rulesKitFaces, rulesSummaryText } from './rules-summary';
+import { rulesKitFaces, rulesSummaryText } from './rules-summary';
 
 export interface RulesStripProps {
   rules: LobbyRules;
   className?: string;
+  /** The host or the solo menu: the sheet holds `RulesEditor` (L76-09). Absent: read-only. */
+  editor?: RulesEditorBinding;
 }
 
 /** 4 columns, 8 once the strip's content is 26rem wide (8 cells of 3.25rem), so 16 kits fill whole rows. */
@@ -58,10 +65,11 @@ const FACE_GRID_CLASS = 'grid grid-cols-4 gap-x-1 gap-y-2 @min-[26rem]:grid-cols
 /** `w-12` (48px) holds the 11px "Excluded" caption (about 48px); it is the same for every face. */
 const FACE_CELL_CLASS = 'flex w-12 flex-col items-center justify-self-center gap-1';
 
-export function RulesStrip({ rules, className = '' }: RulesStripProps): ReactElement {
+export function RulesStrip({ rules, className = '', editor }: RulesStripProps): ReactElement {
   const [open, setOpen] = useState(false);
   const reduced = usePrefersReducedMotion();
   const summaryId = useId();
+  const clock = turnTimeLabel(rules, editor?.serverDefaultTime === true);
 
   return (
     <>
@@ -93,7 +101,7 @@ export function RulesStrip({ rules, className = '' }: RulesStripProps): ReactEle
         <span className="flex flex-wrap items-center gap-x-4 gap-y-1">
           <span className="inline-flex items-center gap-1.5 font-v7-display text-v7-title leading-none">
             <Icon name="clock" size={22} />
-            <span>{formatTurnTimeSeconds(rules.turnTimeSeconds)}</span>
+            <span>{clock}</span>
           </span>
           {rules.randomOnly ? (
             <span className="inline-flex items-center gap-1.5 font-v7-body text-v7-body font-extrabold">
@@ -125,7 +133,7 @@ export function RulesStrip({ rules, className = '' }: RulesStripProps): ReactEle
         </span>
       </button>
       <span id={summaryId} hidden>
-        {rulesSummaryText(rules)}
+        {rulesSummaryText(rules, clock)}
       </span>
       <RulesSheet
         open={open}
@@ -133,6 +141,7 @@ export function RulesStrip({ rules, className = '' }: RulesStripProps): ReactEle
         onClose={() => {
           setOpen(false);
         }}
+        {...(editor !== undefined ? { editor } : {})}
       />
     </>
   );

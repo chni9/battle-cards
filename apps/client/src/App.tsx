@@ -19,8 +19,9 @@ import { forgetChatSeen } from './screens/arena/chat-unread-store';
 import { ClaimSeatDialog } from './screens/claim-seat-dialog';
 import { claimStayLabel, shouldShowClaimPicker } from './screens/claim-seat';
 import { EndScreen } from './screens/end';
-import { HomeScreen } from './screens/home';
-import { LobbyScreen } from './screens/lobby';
+import { HomeScreen } from './screens/home/home-screen';
+import { LobbyScreen } from './screens/lobby/lobby-screen';
+import { shouldClearRejectOnPhaseChange } from './screens/reject-phase';
 import { soloMenuSeed, type SoloMenuSeed } from './screens/solo-menu-seed';
 import { STATUS_LABELS } from './screens/status-labels';
 import { TableScreen, type TableScreenProps } from './screens/table';
@@ -114,6 +115,20 @@ function GameApp() {
   const [tablePreference] = useState(() =>
     applyUiSwitchParam(parseUiSwitchParam(window.location.search), browserUiSwitchStorage()),
   );
+
+  // A reject belongs to the screen it arrived on (spec v7 §7.2, Q26/Q29; A.9 ruling 7; supersedes the
+  // L39 carry-over across phases): a change between two view phases clears it, and a change to or from
+  // Home never does, so a kick or a solo-launch failure still shows there. React's "adjust state while
+  // rendering" pattern (as `screens/arena/top-bar.tsx`): it runs before the next screen commits, so no
+  // dialog or toast mounts with the old reject, and it only updates GameApp's own state (the hook runs here).
+  const viewPhase = view?.phase ?? null;
+  const [renderedPhase, setRenderedPhase] = useState(viewPhase);
+  if (renderedPhase !== viewPhase) {
+    setRenderedPhase(viewPhase);
+    if (shouldClearRejectOnPhaseChange(renderedPhase, viewPhase)) {
+      clearActionReject();
+    }
+  }
 
   const claimableSeats = view?.claimableSeats ?? [];
   const claimableKey = claimableSeats.map((seat) => seat.playerId).join('|');
@@ -277,6 +292,7 @@ function GameApp() {
           view={view}
           status={status}
           error={error}
+          onDismissError={clearActionReject}
           onStart={startGame}
           onLeave={leave}
           onAddBot={addBot}
@@ -286,6 +302,15 @@ function GameApp() {
           onChooseKit={chooseKit}
           onSetLobbyRules={setLobbyRules}
           onSendChat={sendChat}
+          // Claim a seat (L76-16, §7.2, Q24, A.9 ruling 9): a walk-in only, while seats are claimable,
+          // as the arena (L74-23). A null dismissed key shows the picker again for the same set.
+          {...(walkInSpectator && claimableSeats.length > 0
+            ? {
+                onReopenClaim: () => {
+                  setClaimDismissedKey(null);
+                },
+              }
+            : {})}
         />
         {claimDialog}
       </>
