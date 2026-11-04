@@ -234,3 +234,47 @@ describe('hand fan in the arena (L74-07)', () => {
     expectNoArenaIntent(props);
   });
 });
+
+describe('hand scroll fades (Q87-4, designer 2026-11-03; L75-13)', () => {
+  const SEVEN = ['basic-attack', 'strong-attack', 'super-attack', 'spy', 'shield', 'tax', 'thief'] as const;
+  /** The hand's scroller; happy-dom has no layout, so a test gives it the box a browser would report. */
+  function stubScroller(box: { scrollWidth: number; clientWidth: number; scrollLeft: number }): HTMLElement {
+    const region = document.querySelector<HTMLElement>('[data-hand-fan] [data-scroll-axis="x"]');
+    if (region === null) throw new Error('no hand scroller');
+    Object.defineProperties(region, {
+      scrollWidth: { configurable: true, get: () => box.scrollWidth },
+      clientWidth: { configurable: true, get: () => box.clientWidth },
+      scrollLeft: { configurable: true, get: () => box.scrollLeft },
+    });
+    return region;
+  }
+  const fades = (): [boolean, boolean] => [
+    document.querySelector('[data-hand-fan] [data-scroll-cue="start"]') !== null,
+    document.querySelector('[data-hand-fan] [data-scroll-cue="end"]') !== null,
+  ];
+
+  it('with 7 cards that overflow: the right fade shows and the left does not; scrolled away from the start both show; at the end only the left stays', () => {
+    renderUi(fan(viewWith({ hand: SEVEN.map((id) => makeCard(id)) })));
+    expect(fades()).toEqual([false, false]);
+    const box = { scrollWidth: 900, clientWidth: 360, scrollLeft: 0 };
+    const region = stubScroller(box);
+    fireEvent.scroll(region);
+    expect(fades()).toEqual([false, true]);
+    box.scrollLeft = 200;
+    fireEvent.scroll(region);
+    expect(fades()).toEqual([true, true]);
+    box.scrollLeft = 540; // scrollWidth − clientWidth: the end
+    fireEvent.scroll(region);
+    expect(fades()).toEqual([true, false]);
+    // Decorative: not announced, and a tap or drag reaches the card under it.
+    const left = document.querySelector('[data-scroll-cue="start"]');
+    expect([left?.getAttribute('aria-hidden'), left?.className.includes('pointer-events-none')]).toEqual(['true', true]);
+  });
+
+  it('with no overflow: neither fade shows', () => {
+    renderUi(fan(viewWith({ hand: SEVEN.slice(0, 3).map((id) => makeCard(id)) })));
+    const region = stubScroller({ scrollWidth: 360, clientWidth: 360, scrollLeft: 0 });
+    fireEvent.scroll(region);
+    expect(fades()).toEqual([false, false]);
+  });
+});

@@ -270,7 +270,12 @@ collapsible log column on the right (320 px, a 44 px rail when collapsed). The c
 seat sheets are centred dialogs on desktop (`placement="auto"`), and desktop seats are drawn
 at 120×136 with a tile kit portrait. Landscape-compact (L75-03) puts the top bar and the ticker
 in one top row, the seats in one band, and the compact self strip, the hand and the dock in one
-bottom row.
+bottom row. In portrait the bottom band compacts when the plate would cover a seat (L75-13, 'Bas
+plus court'): the compact self strip and 52 px hand cards; the dock keeps its controls. A hand that
+overflows its row shows a static 40 px fade (`--bg-0` into nothing) on its right edge, and on its
+left edge once it is scrolled away from the start (L75-13, Q87-4, designer 2026-11-03). It is the
+admin tables' scroll cue (L80-12) on both edges, decorative (`aria-hidden`, no pointer events) and
+the same under reduced motion.
 
 The page ground is the opt-in class **`.v7-ground`** (`ui/tokens.css`, `@layer components`):
 `--bg-0` under a `--bg-1` to `--bg-0` gradient, the two halos (`--glow-a` top left, `--glow-b`
@@ -895,7 +900,9 @@ only V7 card renderer; the V2 `design/components/card.tsx` stays for the classic
   only resize path. **Hand size rule (L75-03):** in landscape-compact the hand fan sets
   `--hand-card-w` to `heightBoundHandCardWidthPx(visible height)` (`ui/card/hand-card-size.ts`): a
   card a quarter of the visible height tall, clamped to the `hand` clamp's 64–120 px (65 px at
-  390 px tall). The non-spec widths are picks for the L72-21 critique.
+  390 px tall). The compact portrait band (L75-13) sets 52 px (`COMPACT_HAND_CARD_W_PX`), below
+  the 64 px floor: the 44 px strip and the 16 px chips hold, and the longest names fall to the
+  10 px name floor. The non-spec widths are picks for the L72-21 critique.
 - **Overflow:** the selected lift (8px up, 105%), the focus ring (8px around), the counter
   glow (4px out plus a 12px blur) and the counter badge (8px under the bottom edge) reach past
   the 2:3 box. A scroll or `overflow-hidden` parent pads for them: about 16px around active

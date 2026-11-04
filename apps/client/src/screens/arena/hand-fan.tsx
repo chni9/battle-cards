@@ -21,6 +21,12 @@
  * L75-03 (§5.4, §6.4): `cardWidthPx` sizes the hand from outside (landscape-compact: a card a quarter
  * of the visible height tall). It sets `--hand-card-w` inline, over the Card clamp, and `--card-w`
  * stays each card's only resize path.
+ *
+ * L75-13 (§6.1 item 4; Q87-4, designer 2026-11-03): a hand that overflows its scroller fades on its
+ * right edge, and on its left edge once scrolled away from the start (`useHiddenEdges`, the admin
+ * tables' cue on both edges). The fades are static and decorative: hidden from assistive technology,
+ * they take no clicks, so a tap, a long press or a drag reaches the card under them, and a selected
+ * or focused card (`z-10`) rises above them. They are the same under reduced motion.
  */
 
 import type { PlayingStateView } from '@card-battle/shared';
@@ -42,6 +48,7 @@ import {
   type HandCardSource,
   type HandFanCard,
 } from './hand-fan-model';
+import { useHiddenEdges } from './hand-scroll-cue';
 import type { RejectCue } from './reject-model';
 
 export interface HandFanProps {
@@ -98,6 +105,13 @@ const REJECT_SHAKE_KEYFRAMES = { x: [0, -8, 8, -6, 6, -3, 0] };
 const REJECT_FLASH_KEYFRAMES = { boxShadow: [`0 0 0 3px ${V7_COLORS.danger}`, `0 0 0 3px ${V7_COLORS.danger}00`] };
 const REJECT_TRANSITION = { duration: durationS('slow') };
 
+/**
+ * The scroll-edge fade (Q87-4, L75-13): 40 px of the ground colour (`--bg-0`, the hand sits on the
+ * ground) into nothing, over the edge, as the admin tables' cue fades from their panel. It takes no
+ * clicks. The edge side and the gradient direction are added per fade.
+ */
+const HAND_CUE_CLASS = 'pointer-events-none absolute inset-y-0 w-10 from-v7-bg-0 to-transparent';
+
 export function HandFan({ view, ctx, selectedInstanceId, onOpenCard, drag, rejected = null, cardWidthPx }: HandFanProps): ReactElement {
   const model = handFanModel(view, ctx);
   const groups = [model.hand, model.specials];
@@ -107,12 +121,15 @@ export function HandFan({ view, ctx, selectedInstanceId, onOpenCard, drag, rejec
     '--hand-empties': String(groups.filter((cards) => cards.length === 0).length),
     ...(cardWidthPx !== undefined ? { '--hand-card-w': `${String(cardWidthPx)}px` } : {}),
   };
+  // The scroller is state, not a ref: the fades read its layout once it mounts (as `AdminDataTable`).
+  const [region, setRegion] = useState<HTMLDivElement | null>(null);
+  const hidden = useHiddenEdges(region);
   return (
     // The container for `cqi`. `--hand-card-w` restates the Card `hand` width (spec v7 §5.4), and an
     // inline `cardWidthPx` (L75-03) wins over it. Each card takes it through
-    // `[--card-w:var(--hand-card-w)]`, the Card's only resize path.
-    <div data-hand-fan="" className="@container h-full w-full [--hand-card-w:clamp(64px,19vw,120px)]" style={style}>
-      <ScrollArea axis="x" className="h-full px-4 pt-4 pb-3">
+    // `[--card-w:var(--hand-card-w)]`, the Card's only resize path. `relative` places the fades on it.
+    <div data-hand-fan="" className="@container relative h-full w-full [--hand-card-w:clamp(64px,19vw,120px)]" style={style}>
+      <ScrollArea ref={setRegion} axis="x" className="h-full px-4 pt-4 pb-3">
         <div className="mx-auto flex w-max items-end gap-3">
           <HandGroup
             zone="hand"
@@ -132,6 +149,12 @@ export function HandFan({ view, ctx, selectedInstanceId, onOpenCard, drag, rejec
           />
         </div>
       </ScrollArea>
+      {hidden === 'left' || hidden === 'both' ? (
+        <span aria-hidden="true" data-scroll-cue="start" className={`${HAND_CUE_CLASS} left-0 bg-linear-to-r`} />
+      ) : null}
+      {hidden === 'right' || hidden === 'both' ? (
+        <span aria-hidden="true" data-scroll-cue="end" className={`${HAND_CUE_CLASS} right-0 bg-linear-to-l`} />
+      ) : null}
     </div>
   );
 }

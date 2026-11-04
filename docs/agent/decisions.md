@@ -6426,3 +6426,37 @@ Source: technical spec v7 §5.4, §6.1, §6.4; controller ruling R4 and open-que
   the floor keeps the ticker when the dock is empty (a walk-in).
 
 ---
+
+## 2026-11-04 · [P] "Bas plus court": the compact band's numbers (L75-13)
+
+Source: the plan-commit entry "Bas plus court" (designer 2026-11-03, R5), which this one only
+quantifies; plan Appendix A.6 and Review Focus 4; the Lot 74 gate (G1, G2, G4).
+
+- **Trigger.** Portrait only. The band compacts when a seat would meet the plate's 122 px footprint
+  (open-question ruling 2) above the full band. The model reproduces the gate's measurements
+  (82 px at 360×740, 14 px at 375×812 with the empty 96 px plate).
+- **Sizes.** Compact hand cards are 52 px wide. The compact strip is 61 px against the full
+  strip's 160 px at 360–375 px. The savings are `ceil(99 + 1.5 × (clamp(64, 19vw, 120) − 52))`:
+  124 px at 360 and 128 px at 375. An 8-seat table at 360×740 gets a 338 px arena, 16 px over the
+  322 px it needs.
+- **No flap (S1).** Flow badges and thumbs cost both strips the same, and the savings are rounded up.
+  An upgraded-shield pill can add a fourth pill row to the full strip at 360 px, so the model can
+  miss about 44 px of saving. A compact band therefore returns to full only when the full band's
+  arena would clear the plate with `BAND_HYSTERESIS_PX` = 48 px to spare; full → compact keeps the
+  plain threshold. From about 385 px the full strip drops to two pill rows, so the constant
+  over-estimates and the band only returns to full later. Check 1 re-measures the arena heights,
+  and this note is updated if they differ (open-question ruling 3).
+- **Monotone overlap.** A seat counts as covered by `max(0, seat bottom − plate top)`, not by its
+  intersection with the plate, because the plate is pinned to the arena's bottom edge and the grid
+  places its rows from the arena top. With the intersection, an arena of 8 px or less read 0, and a
+  short compact arena (a 2-seat Duplicator at 360×640: 40 px full, 164 px compact, judged −8 px)
+  flapped between the bands. The unmeasured guard is a 0-wide arena only.
+- **Designer question:** at 52 px the longest card names fall to the 10 px floor and may wrap
+  mid-word (DESIGN.md › Card › Name). Accept, or hide names at that size? Default: accept.
+- **Hand scroll cue (Q87-4, designer 2026-11-03: fade added).** A hand that overflows shows a
+  static fade on its right edge, and on its left edge once scrolled away from the start. It
+  reuses the admin tables' pattern (`screens/admin/admin-scroll-cue.ts`, L80-12) in
+  `hand-scroll-cue.ts`, because that code is private to `screens/admin/`; the fade is `--bg-0`
+  into nothing, 40 px wide, and static under reduced motion.
+
+---

@@ -58,6 +58,9 @@
  * - §6.4, §5.4 (L75-03): landscape-compact: the top bar and ticker share the top row, seats sit in the
  *   band, and the compact strip, the hand (height-bound size) and the dock share one row; a mode change
  *   cancels a drag.
+ * - §6.1, §6.4 (L75-13, R5 'Bas plus court'): in portrait, when the full bottom band would let the plate
+ *   footprint cover a seat, the band compacts (`data-bottom-band`): a compact strip and 52 px hand cards;
+ *   the dock keeps its controls.
  *
  * Import rule (L74-01 brief): `screens/arena/` imports only from `ui/`, `view-model/`, `fx/`,
  * `net/` (types), `help/`, `feedback/` and the shared screen modules. It never imports
@@ -98,6 +101,7 @@ import {
   type ArenaRegion,
 } from './arena-regions';
 import { ArenaSeats } from './arena-seats';
+import { bottomBandFor, COMPACT_HAND_CARD_W_PX, type BottomBand } from './bottom-band';
 import {
   arenaSheetEntries,
   arenaSheetKey,
@@ -234,6 +238,12 @@ function ArenaScreenInner(props: ArenaScreenProps): ReactElement {
   // The desktop log panel (§6.4, L75-02; open-question ruling 5): expanded on mount. It lives here, so a
   // mode change keeps it; it is not a sheet and never ends targeting.
   const [logPanelExpanded, setLogPanelExpanded] = useState(true);
+  // The portrait bottom band (§6.1, §6.4; L75-13, R5 "Bas plus court"): it compacts when the full band
+  // would let the plate cover a seat, with hysteresis (`bottomBandFor`). Render-phase, as the targeting
+  // end, never an effect.
+  const [band, setBand] = useState<BottomBand>('full');
+  const nextBand = bottomBandFor(view, layoutBox, band);
+  if (nextBand !== band) setBand(nextBand);
   const seatsModel = seats(view, layoutBox);
   // The shell's single layout mode (§6.4, R1): every region's grid area and row read it.
   const mode: LayoutMode = seatsModel.layout.mode;
@@ -354,8 +364,17 @@ function ArenaScreenInner(props: ArenaScreenProps): ReactElement {
     commit,
     openChoice: openCard,
     mode,
+    band,
   });
   const dragging = handDrag.view?.phase === 'dragging' ? handDrag.view : null;
+  // The hand's sized width (A.5.1): height-bound in landscape-compact (L75-03), 52 px in the compact
+  // portrait band (L75-13); otherwise the Card clamp stands.
+  const handCardWidthPx =
+    mode === 'landscape-compact'
+      ? heightBoundHandCardWidthPx(layoutBox.viewport.height)
+      : band === 'compact'
+        ? COMPACT_HAND_CARD_W_PX
+        : undefined;
 
   useEffect(() => {
     if (!targeting) return;
@@ -374,6 +393,7 @@ function ArenaScreenInner(props: ArenaScreenProps): ReactElement {
       data-arena="next"
       data-action-lock={lock ?? 'none'}
       data-layout-mode={mode}
+      data-bottom-band={band}
       style={arenaGridStyle(mode)}
       className="v7-ground relative grid h-full w-full min-w-0 overflow-hidden font-v7-body text-v7-text"
     >
@@ -484,7 +504,7 @@ function ArenaScreenInner(props: ArenaScreenProps): ReactElement {
         ) : (
           <SelfStrip
             model={strip}
-            compact={mode === 'landscape-compact'}
+            compact={mode === 'landscape-compact' || band === 'compact'}
             onOpenKit={(kitId) => {
               openSheet({ kind: 'kit', kitId });
             }}
@@ -501,7 +521,7 @@ function ArenaScreenInner(props: ArenaScreenProps): ReactElement {
           onOpenCard={openCard}
           drag={handDrag.fanProps}
           rejected={rejectCue}
-          {...(mode === 'landscape-compact' ? { cardWidthPx: heightBoundHandCardWidthPx(layoutBox.viewport.height) } : {})}
+          {...(handCardWidthPx !== undefined ? { cardWidthPx: handCardWidthPx } : {})}
         />
       </div>
       <div {...regionLayout('dock')} data-zone="dock" className={`px-2 pb-2${inHandRow('dock')}`}>

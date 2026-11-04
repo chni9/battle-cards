@@ -1634,6 +1634,24 @@ Appendix A). Each Lot 74 task appends its bullet here, in task order.
     the dock under the ticker. The ticker cell takes no width from its content (`w-0 min-w-full`),
     so the dock sets the third column (10 rem at least, so an empty walk-in dock keeps the ticker)
     and a long log line truncates inside it instead of widening the grid.
+- `screens/arena/bottom-band.ts` (L75-13, spec v7 §6.1, §6.4; R5, designer "Bas plus court"): in
+  portrait, when the full bottom band would let the plate cover a seat (`plateOverlapPx` over
+  `seatCenters` / `seatRect` and `plateRect`, with the 122 px footprint: the landing frame plus one
+  badge row; a seat counts by how far its bottom edge sits below the plate's top edge, so the
+  overlap only grows as the arena shrinks), the band compacts (`<main data-bottom-band="compact">`).
+  The self strip goes compact and the hand cards drop to 52 px (`COMPACT_HAND_CARD_W_PX`); the dock
+  keeps its controls, and the seat and plate boxes do not change. While compact, `bottomBandFor`
+  judges the arena the full band would leave (measured − `bottomBandSavingsPx(width)`) and returns
+  to full only when that arena clears the plate with `BAND_HYSTERESIS_PX` (48) to spare, so the band
+  never flaps even when the modelled savings miss a pill row. Landscape-compact and desktop are
+  always `full`. A flip of the band cancels a lifted hand drag (`useHandDrag` keys its cancel on the
+  mode and the band): the arena, the strip and the hand cards change size under the card, so its
+  drop rects are stale.
+- `screens/arena/hand-scroll-cue.ts`, `hand-fan.tsx` (L75-13, Q87-4, designer 2026-11-03): a hand
+  whose scroller overflows shows a static, decorative fade (`data-scroll-cue`, `aria-hidden`, no
+  clicks) on its right edge, and on its left edge once it is scrolled away from the start
+  (`useHiddenEdges`: the admin tables' cue of L80-12, which is private to `screens/admin/`, on both
+  edges). It is the same under reduced motion.
 
 ## Design system (V2 · Lots 10+)
 
