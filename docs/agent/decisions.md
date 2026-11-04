@@ -6399,3 +6399,30 @@ rulings 5 and 7 (Lot 75 plan, Appendix A.2–A.4).
   `title`. No change.
 
 ---
+
+## 2026-11-04 · [P] V7 arena landscape-compact: the band, the hand size rule, the compact strip (L75-03)
+
+Source: technical spec v7 §5.4, §6.1, §6.4; controller ruling R4 and open-question rulings 6 and 7
+(Lot 75 plan, Appendix A.3, A.5); plan Review Focus 1.
+
+- **Rows.** The top bar and the ticker share the top row, the seats sit in one band in turn order,
+  and the compact self strip, the hand and the dock share the bottom row. **Designer question**
+  (open question 6): this composition? Default: yes.
+- **Hand size.** A landscape hand card is a quarter of the visible height tall, clamped to 64–120 px
+  (`heightBoundHandCardWidthPx`): 65 px at 390 px, the 64 px floor at 375 px.
+- **Compact strip.** One row: the thumb kit portrait and four small pills. Their captions are spoken
+  and in `title`, but not shown, because four captioned pills do not fit one row at 360 px. The flow
+  badges and the thumbs keep their own lines, so the in-play cards cost the full and the compact
+  strip the same height (L75-13 relies on it). **Designer question:** captions off in the compact
+  strip (L43-01 keeps them on the full strip)? Default: off.
+- **Seat box.** `SEAT_BOX['landscape-compact']` goes from 76×84 to 76×92 (§14.3 tuning). The band now
+  draws the portrait anatomy, which had been clipped 4 px at the arena top.
+- **Drag.** A mode change cancels a pressed or lifted drag: its drop rects were measured for the
+  old layout.
+- **Ticker column.** The band grid's third column is `minmax(10rem, auto)`, and the ticker cell has
+  no width of its own (`w-0 min-w-full`). A track sized `auto` takes its items' max-content, and a
+  truncated line's max-content is the whole line, so a long log line would have widened the column
+  and starved the hand (`min-w-0` alone only lowers the minimum). Now the dock sets the column, and
+  the floor keeps the ticker when the dock is empty (a walk-in).
+
+---

@@ -493,8 +493,9 @@ and are mirrored in `ui/palette.ts` and `ui/motion/motion-tokens.ts`.
   its own default. `--card-w` does not inherit (`@property` in `ui/tokens.css`), so setting it on
   a hand row does nothing: set it per card. The definite height means a default stretching flex
   or grid row cannot distort a card, and the row's `items-*` alignment still applies; do not
-  add `self-*` to cards. L75's landscape-compact hand derives `--card-w` from the visible
-  height. Never pass `w-*`, `h-*` or `aspect-*` classes: they would race the card's own sizes.
+  add `self-*` to cards. The landscape-compact hand derives `--hand-card-w` from the visible
+  height (L75-03, `ui/card/hand-card-size.ts`). Never pass `w-*`, `h-*` or `aspect-*` classes: they
+  would race the card's own sizes.
   The selected lift, the 8 px focus ring, the counter glow and the counter badge reach past
   the 2:3 box, so a scroll or `overflow-hidden` parent pads about 16 px around active cards.
   Hidden faces carry no `data-card-id` or `data-instance-id`.
@@ -1614,6 +1615,25 @@ Appendix A). Each Lot 74 task appends its bullet here, in task order.
     live, so sheets and toasts still follow the keyboard.
   - Tests run in a 390×844 portrait window by default; desktop and landscape tests call
     `stubArenaLayout` with an `ARENA_TEST_BOXES` box (`testing.md` › Arena fixtures).
+- `ui/card/hand-card-size.ts`, `screens/arena/self-strip.tsx`, `hand-fan.tsx`, `use-hand-drag.ts`,
+  `arena-seats.tsx` (L75-03, spec v7 §5.4, §6.1, §6.4): landscape-compact (visible height under
+  500 px). The top bar and the ticker share the top row, the arena takes the rest, and one bottom
+  row holds the compact self strip, the hand and the dock (`data-arena-row="hand"` on all three).
+  - Seats sit in one top band in turn order (`data-seat-layout="band"`), drawn with the portrait
+    anatomy (`SEAT_BOX['landscape-compact']` is 76×92 since L75-03); the plate is centred below.
+  - Hand size rule: `cardWidthPx = heightBoundHandCardWidthPx(visible height)` sets `--hand-card-w`
+    inline (a card a quarter of the visible height tall, 64–120 px; 65 px at 390). The 44 px strip,
+    the chips and the in-hand scroll stay.
+  - `SelfStrip compact` (`data-self-strip="compact"`): one row of the thumb kit portrait and the
+    four resources as small pills (captions spoken and in `title`, not shown); the flow badges and
+    the in-play thumbs keep their own lines; every anchor stays.
+  - A layout mode change cancels a pressed or lifted drag like `pointercancel` (`HandDragInput.mode`),
+    because its drop rects belong to the old layout. Open sheets re-place; owner-local sheets,
+    drafts and targeting survive (`arena-mode-crossing.test.tsx`, Review Focus 1).
+  - The band grid's columns are `auto minmax(0, 1fr) minmax(10rem, auto)`: the strip, the hand, and
+    the dock under the ticker. The ticker cell takes no width from its content (`w-0 min-w-full`),
+    so the dock sets the third column (10 rem at least, so an empty walk-in dock keeps the ticker)
+    and a long log line truncates inside it instead of widening the grid.
 
 ## Design system (V2 · Lots 10+)
 

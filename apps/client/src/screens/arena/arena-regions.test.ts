@@ -22,6 +22,11 @@ describe('arena rows (A.3)', () => {
     expect(arenaRowAttributes('dock', 'desktop')).toEqual({ 'data-arena-row': 'hand' });
   });
 
+  it('floors the landscape band\'s third column, so an empty dock keeps the ticker, and never sizes it by the ticker line (L75-03)', () => {
+    // The strip and the dock size their columns; the hand is the flexible one (`minmax(0, 1fr)`).
+    expect(arenaGridStyle('landscape-compact').gridTemplateColumns).toBe('auto minmax(0, 1fr) minmax(10rem, auto)');
+  });
+
   it('names all six regions in every mode grid, so no region loses its area', () => {
     for (const mode of MODES) {
       const names = new Set(arenaGridStyle(mode).gridTemplateAreas.split(/[\s"]+/).filter((name) => name !== ''));

@@ -12,7 +12,8 @@
  *
  * During a hand drag (L74-12, §6.6.3), `dropHighlight` lights the seats that take the card.
  *
- * Each seat is drawn at its mode's box, `model.layout.mode` (L75-02, §6.4).
+ * Each seat is drawn at its mode's box, `model.layout.mode` (L75-02, §6.4). `data-seat-layout` is
+ * `arc`, `grid`, or `band`: the landscape-compact top band, an arc in the layout model (L75-03, §6.4).
  */
 
 import { useEffect, useRef, type ReactElement } from 'react';
@@ -64,7 +65,7 @@ export function ArenaSeats({
     <div
       ref={rootRef}
       data-zone="opponents"
-      data-seat-layout={model.layout.kind}
+      data-seat-layout={model.layout.kind === 'arc' && model.layout.mode === 'landscape-compact' ? 'band' : model.layout.kind}
       data-opponent-count={String(model.seats.length)}
       className="pointer-events-none absolute inset-0"
     >

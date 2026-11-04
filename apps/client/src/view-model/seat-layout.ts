@@ -29,10 +29,14 @@ export interface LayoutBox {
 /** Two seat boxes closer than this on both axes are "too close": the layout becomes a grid (§6.4). */
 export const SEAT_MIN_GAP_PX = 8;
 
-/** Seat bounding box, badge row included (§6.4). L73 starting values; L74 tunes them (§14.3). */
+/**
+ * Seat bounding box, badge row included (§6.4). L73 starting values; L74 tunes them (§14.3).
+ * L75-03: the landscape band draws the portrait anatomy, so its box is the portrait box (it was 76×84,
+ * which clipped the anatomy 4 px at the region top).
+ */
 export const SEAT_BOX: Readonly<Record<LayoutMode, Size>> = {
   portrait: { width: 76, height: 92 },
-  'landscape-compact': { width: 76, height: 84 },
+  'landscape-compact': { width: 76, height: 92 },
   desktop: { width: 120, height: 136 },
 };
 

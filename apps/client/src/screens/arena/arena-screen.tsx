@@ -55,6 +55,9 @@
  * - §6.4 (L75-02): one layout mode per render, on `data-layout-mode`; `<main>` is a grid per mode and
  *   the regions keep their elements; desktop puts the log panel in the ticker region and centres the
  *   card, Shop and seat sheets.
+ * - §6.4, §5.4 (L75-03): landscape-compact: the top bar and ticker share the top row, seats sit in the
+ *   band, and the compact strip, the hand (height-bound size) and the dock share one row; a mode change
+ *   cancels a drag.
  *
  * Import rule (L74-01 brief): `screens/arena/` imports only from `ui/`, `view-model/`, `fx/`,
  * `net/` (types), `help/`, `feedback/` and the shared screen modules. It never imports
@@ -68,6 +71,7 @@ import { TableFxProvider } from '../../fx/table-fx-context';
 import { useTableFxTriggers } from '../../fx/use-table-fx-triggers';
 import type { RoomConnectionStatus } from '../../net/use-room-connection';
 import { TableBannerHost } from '../../ui/banner/table-banner-host';
+import { heightBoundHandCardWidthPx } from '../../ui/card/hand-card-size';
 import { v7SeatColor } from '../../ui/palette';
 import { liveSheetId } from '../../ui/primitives/sheet-stack';
 import { useSheetStackStore } from '../../ui/primitives/sheet-stack-context';
@@ -154,6 +158,18 @@ export interface ArenaScreenProps extends TableScreenProps {
   /** L74-25: the raw connection status (the reconnect banner and lock). */
   connectionStatus: RoomConnectionStatus;
 }
+
+/**
+ * The ticker region's classes per mode (§6.4). Portrait: a full-width row. Landscape-compact: beside the
+ * top bar in the band grid's third column (L75-03), with no width of its own (`w-0 min-w-full`), so the
+ * column takes the dock's width and a long log line is truncated inside it instead of widening the grid.
+ * Desktop: the right-hand log column (L75-02).
+ */
+const TICKER_CLASS: Readonly<Record<LayoutMode, string>> = {
+  portrait: 'min-w-0 px-2',
+  'landscape-compact': 'w-0 min-w-full self-center px-2 pt-2',
+  desktop: 'flex min-h-0 flex-col px-2 pb-2',
+};
 
 /** The FX provider shell (plan A.9.2), as `TableScreen`: the overlay draws over the arena. */
 export function ArenaScreen(props: ArenaScreenProps): ReactElement {
@@ -337,6 +353,7 @@ function ArenaScreenInner(props: ArenaScreenProps): ReactElement {
     targetingActive: targeting,
     commit,
     openChoice: openCard,
+    mode,
   });
   const dragging = handDrag.view?.phase === 'dragging' ? handDrag.view : null;
 
@@ -392,10 +409,7 @@ function ArenaScreenInner(props: ArenaScreenProps): ReactElement {
           confirmRequest={leaveRequest}
         />
       </div>
-      <div
-        {...regionLayout('ticker')}
-        className={mode === 'desktop' ? 'flex min-h-0 flex-col px-2 pb-2' : 'min-w-0 px-2'}
-      >
+      <div {...regionLayout('ticker')} className={TICKER_CLASS[mode]}>
         {/* Desktop: the right-hand log column (§6.4, A.4.1). Elsewhere the one-line ticker opens the log sheet. */}
         {mode === 'desktop' ? (
           <LogPanel
@@ -470,6 +484,7 @@ function ArenaScreenInner(props: ArenaScreenProps): ReactElement {
         ) : (
           <SelfStrip
             model={strip}
+            compact={mode === 'landscape-compact'}
             onOpenKit={(kitId) => {
               openSheet({ kind: 'kit', kitId });
             }}
@@ -486,6 +501,7 @@ function ArenaScreenInner(props: ArenaScreenProps): ReactElement {
           onOpenCard={openCard}
           drag={handDrag.fanProps}
           rejected={rejectCue}
+          {...(mode === 'landscape-compact' ? { cardWidthPx: heightBoundHandCardWidthPx(layoutBox.viewport.height) } : {})}
         />
       </div>
       <div {...regionLayout('dock')} data-zone="dock" className={`px-2 pb-2${inHandRow('dock')}`}>

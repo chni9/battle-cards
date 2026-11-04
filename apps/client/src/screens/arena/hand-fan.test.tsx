@@ -198,6 +198,15 @@ describe('HandFan (L74-07)', () => {
     renderUi(fan(viewWith({ hand: [makeCard('spy')] })));
     expect(fireEvent.contextMenu(within(group('Hand')).getByRole('button', { name: 'Spy' }))).toBe(false);
   });
+
+  it('a sized hand sets --hand-card-w inline; an unsized one keeps the Card clamp (§5.4, L75-03)', () => {
+    const view = viewWith({ hand: [makeCard('spy')] });
+    const { unmount, container } = renderUi(fan(view, { cardWidthPx: 65 }));
+    expect(container.querySelector<HTMLElement>('[data-hand-fan]')?.style.getPropertyValue('--hand-card-w')).toBe('65px');
+    unmount();
+    const plain = renderUi(fan(view));
+    expect(plain.container.querySelector<HTMLElement>('[data-hand-fan]')?.style.getPropertyValue('--hand-card-w')).toBe('');
+  });
 });
 
 describe('hand fan in the arena (L74-07)', () => {

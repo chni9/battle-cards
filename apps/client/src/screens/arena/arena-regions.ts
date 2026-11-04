@@ -81,6 +81,11 @@ export interface ArenaGridStyle {
  * Inline, because Tailwind cannot spell quoted area templates (spec v7 §6.4; plan A.3, K11, K12).
  * Desktop has three columns (hand, dock, log): the top bar spans them, the arena and the self strip
  * span the first two, and the `ticker` region is the third column under the top bar.
+ *
+ * Landscape-compact (L75-03) has three columns too: the self strip, the hand (the flexible one) and
+ * the dock. The ticker sits above the dock in the third column, which the dock sizes (at least 10 rem,
+ * so an empty dock keeps the ticker): the ticker takes no width from its content (`w-0 min-w-full`,
+ * `arena-screen.tsx`), so a long log line is truncated inside the column and cannot widen the grid.
  */
 const ARENA_GRID: Readonly<Record<LayoutMode, ArenaGridStyle>> = {
   portrait: {
@@ -90,7 +95,7 @@ const ARENA_GRID: Readonly<Record<LayoutMode, ArenaGridStyle>> = {
   },
   'landscape-compact': {
     gridTemplateAreas: '"top-bar top-bar ticker" "arena arena arena" "self-strip hand dock"',
-    gridTemplateColumns: 'auto minmax(0, 1fr) auto',
+    gridTemplateColumns: 'auto minmax(0, 1fr) minmax(10rem, auto)',
     gridTemplateRows: 'auto minmax(0, 1fr) auto',
   },
   desktop: {

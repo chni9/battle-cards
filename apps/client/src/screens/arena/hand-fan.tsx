@@ -17,6 +17,10 @@
  * L74-25 (§6.6.2, §8.3): the card a rejected send spent (`rejected`) springs back with a shake in
  * its slot, or a `--danger` ring flash under reduced motion, on the same in-place wrapper as the
  * flip, so focus stays on it.
+ *
+ * L75-03 (§5.4, §6.4): `cardWidthPx` sizes the hand from outside (landscape-compact: a card a quarter
+ * of the visible height tall). It sets `--hand-card-w` inline, over the Card clamp, and `--card-w`
+ * stays each card's only resize path.
  */
 
 import type { PlayingStateView } from '@card-battle/shared';
@@ -51,12 +55,15 @@ export interface HandFanProps {
   readonly drag?: HandFanDragProps;
   /** L74-25: the card a rejected send spent; it shakes in its slot (a colour flash under reduced motion). */
   readonly rejected?: RejectCue | null;
+  /** L75-03 / L75-13: a sized hand, `--hand-card-w` inline; absent, the Card clamp stands. */
+  readonly cardWidthPx?: number;
 }
 
 type HandFanStyle = CSSProperties & {
   readonly '--hand-strips': string;
   readonly '--hand-fulls': string;
   readonly '--hand-empties': string;
+  readonly '--hand-card-w'?: string;
 };
 
 /**
@@ -91,17 +98,19 @@ const REJECT_SHAKE_KEYFRAMES = { x: [0, -8, 8, -6, 6, -3, 0] };
 const REJECT_FLASH_KEYFRAMES = { boxShadow: [`0 0 0 3px ${V7_COLORS.danger}`, `0 0 0 3px ${V7_COLORS.danger}00`] };
 const REJECT_TRANSITION = { duration: durationS('slow') };
 
-export function HandFan({ view, ctx, selectedInstanceId, onOpenCard, drag, rejected = null }: HandFanProps): ReactElement {
+export function HandFan({ view, ctx, selectedInstanceId, onOpenCard, drag, rejected = null, cardWidthPx }: HandFanProps): ReactElement {
   const model = handFanModel(view, ctx);
   const groups = [model.hand, model.specials];
   const style: HandFanStyle = {
     '--hand-strips': String(groups.reduce((sum, cards) => sum + Math.max(0, cards.length - 1), 0)),
     '--hand-fulls': String(groups.filter((cards) => cards.length > 0).length),
     '--hand-empties': String(groups.filter((cards) => cards.length === 0).length),
+    ...(cardWidthPx !== undefined ? { '--hand-card-w': `${String(cardWidthPx)}px` } : {}),
   };
   return (
-    // The container for `cqi`. `--hand-card-w` restates the Card `hand` width (spec v7 §5.4); each
-    // card takes it through `[--card-w:var(--hand-card-w)]`, the Card's only resize path.
+    // The container for `cqi`. `--hand-card-w` restates the Card `hand` width (spec v7 §5.4), and an
+    // inline `cardWidthPx` (L75-03) wins over it. Each card takes it through
+    // `[--card-w:var(--hand-card-w)]`, the Card's only resize path.
     <div data-hand-fan="" className="@container h-full w-full [--hand-card-w:clamp(64px,19vw,120px)]" style={style}>
       <ScrollArea axis="x" className="h-full px-4 pt-4 pb-3">
         <div className="mx-auto flex w-max items-end gap-3">
