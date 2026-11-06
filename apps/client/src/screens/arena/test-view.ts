@@ -251,7 +251,9 @@ export function stubArenaLayout(viewport: Size, arena: Size, options: ArenaLayou
       this.callback([], this);
     }
   }
-  vi.stubGlobal('ResizeObserver', FakeResizeObserver);
+  // Not `vi.stubGlobal`: its `unstubAllGlobals` would also clear globals a test stubbed itself.
+  const originalObserver = Object.getOwnPropertyDescriptor(globalThis, 'ResizeObserver');
+  Object.defineProperty(globalThis, 'ResizeObserver', { configurable: true, writable: true, value: FakeResizeObserver });
   const rect = vi
     .spyOn(Element.prototype, 'getBoundingClientRect')
     .mockImplementation(function (this: Element) {
@@ -286,7 +288,8 @@ export function stubArenaLayout(viewport: Size, arena: Size, options: ArenaLayou
       else Object.defineProperty(window, 'visualViewport', original);
       rect.mockRestore();
       observers.clear();
-      vi.unstubAllGlobals();
+      if (originalObserver === undefined) Reflect.deleteProperty(globalThis, 'ResizeObserver');
+      else Object.defineProperty(globalThis, 'ResizeObserver', originalObserver);
     },
   };
 }

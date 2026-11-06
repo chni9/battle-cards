@@ -3,7 +3,7 @@
 import { act, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { renderUi } from '../test/render';
-import { useViewportMode, useVisualViewportBox } from './use-visual-viewport-box';
+import { isTextEntryElement, useViewportMode, useVisualViewportBox } from './use-visual-viewport-box';
 
 type FakeViewport = EventTarget & { width: number; height: number; offsetTop: number; offsetLeft: number };
 
@@ -158,5 +158,28 @@ describe('useViewportMode keyboard hold (L75-02, ruling 7, U1)', () => {
     act(() => { fieldA.dispatchEvent(new FocusEvent('focusout', { bubbles: true, relatedTarget: document.body })); });
     active.mockRestore();
     expect(screen.getByTestId('mode').textContent).toBe('landscape-compact');
+  });
+});
+
+describe('isTextEntryElement (L75-02 m6)', () => {
+  const input = (type: string): HTMLInputElement => Object.assign(document.createElement('input'), { type });
+
+  it('accepts a textarea, a text-like input and a contenteditable element', () => {
+    const editable = document.createElement('div');
+    // happy-dom reflects `isContentEditable` from the attribute only for a connected element.
+    editable.setAttribute('contenteditable', 'true');
+    document.body.append(editable);
+    expect([
+      isTextEntryElement(document.createElement('textarea')),
+      ...['text', 'search', 'email', 'password', 'number', 'url'].map((type) => isTextEntryElement(input(type))),
+      isTextEntryElement(editable),
+    ]).toEqual([true, true, true, true, true, true, true, true]);
+    editable.remove();
+  });
+
+  it('rejects the input types that bring up no keyboard, a plain element and null', () => {
+    const types = ['button', 'checkbox', 'color', 'file', 'hidden', 'image', 'radio', 'range', 'reset', 'submit'];
+    expect(types.map((type) => isTextEntryElement(input(type)))).toEqual(types.map(() => false));
+    expect([isTextEntryElement(document.createElement('div')), isTextEntryElement(document.createElement('button')), isTextEntryElement(null)]).toEqual([false, false, false]);
   });
 });

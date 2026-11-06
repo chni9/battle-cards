@@ -244,10 +244,13 @@ These are the spots where a plausible implementation is wrong and silent:
   even when the seat has live Spy numbers (L51-15). Overlay chips stay opaque
   until arrival; unspied `?` seats flash public signed Δ (L51-16). Play-card
   ghosts use `measurePlayCardGhost`, not the removed `measurePlayFlyout`.
-- Collapsed felt chrome still animates: flyouts and overlay flashes must resolve
-  `log-collapsed` / `opponents-collapsed` / `incoming-collapsed` when the
-  expanded panel is unmounted (L53-07). A null measure because the seat or log
-  is a button fails the gate.
+- A collapsed log still animates: flyouts and overlay flashes must resolve the first visible of
+  `action-log-panel` and `log-collapsed` when the expanded panel is unmounted (L53-07, L75-08).
+  L75-08 retired the `opponents-collapsed` and `incoming-*` fallbacks: no arena element carries
+  them, and card ghosts land on the plate. A null measure because the log is a button fails the gate.
+- Run the client tests from the repo root (`pnpm test`, `pnpm vitest run <path>`). The portrait
+  390×844 default the arena tests rely on lives in the root `vitest.config.ts`, so running Vitest from
+  `apps/client` fails the arena tests that do not stub a viewport (L75-02).
 - A `buyPoolCard` log or live `ACTION_PLAYED` that names `cardId` for a
   non-seer (L63-06). Buyer / Spy / spectator overlay still see the card;
   sitting pool faces stay public.
