@@ -8,12 +8,12 @@
  * the tutorial callouts share `Z_INDEX.hint` (K6). `note` is a no-op in a tutorial (V2; L46-03).
  */
 
-import { INCOMING_THIEF_HINT_BODY } from '../../help/hint-copy';
-import type { HintId } from '../../ui/hint-ids';
-import { useState } from 'react';
 import type { PlayingStateView, SubChoiceRequiredPayload } from '@card-battle/shared';
+import { useState } from 'react';
 
+import { INCOMING_THIEF_HINT_BODY } from '../../help/hint-copy';
 import { applyHintPatch, readHintState } from '../../ui/help-storage';
+import type { HintId } from '../../ui/hint-ids';
 import { useSheetStackState } from '../../ui/primitives/sheet-stack-context';
 import { earliestIncomingThief, incomingAttackTargetingYouIds, incomingThiefTargetingYouIds } from '../../view-model/incoming-threat-diff';
 import type { PovMode, SeatModel } from '../../view-model/seats';
