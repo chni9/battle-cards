@@ -6999,3 +6999,19 @@ deletions); the Lot 75 plan, Part 2 (A.15–A.18); classification rows 19–21, 
   V2 opponent-Shield path, Q37), `CoachResourceKind` (it lost `export`; its own file still uses it).
 
 ---
+
+## 2026-11-06 · [P] Gate B designer answers: the tutorial coach slot and the callout ring (Q2-5, Q2-6)
+
+Source: technical spec v7 §6.12; Lot 75 plan Part 2 Appendix B; designer 2026-11-06.
+
+- **Q2-5, not accepted: fixed.** At 375×812 the coach still covered part of the Incoming tour mark
+  from both the top-left and the bottom slot. `placeCoach` gets a third slot under the opponent row,
+  used when both of the others overlap the marks and it covers them strictly less than the top-left
+  does. `CoachPlacementInput` gains the opponent row's rect (`opponents`, optional: absent, the
+  two-slot result is unchanged), measured by `tutorial-coach-host.tsx` from the opponent seats.
+- **Q2-6, not accepted: fixed.** The `your-zone` callout ring sat 4px outside a target that touches
+  the left or bottom screen edge, so it drew off-screen. `calloutPlacement` insets the ring into the
+  visible box; the arrow keeps its own clamp.
+- Client-only UI placement: no rule, value or protocol change (`PROTOCOL_VERSION` stays 45).
+
+---

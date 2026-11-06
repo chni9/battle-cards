@@ -14,7 +14,9 @@
  *   While a live `[data-tutorial-highlight]` element (or its ring and arrow), or a valid target seat
  *   while the player is targeting, overlaps that corner, the
  *   panel flips to the arena region's bottom edge (`placeCoach`, designer 2026-11-06, Check 2 stop item
- *   S4): at 375×812 the corner covered the opponent seat and the Incoming plate. The marks are read
+ *   S4): at 375×812 the corner covered the opponent seat and the Incoming plate. When the bottom edge
+ *   overlaps the marks too, it takes a third slot under the opponent row (the box around the measured
+ *   `[data-zone="opponent-seat"]` elements; designer 2026-11-06, Q2-5). The marks are read
  *   with the callout layer's own reader (`liveTutorialMarks`: live sheet layer, not inert, not empty), on each frame, because
  *   sheets and the fan move without notice.
  * - **Focus.** The slot's mousedown is prevented, so × and Got it never move focus out of an open
@@ -57,6 +59,24 @@ const VALID_TARGET_SEAT_SELECTOR = '[data-target-seat="valid"]';
 
 const UNMEASURED_SLOT: SlotPosition = { top: COACH_INSET_PX, left: COACH_INSET_PX };
 
+const OPPONENT_SEAT_SELECTOR = '[data-zone="opponent-seat"]';
+
+/** The box around every opponent seat, or `undefined` while none is mounted (`placeCoach`'s third slot). */
+function opponentRowRect(arena: Element): Rect | undefined {
+  const rects = Array.from(arena.querySelectorAll(OPPONENT_SEAT_SELECTOR), (seat) => seat.getBoundingClientRect()).filter(
+    (rect) => rect.width > 0 && rect.height > 0,
+  );
+  if (rects.length === 0) return undefined;
+  const left = Math.min(...rects.map((rect) => rect.left));
+  const top = Math.min(...rects.map((rect) => rect.top));
+  return {
+    left,
+    top,
+    width: Math.max(...rects.map((rect) => rect.right)) - left,
+    height: Math.max(...rects.map((rect) => rect.bottom)) - top,
+  };
+}
+
 const toRect = (rect: DOMRect): Rect => ({ left: rect.left, top: rect.top, width: rect.width, height: rect.height });
 
 export function TutorialCoachHost({ coach, onHide, onAck }: TutorialCoachHostProps): ReactElement {
@@ -81,6 +101,7 @@ export function TutorialCoachHost({ coach, onHide, onAck }: TutorialCoachHostPro
       if (slotElement === null) return;
       const rect = toRect(arena.getBoundingClientRect());
       const size = slotElement.getBoundingClientRect();
+      const row = opponentRowRect(arena);
       const placed = placeCoach({
         coach: { width: size.width, height: size.height },
         // In the host's coordinates, which start at the visual viewport's offset.
@@ -90,6 +111,7 @@ export function TutorialCoachHost({ coach, onHide, onAck }: TutorialCoachHostPro
           left: mark.left - box.offsetLeft,
           top: mark.top - box.offsetTop,
         })),
+        ...(row !== undefined ? { opponents: { ...row, left: row.left - box.offsetLeft, top: row.top - box.offsetTop } } : {}),
       });
       setSlot((previous) => (previous.top === placed.top && previous.left === placed.left ? previous : { top: placed.top, left: placed.left }));
     };

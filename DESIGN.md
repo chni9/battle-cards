@@ -1326,7 +1326,10 @@ deleted in L75-11.
   every sheet. The slot is the arena region's top-left, 8px in, `min(22rem, 100% - 1rem)` wide, in every
   mode, flipping to the arena region's bottom edge, 8px in, while a live tutorial mark (with its 20px ring
   and arrow reach) or, while the player is targeting, a valid target seat overlaps that corner and the
-  bottom box covers them strictly less (`coach-placement.ts`, designer 2026-11-06). Its mousedown is
+  bottom box covers them strictly less (`coach-placement.ts`, designer 2026-11-06). When the top-left and
+  the bottom slots both overlap the marks, a third slot sits under the opponent row (20px below the
+  lowest seat, inside the arena, 8px from its left edge) if it covers them strictly less (designer
+  2026-11-06, Q2-5). Its mousedown is
   prevented, so a press never moves focus out of an open sheet; from the keyboard,
   × moves focus to the top bar's Menu (Show coach) and Got it to the next step's Got it. Got it is a
   full-width primary Button (`data-tutorial-ack="got-it"`). The panel reopens from Menu → Show coach

@@ -3,7 +3,8 @@
  * (K8: the arena region's top-left, 8 px in) and designer 2026-11-06 (Check 2 stop item S4): at
  * 375×812 that corner is directly over the opponent seat and the Incoming plate, so the coach hid what
  * the tour marked. It now flips to the arena's bottom edge, but only while a marked element overlaps
- * the default box. Pure: no DOM, no React; `tutorial-coach-host.tsx` measures and calls it.
+ * the default box; and designer 2026-11-06 (Q2-5) adds a third slot under the opponent row for when
+ * both of those overlap the marks. Pure: no DOM, no React; `tutorial-coach-host.tsx` measures and calls it.
  */
 
 import type { Rect } from '../../view-model/drop-target';
@@ -19,7 +20,7 @@ export const COACH_INSET_PX = 8;
  */
 export const COACH_MARK_CLEARANCE_PX = 20;
 
-export type CoachEdge = 'top' | 'bottom';
+export type CoachEdge = 'top' | 'bottom' | 'under-opponents';
 
 export interface CoachPlacement {
   readonly edge: CoachEdge;
@@ -35,6 +36,11 @@ export interface CoachPlacementInput {
   readonly arena: Rect;
   /** The live `[data-tutorial-highlight]` rects: the marked element or elements. */
   readonly marks: readonly Rect[];
+  /**
+   * The opponent row: the box around every opponent seat. The third slot sits under it, clear of the
+   * seats' own rings and arrows. Absent (no seat measured), the coach has the two slots only.
+   */
+  readonly opponents?: Rect;
 }
 
 /** The area of `a` ∩ `b`, 0 when they only touch. */
@@ -57,9 +63,11 @@ function withCallout(mark: Rect): Rect {
 /**
  * The top-left corner (K8), or the arena's bottom edge when a mark overlaps the default box and the
  * bottom box covers the marks strictly less: if the bottom would hide as much, the default stays, so
- * the coach never moves for nothing. A coach taller than the arena keeps its top edge inside it.
+ * the coach never moves for nothing. When both overlap the marks, the slot under the opponent row
+ * (designer 2026-11-06, Q2-5) takes over if it covers them strictly less than the top-left does. A
+ * coach taller than the arena keeps its top edge inside it.
  */
-export function placeCoach({ coach, arena, marks }: CoachPlacementInput): CoachPlacement {
+export function placeCoach({ coach, arena, marks, opponents }: CoachPlacementInput): CoachPlacement {
   const left = arena.left + COACH_INSET_PX;
   const topEdge = arena.top + COACH_INSET_PX;
   const bottomEdge = Math.max(topEdge, arena.top + arena.height - COACH_INSET_PX - coach.height);
@@ -68,7 +76,15 @@ export function placeCoach({ coach, arena, marks }: CoachPlacementInput): CoachP
     return marks.reduce((sum, mark) => sum + overlapArea(box, withCallout(mark)), 0);
   };
   const atTop = coveredAt(topEdge);
-  return atTop > 0 && coveredAt(bottomEdge) < atTop
-    ? { edge: 'bottom', top: bottomEdge, left }
-    : { edge: 'top', top: topEdge, left };
+  if (atTop === 0) return { edge: 'top', top: topEdge, left };
+  const atBottom = coveredAt(bottomEdge);
+  if (atBottom < atTop) return { edge: 'bottom', top: bottomEdge, left };
+  if (opponents !== undefined) {
+    const underEdge = Math.min(
+      bottomEdge,
+      Math.max(topEdge, opponents.top + opponents.height + COACH_MARK_CLEARANCE_PX),
+    );
+    if (coveredAt(underEdge) < atTop) return { edge: 'under-opponents', top: underEdge, left };
+  }
+  return { edge: 'top', top: topEdge, left };
 }

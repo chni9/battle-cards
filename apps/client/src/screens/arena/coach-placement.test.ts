@@ -59,4 +59,47 @@ describe('placeCoach (S4)', () => {
     const arena: Rect = { left: 40, top: 56, width: 1104, height: 489 };
     expect(place([], arena)).toEqual({ edge: 'top', top: 64, left: 48 });
   });
+
+  describe('the slot under the opponents (Q2-5)', () => {
+    const seat: Rect = { left: 150, top: 110, width: 76, height: 92 };
+    const plate: Rect = { left: 128, top: 300, width: 120, height: 82 };
+    /** The opponent row at 375×812: the seat's own rect. */
+    const opponents = seat;
+    const underTop = seat.top + seat.height + COACH_MARK_CLEARANCE_PX;
+
+    it('goes under the opponent row when the top-left and the bottom slots both overlap the marks', () => {
+      // The seat is under the top-left box, the Incoming plate under the bottom one.
+      expect(placeCoach({ coach: COACH, arena: ARENA, marks: [plate, seat], opponents })).toEqual({
+        edge: 'under-opponents',
+        top: underTop,
+        left: ARENA.left + COACH_INSET_PX,
+      });
+    });
+
+    it('leaves the two-slot result alone when the top-left is clear', () => {
+      expect(placeCoach({ coach: COACH, arena: ARENA, marks: [], opponents }).edge).toBe('top');
+      expect(placeCoach({ coach: COACH, arena: ARENA, marks: [{ left: 0, top: 600, width: 375, height: 120 }], opponents }).edge).toBe('top');
+    });
+
+    it('leaves the two-slot result alone when the bottom slot is clear or covers less', () => {
+      expect(placeCoach({ coach: COACH, arena: ARENA, marks: [seat], opponents }).edge).toBe('bottom');
+    });
+
+    it('keeps the two-slot result without an opponent row', () => {
+      expect(placeCoach({ coach: COACH, arena: ARENA, marks: [plate, seat] })).toEqual(place([plate, seat]));
+      expect(place([plate, seat]).edge).toBe('top');
+    });
+
+    it('stays put when the slot under the opponents would hide the marks as much', () => {
+      const band: Rect = { left: 0, top: underTop, width: 375, height: ARENA.top + ARENA.height - underTop };
+      expect(placeCoach({ coach: COACH, arena: ARENA, marks: [seat, band], opponents }).edge).toBe('top');
+    });
+
+    it('keeps the slot inside the arena, whatever the opponent row', () => {
+      const low: Rect = { left: 150, top: 300, width: 76, height: 92 };
+      const placed = placeCoach({ coach: COACH, arena: ARENA, marks: [plate, low, seat], opponents: low });
+      expect(placed.top + COACH.height).toBeLessThanOrEqual(ARENA.top + ARENA.height - COACH_INSET_PX);
+      expect(placed.top).toBeGreaterThanOrEqual(ARENA.top + COACH_INSET_PX);
+    });
+  });
 });
