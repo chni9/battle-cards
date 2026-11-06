@@ -250,7 +250,8 @@ Tailwind utilities: `font-v7-display`, `font-v7-card`, `font-v7-body`, `text-v7-
 input under 16px. One exception: a hand card's name may shrink below 11px so its longest word
 never breaks (Card, L72-12). It happens only for names whose widest word is long, on viewports
 from 320px up to about 367px (a hand card under 69.75px): about 10.8px at 360px, and 10.04px at
-337px and below, on the 64px clamp floor. The 10px floor is never reached by a catalog name. It
+337px and below, on the 64px clamp floor. The 10px floor is never reached by a catalog name, except
+in the compact portrait band (L75-13), whose 52px hand cards reach it. It
 waits on the designer (decisions.md 2026-10-27).
 
 **The Vital Rule.** Own lives are at least 20px and the incoming damage badge at least 22px on
@@ -931,7 +932,8 @@ only V7 card renderer; the V2 `design/components/card.tsx` stays for the classic
   (5.798em with tight tracking), needs a strip of 63.8px at 11px, that is a 69.75px hand card
   (97 % of the face, face = card − 4px), reached at a 367px viewport (19vw). From about 367px
   down to 337px, where the 64px clamp floor starts, such a name shrinks from 11px to 10.04px,
-  and stays at 10.04px below; the 10px floor itself is never reached by a catalog name.
+  and stays at 10.04px below; the 10px floor itself is never reached by a catalog name, except in the
+  compact portrait band (L75-13), whose 52px hand cards reach it.
   Measured: on a 375px phone every hand name stays 11px; at 360px "Regeneration" is about 10.8px
   (face 64.4px); at 320px the smallest is 10.04px.
   "Upgrade Point Thief" and "Super Regeneration" take two lines. Where `cqi` is unsupported, the
