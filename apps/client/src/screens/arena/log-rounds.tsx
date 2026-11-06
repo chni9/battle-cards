@@ -27,7 +27,8 @@ const HEADER_CLASS = 'z-[1] bg-v7-panel py-1 font-v7-display text-v7-caption tex
 
 export function LogRounds({ view, model, onOpenCard, inset }: LogRoundsProps): ReactElement {
   if (model.rounds.length === 0) {
-    return <p className="font-v7-body text-v7-body font-bold text-v7-text-2">{LOG_EMPTY_COPY}</p>;
+    // The panel's scrollport has no top padding (its sticky headers carry `py-1`), so the empty line takes the same inset (L75-12 Gate C).
+    return <p className={`font-v7-body text-v7-body font-bold text-v7-text-2${inset === 'panel' ? ' pt-1' : ''}`}>{LOG_EMPTY_COPY}</p>;
   }
   return (
     <>
