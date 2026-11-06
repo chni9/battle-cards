@@ -1684,8 +1684,9 @@ Appendix A). Each Lot 74 task appends its bullet here, in task order.
   `portraitInspected`, the idle index, the dismissed coach key) and derives the coach (tour, then Look,
   then script copy; 'Play' after `TUTORIAL_IDLE_MS` on the POV's turn), the tour highlight and the locks.
   `TutorialCoachHost` portals the `CoachPanel` on `Z_INDEX.coach` at the arena region's top-left, or on its bottom
-  edge while a marked element (with its ring and arrow, `COACH_MARK_CLEARANCE_PX`) overlaps that corner and the
-  bottom box would cover the marks strictly less (`placeCoach`, designer 2026-11-06); × hides
+  edge while a marked element (with its ring and arrow, `COACH_MARK_CLEARANCE_PX`) or, while the player is
+  targeting, a valid target seat overlaps that corner and the bottom box would cover them strictly less
+  (`placeCoach`, designer 2026-11-06; marks read by `liveTutorialMarks`); × hides
   it, Menu → Show coach (`icon="coach"`, between How to play and Action log) reopens it, and new copy
   reopens it. A press on it never moves focus, so it hides or advances over an open sheet. While the tour
   or the Look gate is up, the commit's `allow` vetoes every send silently, no drag starts, Shop and Unspy

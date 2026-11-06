@@ -7,7 +7,7 @@ import {
   TUTORIAL_LOOK_COACH, TUTORIAL_TOUR_STEPS, tutorialStepAt,
   type MirrorChoiceRequiredPayload, type PlayingStateView, type TutorialTourHighlight,
 } from '@card-battle/shared';
-import { act, fireEvent, screen, within } from '@testing-library/react';
+import { act, fireEvent, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { renderUi } from '../../test/render';
@@ -19,6 +19,7 @@ import {
 import { makePending } from '../../view-model/test-fixtures';
 import { TUTORIAL_IDLE_MS, TUTORIAL_IDLE_PLAY_TITLE } from '../../view-model/tutorial-coach-copy';
 import { ArenaScreen, type ArenaScreenProps } from './arena-screen';
+import { CANCEL_ACTION_LABEL } from './card-sheet-actions';
 import { HAND_GROUP_COPY } from './hand-fan-model';
 import { SUB_CHOICE_COPY } from './sub-choice/sub-choice-model';
 import {
@@ -316,8 +317,8 @@ describe('the coach slot flips below its mark (designer 2026-11-06, S4)', () => 
   const rectFor = (element: Element): DOMRect | undefined => {
     if (element.getAttribute('data-arena-region') === 'arena') return ARENA_RECT;
     if (element.hasAttribute('data-tutorial-coach-slot')) return COACH_RECT;
-    if (element.getAttribute('data-zone') === 'opponent-seat') return SEAT_RECT;
-    if (element.getAttribute('data-zone') === 'hand') return HAND_RECT;
+    if (element.getAttribute('data-zone') === 'opponent-seat' || element.hasAttribute('data-target-seat')) return SEAT_RECT;
+    if (element.getAttribute('data-zone') === 'hand' || element.hasAttribute('data-instance-id')) return HAND_RECT;
     if (element.getAttribute('data-zone') === 'log-collapsed') return LOG_RECT;
     return undefined;
   };
@@ -341,6 +342,20 @@ describe('the coach slot flips below its mark (designer 2026-11-06, S4)', () => 
     await ack(user, 1);
     expect(one('[data-tutorial-highlight]').getAttribute('data-tutorial-highlight')).toBe('action-log');
     expect(slotTop()).toBe(TOP);
+  });
+
+  it('dodges the valid target seats while the player is targeting, though no tutorial mark is on them (final review I1)', async () => {
+    const phone = ARENA_TEST_BOXES.phone375;
+    stub = stubArenaLayout(phone.viewport, phone.arena, { rectFor });
+    const { user } = setup(3);
+    expect(slotTop()).toBe(TOP);
+    await user.click(one('[data-arena-region="hand"] [data-instance-id="basic-attack-1"]'));
+    await user.click(one('[data-arena-sheet="card:basic-attack-1"] [data-card-action="use"]'));
+    expect(all('[data-target-seat="valid"]').length).toBeGreaterThan(0);
+    expect(all('[data-zone="opponent-seat"] [data-tutorial-highlight], [data-zone="opponent-seat"][data-tutorial-highlight]')).toEqual([]);
+    await waitFor(() => { expect(slotTop()).toBe(BOTTOM); });
+    await user.click(within(one('[data-zone="targeting-bar"]')).getByRole('button', { name: CANCEL_ACTION_LABEL }));
+    await waitFor(() => { expect(slotTop()).toBe(TOP); });
   });
 
   it('stays non-modal and above the sheets after a flip: the slot keeps the host layer and takes presses', async () => {

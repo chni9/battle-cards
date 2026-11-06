@@ -11,7 +11,8 @@
  * - **Slot (K8, S4).** The panel sits at the `[data-arena-region="arena"]` region's top-left, 8 px in,
  *   `min(22rem, 100% - 1rem)` wide, in every mode. The host measures that region itself (a
  *   `ResizeObserver`, the `use-arena-layout-box.ts` pattern), so a mode change only moves the panel.
- *   While a live `[data-tutorial-highlight]` element (or its ring and arrow) overlaps that corner, the
+ *   While a live `[data-tutorial-highlight]` element (or its ring and arrow), or a valid target seat
+ *   while the player is targeting, overlaps that corner, the
  *   panel flips to the arena region's bottom edge (`placeCoach`, designer 2026-11-06, Check 2 stop item
  *   S4): at 375×812 the corner covered the opponent seat and the Incoming plate. The marks are read
  *   with the callout layer's own reader (`liveTutorialMarks`: live sheet layer, not inert, not empty), on each frame, because
@@ -26,7 +27,7 @@ import { useLayoutEffect, useRef, useState, type ReactElement } from 'react';
 import { createPortal } from 'react-dom';
 
 import { CoachPanel } from '../../ui/coach/coach-panel';
-import { liveTutorialMarks } from '../../ui/coach/live-tutorial-marks';
+import { liveTutorialMarks, type LiveTutorialMark } from '../../ui/coach/live-tutorial-marks';
 import { Z_INDEX } from '../../ui/layers';
 import { Button } from '../../ui/primitives/button';
 import { liveSheetId } from '../../ui/primitives/sheet-stack';
@@ -51,6 +52,9 @@ interface SlotPosition {
   readonly left: number;
 }
 
+/** A seat the targeting step accepts (`opponent-seat.tsx`, L74-10). */
+const VALID_TARGET_SEAT_SELECTOR = '[data-target-seat="valid"]';
+
 const UNMEASURED_SLOT: SlotPosition = { top: COACH_INSET_PX, left: COACH_INSET_PX };
 
 const toRect = (rect: DOMRect): Rect => ({ left: rect.left, top: rect.top, width: rect.width, height: rect.height });
@@ -66,6 +70,12 @@ export function TutorialCoachHost({ coach, onHide, onAck }: TutorialCoachHostPro
   useLayoutEffect(() => {
     const arena = document.querySelector('[data-arena-region="arena"]');
     if (arena === null) return;
+    // The tour and Look marks, and while the player is targeting, the seats they may pick: the script marks
+    // the hand card then, so nothing in the arena would stop the coach covering the only valid target.
+    const liveMarks = (): readonly LiveTutorialMark[] => {
+      const live = liveSheetId(store.getSnapshot());
+      return [...liveTutorialMarks(live), ...liveTutorialMarks(live, VALID_TARGET_SEAT_SELECTOR)];
+    };
     const measure = (): void => {
       const slotElement = slotRef.current;
       if (slotElement === null) return;
@@ -75,7 +85,7 @@ export function TutorialCoachHost({ coach, onHide, onAck }: TutorialCoachHostPro
         coach: { width: size.width, height: size.height },
         // In the host's coordinates, which start at the visual viewport's offset.
         arena: { ...rect, left: rect.left - box.offsetLeft, top: rect.top - box.offsetTop },
-        marks: liveTutorialMarks(liveSheetId(store.getSnapshot())).map(({ rect: mark }) => ({
+        marks: liveMarks().map(({ rect: mark }) => ({
           ...mark,
           left: mark.left - box.offsetLeft,
           top: mark.top - box.offsetTop,
