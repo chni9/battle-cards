@@ -3270,3 +3270,47 @@ and 1440×900).
   in; `fd6dbea0` step exit skips aria-disabled actions; `356a4153` Play and the confirm keep focus
   as the turn passes; `b23dc48c` the empty caption in px; `541f19af` the visibility spy restored;
   `b1ded6e5` the dead rules cache step removed. `pnpm verify` **3770** tests.
+
+### Lot 75 Part 1 verified 2026-11-06 (browser Check 1, `TURN_DURATION_MS=300000 RECONNECT_GRACE_MS=5000`, PROTOCOL 45)
+
+Covers L75-02, L75-03, L75-13 and L75-08 at `bc22710e`. Dedicated servers: Vite `:5273`, Colyseus
+`:2667`; `?ui=next`; solo rooms (nicks **G75…**, no room codes were shown by the new arena) and one
+`?ui=classic` solo room, **RGPQLZ**. Viewports: 1440×900, 1024×600, 768×1024, 390×844, 375×812,
+360×740, 844×390, 667×375. One browser caveat: the built-in pane is hidden while the agent runs, and a
+hidden page does not deliver `ResizeObserver` callbacks until something renders, so after every
+`resize_window` take a tiny screenshot before measuring (without it the seats stay laid out for the
+old arena; not an app defect).
+
+- **L75-02 desktop.** 2, 4, 7 opponents at 1440×900: pass (no page scroll, seats 120×136, none cropped,
+  plate clear; arena 1104×489, the log column 336 px wide, expanded by default; collapsed it is 60 px with a
+  44 px toggle). Menu → Action log expands a collapsed panel: pass. Card sheet centred: pass (496,115,
+  448×669 on 1440×900). Log scrollport `pt-0 pb-2` (computed 0 / 8 px): pass. Desktop arrow trim: pass (a
+  third-party arrow runs corner to corner, an incoming one starts 2 px outside its seat and stops 26 px
+  short of the plate). **1024×600 desktop: stop item S1** (4 seats: the top seat is covered by the plate by
+  43 px; 8 seats: three seats cropped by 128 px; the hand row is 223 px tall). 768×1024: portrait, arena
+  469 px, pass. Sell zone position on a desktop drag and the turn label at 375: not exercised (no real drag
+  device; the label keeps truncating, Q87-3).
+- **Focus hold (`654d9b2a`).** Defect fixed earlier. Quick look: a focused chat input holds portrait when the
+  window turns landscape, and it flips on blur. The A → B field move: not exercised (one field).
+- **L75-03 landscape-compact.** 844×390 and 667×375 with 8 seats, no page scroll, the band holds 7 seats,
+  plate clear (844: 1 px overlap with an empty plate, 667: 0). Arena **159** px (box was 176) and **160**
+  (box 162): boxes updated (`61e02ebb`). **667×375: stop item S2** (the hand region is 32 px wide: strip
+  287 + dock 348). At 844 the hand is 209 px (3 cards of 65 px), usable. Ticker cell: pass (it stays as wide as
+  the dock column, 348 px, whatever the log line). `TopBar compact?` not needed (plate clear at 667).
+- **L75-13 portrait band.** Full band at 360 / 375: arena 214 / 282, strip 160, hand 131 / 135: pass. Compact
+  strip measured **67** (plan 61): fixed (`966d0fc7`). 8 seats compact at 360, 375 and 390 with no seat
+  covered; 2-seat Duplicator at 360: dock 174, compact arena 258, full 140: pass. 390 full strip is 116 px
+  (see decisions 2026-11-06). Hand edge fades: only right at start, both when scrolled, no seam over the ground
+  halo: pass. 52 px card names: wrap at the 10 px floor is acceptable (default accept). Band flapping: one
+  `compact → full` flip when the game ended, none across turns: pass. The 170 px plate and an upgraded-shield
+  fourth pill row: not exercised. Eliminated POV (the Watching strip is 183 px, it does not compact): the plate
+  covers a seat by 6 px at 360×740, 8 seats: **stop item S3**; the walk-in strip itself: not exercised.
+- **L75-08 FX anchors.** Incoming attack banner `You are being attacked` centred (583,434) on desktop: pass.
+  Coin chips and the elimination beat seen at 844×390 on the eliminated board: pass. Log chip aimed at the
+  visible log (`bc22710e`, K12 gap): defect fixed, not re-driven (no long log sheet). `?ui=classic` (RGPQLZ):
+  card ghost lands after a Draw, no console error: pass (partial). A mutual cancel, Sentence, own Gambler wipe,
+  Thief chips, buy / sell ghosts and reduced motion: not exercised.
+- **Mirror carry-forward.** Not exercised: three attempts (Tactician, Mirror bought for 12) could not hold 6
+  points under an eligible incoming attack; no repeat of the Lot 74 case in portrait or on desktop.
+- **Design scan.** Not exercised (no live-server scan this run). `.impeccable/config.json` parses with 29
+  `ignoreValues`, as the plan expects.
