@@ -204,6 +204,13 @@ describe('placeCoach during the tour (S-B1)', () => {
     expect(placeCoach(script(PHONE, [PHONE.plate], PHONE.seat))).toEqual({ edge: 'top', top: PHONE.arena.top + COACH_INSET_PX, left: COACH_INSET_PX });
   });
 
+  it('clears the Look gate portrait and its arrow at 360×740', () => {
+    // The revealed opponent's portrait is the seat's top part (the arrow reach is part of the cover).
+    const portrait: Rect = { left: 150, top: 145, width: 60, height: 60 };
+    expect(cover(script(SMALL, [portrait], SMALL.seat), [portrait])).toBeGreaterThan(0);
+    expect(cover(tour(SMALL, [portrait], SMALL.seat), [portrait])).toBe(0);
+  });
+
   it('clears the Incoming and Opponent marks and the Action log arrow at 360×740', () => {
     const log: Rect = { left: 0, top: 98, width: 360, height: 40 };
     for (const marks of [[SMALL.plate], [SMALL.seat], [log]]) {

@@ -16,7 +16,7 @@
  *   panel flips to the arena region's bottom edge (`placeCoach`, designer 2026-11-06, Check 2 stop item
  *   S4): at 375×812 the corner covered the opponent seat and the Incoming plate. When the bottom edge
  *   overlaps the marks too, it takes a third slot under the opponent row (the box around the measured
- *   `[data-zone="opponent-seat"]` elements; designer 2026-11-06, Q2-5). During the board tour only
+ *   `[data-zone="opponent-seat"]` elements; designer 2026-11-06, Q2-5). During the board tour and the Look gate only
  *   (`coach.tour`: the table is locked), the slots are the visible viewport's top and bottom edges and
  *   the one under the opponents, the least-covering winning (designer 2026-11-06, Gate B stop item
  *   S-B1); script steps keep the arena-only slots so the hand and dock stay usable. The marks are read
@@ -116,7 +116,7 @@ export function TutorialCoachHost({ coach, onHide, onAck }: TutorialCoachHostPro
         })),
         ...(row !== undefined ? { opponents: { ...row, left: row.left - box.offsetLeft, top: row.top - box.offsetTop } } : {}),
       };
-      // The tour locks the table, so its coach may sit over the self strip and the hand (S-B1); a script step keeps the arena.
+      // The tour and the Look gate lock the table, so their coach may sit over the self strip and the hand (S-B1); a script step keeps the arena.
       const placed = placeCoach(
         coach.tour ? { ...shared, bounds: 'viewport', viewport: { left: 0, top: 0, width: box.width, height: box.height } } : shared,
       );

@@ -317,7 +317,7 @@ describe('the coach slot flips below its mark (designer 2026-11-06, S4; S-B1)', 
   const rectFor = (element: Element): DOMRect | undefined => {
     if (element.getAttribute('data-arena-region') === 'arena') return ARENA_RECT;
     if (element.hasAttribute('data-tutorial-coach-slot')) return COACH_RECT;
-    if (element.getAttribute('data-zone') === 'opponent-seat' || element.hasAttribute('data-target-seat')) return SEAT_RECT;
+    if (['opponent-seat', 'opponent-portrait'].includes(element.getAttribute('data-zone') ?? '') || element.hasAttribute('data-target-seat')) return SEAT_RECT;
     if (element.getAttribute('data-zone') === 'hand' || element.hasAttribute('data-instance-id')) return HAND_RECT;
     if (element.getAttribute('data-zone') === 'log-collapsed') return LOG_RECT;
     return undefined;
@@ -349,6 +349,16 @@ describe('the coach slot flips below its mark (designer 2026-11-06, S4; S-B1)', 
     expect(one('[data-tutorial-highlight]').getAttribute('data-tutorial-highlight')).toBe('action-log');
     // The ticker row sits under the viewport's top edge: the coach stays at the bottom edge.
     expect(slotTop()).toBe(VIEWPORT_BOTTOM);
+  });
+
+  it('during the Look gate, which locks the table too, leaves the arena for the viewport bottom edge (S-B1)', () => {
+    const phone = ARENA_TEST_BOXES.phone375;
+    stub = stubArenaLayout(phone.viewport, phone.arena, { rectFor });
+    setup(9);
+    expect(coachTitle()).toBe(TUTORIAL_LOOK_COACH.title);
+    // The revealed portrait is under the top-left box: the arena-only bottom slot would be BOTTOM.
+    expect(slotTop()).toBe(VIEWPORT_BOTTOM);
+    expect(slotTop()).not.toBe(BOTTOM);
   });
 
   it('on a script step keeps the coach inside the arena, so the hand and the dock stay playable (S-B1)', () => {

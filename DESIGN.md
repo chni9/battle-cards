@@ -1329,7 +1329,7 @@ deleted in L75-11.
   bottom box covers them strictly less (`coach-placement.ts`, designer 2026-11-06). When the top-left and
   the bottom slots both overlap the marks, a third slot sits under the opponent row (20px below the
   lowest seat, inside the arena, 8px from its left edge) if it covers them strictly less (designer
-  2026-11-06, Q2-5). During the board tour only (the table is locked), those three slots are the visible
+  2026-11-06, Q2-5). During the board tour and the Look gate (the table is locked), those three slots are the visible
   viewport's top edge, its bottom edge (8px in) and the one under the opponent row, over the self strip and
   the hand: `placeCoach` takes the one that covers the marks and arrows least, a tie going to top, then
   bottom, then under (designer 2026-11-06, Gate B S-B1); script steps keep the arena-only slots. Its mousedown is
