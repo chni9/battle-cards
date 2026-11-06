@@ -20,7 +20,7 @@ import {
   type WhatsNewScope,
 } from '@card-battle/shared';
 import { motion } from 'motion/react';
-import { useEffect, useState, type ReactElement, type SyntheticEvent } from 'react';
+import { useEffect, useRef, useState, type ReactElement, type SyntheticEvent } from 'react';
 
 import { FeedbackDialog } from '../../feedback/feedback-dialog';
 import type { RoomConnectionStatus } from '../../net/use-room-connection';
@@ -35,11 +35,12 @@ import { usePrefersReducedMotion } from '../../ui/motion/use-prefers-reduced-mot
 import { motionAttribute } from '../../ui/primitives/chrome-classes';
 import { hasUnseenReleaseNotes, markLatestReleaseSeen } from '../../ui/release-storage';
 import { HowToPlayDialog, type HowToPlayCloseReason } from '../how-to-play-dialog';
+import { INVITE_CODE_LENGTH } from '../lobby/invite-link';
 import { KitPickerSheet } from '../lobby/kit-picker-sheet';
 import type { SoloMenuSeed } from '../solo-menu-seed';
 import { WhatsNewDialog } from '../whats-new-dialog';
 import { BetaCard } from './home-art';
-import { homeMountEntry, howToPlayCloseOutcome } from './home-gate';
+import { homeMountEntry, howToPlayCloseOutcome, type HomeMountMode } from './home-gate';
 import { HomeHub } from './home-hub';
 import { whatsNewAutoScope, type WhatsNewAutoTrigger } from './home-whats-new';
 import { OnlinePath } from './online-path';
@@ -78,7 +79,7 @@ export interface HomeScreenProps {
   openOnline?: true;
 }
 
-type HomeMode = 'hub' | 'online' | 'solo' | 'tutorial';
+type HomeMode = HomeMountMode;
 
 /** The mode switch (§11 Q7): a fade and a short rise; `motionPropsFor` keeps the fade only when reduced. */
 const HOME_MODE_MOTION: V7MotionSpec = {
@@ -133,6 +134,17 @@ export function HomeScreen({
   // clears its own flag), so turning it off never reopens it (spec v7 §7.3; as `LobbyKitCard`, L76-11).
   if (solo.rules.randomOnly && kitPickerOpen) setKitPickerOpen(false);
 
+  // A mode switch remounts the subtree, so the tile or Back that was pressed unmounts with focus on
+  // it. Focus the new title (P2-m5, WCAG 2.4.3); never on the first mount, which keeps the page's
+  // own start and an invite arrival's.
+  const modeRoot = useRef<HTMLDivElement>(null);
+  const shownMode = useRef(mode);
+  useEffect(() => {
+    if (shownMode.current === mode) return;
+    shownMode.current = mode;
+    modeRoot.current?.querySelector<HTMLElement>('h1')?.focus();
+  }, [mode]);
+
   useEffect(() => {
     if (soloMenuSeed !== undefined) {
       onSoloMenuSeedApplied?.();
@@ -141,7 +153,7 @@ export function HomeScreen({
 
   const busy = status === 'connecting' || soloLaunchPending;
   const canSubmit = nickname.trim().length > 0 && !busy;
-  const canJoin = canSubmit && joinCode.trim().length === 6;
+  const canJoin = canSubmit && joinCode.trim().length === INVITE_CODE_LENGTH;
   const launchOnce = useLaunchOnce(status, error, soloLaunchPending);
 
   const onCreateSubmit = (event: SyntheticEvent<HTMLFormElement>): void => {
@@ -254,6 +266,7 @@ export function HomeScreen({
       <section className="mx-auto w-full max-w-3xl px-4 pb-10 pt-2 sm:px-6">
         <motion.div
           key={mode}
+          ref={modeRoot}
           data-home-mode={mode}
           data-motion={motionAttribute(reduced)}
           {...motionPropsFor(HOME_MODE_MOTION, reduced)}

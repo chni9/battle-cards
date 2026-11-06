@@ -462,6 +462,38 @@ describe('Home layout (L53-07)', () => {
   });
 });
 
+describe('Focus on a mode switch (P2-m5; WCAG 2.4.3)', () => {
+  const heading = (): HTMLElement => screen.getByRole('heading', { level: 1 });
+
+  it('focuses nothing on the first mount, then the path title after a tile and the hub title after Back', async () => {
+    seedHomeStorage(SEEN);
+    const { user } = renderHome();
+    expect(document.activeElement).toBe(document.body);
+    await user.click(screen.getByRole('button', { name: 'Play solo' }));
+    expect(title()).toBe('Play solo');
+    expect(document.activeElement).toBe(heading());
+    await user.click(screen.getByRole('button', { name: 'Back' }));
+    expect(title()).toBe('Card Battle');
+    expect(document.activeElement).toBe(heading());
+  });
+
+  it.each(['Skip', 'Got it'] as const)('a gated %s hands focus to the path title it enters', async (way) => {
+    seedHomeStorage({ howToPlaySeen: false, whatsNewSeen: true });
+    const { user } = renderHome();
+    await user.click(screen.getByRole('button', { name: 'Play online' }));
+    await closeHomeDialog(user, 'How to play', way);
+    expect(title()).toBe('Play online');
+    expect(document.activeElement).toBe(heading());
+  });
+
+  it('does not steal focus from a dialog that opens over the hub', async () => {
+    seedHomeStorage(SEEN);
+    const { user } = renderHome();
+    await user.click(screen.getByRole('button', { name: 'How to play' }));
+    expect(screen.getByRole('dialog', { name: 'How to play' }).contains(document.activeElement)).toBe(true);
+  });
+});
+
 describe('Lot 76 copy (spec v7 §10.1, L76-03)', () => {
   it('tells the host on Online to start once every guest is Ready', async () => {
     seedHomeStorage(SEEN);

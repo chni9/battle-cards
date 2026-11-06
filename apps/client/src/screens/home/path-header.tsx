@@ -44,8 +44,10 @@ export function PathHeader({
       <p className="mt-4 font-v7-body text-v7-caption font-extrabold uppercase tracking-[0.14em] text-v7-text-2">
         Card Battle
       </p>
-      <h1 className="font-v7-display text-v7-display leading-none text-v7-text">{title}</h1>
-      <p className="max-w-[40ch] font-v7-body text-v7-body text-v7-text-2">{subtitle}</p>
+      <h1 tabIndex={-1} className="font-v7-display text-v7-display leading-none text-v7-text outline-none">
+        {title}
+      </h1>
+      <p className="max-w-[40ch] text-pretty font-v7-body text-v7-body text-v7-text-2">{subtitle}</p>
       <HomeStatus status={status} error={error} soloLaunchPending={soloLaunchPending} />
     </header>
   );

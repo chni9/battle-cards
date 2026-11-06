@@ -42,7 +42,7 @@ export interface HomeHubProps {
 
 /** Display uppercase, 48 px from `sm`; it overlaps the bottom of the fan (DESIGN.md › Typography). */
 const WORDMARK_CLASS =
-  'relative -mt-8 font-v7-display text-v7-display uppercase leading-none tracking-wide text-v7-text sm:text-[48px]';
+  'relative -mt-8 font-v7-display text-v7-display uppercase leading-none tracking-wide text-v7-text outline-none sm:text-[48px] [@media(max-height:500px)]:mt-0';
 
 /** The arcade outline painted under the fill (a 6 px stroke shows 3 px) and the hard ink shadow. */
 const WORDMARK_STYLE: CSSProperties = {
@@ -103,7 +103,7 @@ export function HomeHub({
   return (
     <div className="flex flex-col items-center gap-4 text-center">
       <HomeArt />
-      <h1 className={WORDMARK_CLASS} style={WORDMARK_STYLE}>
+      <h1 tabIndex={-1} className={WORDMARK_CLASS} style={WORDMARK_STYLE}>
         Card Battle
       </h1>
       <p className="font-v7-body text-v7-caption font-extrabold uppercase tracking-[0.14em] text-v7-text-2">
@@ -126,7 +126,7 @@ export function HomeHub({
         </Button>
       </div>
 
-      <p className="max-w-[42ch] font-v7-body text-v7-body text-v7-text-2">
+      <p className="max-w-[42ch] text-pretty font-v7-body text-v7-body text-v7-text-2">
         New here? Open How to play once, then pick Tutorial, Online, or Solo.
       </p>
     </div>

@@ -60,7 +60,7 @@ export function HomeArt(): ReactElement {
       aria-hidden="true"
       data-home-card-fan
       data-motion={motionAttribute(reduced)}
-      className="pointer-events-none relative flex h-40 w-full items-end justify-center overflow-x-clip sm:h-48"
+      className="pointer-events-none relative flex h-40 w-full items-end justify-center overflow-x-clip sm:h-48 [@media(max-height:500px)]:hidden"
     >
       {FAN_CARDS.map(({ cardId, tilt }, index) => (
         <div key={cardId} className={`-mx-4 ${tilt}`.trim()}>
