@@ -85,7 +85,7 @@ export interface ArenaGridStyle {
  * Landscape-compact (L75-03) has three columns too: the self strip, the hand (the flexible one) and
  * the dock. The ticker sits above the dock in the third column, which the dock sizes (at least 10 rem,
  * so an empty dock keeps the ticker): the ticker takes no width from its content (`w-0 min-w-full`,
- * `arena-screen.tsx`), so a long log line is truncated inside the column and cannot widen the grid.
+ * `ARENA_TICKER_CLASS`), so a long log line is truncated inside the column and cannot widen the grid.
  */
 const ARENA_GRID: Readonly<Record<LayoutMode, ArenaGridStyle>> = {
   portrait: {
@@ -113,3 +113,15 @@ export function arenaGridStyle(mode: LayoutMode): ArenaGridStyle {
 export function arenaAreaStyle(region: ArenaRegion): { readonly gridArea: ArenaRegion } {
   return { gridArea: region };
 }
+
+/**
+ * The ticker region's classes per mode (§6.4). Portrait: a full-width row. Landscape-compact: beside the
+ * top bar in the band grid's third column (L75-03), with no width of its own (`w-0 min-w-full`), so the
+ * column takes the dock's width and a long log line is truncated inside it instead of widening the grid.
+ * Desktop: the right-hand log column (L75-02).
+ */
+export const ARENA_TICKER_CLASS: Readonly<Record<LayoutMode, string>> = {
+  portrait: 'min-w-0 px-2',
+  'landscape-compact': 'w-0 min-w-full self-center px-2 pt-2',
+  desktop: 'flex min-h-0 flex-col px-2 pb-2',
+};

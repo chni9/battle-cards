@@ -115,6 +115,7 @@ import type { TableScreenProps } from '../table';
 import { createArenaCommit } from './arena-commit';
 import { hintCauseForCardSheet, hintCauseForIntent } from './arena-hint-causes';
 import {
+  ARENA_TICKER_CLASS,
   arenaAreaStyle,
   arenaGridStyle,
   arenaRegionAttributes,
@@ -187,18 +188,6 @@ export interface ArenaScreenProps extends TableScreenProps {
   /** L74-25: the raw connection status (the reconnect banner and lock). */
   connectionStatus: RoomConnectionStatus;
 }
-
-/**
- * The ticker region's classes per mode (§6.4). Portrait: a full-width row. Landscape-compact: beside the
- * top bar in the band grid's third column (L75-03), with no width of its own (`w-0 min-w-full`), so the
- * column takes the dock's width and a long log line is truncated inside it instead of widening the grid.
- * Desktop: the right-hand log column (L75-02).
- */
-const TICKER_CLASS: Readonly<Record<LayoutMode, string>> = {
-  portrait: 'min-w-0 px-2',
-  'landscape-compact': 'w-0 min-w-full self-center px-2 pt-2',
-  desktop: 'flex min-h-0 flex-col px-2 pb-2',
-};
 
 /** The FX provider shell (plan A.9.2), as `TableScreen`: the overlay draws over the arena. */
 export function ArenaScreen(props: ArenaScreenProps): ReactElement {
@@ -488,7 +477,7 @@ function ArenaScreenInner(props: ArenaScreenProps): ReactElement {
           {...(tutorial.coach !== null && !tutorial.coach.open ? { onShowCoach: tutorial.onShowCoach } : {})}
         />
       </div>
-      <div {...regionLayout('ticker')} className={TICKER_CLASS[mode]}>
+      <div {...regionLayout('ticker')} className={ARENA_TICKER_CLASS[mode]}>
         {/* Desktop: the right-hand log column (§6.4, A.4.1). Elsewhere the one-line ticker opens the log sheet. */}
         {mode === 'desktop' ? (
           <LogPanel
