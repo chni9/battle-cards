@@ -3,8 +3,9 @@
  * §6.9; Appendix A `table-action-log-panel` (V2's 48 px stick); L74-15, moved here in L75-02.
  *
  * While `active`, the log opens on the newest line, then follows new lines only while the reader
- * is within 48 px of the bottom (`followLogScroll`). A `ResizeObserver` on the content keeps it
- * stuck when lines land (a sheet mounts its content hidden, so only an observer sees it gain a
+ * is within 48 px of the bottom (`followLogScroll`). A `ResizeObserver` on the content and on the
+ * scrollport keeps it stuck when lines land or the port resizes (a sheet mounts its content hidden,
+ * so only an observer sees it gain a
  * height). Every stick refreshes `lastTop`, so the scroll event Chrome fires after new lines land,
  * with `scrollTop` unchanged, never unsticks the log (L74-26 G27; review M3).
  */
@@ -51,6 +52,8 @@ export function useLogFollow(
 
     scroller.addEventListener('scroll', follow, { passive: true });
     observer.observe(body);
+    // The scrollport too: a desktop panel that shrinks with the window gains no content, yet must keep the newest line in view.
+    observer.observe(scroller);
     stick();
 
     return () => {

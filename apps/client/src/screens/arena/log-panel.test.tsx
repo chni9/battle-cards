@@ -83,6 +83,18 @@ describe('LogPanel (§6.4, §6.9)', () => {
     expect(within(port() ?? document.body).getByText('No actions yet')).toBeTruthy();
   });
 
+  it('keeps the newest line in view when the scrollport itself resizes, with no new line (L75-02 m2)', () => {
+    layout = stubArenaLayout(ARENA_TEST_BOXES.desktop.viewport, ARENA_TEST_BOXES.desktop.arena);
+    setup(true);
+    const scroller = port();
+    if (scroller === null) throw new Error('no scrollport');
+    const box = { scrollHeight: 900, clientHeight: 300, scrollTop: 600 };
+    stubScroller(scroller, box);
+    box.clientHeight = 200; // the window shrank: the port is shorter, the content is not
+    layout.resizeElement(scroller);
+    expect(box.scrollTop).toBe(700);
+  });
+
   it('keeps following new lines through a scroll event the reader did not make (L74-26 review M3)', () => {
     layout = stubArenaLayout(ARENA_TEST_BOXES.desktop.viewport, ARENA_TEST_BOXES.desktop.arena);
     setup(true);
