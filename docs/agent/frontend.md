@@ -2048,12 +2048,12 @@ rules above are unchanged — this section only covers how the client looks.
   `my-auto` / `max-h-full` of that overlay (never `items-center` — that clips the title).
   `panelClassName` `max-w-*` becomes one `max-w-[min(<abs>,100%)]` token via
   `dialogPanelClassName` (L53-02 / L53-07). Prefer this
-  for every modal prompt (Lobby copy feedback; Table card-first prompts). No
+  for every modal prompt (Lobby copy feedback; Game over prompts). No
   extra npm dependency unless separately ruled. V2 only: V7 surfaces use `ui/primitives`
   `Sheet` / `Dialog` / `Toast` (L72-09), where Esc closes only the top sheet (Q49); see
   DESIGN.md.
-- **Tooltip:** hover + focus; `role="tooltip"`; used for unavailable own cards (reason from
-  view fields only).
+- **Tooltip (V2, deleted in L75-11):** `design/components/tooltip.tsx` is gone. V7 surfaces use `ui/primitives` tooltips
+  and the visible text or `title` for unavailable own cards (reason from view fields only).
 - **Button variants:** `purple` (play), `yellow` (kept for other CTAs), `green` (confirm/Start/Create/Join
   / Draw when `drawValue ≤ 10` / Sell), `red` (Leave / return home / Draw when payout `> 10`), `orange` (Buy / Upgrade / Shop / Copy). Solid rounded CTAs from
   token hues — no `*_button.png` skins, no hex clip-path.
@@ -2147,7 +2147,7 @@ rules above are unchanged — this section only covers how the client looks.
   Card sits next to `data-hint-anchor` (no rings); `incoming-thief` reuses Incoming, with the earliest-queued thief's per-card body (L75-07).
   Hand / Specials anchors are the **card cluster** (`inline-flex`), not the flex-1 section;
   those two cards sit **beside** the cluster (top-aligned, left when it fits) so they are
-  not dumped on the felt's left edge or over the other row. `leave` is not a hint id.
+  not dumped on the arena's left edge or over the other row. `leave` is not a hint id.
   Completing or skipping the tutorial does **not** set `skipAll`
   (L46-03). There is **no** hub Reset help control (L51-03); `resetHelpStorage` is
   tests-only. A stranger clears `localStorage['card-battle.v6.howToPlaySeen']` and
@@ -2177,10 +2177,10 @@ rules above are unchanged — this section only covers how the client looks.
   - the solo path sends `chooseKit` before `startGame` when the pick is not random.
   The V2 chrome (a fixed check column, green / orange Ready) is retired (decisions.md
   2026-11-03, L76-12).
-- **Table bot seats (L17-03 / L17-05):** `BotSeatLabel` on opponent zones. `botReason` may
+- **Bot seats (L17-03 / L17-05):** `BotSeatLabel` (`ui/seat/`) on arena opponent seats (`screens/arena/opponent-seat.tsx`). `botReason` may
   still arrive on the wire; the action-log **Why** control is **hidden in every mode** (L45-05).
 - **Walk-in spectator (L57-13):** `isSpectator` on playing/finished views. Zero legal
-  actions; flag **Leave table**; **Watching** copy on the felt; private dock hidden.
+  actions; flag **Leave table**; **Watching** copy on the arena; private dock hidden.
   Hands, kits, and resources use the same upgraded-Spy overlay as an eliminated
   spectator. After Game over **Play again**, these sockets become unready lobby guests
   (L57-14) while a player seat is free.
@@ -2188,127 +2188,57 @@ rules above are unchanged — this section only covers how the client looks.
   rendering entries from public/self `activePersistentEffects` (PROTOCOL_VERSION 19).
   Own actives sit on the kit identity row as tiny thumbs (not a CardBand row),
   including combat Shield while `shield > 0` (base/upgraded art — no activated PNG).
-  Opponent actives sit beside the kit portrait (`activeShield` + persistents). The V2 table
-  shows no Incoming / felt chip for Imposition or Points Generator: the unwired
+  Opponent actives sit beside the kit portrait (`activeShield` + persistents). The arena
+  shows no Incoming chip for Imposition or Points Generator: the unwired
   `persistent-incoming.ts` was deleted in L73-05 (spec v7 §13 #35). V7 recurring chips come
   from `view-model/recurring-chips.ts` (View-model layer above) and render on the arena's central plate (L74-06).
 - **Elimination:** one generic treatment on `KitPortrait` — desaturate + “Eliminated” badge.
   No `*(dead).png` paths.
-- **Table (L12):** felt shell in `screens/table/` — opponents arc, pending strip, **center-stage
-  action log**, private dock + economy bar (`data-zone` hooks for Lot 14). Economy: compact
-  **Draw** is only the gain point `CostDisplay` (`signed="gain"`, green CTA — not
-  yellow-on-yellow with the point icon; no “Draw” letters — L59-01; `aria-label` /
-  `title` keep the name; nested `CostDisplay` `title={null}` so hover is not only
-  “plus 1 pt”) + compact **Shop** (L43-02 / L43-05 / L59-02, word label stays, same
-  compact `Button` as Draw / Unspy) + compact **Unspy** (L58-07 /
-  L59-01: crossed-eye inline SVG + `CostDisplay` of `CLEAR_SPY_COST` `signed="cost"`;
-  no “Unspy” letters; `aria-label` / `title` keep the name; nested `CostDisplay`
-  `title={null}` so hover is not only “minus 10 pts”).   Unspy is grey when it is not
-  your turn, actions are locked, you cannot afford 10, or no living `spyingOnYou` seat
-  exists. Click opens a seat picker of living opponents who are **spying you**
-  (hint: “Choose who is spying you.”; a single living spy is preselected so Confirm
-  stays readable). The public log is `{actor} got unspied from {spy}` — Unspy drops
-  **their** Spy on you, not yours on them. Shop Dialog (always openable — pool is
-  public off-turn) shows the **Upgrade points** title plus the upgrade-point icon
-  (no current-count). Buy/Sell sit **below**: kit points `CostDisplay` via
-  `upgradePointBuyCost` / `upgradePointSellYield` at render time, never cached, plus
-  **+1 / −1** upgrade-point `CostDisplay` (`signed="gain"` on Buy, `signed="cost"` on
-  Sell). Buy is orange (points `signed="cost"`); Sell is green (points `signed="gain"`
-  so the point icon has contrast). Then the shared-card
-  grid + Buy special (price `SPECIAL_CARD_PURCHASE_POINTS` from `view-model/shop.ts`, Q50), and the pool (**Buy random** + public `poolBuyCost`). Shop faces use catalog costs: Spy play **2** / buy **4**
-  (Lot 54 — do not restore 4/8). Living opponents who spy you show a small **open** eye
-  (`spyingOnYou`). Turn strip: **?** (How to play) then **!** (Feedback,
-  `aria-label` Feedback; Lot 57: never replace with the word Feedback — 44px `IconButton`)
-  left of timers, **Chat** then **flag**
-  right (inline SVGs). Chat opens and closes a fixed-height popup that scrolls to
-  the newest line. Each line is the round (or Lobby) and the seat-colored nickname.
-  Unread is how many messages arrived since it was closed (client-local).
-  Eliminated and spectator lines stay gray italic and labeled. Play again keeps
-  the lines in the next gathering. The finished board can open the snapshot
-  from that game's end and cannot send. Flag `aria-label` Forfeit / Leave table / Return home. Alive flag opens Stay / Forfeit
-  (“Leave the game? That counts as a forfeit.”); spectator flag opens Stay / Leave
-  (“Leave the table?”). Finished `readOnly` flag opens Stay / Return home (designer
-  2026-08-21 follow-up — the flag stays on inspect; Game over **Return home** also stays).
-  Esc / overlay = Stay. Stats stays on the dock when `readOnly`. Lobby Leave is
-  still immediate disconnect. Buy/Sell/Buy-card stay disabled when `!isMyTurn || actionsLocked`.
-  Shell is full-bleed
-  (`h-full` of `#root`; `html` / `body` / `#root` are `width/height: 100%`
-  with overflow hidden — not `100dvh`, which can stay stale after a resize
-  and leave the table as a small box on the html surface). Home and lobby
-  scroll **inside** `#root` (`overflow-y-auto`); the table shell does not
-  page-scroll. No `max-w` gutters. Opponents stay **one
-  horizontally scrollable row** (`flex-nowrap`, overflow-x; unlayered CSS locks nowrap so
-  six seats never wrap to a second line — Lot 53). 4+ opponents use compact seat chrome.
-  Eight-player tables stay on that same nowrap row (overflow-x). The V7 lobby (L76-12) has no
-  inner list scroll: `main` scrolls and its action bar sticks to the bottom, so eight seats never
-  cover Start. **Dock is primary**
-  (hand fills remaining height); action log is capped (~15vh portrait) until the felt is
-  too short. **Landscape:** two-column felt — left opponents + pending + log, right
-  dock (hand/economy). Short phone landscape keeps the left column at **~10.5rem**
-  so one uncropped hand row still fits. Tall landscape (`min-height: 560px`,
-  desktop / tablet) uses `minmax(16rem, 38%)` so opponents and the action log
-  take empty width instead of a 168px strip. Shell is `w-full` / `h-full` of
-  `#root` (no `w-screen` / `100vw` / `100dvh` gutters). If one
-  uncropped hand row still cannot fit, chrome collapses into a button + Dialog in this order:
-  **Incoming** (dock Incoming + felt Waiting on others) → **opponents** → **action log**.
-  Viewports with `innerHeight` ≤ 500px collapse Incoming and opponents; the action log
-  stays on the felt unless leftover chrome still overflows (L53-07). Landscape `used()`
-  ignores dock min-height (dock is beside chrome). When opponents collapse, leftover
-  left-column height is the log (`minmax(0, 1fr)`), not two buttons with an empty slate.
-  Since L75-08 flyouts aim only at the
-  log button (`log-collapsed`) among the collapsed buttons. Collapse Dialogs must
-  fit in the viewport with Close visible. Empty Incoming / Waiting / Specials take no flex
-  space. No separate
-  “Card Battle” header; code/status live in the turn strip. Opponents hug content (no empty
-  white seat slab). Pending effects targeting `view.you`
-  render in the private   zone (Incoming); effects on others stay on the felt strip (**Waiting
-  on others**, L43-03) — both strips size to show full
-  chips and scroll internally when many effects queue. Kit
-  portrait opens a visual inspect Dialog from `getKit` / `getCard` only (L51-04:
-  starting-hand action/attack versos + counts, `CostDisplay` on Draw / special play
-  cost / upgrade-point buy-sell, grouped trait cards — never `N action · M attack`
-  prose).   **Private zone:**
-  Incoming sits **beside the kit** on the identity row (not a full-width row under
-  it). Chips **stack vertically** and scroll (`max-h-14`, overflow-y) when several
-  queue. No `max-h-9` clip on the chip itself. Felt Waiting stays a horizontal
-  strip. `CardBand` — Hand and Specials share **one** face width (preferred min
-  **22px**, max **48px**; shrink further rather than crop). Specials do not size
-  independently. A short
-  Hand or Specials row packs to `w-max` and **centers** with `mx-auto` (do not
-  `justify-center` the overflow row — that clips both sides). Resources sit
-  above
-  the economy bar with **visible captions**
-  (Lives, Points, Upgrade points, Shield — L43-01, not `sr-only` / `title` only);
-  kit inspect and opponent reveal stay compact; `Card detail="face"`; effect
-  copy in the card Dialog. Action log: scrollable list only (no filter rail); entries
-  grouped under a sticky **Round N** header
-  (table round = `floor(turnSequence / seatCount) + 1`, presentation only — no turn numbers
-  shown) with one line per action. Hand/specials are **one row each** and **scroll
-  horizontally** (L53-07; no wrap, no vertical card scroll, no pager). Width follows row
-  height so the name line stays on-screen. Side-by-side (short docks) does not flip
-  back to stacked until the band is 48px taller than the enter threshold (L65-04).
-- **Dialog width (L53-02 / L53-07):** `dialogPanelClassName` maps `max-w-*` to one
-  `max-w-[min(<abs>,100%)]` token of the overlay (Shop / kit picker / How to play / sub-choices).
-  Panel is `min-w-0 max-h-full` of the overlay so 390×844 never clips
-  Cancel off the right and 844×390 never clips Close off the bottom. Overlay is
-  sized to `visualViewport` and `items-start` (not `items-center`, which clips the
-  title of a tall panel); `my-auto` still centers a short panel. Footer `Button`s use
-  `compact` and wrap. Collapse Opponents seats sit on a `min-w-0` nowrap row; Action
-  log Dialog uses `embedded` so the empty state is not a full-height white slab.
-- **Table card-first (L12-08 / L51-05):** click own hand/specials → Dialog with effect text + Use /
-  Upgrade / Sell. Play cost is `CostDisplay` icons (`CardEffectCopy`); non-upgraded faces
-  show base `effect` plus an Upgrade block of `upgradeAdds`; upgraded faces show only
-  `upgradeEffect`. `formatCardEffectText` matches that copy (no `Cost:` prefix) for
-  non-dialog surfaces. Cards stay clickable off-turn (and while Mirror/reward prompts run) so the
-  player can read descriptions; action buttons disable when `!isMyTurn` or actions are locked.
-  Nested Dialog for target, Regen quantity, **Card Transformer consume** (hand shared
-  action/attack → `consumeInstanceId`), Assassin multi-attack; self-only Use is one-shot;
-  Spy-revealed cards inspect-only; Mirror and elimination rewards via Dialog. Same
-  intents/payloads as V1. Shop dialog thumbs use upgraded art when the seat's kit
-  `alwaysUpgraded` covers that card (purchase arrives upgraded). Card dialog **Upgrade**
-  shows `CostDisplay { kind: 'upgradePoint', amount: 1 }` with `signed="cost"`; **Sell** is
-  green with catalog `sellYield` and `signed="gain"` (life icon on orange failed contrast).
-  Interactive costs prefix **−** (pay: Use / Upgrade / Buy) or **+** (receive: Draw / Sell).
+- **Table (L12, retired in L75-10 / L75-11):** the felt shell in `screens/table/` (opponents arc, pending
+  strip, center-stage log, economy bar, collapse order, `CardBand`, `PrivateZone`, two-column landscape
+  felt) is deleted. The arena owns the behavior: seats and the central plate in `screens/arena/`
+  (`arena-seats`, `central-plate`), the dock (`dock`: Draw, Shop, Unspy, hand and specials), `shop-sheet`,
+  `card-sheet`, `sub-choice-sheet`, `chat-sheet`, `log-panel`, `leave-confirm-sheet`, and the top bar
+  (`top-bar`). Rules that carry over unchanged:
+  - **Draw** is only the gain point `CostDisplay` (`signed="gain"`, no letters, `aria-label` / `title` keep
+    the name, L59-01); **Shop** keeps its word label; **Unspy** (L58-07 / L59-01) shows a crossed-eye SVG
+    plus `CLEAR_SPY_COST` `signed="cost"`. Unspy is grey when it is not your turn, actions are locked,
+    you cannot afford 10, or no living `spyingOnYou` seat exists. Its seat picker lists living opponents
+    who are **spying you** ("Choose who is spying you."; a single living spy is preselected). The public
+    log is `{actor} got unspied from {spy}`.
+  - The Shop is always openable (the pool is public off-turn): **Upgrade points** title and icon, Buy/Sell
+    priced by `upgradePointBuyCost` / `upgradePointSellYield` at render time (never cached), the shared
+    card grid, Buy special (`SPECIAL_CARD_PURCHASE_POINTS`, Q50), **Buy random** with `poolBuyCost`.
+    Shop faces use catalog costs: Spy play **2** / buy **4** (Lot 54, do not restore 4/8). Buy / Sell /
+    Buy-card are disabled when `!isMyTurn || actionsLocked`.
+  - Chat opens a fixed-height popup that scrolls to the newest line; unread counts messages since it was
+    closed (client-local); eliminated and spectator lines stay gray italic and labeled; Play again keeps
+    the lines; the finished board reads the snapshot and cannot send.
+  - The flag reads Forfeit / Leave table / Return home. Alive: Stay / Forfeit ("Leave the game? That
+    counts as a forfeit."); spectator: Stay / Leave ("Leave the table?"); finished `readOnly`: Stay /
+    Return home. Esc / overlay = Stay. Lobby Leave is immediate.
+  - The log is a scrollable list with a sticky **Round N** header (`floor(turnSequence / seatCount) + 1`,
+    presentation only), one line per action.
+  - Pending effects aimed at you show as Incoming near your seat; effects on others show on the plate.
+    A kit portrait opens the inspect sheet from `getKit` / `getCard` only (L51-04).
+  - `html` / `body` / `#root` are `width/height: 100%` with overflow hidden (not `100dvh`, which can stay
+    stale after a resize); Home and lobby scroll inside `#root`.
+- **Dialog width (L53-02 / L53-07):** `dialogPanelClassName` (V2 `Dialog`, still used by Game over) maps
+  `max-w-*` to one `max-w-[min(<abs>,100%)]` token of the overlay. The panel is `min-w-0 max-h-full` of the
+  overlay, which is sized to `visualViewport` and `items-start`, so a tall panel never clips its title or
+  its Close. V7 sheets and dialogs come from `ui/primitives`.
+- **Card sheet (L12-08 / L51-05, retargeted to `screens/arena/card-sheet.tsx`):** tapping an own hand or
+  special card opens the sheet with effect text and Use / Upgrade / Sell. Play cost is `CostDisplay`
+  icons (`CardEffectCopy`); non-upgraded faces show base `effect` plus an Upgrade block of `upgradeAdds`,
+  upgraded faces only `upgradeEffect`. `formatCardEffectText` matches that copy (no `Cost:` prefix) for
+  non-dialog surfaces. Cards stay tappable off-turn (and while Mirror/reward prompts run) so the player
+  can read them; action buttons disable when `!isMyTurn` or actions are locked. Target, Regen quantity,
+  **Card Transformer consume** (hand shared action/attack → `consumeInstanceId`) and Assassin
+  multi-attack go through a nested sheet; self-only Use is one-shot; Spy-revealed cards are inspect-only;
+  Mirror and elimination rewards use the sub-choice sheet. Intents and payloads are the V1 ones. Shop
+  thumbs use upgraded art when the seat's kit `alwaysUpgraded` covers that card. **Upgrade** shows
+  `CostDisplay { kind: 'upgradePoint', amount: 1 }` with `signed="cost"`; **Sell** is green with catalog
+  `sellYield` and `signed="gain"`. Interactive costs prefix **−** (pay) or **+** (receive).
 - **Visual pickers (L44-01):** the V2 `SeatTile`, `CardChoiceTile` and `choiceTileClassName`
   were deleted in L75-11. The arena replaces them: targeting is a seat tap, and the Shop and the
   sub-choice sheets use large `ui/card` tiles (`screens/arena/shop-sheet.tsx`,
@@ -2396,7 +2326,7 @@ rules above are unchanged — this section only covers how the client looks.
     no card radius, no border). Overlay card chrome is **`asCard === true` only**
     — never `from.width`. Token chips are 40×40 both ends (L51-16); that size
     must not promote them to tiles (L51-14). **Card ghosts on buy/sell and play**
-    (felt pending + card-band midpoint, ~48×72, `asCard: true`) — buy/sell verso
+    (the central plate, ~48×72, `asCard: true`) — buy/sell verso
     when unspied, face when Spyed; play uses public `cardId` face art. Special
     buy uses the special verso. **Every resource
     transaction flies both legs when both exist** (L51-15): catalog spend/yield
@@ -2568,7 +2498,7 @@ rules above are unchanged — this section only covers how the client looks.
   names via `formatCardLabel`) — never raw `RewardChoice` type ids or `cardId` strings.
 - **Sub-choices (L30-03):** one unicast `subChoiceRequired` / `resolveSubChoice` pair
   (`SubChoiceRequiredPayload` discriminated on `kind`). Client stores a single `subChoice`
-  and renders `SubChoiceHost` — Mirror, elimination rewards, steal-pick, pool-pick,
+  and renders `screens/arena/sub-choice-sheet` — Mirror, elimination rewards, steal-pick, pool-pick,
   special-pick, reanimation-kit. Deadline is `SUB_CHOICE_MS` (40s). Clear on confirm /
   `turnStarted` / `gameOver`. Lock other table actions while a sub-choice is open. Also lock
   when `players[you].isEliminated` — after an elim the turn pointer may still sit on the dead
