@@ -440,8 +440,8 @@ and are mirrored in `ui/palette.ts` and `ui/motion/motion-tokens.ts`.
   (`<EffectTextWithIcons text iconSize? />`), `ui/text/card-effect-copy.tsx`
   (`<CardEffectCopy card isUpgraded />`: Cost row, effect, Upgrade block). They carry spec v7
   §6.6.1 and replace the V2 `design/components/{cost-display,effect-text-icons,card-effect-copy}.tsx`
-  on V7 screens; the V2 files and their source-text tests stay untouched until L75 and L76
-  retire their consumers. L72-12 (card chips), L72-15 (kit details), L72-17 (coach) and L74 and
+  on V7 screens; the V2 files and their source-text tests stay untouched until L75
+  retires their consumers. L72-12 (card chips), L72-15 (kit details), L72-17 (coach) and L74 and
   L76 import these.
 - **Use:** one `CostAmount` for every number-plus-icon amount: a cost chip, a Draw or shop price,
   a reward, an amount inside prose. `signed="cost" | "gain"` prefixes `−` or `+` and speaks "minus"
@@ -471,7 +471,7 @@ and are mirrored in `ui/palette.ts` and `ui/motion/motion-tokens.ts`.
   `cardFamilyOf`, `cardCostChip`, `cardDamageChip`, `cardCounterLabel`, `cardFaceLabel`,
   `cardNameWordEm`, `cardNameFontSize`, `CARD_NAME_FIT`, `HIDDEN_CARD_LABEL`).
   `design/components/card.tsx` and its source-text tests stay for the
-  classic screens until L75/L76 retire them.
+  classic screens until L75 retires them.
 - **Art only from `artFor`:** the base drawing, so the Sentence/Shield activated-art guard
   holds by construction and Roulette uses its base drawing. Never call `getCardArtUrl` from a
   V7 surface; upgraded and active looks are Card states.
@@ -3471,3 +3471,64 @@ and 1440×900).
   in; `fd6dbea0` step exit skips aria-disabled actions; `356a4153` Play and the confirm keep focus
   as the turn passes; `b23dc48c` the empty caption in px; `541f19af` the visibility spy restored;
   `b1ded6e5` the dead rules cache step removed. `pnpm verify` **3770** tests.
+
+### Lot 76 verified 2026-11-06 (browser, built-in pane, PROTOCOL 45)
+
+- **Setup:** server `:2767` with `TURN_DURATION_MS=300000 RECONNECT_GRACE_MS=5000`, client `:5373`.
+  Rooms: **WYMASR** (lobby, 1 → 8 seats; Part 1, 2026-11-03), **DAHOHC** (lobby to game),
+  **EYIDKH** (lobby, inline alert), **SCAZLP** (tutorial); Part 2 on 2026-11-04. Gate servers
+  stopped afterwards, so every room is gone.
+- **Viewports:** 320, 360×740, 375×812, 390×844, 844×390 and 1440×900.
+- **Home:** no horizontal scroll at 360, 375, 390 and 1440. What's new opens by itself and Got it
+  marks the entry seen. How to play gates Play online (9 slides, chevrons, Skip marks seen and
+  enters Online). Online: Nickname 16 px, Game code 32 px type in a 56 px field, `?code=abcdefgh`
+  opens Online with `ABCDEF` and strips the URL. Solo: seven seat radios at 360, one centred
+  column at 1440, Start reachable by scroll, slider readout 'Server default' fits at 320.
+  Tutorial: a double click on Start tutorial opens one table. Classic table `?` opens the V7
+  How to play sheet; Feedback shows Kind radios and a 16 px textarea.
+- **Lobby, host:** 360 with a 23-character nickname, 1 → 4 → 8 seats: Start in the sticky bar,
+  Add bot disabled at 8 with 'Room is full (8 seats).', 'Players (8/8)', no horizontal scroll;
+  1440 two page columns. Chat input 16 px, 44 px tall; a reader scrolled up keeps `scrollTop`;
+  collapse and reopen keeps the draft. Kit picker at 360: two columns, 17 tiles. Kick confirm
+  opens on Cancel and the kicked guest lands Home with 'You were kicked.'. Share falls back to
+  'Copy failed … Game code' when the clipboard is blocked.
+- **Lobby, guest:** the 'Rules changed' toast on an exclusion, the strip shows Excluded, the
+  picker tile is Excluded and disabled, and Select this kit is disabled with 'The host has
+  excluded that kit. Pick one that is still allowed.'. A host slider above the server maximum
+  shows 'Server default' by design.
+- **Lobby, walk-in:** after the 5 s grace a third tab via `?code=` gets 'Sit as a disconnected
+  player?' with the sole seat preselected; Stay spectating closes it. The classic table has no
+  Claim a seat reopen (the arena's, L74-23).
+- **Inline alert (EYIDKH):** two synchronous Add bot at 7/8 give 'Room is full (8 seats).' with
+  the inset `--danger` ring and a 44×44 OK, the same look at 1440.
+- **Design gate (§12.4):** static `detect` on 122 Lot 76 files: 0 anti-patterns and 1 documented
+  advisory (the 48 px hub wordmark, in `DESIGN.md`). URL scans of the hub at 390 and 1440 show
+  only the Q3b `.v7-ground` halo and the V2 `tutorial-pulse` `dark-glow` (known false positive).
+  Critique: 28/40 Good, dual-agent (A opus-run design review, B detector and browser pass).
+- **Defects found and fixed** (one fix wave, `5c081184..92262dd4`; `pnpm verify` 527 files / 4094
+  tests):
+  - D1 hub tiles below the fold at 844×390: `3a301dce` (fan hidden and wordmark overlap dropped at
+    short heights; focus moves to the new title on a mode switch).
+  - D2 kit labels split mid-word at 320: `808f5aec`.
+  - D3 Share wrapped alone under the code: `b9c4bdd8`.
+  - D4 focus fell to `body` after the alert OK: `a44b70ad`.
+  - D5 hub hint straggler: `fa785a68`, `dde60190` (`text-pretty` on the solo kit lead and the
+    lobby note).
+  - Review and critique items: `492af59f` Sit here locked while reconnecting; `1765a395` Kick
+    returns focus; `ed95ecef` Table rules strip returns focus; `068fe0b3` Feedback Sent latch
+    per Sent; `59003468` `INVITE_CODE_LENGTH` and the Online Create re-arm; `4759ceb1` solo seat
+    hue test; `317eb22f` How to play opens on Next; `0da4c09f` What's new item 9 shortened;
+    `92262dd4` stale `design/` mentions dropped.
+- **Not exercised:** the reconnect lock (no socket drop in the built-in browser), Feedback Sent
+  (no DB), Link copied and Web Share (clipboard blocked), reduced-motion emulation (covered by
+  the L76-04 controlled test).
+- **Classic table known issues handed to Lot 75:** the tutorial coach (`z-[110]`) and the hint
+  overlay (`z-[105]`) paint over V7 sheets (z-50); the your-turn flash (`z-[90]`) paints over
+  sheets; Esc closes a hidden V7 sheet under a V2 dialog (`decisions.md`, P2-m4).
+- **Designer items for the PR:** critique P1 lobby order (by build, not task) and P1 invite mode
+  (a shared-link guest lands on the host's Create form); P2 How to play art and sizing, Leave and
+  Kick danger styling, hub hierarchy, tagline and Tutorial lead; the wordmark over the fan
+  captions; the kicker eyebrow above headings; What's new bug-fix grouping; the toast covering the
+  kit-preview title (Toast primitive, Lot 72); #89 action, attack and check glyphs; Q39
+  reason-less locks (#90, #116, #139, including a disabled Sit here); the toast timer #122; the
+  inset alert ring.
