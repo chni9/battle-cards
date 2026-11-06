@@ -287,10 +287,6 @@ export function tutorialShopSpotlight(
   return undefined;
 }
 
-export function tutorialPortraitSpotlight(highlight: TutorialHighlight): boolean {
-  return highlight === 'opponent-portrait';
-}
-
 function matchesLegalKind(
   legalKind: TutorialLegalKind,
   intent: TutorialSendIntent,

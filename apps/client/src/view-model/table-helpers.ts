@@ -4,7 +4,6 @@
  */
 
 import {
-  ATTACK_CARD_IDS,
   formatCardEffectText,
   getCard,
   type CardInstance,
@@ -14,7 +13,6 @@ import {
   type RewardChoice,
 } from '@card-battle/shared';
 
-import type { StructuredCost } from '../ui/structured-cost';
 
 export type RewardKind = RewardChoice['type'];
 
@@ -27,20 +25,12 @@ export const REWARD_KINDS: readonly RewardKind[] = [
 
 /**
  * Spoken labels for reward options (aria / native fallback).
- * Interactive chrome prefers CostDisplay via REWARD_KIND_COSTS.
  */
 export const REWARD_KIND_LABELS: Record<RewardKind, string> = {
   lives: '4 lives',
   points: '8 points',
   upgradePoint: '1 upgrade point',
   card: 'A card',
-};
-
-/** Icon costs for elimination reward picks (rules reward amounts). */
-export const REWARD_KIND_COSTS: Partial<Record<RewardKind, StructuredCost>> = {
-  lives: { kind: 'lives', amount: 4 },
-  points: { kind: 'points', amount: 8 },
-  upgradePoint: { kind: 'upgradePoint', amount: 1 },
 };
 
 export function nicknameOf(view: PlayingStateView, playerId: string): string {
@@ -89,31 +79,6 @@ export function buildRewardChoice(
   }
 
   return { type: kind };
-}
-
-/** Cards that Table sends with targetPlayerId (attacks, Spy, Thief, Absorber, Cloning, base Card Thief / Spy Thief). */
-export function cardPlayNeedsTarget(cardId: string, isUpgraded = false): boolean {
-  if (cardId === 'card-thief' || cardId === 'upgrade-point-thief' || cardId === 'spy-thief') {
-    return !isUpgraded;
-  }
-
-  return (
-    (ATTACK_CARD_IDS as readonly string[]).includes(cardId) ||
-    cardId === 'spy' ||
-    cardId === 'thief' ||
-    cardId === 'absorber' ||
-    cardId === 'cloning' ||
-    cardId === 'curse'
-  );
-}
-
-/** Card Transformer needs a hand card to consume (`consumeInstanceId`). */
-function cardPlayNeedsConsume(cardId: string): boolean {
-  return cardId === 'card-transformer';
-}
-
-export function cardIsSelfOnlyPlay(cardId: string, isUpgraded = false): boolean {
-  return !cardPlayNeedsTarget(cardId, isUpgraded) && !cardPlayNeedsConsume(cardId);
 }
 
 /** Effect copy for Dialogs when Table `Card detail="face"` omits it. */

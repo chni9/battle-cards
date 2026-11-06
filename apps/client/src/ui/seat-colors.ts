@@ -63,17 +63,12 @@ export function clampSeatIndex(index: number): SeatIndex {
 }
 
 /** Resolved hex for a seat — use in React inline styles (mobile-safe). */
-export function seatColorHex(index: number): string {
+function seatColorHex(index: number): string {
   return SEAT_COLORS[clampSeatIndex(index)];
 }
 
-/** Alias of `seatColorHex` (name kept for older call sites). */
-export function seatColorVar(index: number): string {
-  return seatColorHex(index);
-}
-
 /** Mix a hex color over white at `amount` (0–1). Avoids `color-mix()` for mobile Safari. */
-export function seatColorWash(hex: string, amount: number): string {
+function seatColorWash(hex: string, amount: number): string {
   const clamped = Math.min(1, Math.max(0, amount));
   const rgb = parseHexRgb(hex);
   if (rgb === null) {

@@ -20,7 +20,6 @@ import {
   tutorialCoachTitle,
   tutorialEconomySpotlight,
   tutorialHighlightAt,
-  tutorialPortraitSpotlight,
   tutorialSendAllowed,
   tutorialShopSpotlight,
   tutorialSpotlightInstanceIds,
@@ -55,7 +54,6 @@ describe('resolveTutorialCoach (L45-05)', () => {
     const coach = resolveTutorialCoach(8);
     expect(coach?.title).toBe('Spy');
     expect(tutorialHighlightAt(8)).toBeNull();
-    expect(tutorialPortraitSpotlight(tutorialHighlightAt(8))).toBe(false);
   });
 
   it('board tour copy wins at index 0 until Got it finishes', () => {

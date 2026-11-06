@@ -7,7 +7,6 @@ import {
   formatActionLogEntry,
   formatActionLogEntrySegments,
   groupByRound,
-  resourceDeltaClass,
   roundOfTurn,
 } from './action-log';
 
@@ -732,9 +731,6 @@ describe('action log resource suffixes', () => {
       label: '\u22121',
       spoken: '\u22121 point',
     });
-    expect(suffix?.type === 'resource' ? resourceDeltaClass(suffix.direction) : '').toBe(
-      'text-cta-red',
-    );
     const line = formatActionLogEntry(
       {
         kind: 'actionPlayed',
@@ -769,9 +765,6 @@ describe('action log resource suffixes', () => {
       label: '+4',
       kind: 'point',
     });
-    expect(gain?.type === 'resource' ? resourceDeltaClass(gain.direction) : '').toBe(
-      'text-cta-green',
-    );
 
     const sell = formatActionLogEntrySegments(
       {
@@ -846,9 +839,6 @@ describe('action log resource suffixes', () => {
       direction: 'gain',
       label: '+?',
     });
-    expect(concealed?.type === 'resource' ? resourceDeltaClass(concealed.direction) : '').toBe(
-      'text-cta-green',
-    );
   });
 
   it('shows resolve-time life loss on the target and both sides of a steal', () => {

@@ -72,10 +72,6 @@ export type ActionLogSegment =
 
 const MINUS = '\u2212';
 
-export function resourceDeltaClass(direction: LogResourceDirection): string {
-  return direction === 'gain' ? 'text-cta-green' : 'text-cta-red';
-}
-
 function resourceDirection(delta: LogResourceDelta): LogResourceDirection {
   if (delta.direction !== undefined) {
     return delta.direction;

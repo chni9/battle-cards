@@ -5,7 +5,6 @@
 import { describe, expect, it } from 'vitest';
 
 import {
-  FELT_QUEUE_TITLE,
   FORFEIT_ACTION_LABEL,
   FORFEIT_ARIA_LABEL,
   FORFEIT_CONFIRM_BODY,
@@ -34,14 +33,11 @@ import {
   UNSPY_PICKER_HINT,
   ACTION_LOG_OPEN_LABEL,
   INCOMING_OPEN_LABEL,
-  OPPONENTS_OPEN_LABEL,
-  WAITING_OPEN_LABEL,
 } from './table-copy';
 
 describe('table copy (L43-03 / technical spec v6 §6.1)', () => {
-  it('uses Hidden kit, Waiting on others, and double the play cost', () => {
+  it('uses Hidden kit and double the play cost', () => {
     expect(HIDDEN_KIT_LABEL).toBe('Hidden kit');
-    expect(FELT_QUEUE_TITLE).toBe('Waiting on others');
     expect(SHOP_PRICE_BLURB).toContain('double the play cost');
     expect(SHOP_PRICE_BLURB).not.toContain('base play cost');
     expect(SHOP_PRICE_BLURB).not.toMatch(/\bUP\b/);
@@ -84,10 +80,8 @@ describe('table leave chrome copy (L43-05)', () => {
 });
 
 describe('felt chrome collapse copy (L53-05)', () => {
-  it('names Incoming, Waiting, Action log, and Opponents buttons', () => {
+  it('names the Incoming and Action log buttons', () => {
     expect(INCOMING_OPEN_LABEL).toBe('Incoming');
-    expect(WAITING_OPEN_LABEL).toBe('Waiting');
     expect(ACTION_LOG_OPEN_LABEL).toBe('Action log');
-    expect(OPPONENTS_OPEN_LABEL).toBe('Opponents');
   });
 });
