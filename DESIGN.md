@@ -1276,7 +1276,10 @@ the new panel (`help/hint-overlay.tsx` renders it since L75-06).
 - **Tutorial host (L75-04):** `screens/arena/tutorial-coach-host.tsx` portals the default panel to
   `document.body` in a `pointer-events: none` box on the visible viewport, on `Z_INDEX.coach`, outside
   every sheet. The slot is the arena region's top-left, 8px in, `min(22rem, 100% - 1rem)` wide, in every
-  mode. Its mousedown is prevented, so a press never moves focus out of an open sheet; from the keyboard,
+  mode, flipping to the arena region's bottom edge, 8px in, while a live tutorial mark (with its 20px ring
+  and arrow reach) or, while the player is targeting, a valid target seat overlaps that corner and the
+  bottom box covers them strictly less (`coach-placement.ts`, designer 2026-11-06). Its mousedown is
+  prevented, so a press never moves focus out of an open sheet; from the keyboard,
   × moves focus to the top bar's Menu (Show coach) and Got it to the next step's Got it. Got it is a
   full-width primary Button (`data-tutorial-ack="got-it"`). The panel reopens from Menu → Show coach
   (`icon="coach"`, distinct from How to play's `help`, Q45); there is no floating reopen control.
