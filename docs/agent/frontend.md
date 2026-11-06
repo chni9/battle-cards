@@ -3680,3 +3680,104 @@ full run 0 to 30), G75Desk (1440×900), G75Land (844×390), G75Menu (375×812). 
 - **Callout frame cost:** the pane was hidden, so no 60 Hz frame sample was possible. One tick (the
   `[data-tutorial-highlight]` query plus its `getBoundingClientRect` reads) takes 0.003 ms with one to three marked
   elements and a clean layout, so the per-frame re-measure is cheap; a sample under a visible pane is left to L75-12.
+
+### Lot 75 verified 2026-11-06 (browser, built-in pane, `TURN_DURATION_MS=300000 RECONNECT_GRACE_MS=5000`, PROTOCOL 45)
+
+The Lot 75 gate on the flipped default (L75-09 to L75-11 merged), in three runs, one after another, because the
+built-in pane is single: **Gate A** (the table, at `9ad5db6f`), **Gate B** (tutorial and hints, at `042641a9`), **Gate C**
+(the design gate and the tour re-measure, at `8b6ce99a` to `e3c8667f`). Dedicated servers: Colyseus `:2667`, Vite
+`:5273`, with `2567`, `5173`, `2767` and `5373` untouched; the gate entries in `.claude/launch.json` were restored
+after each run. Viewports: 360×740, 375×812, 390×844, 844×390, 667×375, 768×1024, 1024×600 and 1440×900. The pane
+caveat of the Part 1 record holds: after every `resize_window`, take a 0.1-scale screenshot before measuring.
+Tutorial rooms show no room code, and the solo rooms of Gates B and C are named by their nicks (G75Tut…, G75Hint…,
+G75C…).
+
+- **Gate A rooms:** **RDYAZL** (solo, 8 seats, Easy) and **MRJTIN** (solo, 4 seats), each at all eight viewports;
+  **XXPXYB** (solo, 2 seats, Mega kill to the finished board); **MYOVFP** (online, two humans in two tabs plus six
+  bots, 8 seats, 120 s turns, Witch and Kamikaze excluded, a walk-in on a third tab); one solo tutorial.
+- **A1 boot:** pass. With no key, with `?ui=classic` and with a stale `card-battle.v7.ui=next`, the playing, finished
+  and tutorial screens are the arena, and the key is gone after load.
+- **A2 layout:** pass, with one recorded residual. No page scroll and six regions at every viewport and seat count; no
+  seat cropped or covered by the plate. The band compacts at 360×740 and 375×812 with 8 seats (strip 67, hand 106 against
+  160 and 131 with 2 and 4 seats), with no flap. **Residual (S1, Q2-4, accepted by the designer 2026-11-06):** 8 seats at
+  1024×600 measure an arena of 688×189, seats 76×92 in a grid, seats 2 to 4 ending 11 px below the arena, and the plate
+  box overlaps seven seats; five `elementFromPoint` probes per seat each hit the seat, so every seat stays pressable. The
+  2-seat Duplicator dock at 360 was not exercised (the kit pick did not take).
+- **A3 scenarios:** incoming attack, mutual cancel and the Mirror redirect pass (a minimized Mirror resolved by itself at
+  its expiry, a redirect of a redirect too). Elimination with the 2-seat Mega kill, a forfeit and the eliminated POV
+  pass. Walk-in by code mid-game, house rules (Table rules, excluded kits, 120 s) and the chat unread badge pass.
+  Partial: base Spy was cancelled by the bot's Spy, so the reveal and Spy+ were not exercised; the walk-in room was 8/8,
+  so Stay and Claim a seat were not exercised.
+- **A4 FX and banners:** partial pass in portrait, desktop and landscape-compact. Card flyouts, token chips (draw, Thief
+  both legs, 18 chips), the resolution flash, the `turn`, `attacked` and `wipe` banners, and the exact Gambler wipe text
+  were seen. The elimination beat, reward pulse, Sentence countdowns, a `?` seat chip and a replay-free finished board
+  were not exercised or not checked (no mid-flight screenshots: a hidden pane runs `requestAnimationFrame` slowly).
+- **A5:** desktop log panel opens and closes, and the Shop and seat sheets are centred (the card sheet was centred in Check 1);
+  landscape-compact shows the icon-only dock at 667×375 and measured bands at 844×390.
+- **A6 gate items:** the Mirror carry-forward passes, not reproduced in four trials (portrait and desktop, twice each);
+  the walk-in `SpectatorStrip` at 360×740 with 8 seats passes (strip 124, header 108, no overlap) and the eliminated POV
+  header compacts 108 to 58; a focus move from field A to field B at 360×300 holds portrait; the S3 50 px saving is
+  measured. Mutual cancel, Gambler wipe and Thief chips pass.
+- **A7 Game over over a sheet:** finding, no defect. When a game finishes, the live arena unmounts and `EndScreen` mounts a
+  fresh arena, so every open V7 sheet is gone when Game over appears. Game over was above the board, readable and pressable
+  at 360×740, 768×884 and 1440×900; one Esc closed Game over only (and opened the ask-once Feedback sheet, whose Skip
+  closed it); Stats reopened Game over and its Esc closed it. A V7 sheet staying under Game over cannot arise from a live
+  finish, and a sheet opened on the finished board blocks the Stats button behind it, so the P2-m4 stack is not reachable.
+  **Accepted by the designer 2026-11-06 (default (a)): the sheets are dropped when the game finishes.**
+- **Gate B, tutorial (B1):** pass. The full tutorial, index 0 to the human win, at 375×812 (G75TutA), 360×740
+  (G75Tut360) and 390×844 (G75Tut390); the tour and the Look gate at 844×390 (G75TutLand, G75TutL2) and 1440×900
+  (G75TutDesk, G75TutDrag). Each step marks exactly its element, Got it advances, the coach stays above the card, Menu and
+  Shop sheets, × then Menu then Show coach works, the idle `Play` retitle shows, Skip from the flag leaves with no Game
+  over, and the finished tutorial board has no coach, callout or `data-tutorial-highlight`. Ring boxes plus their 3 px
+  stroke stayed inside the viewport at 375, 360, 390, 844×390 and 1440×900.
+- **Gate B, hints (B2):** pass. Fresh Classic solo (G75Hint, G75HintL, G75HintD): your-turn, draw, hand, specials, shop,
+  resources and hidden-kit each sit next to their anchor with 0 px overlap in portrait, landscape-compact and desktop; a
+  read-only sheet hides the hint and Esc brings it back; Got it and Skip all persist. The Card Thief body showed below the
+  Incoming plate; the other thief bodies, the plain `incoming` hint and `reward` were not exercised.
+- **Gate B, §14.3 anchors (B3):** pass. The list was built from `HINT_IDS`, the `TUTORIAL_TOUR_STEPS` highlights, the 35
+  `data-zone` / `data-hint-anchor` lines of the parity file (each split on `/` and `,`) and the §6.12 sheet ids, and queried
+  in all three modes. Absent by decision: `incoming-collapsed`, `opponents-collapsed`, `incoming-pending` and
+  `tutorial-coach-toggle`. Out of the table: `beta-card`, `game-over-*`, `dialog-actions`. Discarded parity words: `targets`
+  (line 2459) and `N` (from `Opponents (N)`). V2 hook names with no arena element and no reader, recorded as retired, no
+  defect: `turn`, `action-log`, `private`, `economy` and `opponent-actives`.
+- **Gate B, the Part 1 items (B4):** the `your-zone` ring is inside the viewport at 360×740, 375×812 and 390×844 (F2);
+  a 60 Hz frame sample on a visible pane ran 357 frames in 3 s with three rings live, median 8.3 ms, max 17 ms.
+  The S-B1 stop item (the coach still covering the Incoming mark in the compact portrait arena, 61% at 375×812 and 100% at
+  360×740 after F1) was answered by the designer with option (b), and Gate C re-measured it at 0% (below).
+- **Gate C, the coach after F3 (3 viewports plus desktop):** at 375×812, 360×740 and 390×844 every tour mark, ring and arrow
+  and the Look gate are covered 0%; at 1440×900 as well. Two stop items came out of it: S-C1 and S-C2 (below).
+- **Gate C, design (C1 to C3):** the static `detect` on `screens/arena/`, `ui/`, `help/hint-overlay.tsx` and `index.css`
+  reports 0 findings (17 advisories: the holo colors at `ui/tokens.css:47-51` and the 44 and 72 px kit monogram sizes). The
+  in-page scans of the board, card, Shop, seat and Menu sheets, the coach, the hint panel, the eliminated POV and the finished
+  board show only the pre-approved `radial-spotlight-glow` (Q3b) and the designer-approved `repeating-stripes-gradient`
+  (Q87-5); the V2 `tutorial-pulse` `dark-glow` is gone with L75-11. The critique scored **27/40**, single-context
+  (the gate rules forbid subagents), so its assessment is degraded.
+- **Fixes, by hash** (each one `pnpm verify` green, from 509 files / 4393 tests to 4417):
+  - F1, the third coach slot (Q2-5): `ef47ca8f`; F2, the callout ring inset (Q2-6): `1374f17f`, with the stroke fix `042641a9`.
+  - F3, the tour coach leaves the arena (S-B1): `8d53a61d`, and the Look gate too: `8b6ce99a`.
+  - Gate C: `24caa4c3` (a tour mark's ring stays inside its scrollport, found at 844×390), `e35675b4` (the empty desktop
+    log line inset), `e3c8667f` (no straggler in the coach and hint bodies).
+  - Designer rulings of the stop items: `baae1cc5` (S-C2, the desktop top slot under the top bar) and `985ec80f` (S-C3, the finished
+    board's turn strip shows `—`).
+  - `97ef27fa` renames `ArenaCoachView.tour` to `locksTable` and tidies `placeCoach`; `9ad5db6f` drops a deleted helper from this
+    playbook.
+- **Accepted residuals (designer, 2026-11-06):** Q2-4, 8 seats at 1024×600 (above); S-C1, the 8×7 px corner of the Incoming plate
+  and its ring covered by the coach at 844×390; the sheets dropped when a game finishes (A7).
+- **Not exercised:** `prefers-reduced-motion` for the callouts and the hint panel (the pane cannot emulate it; the code sets
+  `data-motion="reduced"` and the unit tests cover it); a real touch or held-pointer drag onto Sell (the pane's drag sends two
+  moves, read as a horizontal scroll by `classifyHandGesture`; `hand-drag.test.ts` covers the drop); the reconnect banner and
+  its input lock (the pane cannot drop a socket; the L74-25 tests cover it); the walk-in claim picker under the coach (the
+  coach exists only in solo tutorial rooms); the reward sub-choice with a human killer, slot-drop, the Spy and Spy+
+  reveal, the walk-in Stay and Claim, the 170 px plate, an upgraded-shield fourth pill row, the 2-seat Duplicator dock, Sentence
+  and buy ghosts; the other thief hint bodies, the plain `incoming` hint and the `reward` hint; the K12 log chips on a long log
+  sheet (no chip was live); the Look gate at 844×390 after F3; an A7 run per sheet and layout (the same unmount applies to each).
+- **Classic table known issues handed to Lot 75 (Lot 76 record):** resolved by deletion for the classic dialogs and overlays: the tutorial
+  coach and hint z-index, the your-turn flash, and the reward sub-choice and opponent reveal dialogs (L75-10, L75-11). The V2 Game
+  over `Dialog` stays until Lot 77 and now opens over the arena, so the Esc and z-order part of P2-m4 is not resolved by
+  deletion: A7 gives its verdict above (the stack is not reachable, one Esc closes Game over only).
+- **Designer items for the PR (the critique, not stop items):** D1 the desktop card dialog has no Close control (Shop has one); D2 the
+  first-game `your-turn` hint covers opponent seats and the log ticker (360×740 with 8 seats: 3 of 7; 844×390 with 4 seats: 1 of 3);
+  D3 the tutorial Counter step's coach covers 38% of the plate its copy calls "the red highlight" (375×812); D4 the desktop composition
+  (small seats and plate in a large empty arena, a detached `Hand Empty` caption); D5 the landscape card band (a 210 px scroller,
+  truncated names, a native scrollbar on a desktop-class browser, dock slack); D6 the hint copy "It is your turn you have to take one
+  action." (V6, locked by §10). The detector advisories want a DESIGN.md mention.

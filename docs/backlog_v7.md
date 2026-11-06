@@ -23,14 +23,14 @@ Status values: `To do` · `In progress` · `Done` · `Blocked`
 | 72 · Foundations | 21 | 21 |
 | 73 · View-model | 13 | 13 |
 | 74 · Arena I | 26 | 26 |
-| 75 · Arena II | 13 | 12 |
+| 75 · Arena II | 13 | 13 |
 | 76 · Home and lobby | 18 | 18 |
 | 77 · Game over | 8 | 0 |
 | 78 · Juice | 13 | 0 |
 | 79 · Sound and haptics | 5 | 0 |
 | 80 · Admin | 12 | 12 |
 | 81 · Close-out | 6 | 0 |
-| **Total** | **135** | **102** |
+| **Total** | **135** | **103** |
 
 ## Designer questions still open
 
@@ -195,7 +195,7 @@ Tutorial and hints on the arena, the table copy fixes, desktop and landscape-com
 | L75-09 | **Flip the default table to the arena.** **Acceptance:** A component test renders `App` with a fake connection: the playing (Classic and tutorial) and finished phases mount the arena with no key, with `?ui=classic` and with a stale `card-battle.v7.ui`, and the key is gone after boot. `App.tsx` and `end.tsx` no longer import `screens/table`. Release-note tests are green on the updated entry. `pnpm verify` green. | M | **High** | L75-01, L75-05, L75-06, L75-07, L75-08, L75-13 | Done |
 | L75-10 | **Delete the old table shell and classify its tests.** **Acceptance:** No test reads a deleted path. Every classification row names its class and its replacement test or decision. Product behaviors such as Draw with no word label, Unspy disabled under 10 points, Stats only on the finished board, four seat resource icons showing `?`, the flag confirm before Forfeit, and no `100dvh` / no page scroll still have passing tests. Nothing is skipped. `pnpm verify` green. | L | Medium | L75-09 | Done |
 | L75-11 | **Delete old table dialogs and orphaned components.** **Acceptance:** `apps/client/src/screens/table/` is gone, and nothing imports it or a deleted `design/` file. No test reads a deleted path. Product behaviors keep passing behavior tests: Spy shop face 2/4, UP buy/sell from the shared helpers, shop double-tap buy, Use disabled reasons (including Invisibility), sub-choice natural labels, the slot-drop Cancel intent and coach hide/reopen. Nothing is skipped. `pnpm verify` green. | L | Medium | L75-10, L76-02, L76-10, L76-13 | Done |
-| L75-12 | **Run the Lot 75 browser and design gate.** **Acceptance:** Every §12.3 table scenario passes on the arena default; issues found are fixed and re-verified; results recorded. `pnpm verify` green. | M | Medium | L75-01…L75-11, L75-13 | To do |
+| L75-12 | **Run the Lot 75 browser and design gate.** **Acceptance:** Every §12.3 table scenario passes on the arena default; issues found are fixed and re-verified; results recorded. `pnpm verify` green. | M | Medium | L75-01…L75-11, L75-13 | Done |
 | L75-13 | **Fit the 6–8 seat portrait grid and the plate on small phones.** **Acceptance:** At 360×740 and 375×812, with 8 seats and with a 2-seat Duplicator dock, no seat is covered by the central plate, checked by a pure geometry test and the Lot 75 gate. The layout choice (compact grid seats, a side-anchored plate, or a shorter strip) is a designer decision recorded in `decisions.md` before coding. | M | Medium | L74-26 | Done |
 
 ### §6.12 tutorial highlight map (L75-04)
