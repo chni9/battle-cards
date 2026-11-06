@@ -14,7 +14,7 @@
  * With no answer after `FEEDBACK_SEND_TIMEOUT_MS` the sheet unlocks with the fallback error. A
  * success retitles the same sheet 'Sent', which closes after `FEEDBACK_SENT_CLOSE_MS` or on OK,
  * Esc, backdrop or swipe, and reports `onDismiss('sent')` once: `useOncePerOpen` (plan A.9 ruling 5)
- * latches that report per open, so OK pressed as the timer fires still reports once (decisions.md
+ * latches that report per Sent, so OK pressed as the timer fires still reports once (decisions.md
  * L76-07).
  */
 
@@ -114,7 +114,8 @@ export function FeedbackDialog({
   const inFlight = useRef(false);
   const sendTimer = useRef<number | null>(null);
   const okSlot = useRef<HTMLSpanElement>(null);
-  const once = useOncePerOpen(open);
+  // Per Sent, not per open: a second Sent in the same open (a parent that did not close) is a new report.
+  const once = useOncePerOpen(open && sent);
 
   const clearSendTimer = (): void => {
     if (sendTimer.current === null) return;

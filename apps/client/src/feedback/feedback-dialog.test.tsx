@@ -12,7 +12,7 @@ import {
 import { act, screen, waitFor, within } from '@testing-library/react';
 import type { UserEvent } from '@testing-library/user-event';
 import { useState, type ReactElement } from 'react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { renderUi, type RenderUiOptions } from '../test/render';
 import { FeedbackDialog, type FeedbackDialogProps } from './feedback-dialog';
@@ -90,6 +90,10 @@ const ENTRY: ActionLogEntryView = { kind: 'rewardsClaimed', eliminatorPlayerId: 
 beforeEach(() => {
   feedback.submit.mockReset();
   feedback.submit.mockResolvedValue({ ok: true });
+});
+// A test that fails with fake timers on would leak them into the next one (ledger #191).
+afterEach(() => {
+  vi.useRealTimers();
 });
 
 describe('the Feedback ticket (spec v7 §7.7, §11 Q71; L47-06, L57-05)', () => {
@@ -303,6 +307,22 @@ describe('Sent (spec v7 §7.7 amended, Q6/Q68/Q69; L76-07 Review)', () => {
       vi.advanceTimersByTime(FEEDBACK_SENT_CLOSE_MS);
     });
     expect(onDismiss.mock.calls).toEqual([['sent']]);
+  });
+});
+
+describe('the Sent latch is per Sent, not per open (ledger #190)', () => {
+  it('reports sent for a second Sent in the same open when the parent has not closed the dialog', async () => {
+    const onDismiss = vi.fn<Dismiss>();
+    const { user } = renderUi(<FeedbackDialog open mode="manual" screen="home" onDismiss={onDismiss} />, { reducedMotion: true });
+    await writeIdea(user, 'More kits');
+    await user.click(control('Send'));
+    await user.click(within(await screen.findByRole('dialog', { name: FEEDBACK_SENT_TITLE })).getByRole('button', { name: FEEDBACK_SENT_DISMISS_LABEL }));
+    expect(onDismiss.mock.calls).toEqual([['sent']]);
+    await screen.findByRole('dialog', { name: 'Feedback' }); // the form is back and empty
+    await writeIdea(user, 'More modes');
+    await user.click(control('Send'));
+    await user.click(within(await screen.findByRole('dialog', { name: FEEDBACK_SENT_TITLE })).getByRole('button', { name: FEEDBACK_SENT_DISMISS_LABEL }));
+    expect(onDismiss.mock.calls).toEqual([['sent'], ['sent']]);
   });
 });
 
