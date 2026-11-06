@@ -1,8 +1,8 @@
 /**
  * A nickname painted in its player's seat hue — L39-03 under technical spec v7 §5.1 (the eight
  * `--seat-*` hues) and §5.2 (seat names are Lilita One). L72-19. It replaces
- * `design/components/player-name.tsx` on V7 surfaces; the V2 file stays for the V2 table,
- * lobby and Game over until L74, L76 and L77 switch their imports.
+ * `design/components/player-name.tsx` on V7 surfaces; the V2 file stays only for Game over
+ * until L77 switches its import.
  *
  * - **Seat:** an explicit `seatIndex` (clamped into 0–7) wins, else `seatIndexOf(view,
  *   playerId)` when both are given, else none. An unresolved seat renders the nickname in the

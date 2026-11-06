@@ -848,7 +848,7 @@ The V2 rule "one Esc closes every open Dialog" does not apply to V7 surfaces.
 `ui/card/glyph-amount.ts`, `ui/card/cost-amount.tsx`, `ui/text/effect-text-with-icons.tsx` and
 `ui/text/card-effect-copy.tsx` (spec v7 §6.6.1; Appendix A `global-card-effect-copy-inline-icons`).
 They are the V7 successors of the V2 `CostDisplay`, `EffectTextWithIcons` and `CardEffectCopy`
-in `design/components/`, which stay until L75 (and L77 for Game over) retire their consumers. Catalog text is
+in `design/components/`, which L75-11 deleted. Catalog text is
 rendered as it is; the copy fixes of §10.5 are L72-13's.
 
 - **Icon map** (`glyphAmountIcon`, one `GlyphAmount` shape for the structured costs and for the
@@ -896,7 +896,7 @@ rendered as it is; the copy fixes of §10.5 are L72-13's.
 `ui/card/card.tsx` and `ui/card/card-face.ts` (L72-12; spec v7 §5.3, §5.4, §5.5, §6.6.5, §8.2,
 §8.3; Appendix A `global-card-face`, `global-activated-art-guard`,
 `global-art-lot63-gambler-roulette`, `active-persistent-thumbs`, `sentence-chips`). It is the
-only V7 card renderer; the V2 `design/components/card.tsx` stays for the classic screens.
+only V7 card renderer; the V2 `design/components/card.tsx` was deleted in L75-11.
 
 - **API:** `<Card size instance damageMultiplier? counter? selected? unplayable? description?
   onActivate? className? dataAttributes? />`, or `<Card face="hidden" family size … />` for a Spy
@@ -1031,8 +1031,7 @@ only V7 card renderer; the V2 `design/components/card.tsx` stays for the classic
 `global-text-input-no-ios-zoom`). One `<ChatLog messages players canWrite onSend inputLabel?
 placeholder? sendLocked? />` is shared by the lobby (L76), the arena chat sheet (L74) and the read-only Game
 over chat (L77). The lobby already uses it, inside `LobbyChatPanel` (L76-13: a collapsible
-`--panel` card under the seats, open from the start); the V6 `screens/table/chat-log.tsx` stays
-until L75 deletes the classic table.
+`--panel` card under the seats, open from the start).
 
 - **Box:** `h-52`, `--panel-2` fill, `rounded-v7-chrome-sm`, `px-3 py-2`, no hard shadow, like
   the text input. It is a `ScrollArea` (`axis="y"`) named "Chat" (`CHAT_LOG_LABEL`, the V6 copy
@@ -1085,7 +1084,8 @@ until L75 deletes the classic table.
 `kit.gallery.tsx` (spec v7 §4.2, §5.5, §6.6.5, §7.3, §11; Appendix A `kit-inspect-dialog`,
 `lobby-kit-picker-dialog`, `home-solo-kit-picker`, `global-art-catalog`). They replace the V2
 `design/components/kit-portrait.tsx` and `screens/table/kit-inspect-details.tsx` on V7 surfaces;
-the classic files and their duplicated copy stay until L75.
+the V2 `design/components/kit-portrait.tsx` stays only for Game over; `kit-inspect-details.tsx` was
+deleted in L75-11.
 
 - **KitPortrait:** `<KitPortrait kitId size? isEliminated? className? onClick? ariaLabel? dataAttributes? />`,
   `kitId` a `KitId`, `'random'` or `null` (not revealed). Widths are `thumb` 40, `tile` 72,
@@ -1241,9 +1241,8 @@ the classic files and their duplicated copy stay until L75.
 `ui/coach/coach-panel.tsx` and `coach.gallery.tsx` (spec v7 §4.2, §6.12, §8.3; Appendix A
 `table-tutorial-coach`, `table-first-game-hints`, `first-game-hint-host`, `tutorial-overlays`).
 `<CoachPanel title body zone onHide hideAriaLabel footer? extraAttrs? compact? />` and
-`<CoachBody text />` replace `design/components/coach-panel.tsx`, with the same props. That file,
-`screens/table/tutorial-coach.tsx` and the `.tutorial-coach-panel` CSS stay until L75, which hosts
-the new panel (`help/hint-overlay.tsx` renders it since L75-06).
+`<CoachBody text />` replace `design/components/coach-panel.tsx`, with the same props
+(`help/hint-overlay.tsx` renders it since L75-06).
 
 - **Element:** a hovering `<aside>` named by its title (`aria-labelledby` the `<h2>`, so it is a
   named complementary landmark). It is never a dialog or modal: no `role`, no `aria-modal`, no
@@ -1405,8 +1404,9 @@ advances so it never fires later. The arena passes it because its POV eliminatio
 pure `connection-badge-label.ts`) and `seat.gallery.tsx` (spec v7 §4.2, §5.1, §5.2, §6.2;
 Appendix A `global-connection-badge`). Props and copy are V2's, unchanged: `<PlayerName
 nickname playerId? view? seatIndex? className? possessive? />`, `<BotSeatLabel difficulty
-className? />`, `<ConnectionBadge player className? />`. The V2 files in `design/components/`
-stay until L75 (and L77 for Game over) switch their imports; new code imports only `ui/seat/`.
+className? />`, `<ConnectionBadge player className? />`. The V2 `design/components/player-name.tsx`
+stays only for Game over (L77); the V2 `bot-seat-label.tsx` and `connection-badge.tsx` were deleted in
+L75-11. New code imports only `ui/seat/`.
 
 - **PlayerName:** Lilita One (`font-v7-display`, one weight; V2's `font-semibold` is gone). The
   hue is inline hex from `v7SeatColor`, never `var()` or `color-mix()`, on the nickname span

@@ -6974,3 +6974,28 @@ Source: technical spec v7 §12.1, §4.2, §6.1, §6.4, §6.5, §6.9, §6.12, §1
   (A.17). Copy citations that name a V2 file as their source stay.
 
 ---
+
+## 2026-11-06 · [P] The old table dialogs and orphaned design components retire (L75-11)
+
+Source: technical spec v7 §12.1, §4.2, §6.6.1, §6.7, §6.8, §6.12, §11, §15 (L76 before L75's lobby
+deletions); the Lot 75 plan, Part 2 (A.15–A.18); classification rows 19–21, 46–49, 72, 81, 83–85,
+102–113, 134, 150–169, 188–189, 197–198.
+
+- **Deleted:** the rest of `screens/table/` (the directory is gone), `screens/illegal-action-dialog.tsx`,
+  `action-log/action-log-panel.tsx`, `bots/format-bot-reason.ts` (dead since the Why control stayed hidden,
+  L45-05; its only reference was a string in the deleted panel test), and 14 `design/components/` files with no importer left: animated-card,
+  bot-seat-label, card-choice-tile, card-effect-copy, card, choice-tile-chrome, coach-panel, connection-badge,
+  cost-display, effect-text-icons, icon-button, life-count-badge, seat-tile, tooltip. 19 test files go.
+- **Kept for Game over (L77):** `design/components/` button, dialog, kit-portrait, player-name and
+  resource-icon, which `screens/game-over-dialog.tsx` imports, with `kit-portrait.test.ts` and
+  `dialog.dialog-width.test.ts`; the `[role="dialog"]` rules in `index.css` stay with them.
+- **No lobby repointing.** Lot 76 (PR #89) already rebuilt the lobby on `ui/`; nothing outside the old
+  table imported `ChatLog` or `KitInspectDetails`.
+- **Moved, not retired:** the four kit-inspect logic tests, verbatim, to `view-model/` beside their modules.
+- **Retired old-layout assertions:** SeatTile pickers, compact dialog CTAs, choice-tile chrome, the PNG
+  resource icons and the V2 callout and coach CSS (§6.6.2, §6.6.1, §6.7, §5.3, §5.6, §6.12). Every kept
+  behavior names its arena or `ui/` test in its row.
+- **Dead exports** removed with their last importer: `MOTION_STAGGER_S`, `activeUpgradeInstanceId` (the
+  V2 opponent-Shield path, Q37), `CoachResourceKind` (it lost `export`; its own file still uses it).
+
+---

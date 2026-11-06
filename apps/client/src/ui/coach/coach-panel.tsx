@@ -1,5 +1,5 @@
 /**
- * Coach panel — technical spec v7 §4.2 (rebuilt in `ui/` before `screens/table/` is deleted),
+ * Coach panel — technical spec v7 §4.2 (rebuilt in `ui/` before `screens/table/` was deleted, L75-11),
  * §6.12 (the tutorial coach and the first-game hints keep their behavior and are restyled) and
  * §8.3 (reduced motion). Appendix A `table-tutorial-coach`, `table-first-game-hints`,
  * `first-game-hint-host` and `tutorial-overlays`. L72-17.

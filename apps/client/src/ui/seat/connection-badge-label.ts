@@ -1,8 +1,7 @@
 /**
  * The text of a seat's connection badge — L10-04 (frontend.md degraded states) and parity
  * `global-connection-badge` (technical spec v7 Appendix A), moved unchanged from V2's private
- * `badgeLabel` in `design/components/connection-badge.tsx` so the V7 badge and the V2 one say
- * the same thing. It lives in a `.ts` because react-refresh forbids a non-component export in
+ * `badgeLabel` in `design/components/connection-badge.tsx` (deleted in L75-11). It lives in a `.ts` because react-refresh forbids a non-component export in
  * a `.tsx`.
  *
  * The thresholds mirror the server's `ABSENT_AUTO_TURN_LIMIT` (3) and

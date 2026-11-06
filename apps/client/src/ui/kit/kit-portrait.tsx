@@ -4,7 +4,7 @@
  * the caller's), §7.3 (kit picker) and §11 (portrait `alt` = kit name). Appendix A:
  * `global-art-catalog`, `global-dialog-button-primitives`; L10-05 (eliminated is greyscale plus
  * a badge, no per-kit dead art). L72-15. It replaces `design/components/kit-portrait.tsx` on V7
- * surfaces; the classic file stays until L75 and L76.
+ * surfaces; the V2 file stays only for Game over (L77).
  *
  * - **Faces:** a kit shows its base drawing from `artFor` on the card-face gradient, in a fixed
  *   box with `object-contain` so the 16 trimmed drawings share one visual weight. An unrevealed

@@ -1,8 +1,7 @@
 /**
  * Visible bot seat marker — technical spec v3 §6, §7 (L17-03: shown to every recipient, not
- * host-only) and v7 §5.1, §5.2, §5.3. L72-19. It replaces `design/components/bot-seat-label.tsx`
- * on V7 surfaces; the V2 file stays for the V2 table and lobby until L74 and L76 switch their
- * imports.
+ * host-only) and v7 §5.1, §5.2, §5.3. L72-19. It replaced `design/components/bot-seat-label.tsx`,
+ * deleted in L75-11.
  *
  * Reads "Bot · {Easy|Normal|Hard}" (`botSeatLabelParts`, over `formatBotDifficulty`; the same
  * words as plain text are `botSeatLabelText`): a decorative `bot` icon, the word

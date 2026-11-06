@@ -2,9 +2,8 @@
  * Seat connection and elimination badge — L10-04, parity `global-connection-badge` (technical
  * spec v7 Appendix A), §5.1 (grounds), §5.2 (11 px floor for functional text) and §5.3 (a seat
  * badge takes its radius from `--chrome-radius-sm` and carries no outline or hard shadow: the
- * seat frame around it owns the arcade chrome). L72-19. It replaces
- * `design/components/connection-badge.tsx` on V7 surfaces; the V2 file stays for the V2 table
- * until L74 switches its imports.
+ * seat frame around it owns the arcade chrome). L72-19. It replaced
+ * `design/components/connection-badge.tsx`, deleted in L75-11.
  *
  * - **Copy:** `connectionBadgeLabel` (the V2 strings and its 3 / 5 thresholds, unchanged);
  *   `null` means no badge, so the component renders nothing.

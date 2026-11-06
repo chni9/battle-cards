@@ -1,7 +1,7 @@
 /**
  * Chat transcript and composer (rules spec §6 Chat; technical spec v7 §6.9, §7.5). One
  * component for the lobby (L76), the arena chat sheet (L74) and the read-only Game over chat
- * (L77); it replaces the V6 table `ChatLog` for them, which stays until L75-11.
+ * (L77); it replaced the V6 table `ChatLog`, deleted in L75-11.
  *
  * Each line is the round stamp, then the sender's nickname in its seat hue. A side-stream line
  * (eliminated or spectator, which living readers never receive) is italic `--text-2` with its

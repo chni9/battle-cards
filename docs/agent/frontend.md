@@ -26,8 +26,8 @@ action-log fog, Lot 64 Gambler start specials / weighted Draw / gambling death).
 **V7 (visual redesign "Arcade Holo") is in progress** (`docs/technical_spec_v7.md` +
 Appendix A `docs/technical_spec_v7_parity.md`, `docs/backlog_v7.md`, Lots 72–81). Since L75-09
 the table, the finished board and tutorial rooms are the V7 arena; `?ui=` is ignored. The old
-`screens/table.tsx` shell is deleted (L75-10); its dialogs go in L75-11. It is
-client-only and lands side by side: the V2 design system below still governs every screen
+`screens/table.tsx` shell is deleted (L75-10), and so are its dialogs (L75-11). `design/` holds only
+Game over's five V2 files. It is client-only and lands side by side: the V2 design system below still governs every screen
 until that screen's V7 lot lands (spec v7 §4.4). Product context: `/PRODUCT.md`. V7
 design-system record: `/DESIGN.md`. On conflict, **code > spec v7 §5
 (normative) > `DESIGN.md`** (derived from the code; spec v7 §5.8).
@@ -155,7 +155,7 @@ Technical spec v7 §4.1–4.3; the per-module dispositions are the §4.1 table i
   `hasInvisibility` (server `playerIsInvisible`; a seat or `view.self`) and
   `seatIsLivingInvisible` (server `isIllegalOpposingTarget`). New view-model code never
   re-writes either predicate; `self-strip.ts` and `seats.ts` read the Invisibility effect itself
-  for its turns. The V2 table keeps `screens/table/card-actions.tsx` until L75.
+  for its turns.
 - **In-play cards (L73-07).** `cardActions` also takes `active`, `shield` and `sentence` refs.
   Upgrade is offered only on the POV's own active persistent in `UPGRADEABLE_ACTIVE_CARD_IDS`, own
   Shield while `self.shield > 0` (`active-shield`) and own ticking Sentence (its id). It is disabled
@@ -165,8 +165,7 @@ Technical spec v7 §4.1–4.3; the per-module dispositions are the §4.1 table i
   Shield or Sentence, and is disabled off-turn and during a sub-choice (Q40); the Lot 69 confirm
   stays a UI step. `inPlayThumbs(view, ownerPlayerId)` lists a seat's Shield, persistents and
   ticking Sentences with their `ThumbBadge` and `activatedArt`, which is never true for Shield or
-  Sentence (Appendix A `global-activated-art-guard`). The V2 table keeps `activeUpgradeInstanceId`
-  until L75.
+  Sentence (Appendix A `global-activated-art-guard`).
 - **Drag and drop (L73-08).** `cardActions` adds `drop` (valid seats, what the plate does, Sell) and
   `canDrag`, which is false off-turn, while locked, for read-only and in-play cards, and when no zone
   takes the card; the arena adds the tutorial tour and Look gate (L75-04). A disabled Use opens no
@@ -192,7 +191,7 @@ Technical spec v7 §4.1–4.3; the per-module dispositions are the §4.1 table i
   Buy random uses the public `poolBuyCost`. Every buy carries the lock reason off-turn, in a
   sub-choice and on the finished board, so the Shop is browse-only there.
   `SPECIAL_CARD_PURCHASE_POINTS` is the **only** client copy of the special price (Q50):
-  `screens/table/shop-dialog.tsx` and `view-model/opponent-token-chips.ts` import it, and the
+  `screens/arena/shop-sheet-model.ts` and `view-model/opponent-token-chips.ts` import it, and the
   server's `SPECIAL_CARD_PURCHASE_COST` stays authoritative. In the tutorial,
   `shop-upgrade-point` opens Upgrade points and `shop-absorber` opens Cards with Absorber
   highlighted, not preselected.
@@ -442,9 +441,8 @@ and are mirrored in `ui/palette.ts` and `ui/motion/motion-tokens.ts`.
   (`<CostAmount amount signed? multiplier? title? size? />`), `ui/text/effect-text-with-icons.tsx`
   (`<EffectTextWithIcons text iconSize? />`), `ui/text/card-effect-copy.tsx`
   (`<CardEffectCopy card isUpgraded />`: Cost row, effect, Upgrade block). They carry spec v7
-  §6.6.1 and replace the V2 `design/components/{cost-display,effect-text-icons,card-effect-copy}.tsx`
-  on V7 screens; the V2 files and their source-text tests stay untouched until L75
-  retires their consumers. L72-12 (card chips), L72-15 (kit details), L72-17 (coach) and L74 and
+  §6.6.1 and replaced the V2 `design/components/{cost-display,effect-text-icons,card-effect-copy}.tsx`,
+  deleted in L75-11 with their source-text tests. L72-12 (card chips), L72-15 (kit details), L72-17 (coach) and L74 and
   L76 import these.
 - **Use:** one `CostAmount` for every number-plus-icon amount: a cost chip, a Draw or shop price,
   a reward, an amount inside prose. `signed="cost" | "gain"` prefixes `−` or `+` and speaks "minus"
@@ -473,8 +471,7 @@ and are mirrored in `ui/palette.ts` and `ui/motion/motion-tokens.ts`.
   `face="hidden" family`) with its pure helpers in `ui/card/card-face.ts` (`CARD_SIZES`,
   `cardFamilyOf`, `cardCostChip`, `cardDamageChip`, `cardCounterLabel`, `cardFaceLabel`,
   `cardNameWordEm`, `cardNameFontSize`, `CARD_NAME_FIT`, `HIDDEN_CARD_LABEL`).
-  `design/components/card.tsx` and its source-text tests stay for the
-  classic screens until L75 retires them.
+  The V2 `design/components/card.tsx` and its source-text tests were deleted in L75-11.
 - **Art only from `artFor`:** the base drawing, so the Sentence/Shield activated-art guard
   holds by construction and Roulette uses its base drawing. Never call `getCardArtUrl` from a
   V7 surface; upgraded and active looks are Card states.
@@ -522,9 +519,9 @@ and are mirrored in `ui/palette.ts` and `ui/motion/motion-tokens.ts`.
 
 - **Component:** `ui/chat/ChatLog` (L72-14): transcript plus composer; `onSend` receives the
   trimmed body (the V6 log sent it untrimmed); `inputLabel`/`placeholder` override for the
-  walk-in label (the lobby panel passes 'Spectators only see this', L76-13). It replaces
-  `screens/table/chat-log.tsx` for L74-16, the lobby (L76-02; its panel L76-13) and L77-05.
-  The old file stays until L75-11. Props: `messages`, `players`, `canWrite`, `onSend`, `inputLabel?`, `placeholder?`, `sendLocked?` (L76-14).
+  walk-in label (the lobby panel passes 'Spectators only see this', L76-13). It replaced
+  `screens/table/chat-log.tsx` (deleted in L75-11) for L74-16, the lobby (L76-02; its panel L76-13)
+  and L77-05. Props: `messages`, `players`, `canWrite`, `onSend`, `inputLabel?`, `placeholder?`, `sendLocked?` (L76-14).
   `ui/chat/chat-line.ts` holds `chatLineView` (round label, seat, side stream, role label) and the
   three V6 copy constants; spec v7 §10.6 adds no chat string. No unread logic (`chat-unread.ts`
   is L73/L74).
@@ -574,8 +571,8 @@ and are mirrored in `ui/palette.ts` and `ui/motion/motion-tokens.ts`.
 
 - **What replaces what:** `KitPortrait` and `KitDetails` replace `design/components/kit-portrait.tsx`
   and `screens/table/kit-inspect-details.tsx` on V7 surfaces: the L74 kit sheet and self strip,
-  the L76 kit picker and the L72-16 rules strip. The classic files and their duplicated copy
-  stay until L75 / L76, which delete them with their source-text tests.
+  the L76 kit picker and the L72-16 rules strip. `kit-inspect-details.tsx` was deleted in L75-11; the V2
+  `design/components/kit-portrait.tsx` stays only for Game over (L77).
 - **Values:** every number comes from `KIT_CATALOG` (`getKit`, `upgradePointBuyCost`,
   `upgradePointSellYield`), never from the PNG: the printed stats are cropped out of the art
   (`artFor`), and the old Gambler PNG prints "?" where the catalog has Draw 10. The ability
@@ -612,8 +609,8 @@ and are mirrored in `ui/palette.ts` and `ui/motion/motion-tokens.ts`.
   hand is two hidden thumbs. Random starting specials are hidden special thumbs captioned "Random special" (L76-03). A thumb prints no name and no cost chip, so the details add a
   visible caption and a signed `CostAmount`. Never resize them with `w-*` classes (Card contract).
 - **Tests:** `kit-details.test.tsx` is the component test that the L30-05 and L51-04 rows of
-  `kit-inspect-dialog.test.ts` expected (`docs/backlog_v7_test_classification.md`); the classic
-  test stays as it is until L75 / L76. A test that mocks `console.error` also asserts nothing
+  `kit-inspect-dialog.test.ts` expected (`docs/backlog_v7_test_classification.md`); that file was
+  deleted in L75-11, and its logic tests moved to `view-model/`. A test that mocks `console.error` also asserts nothing
   else was logged, so a React key or nesting warning fails it.
 - **Gallery:** section `kit` (`ui/kit/kit.gallery.tsx`, DEV only). The size by kit matrix is
   not in the gallery: check it in the browser by mounting `/src/ui/kit/kit-portrait.tsx` from
@@ -671,9 +668,9 @@ and are mirrored in `ui/palette.ts` and `ui/motion/motion-tokens.ts`.
 
 - **`ui/coach/coach-panel.tsx`** provides `CoachPanel` and `CoachBody` (L72-17), with the props of
   `design/components/coach-panel.tsx` (`title`, `body`, `zone`, `onHide`, `hideAriaLabel`,
-  `footer?`, `extraAttrs?`, `compact?`). It is the L75 drop-in for `screens/table/tutorial-coach.tsx`,
-  which keeps the V6 panel, its `.tutorial-coach-panel` CSS and
-  its source-text tests (`tutorial-callout.test.ts`) until then (`help/hint-overlay.tsx` renders it since L75-06). It is
+  `footer?`, `extraAttrs?`, `compact?`). It replaced `screens/table/tutorial-coach.tsx`, the V6 panel, its
+  `.tutorial-coach-panel` CSS and its source-text tests, all deleted in L75-11
+  (`help/hint-overlay.tsx` renders it since L75-06). It is
   not a dialog (no `role`, no `aria-modal`, no focus move, no key handling, so Esc stays with the
   sheet stack) and has no Skip: Skip stays on the table flag (Lot 45), and the hint host passes
   "Got it" and "Skip all" as `footer`. The caller passes the hide label (`HIDE_COACH_ARIA_LABEL`).
@@ -1737,6 +1734,7 @@ Appendix A). Each Lot 74 task appends its bullet here, in task order.
   tests; each assertion is classified in `docs/backlog_v7_test_classification.md`. `ArenaScreenProps` owns the
   board fields (no `TableScreenProps`). The hand region clips its overflow outside portrait (the retired
   `index.css` card-band rule).
+- `screens/table/`, `screens/illegal-action-dialog.tsx`, `action-log/action-log-panel.tsx` and the orphaned `design/components/` files (L75-11, spec v7 §12.1, §4.2): deleted with their tests. `design/` keeps only Game over's five files until L77 or L81.
 
 ## Home and lobby (V7 · Lot 76)
 
@@ -1749,7 +1747,7 @@ Spec v7 §7.1–§7.5 and §7.7; plan `docs/superpowers/plans/2026-10-21-v7-lot-
   App imports `./screens/lobby/lobby-screen` (no `index.ts`). `lobby-ready.ts`,
   `lobby-ready-mark.tsx` and `lobby-kit-picker.ts` moved beside it with their tests; the pure
   `lobby-ready` and `lobby-kit-picker` suites are unchanged. Two imports switched to their L72
-  rebuilds, so nothing in the lobby imports `screens/table/` (L75-11 may delete the old copies):
+  rebuilds, so nothing in the lobby imports `screens/table/` (L75-11 deleted the old copies):
   `ChatLog` from `ui/chat/chat-log`, and in `screens/lobby-kit-picker-dialog.tsx` (deleted by
   L76-10), `KitDetails` from `ui/kit/kit-details`. The V7 `ChatLog` trims the body before `onSend`, which the V6 log
   did not, so a lobby `SEND_CHAT` now carries the trimmed text (decisions.md 2026-11-03). Two
@@ -2004,7 +2002,7 @@ Spec v7 §7.1–§7.5 and §7.7; plan `docs/superpowers/plans/2026-10-21-v7-lot-
   it. Reduced motion pages instantly and the sheet fades only. Skip → 'skip', Got it → 'got-it', Esc,
   backdrop and swipe-down → 'dismiss', each once per open (`useOncePerOpen`), so a gated close enters
   its path once and never reads as a manual close. Props and `HowToPlayCloseReason` are unchanged, so
-  Home, the arena menu and the classic table '?' need no edit; on the table it is now a V7 sheet, so
+  Home, the arena menu and the table '?' need no edit; on the table it is a V7 sheet, so
   Esc closes only it (Q49). It never sends an intent and imports nothing from `design/`.
 - `feedback/feedback-dialog.tsx`, `feedback-timing.ts`, `ui/primitives/text-area.tsx` (L76-07, spec v7 §7.7, the Lot 76 backlog review for the 1.5 s Sent close, §5.2, §11 Q71; decisions.md 2026-11-04): Feedback is a V7 `Dialog` (a bottom sheet on phones, centered on desktop, in the sheet stack) with unchanged props, so Home, the lobby, the arena, the classic table and End mount it as before. Kind is a `Segmented` radio group "Kind" (Bug first); the About chips keep `aria-pressed` and catalog order; Message is the new `TextArea` and Contact (optional) a `TextField`, both 16 px. There is still no `<form>`, so Enter never sends. Send keeps the synchronous in-flight gate and the request id. While sending, `dismissLocked` ignores Esc, backdrop and swipe and Skip / Cancel are disabled; with no answer after `FEEDBACK_SEND_TIMEOUT_MS` (15 s) the sheet unlocks with 'Could not save — try again' and the late answer is ignored. A success retitles the sheet "Sent" ("Thanks for your feedback.", OK focused); it closes after `FEEDBACK_SENT_CLOSE_MS` (1.5 s) or on OK, Esc, backdrop or swipe and reports `onDismiss('sent')` once, latched per open by `screens/use-once-per-open.ts` (A.9 ruling 5), so OK pressed as the timer fires still reports once. The payload is unchanged and never carries the seed. Tests: `feedback/feedback-dialog.test.tsx` (it replaces the source-text `feedback-dialog.test.ts`), `ui/primitives/text-area.test.tsx`.
 - `screens/home/online-path.tsx`, `tutorial-path.tsx`, `nickname-field.tsx` (L76-08, spec v7 §7.1, §5.2, §7.7): the V7 Online and Tutorial paths. Online: Nickname (`TextField`, 16 px) outside both forms, so Enter in it does nothing; then the Create card (`ONLINE_CREATE_HELPER`, primary Create) and the Join card with the large code field (`TextField size="lg"`: uppercased as typed, maxLength 6, autocomplete and spellcheck off, placeholder ABCDEF) and primary Join. Enter in the code submits Join only while Join is enabled. Tutorial: Nickname, then Start tutorial, in one form (Enter starts it). Busy disables the fields and the submits. A connection error stays in the path header's inline status block and the fields keep their values, so the player retries in place. `home-classes.ts` is deleted. Tests: `online-path.test.tsx`, `tutorial-path.test.tsx`.
@@ -2026,10 +2024,10 @@ rules above are unchanged — this section only covers how the client looks.
 - **Tokens:** palette and type scale derived from the V1 asset subset (card faces, kit pastels,
   verso/opponent slate, resource icons, button PNG *hues*). Colored `*_button.png` files are
   **not** used as UI skins — CTAs are CSS components inspired by those hues (Lot 10 ruling).
-- **Components:** `apps/client/src/design/components/` — `Button`, `Card`, `ResourceIcon`,
-  `ConnectionBadge`, `KitPortrait`, `Dialog` (L11-03), `Tooltip` (L12-08), `PlayerName` /
-  `CostDisplay` (Lot 39), `IconButton` (L43-05, 44px, no `min-w-[7rem]`), `SeatTile` /
-  `CardChoiceTile` / `choiceTileClassName` (L44-01; shop buy cells use the helper). Art resolution:
+- **Components:** `apps/client/src/design/components/` — only Game over's five V2 files remain
+  (L75-11): `Button`, `Dialog` (L11-03), `KitPortrait`, `PlayerName` and `ResourceIcon`. The rest
+  (`Card`, `ConnectionBadge`, `Tooltip`, `CostDisplay`, `IconButton`, `SeatTile`, `CardChoiceTile`,
+  `choiceTileClassName`, …) were deleted; V7 rebuilds live in `ui/`. Art resolution:
   `apps/client/src/ui/asset-lookup.ts`, with the filename maps in
   `apps/client/src/ui/asset-files.ts` (never invent a mapping; never invent filenames —
   `wizard` → `Magician.png` is declared). Copy kit PNGs from repo `images/` into
@@ -2207,7 +2205,7 @@ rules above are unchanged — this section only covers how the client looks.
   no “Unspy” letters; `aria-label` / `title` keep the name; nested `CostDisplay`
   `title={null}` so hover is not only “minus 10 pts”).   Unspy is grey when it is not
   your turn, actions are locked, you cannot afford 10, or no living `spyingOnYou` seat
-  exists. Click opens a `SeatTile` picker of living opponents who are **spying you**
+  exists. Click opens a seat picker of living opponents who are **spying you**
   (hint: “Choose who is spying you.”; a single living spy is preselected so Confirm
   stays readable). The public log is `{actor} got unspied from {spy}` — Unspy drops
   **their** Spy on you, not yours on them. Shop Dialog (always openable — pool is
@@ -2311,22 +2309,19 @@ rules above are unchanged — this section only covers how the client looks.
   shows `CostDisplay { kind: 'upgradePoint', amount: 1 }` with `signed="cost"`; **Sell** is
   green with catalog `sellYield` and `signed="gain"` (life icon on orange failed contrast).
   Interactive costs prefix **−** (pay: Use / Upgrade / Buy) or **+** (receive: Draw / Sell).
-- **Visual pickers (L44-01):** `choiceTileClassName` is the shop selected/idle ring.
-  `SeatTile` (seat wash + `PlayerName` + `KitPortrait`; hidden kit = opponent “?”;
-  selected uses a 6px orange *layout* frame (`choiceTileSelectedFrameStyle`)
-  plus inner glow — Dialog overflow cannot crop a box-model ring) and
-  `CardChoiceTile` (card thumb, or attack verso when identity is hidden) live under
-  `design/components/`. Shop buy cells use the helper only. Later L44 prompts consume
-  the tiles; intents stay unchanged.
-- **Mirror sub-choice (L44-03):** pending attacks are `CardChoiceTile` (art + name +
-  source `PlayerName` + “→ you”); new target is `SeatTile`. Payload still
+- **Visual pickers (L44-01):** the V2 `SeatTile`, `CardChoiceTile` and `choiceTileClassName`
+  were deleted in L75-11. The arena replaces them: targeting is a seat tap, and the Shop and the
+  sub-choice sheets use large `ui/card` tiles (`screens/arena/shop-sheet.tsx`,
+  `screens/arena/sub-choice/`). Intents are unchanged.
+- **Mirror sub-choice (L44-03):** pending attacks are card tiles (art + name +
+  source `PlayerName` + “→ you”); new target is a seat tile. Payload still
   `{ kind: 'mirror', pendingEffectId, newTargetPlayerId }`. Eligible ids only.
   L56-04: tiles pass `damageMultiplier` so doubled listed damage shows immediately.
 - **Listed attack damage (L56-04):** compact `LifeCountBadge` (life glyph + tabular
   number, no `ResourceIcon` flyout). Catalog × `damageMultiplier` via shared
   `listedAttackDamage` — `null` for Tax / Absorber / Super Mirror the card. Surfaces:
   Incoming/Waiting chips, attack **play** log + Mirror history (v31 fields), Mirror
-  picker, attack faces (hand / specials / shop / `CardChoiceTile`). Resolved lines
+  picker, attack faces (hand / specials / shop / pickers). Resolved lines
   keep actual `−N life` / shield absorbed.
 - **Inspect from log / queue (L56-05):** card-name segments in the action log
   (`actionPlayed`, `actionResolved`, `mirrorRedirected`, `curseTransferred`,
@@ -2348,14 +2343,14 @@ rules above are unchanged — this section only covers how the client looks.
   (counter 0, Curse floor, death dump, leave / forfeit / inactivity).
   Manual Invisibility deactivate copy is “deactivated {card}; it is lost”
   (`actionPlayed` only).
-- **Steal / pool / consume / special (L44-05):** all grids are `CardChoiceTile`.
+- **Steal / pool / consume / special (L44-05):** all grids are card tiles.
   Unknown steal identities use the attack verso and the fixed “Hidden card”
   caption — no instance id on the tile. Pool extras stay `disabled` at `maxCount`.
   Payloads unchanged (`steal-pick` instanceId, `pool-pick` instanceIds,
   consume `playCard` + `consumeInstanceId`, `special-pick` cardId).
 - **Rewards / reanimation / Regeneration (L44-06):** reward resource kinds use
-  `choiceTileClassName` + existing `REWARD_KIND_COSTS` `CostDisplay` (4/8/1);
-  card kind is a `CardChoiceTile` grid (Confirm still two choices; log stays
+  tile chrome + existing `REWARD_KIND_COSTS` cost amounts (4/8/1);
+  card kind is a card-tile grid (Confirm still two choices; log stays
   opaque). Reanimation wraps `KitPortrait` with the same chrome (not a third
   primitive). Regeneration is four click-to-commit buttons (`1 life` … `4 lives`);
   click sends `playCard` `{ quantity: n }` and closes; footer is Cancel only;
@@ -2376,14 +2371,15 @@ rules above are unchanged — this section only covers how the client looks.
   `ui/fx-anchors.ts`; `fx/play-flyout.ts` keeps the DOM measuring (L72-03).
 - **Table UX polish (Lot 39 · `docs/backlog_ux.md`):** client readability only — no rule
   change. Task IDs are **L39-** so they never collide with V5 Lot 32 search work.
-  - **IllegalActionDialog (L39-02):** `error` is `{ code, message }` (PROTOCOL 27). Table
-    parses into `actionReject` and opens `IllegalActionDialog` (title/body from
-    `illegal-action-copy.ts`, Esc / overlay / OK dismiss via `clearActionReject`). Timers
+  - **Illegal action reject (L39-02):** `error` is `{ code, message }` (PROTOCOL 27). The room
+    parses it into `actionReject`; the V2 `IllegalActionDialog` was deleted in L75-11, and the arena
+    shows its reject toast (`screens/arena/reject-toast.tsx`; title/body from
+    `illegal-action-copy.ts`, dismissed via `clearActionReject`). Timers
     strip no longer shows a red reject line. Lobby/home keep the inline alert string.
     `stateUpdate` must **not** clear `actionReject` (bot sync would dismiss mid-read); a view
     **phase** change does, from L76-14 (App, `screens/reject-phase.ts`; decisions.md).
-    When cleared, unmount the dialog (do not leave `Dialog` at `open={false}`) so
-    AnimatePresence cannot leave a stuck blocking overlay.
+    The V2 dialog had to unmount when cleared (not sit at `open={false}`) so
+    AnimatePresence could not leave a stuck blocking overlay; the arena toast has no overlay.
   - **Seat colors (L39-03 / L55-01):** client-only palette `--color-seat-0…7` (blue / red /
     green / yellow / violet / orange / teal / pink) indexed by `view.players` array position (`ui/seat-colors.ts`).
     POV **dock** uses a strong seat wash (`seatZoneStyle({ intensity: 'fill' })`)

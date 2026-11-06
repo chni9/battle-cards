@@ -101,7 +101,7 @@ export function isTutorialCoachOpen(
   return coachKey !== null && dismissedKey !== coachKey;
 }
 
-export type CoachResourceKind = 'point' | 'life' | 'upgradePoint' | 'shield';
+type CoachResourceKind = 'point' | 'life' | 'upgradePoint' | 'shield';
 
 export type CoachBodyPart =
   | { readonly kind: 'text'; readonly text: string; readonly bold: boolean }
