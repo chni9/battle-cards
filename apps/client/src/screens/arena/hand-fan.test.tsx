@@ -207,6 +207,14 @@ describe('HandFan (L74-07)', () => {
     const plain = renderUi(fan(view));
     expect(plain.container.querySelector<HTMLElement>('[data-hand-fan]')?.style.getPropertyValue('--hand-card-w')).toBe('');
   });
+
+  it('marks the tour group and each spotlit card with its card id, and nothing else (L75-04, A.8.6)', () => {
+    renderUi(fan(viewWith({ hand: [makeCard('tax'), makeCard('spy')], specialCards: [makeCard('super-regeneration')] }),
+      { tutorial: { group: 'specials', instanceIds: ['tax-1'] } }));
+    expect(Array.from(document.querySelectorAll('[data-tutorial-highlight]')).map((element) =>
+      [element.getAttribute('data-tutorial-highlight'), element.getAttribute('data-instance-id') ?? element.getAttribute('data-zone')]))
+      .toEqual([['tax', 'tax-1'], ['specials', 'specials']]);
+  });
 });
 
 describe('hand fan in the arena (L74-07)', () => {

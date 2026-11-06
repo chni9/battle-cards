@@ -62,10 +62,9 @@ describe('table ui switch (technical spec v7 §4.4 / L72-20)', () => {
     }
   });
 
-  it('tutorial rooms always get the classic table', () => {
+  it('tutorial rooms follow the preference, as Classic rooms do (R9, L75-04)', () => {
     for (const preference of ['next', 'classic'] as const) {
-      expect(resolveTableUi({ preference, playKind: 'tutorial' })).toBe('classic');
-      expect(resolveTableUi({ preference, playKind: 'classic' })).toBe(preference);
+      expect([resolveTableUi({ preference, playKind: 'tutorial' }), resolveTableUi({ preference, playKind: 'classic' })]).toEqual([preference, preference]);
     }
   });
 

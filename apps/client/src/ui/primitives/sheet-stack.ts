@@ -138,8 +138,9 @@ export function escTargetId(state: SheetStackState): string | null {
 
 /**
  * Within its layer, an entry of the `sheet` layer gets `sheet + its index there` and a
- * Minimize bar `sheetBar + its index among those bars`, clamped below the next layer. Unknown
- * or unpainted ids get the base `sheet` layer.
+ * Minimize bar `sheetBar + its index among those bars`, clamped below the next layer: bars stop
+ * at `hint - 1`, so no bar ever paints over a hint or the tutorial coach (L75-04). Unknown or
+ * unpainted ids get the base `sheet` layer.
  */
 export function sheetZIndex(state: SheetStackState, id: string): number {
   const layerIndex = sheetLayer(state).findIndex((entry) => entry.id === id);
@@ -147,7 +148,7 @@ export function sheetZIndex(state: SheetStackState, id: string): number {
   const barIndex = byOpenOrder(state)
     .filter(isMinimizeBar)
     .findIndex((entry) => entry.id === id);
-  if (barIndex !== -1) return Math.min(Z_INDEX.sheetBar + barIndex, Z_INDEX.banner - 1);
+  if (barIndex !== -1) return Math.min(Z_INDEX.sheetBar + barIndex, Z_INDEX.hint - 1);
   return Z_INDEX.sheet;
 }
 

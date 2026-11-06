@@ -35,6 +35,8 @@
  * - **Drop highlight (L74-12, §6.6.3).** During a hand drag, a seat that takes the card carries
  *   `data-drop="valid"` and a `--mine` ring, thicker and `data-drop="over"` under the pointer.
  *   `measureDropZones` reads this root's rect by `data-zone` and `data-player-id`.
+ * - **Tutorial (L75-04, plan A.8.6, K7).** `tutorialHighlight` puts `data-tutorial-highlight` on the
+ *   root (`opponent`, the board tour) or on the `opponent-portrait` div (`opponent-portrait`, Look).
  */
 
 import { useId, type CSSProperties, type ReactElement } from 'react';
@@ -71,6 +73,8 @@ export interface OpponentSeatProps {
   drop?: 'valid' | 'over';
   /** L75-02: the layout mode, which sizes the box and the anatomy. Default 'portrait'. */
   mode?: LayoutMode;
+  /** L75-04: the tutorial mark, fed by `ArenaSeatsProps.tutorial` (private to the arena, K7). */
+  tutorialHighlight?: 'opponent' | 'opponent-portrait';
 }
 
 const ROOT_CLASS = `pointer-events-auto absolute flex flex-col bg-v7-panel text-v7-text select-none [-webkit-touch-callout:none] ${CHROME_SHAPE_SM_CLASS}`;
@@ -188,6 +192,7 @@ export function OpponentSeat({
   target,
   drop,
   mode = 'portrait',
+  tutorialHighlight,
 }: OpponentSeatProps): ReactElement {
   const detailsId = useId();
   const reduced = usePrefersReducedMotion();
@@ -235,6 +240,7 @@ export function OpponentSeat({
       {...(tapped ? { 'data-tapped-seat': 'true' } : {})}
       {...(model.kitHidden ? { 'data-hint-anchor': 'hidden-kit' } : {})}
       {...(drop !== undefined ? { 'data-drop': drop } : {})}
+      {...(tutorialHighlight === 'opponent' ? { 'data-tutorial-highlight': 'opponent' } : {})}
       style={style}
       className={className}
     >
@@ -277,7 +283,10 @@ export function OpponentSeat({
           ) : null}
         </div>
         <div className="flex min-w-0 items-center gap-0.5">
-          <div data-zone="opponent-portrait" className={`flex shrink-0 items-center justify-center ${anatomy.portraitClass}`}>
+          <div
+            data-zone="opponent-portrait"
+            {...(tutorialHighlight === 'opponent-portrait' ? { 'data-tutorial-highlight': 'opponent-portrait' } : {})}
+            className={`flex shrink-0 items-center justify-center ${anatomy.portraitClass}`}>
             {model.avatar.kind === 'kit' ? (
               <KitPortrait kitId={model.avatar.kitId} size={anatomy.kitSize} isEliminated={model.isEliminated} />
             ) : (

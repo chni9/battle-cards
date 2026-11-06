@@ -1028,7 +1028,7 @@ Appendix A). Each Lot 74 task appends its bullet here, in task order.
 
 - `screens/arena/arena-screen.tsx` (L74-01, spec v7 §4.4): the switch. `App.tsx` (playing) and
   `EndScreen` (finished board, `tableUi`) mount `ArenaScreen` when `resolveTableUi(...)` is
-  `'next'`: `?ui=next` was set and the room is Classic. The default and tutorial rooms keep
+  `'next'`: `?ui=next` was set, in a Classic or (since L75-04) a tutorial room. The default keeps
   `TableScreen`. `ArenaScreenProps` extends `TableScreenProps` (L74-21), so App and EndScreen
   mount each board in its own branch and `TableScreen` keeps its props.
 - Regions (L74-01, §6.1, Q60): `ARENA_REGIONS` (`arena-regions.ts`) in DOM order: `top-bar`,
@@ -1554,7 +1554,7 @@ Appendix A). Each Lot 74 task appends its bullet here, in task order.
     unsent chat draft survives a claim (Part 2 final review).
 - `screens/arena/dock.tsx`, `dock-model.ts`; `screens/end.finished-board.test.tsx` (L74-24, spec v7
   §4.4, §6.12): the finished board. `EndScreen` mounts the arena on `finalTable` behind `?ui=next`
-  (never in tutorial) with `readOnly`: every intent locked, the clock '—', Shop browse-only, and
+  (tutorial finishes too since L75-04) with `readOnly`: every intent locked, the clock '—', Shop browse-only, and
   inspect, log and read-only chat (no composer). The dock adds **Stats** (`primary`, V2's word)
   from `dock.stats`; it calls `onShowStats`, which reopens Game over and does nothing while
   Feedback is open (`canReopenEndStats`). `dockHasControls` counts Stats, so a walk-in's finished
@@ -1667,6 +1667,20 @@ Appendix A). Each Lot 74 task appends its bullet here, in task order.
   `incoming-collapsed`, `measureIncomingCollapsedCue`) are retired. `TableBannerHost` reads no
   anchor and sits on the visual viewport in every mode; the overlay stays `z-[110]`, above every
   `Z_INDEX` layer.
+- `screens/arena/use-arena-tutorial.ts`, `tutorial-coach-host.tsx`, `ui/coach/tutorial-callout.tsx` (L75-04,
+  spec v7 §6.12, §6.6.3, §14.3): the tutorial on the arena. `?ui=next` opens tutorial rooms and their
+  finished board here (`resolveTableUi`, R9). `useArenaTutorial` keeps V2's state in the arena (`tourStep`,
+  `portraitInspected`, the idle index, the dismissed coach key) and derives the coach (tour, then Look,
+  then script copy; 'Play' after `TUTORIAL_IDLE_MS` on the POV's turn), the tour highlight and the locks.
+  `TutorialCoachHost` portals the `CoachPanel` on `Z_INDEX.coach` at the arena region's top-left; × hides
+  it, Menu → Show coach (`icon="coach"`, between How to play and Action log) reopens it, and new copy
+  reopens it. A press on it never moves focus, so it hides or advances over an open sheet. While the tour
+  or the Look gate is up, the commit's `allow` vetoes every send silently, no drag starts, Shop and Unspy
+  do not open and hand and special taps open nothing; seat taps stay live, and opening a revealed seat's
+  sheet clears Look once per mount. Each highlight is one `data-tutorial-highlight` attribute on the
+  element `docs/backlog_v7.md` › §6.12 tutorial highlight map names. `TutorialCalloutLayer` rings the live
+  ones (the live sheet's own, else the table's) on `Z_INDEX.hint` with an orange arrow outside them. The
+  finished board (`readOnly`) has no coach, mark or lock.
 
 ## Design system (V2 · Lots 10+)
 
@@ -2191,7 +2205,7 @@ rules above are unchanged — this section only covers how the client looks.
 - **Table UI switch (technical spec v7 §4.4 · L72-20, removed in L75):** `?ui=next` writes
   `localStorage['card-battle.v7.ui'] = 'next'`, `?ui=classic` removes it, else the stored
   value applies; applied once per page load (`useState` initializer in `GameApp`); tutorial
-  rooms always get classic. Read only by `App.tsx` (playing) and `EndScreen` (`tableUi`),
+  rooms follow it since L75-04. Read only by `App.tsx` (playing) and `EndScreen` (`tableUi`),
   each via `const Board = … ? ArenaScreen : TableScreen` so source-text literals stay single.
   `ArenaScreen` is the V7 arena since L74-01 (`## Arena (V7, ?ui=next)`). Storage access is `try/catch` and a
   blocked store degrades to classic (or to the param for that load); the param is never

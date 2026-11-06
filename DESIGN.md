@@ -707,11 +707,13 @@ shipped string.
 (`sheet-stack.ts`, pure; `sheet-stack-context.ts`, the store) that implements spec v7 §6.7.
 The V2 rule "one Esc closes every open Dialog" does not apply to V7 surfaces.
 
-- **Layers** (`ui/layers.ts`, `Z_INDEX`): `dragGhost` 40, `sheet` 50, `sheetBar` 80, `banner` 90, `toast` 95.
+- **Layers** (`ui/layers.ts`, `Z_INDEX`): `dragGhost` 40, `sheet` 50, `sheetBar` 80, `hint` 84, `coach` 86,
+  `banner` 90, `toast` 95 (L75-04: hints and the tutorial coach paint above every sheet and Minimize bar
+  and under banners and toasts; the `fx/` overlay stays on top at 110).
   Sheets and Toast portal to `document.body`, so the layers are global, and a caller's
   `<form>` or transformed ancestor never captures them. Inside a layer the stack assigns
   `sheet + n` to everything on the sheet layer and `sheetBar + n` to Minimize bars, clamped
-  below the next layer.
+  below the next layer: bars clamp below `hint` (`hint - 1`), so no bar paints over a hint or the coach.
 - **Drag ghost** (`Z_INDEX.dragGhost`, L74-12, spec v7 §6.6.5): the arena's hand-drag ghost and
   Sell zone are the one overlay outside Sheet / Dialog / Toast: a `pointer-events: none` portal
   to `document.body`, mounted only during a drag, below every sheet.
@@ -1058,7 +1060,7 @@ over chat (L77). The V6 `screens/table/chat-log.tsx` stays until those lots migr
 `design/components/kit-portrait.tsx` and `screens/table/kit-inspect-details.tsx` on V7 surfaces;
 the classic files and their duplicated copy stay until L75 and L76.
 
-- **KitPortrait:** `<KitPortrait kitId size? isEliminated? className? onClick? ariaLabel? />`,
+- **KitPortrait:** `<KitPortrait kitId size? isEliminated? className? onClick? ariaLabel? dataAttributes? />`,
   `kitId` a `KitId`, `'random'` or `null` (not revealed). Widths are `thumb` 40, `tile` 72,
   `sheet` 96 and `hero` 160 px at 3:4 (default `tile`), radius `--card-radius`, shadow
   `--card-shadow`. The face is the base drawing from `artFor` on the `--card-face-0` to
@@ -1073,7 +1075,8 @@ the classic files and their duplicated copy stay until L75 and L76.
   and `aria-label` for a code face). Anchors: `data-zone="kit-portrait"` and
   `data-eliminated` (kept from V2 for `fx/play-flyout.ts` and the L74 self strip), plus
   `data-kit-face="art" | "hidden" | "random"`, `data-kit-size` and, inside, `data-kit-layer`
-  (`face`, `badge`). The root sets `select-none` and `-webkit-touch-callout: none`; long-press
+  (`face`, `badge`). `dataAttributes` (L75-04) adds `data-*` anchors to the root; its own
+  `data-zone="kit-portrait"` and `data-kit-*` win. The root sets `select-none` and `-webkit-touch-callout: none`; long-press
   belongs to the caller (§6.6.5).
 - **Eliminated:** the face is greyscale and dimmed to 70 % brightness (a grey kit such as Ghost
   or Warrior would otherwise read as alive), and the `eliminated` icon (a `--danger` cross in a
@@ -1262,6 +1265,23 @@ stay until L75, which hosts the new panel.
 - **Gallery:** the `/dev/ui` section `coach` (`ui/coach/coach.gallery.tsx`): the Tax tutorial
   coach with Got it, the Thief follow-up coach with a `+4 points` glyph and no footer, and the
   compact Draw hint with Got it and Skip all, all from the real shared copy.
+- **Tutorial host (L75-04):** `screens/arena/tutorial-coach-host.tsx` portals the default panel to
+  `document.body` in a `pointer-events: none` box on the visible viewport, on `Z_INDEX.coach`, outside
+  every sheet. The slot is the arena region's top-left, 8px in, `min(22rem, 100% - 1rem)` wide, in every
+  mode. Its mousedown is prevented, so a press never moves focus out of an open sheet; from the keyboard,
+  × moves focus to the top bar's Menu (Show coach) and Got it to the next step's Got it. Got it is a
+  full-width primary Button (`data-tutorial-ack="got-it"`). The panel reopens from Menu → Show coach
+  (`icon="coach"`, distinct from How to play's `help`, Q45); there is no floating reopen control.
+- **Tutorial callouts (L75-04):** `ui/coach/tutorial-callout.tsx` `<TutorialCalloutLayer active />` rings
+  every live `[data-tutorial-highlight]` element. `tutorial-callout-geometry.ts` places a 3px
+  `--threat-other` ring 4px outside the element and a 20×12 arrow outside the ring: above it when the
+  element's centre is in the lower half of the visible box, else below, clamped into the box. The layer
+  portals on `Z_INDEX.hint` (a tutorial room never shows a first-game hint), `pointer-events: none` and
+  `aria-hidden`, and re-measures every animation frame while active. It draws the live sheet's own
+  targets while a sheet is live, else the table's, and skips a zero-size or `inert` target, so no
+  scroller, `overflow-hidden` region or sheet body clips it. Full motion pulses the ring's opacity;
+  reduced motion keeps it static (`data-motion`). Real incoming threats keep the plate badges' `data-tone`
+  rings and get no callout.
 
 ## Table banners (ui/banner/, L72-18)
 

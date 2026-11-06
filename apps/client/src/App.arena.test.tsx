@@ -11,10 +11,10 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { App } from './App';
 import type { UseRoomConnectionResult } from './net/use-room-connection';
 import { chatSeenCount, markChatSeen } from './screens/arena/chat-unread-store';
-import { makeArenaView } from './screens/arena/test-view';
+import { makeArenaView, makeTutorialArenaView } from './screens/arena/test-view';
 import { renderUi } from './test/render';
 import { UI_SWITCH_STORAGE_KEY } from './ui-switch';
-import { makeLobbyView } from './view-model/test-fixtures';
+import { makeFinishedView, makeLobbyView } from './view-model/test-fixtures';
 
 const fake = vi.hoisted(() => {
   const state: { connection: UseRoomConnectionResult | null } = { connection: null };
@@ -116,5 +116,18 @@ describe('App and the arena', () => {
     renderUi(<App />, { advanceTimers: vi.advanceTimersByTime, reducedMotion: true });
     expect(document.querySelector('[data-zone="reconnect-banner"]')?.textContent).toBe('Reconnecting…');
     expect(document.querySelector('[data-arena="next"]')?.getAttribute('data-action-lock')).toBe('actions-locked');
+  });
+
+  it('opens a tutorial room on the arena under ?ui=next, with its coach (R9, L75-04)', () => {
+    fake.connection = connectionFor(makeTutorialArenaView(1));
+    renderUi(<App />, { advanceTimers: vi.advanceTimersByTime, reducedMotion: true });
+    expect(document.querySelector('[data-arena="next"]')).not.toBeNull();
+    expect(document.querySelector('[data-zone="tutorial-coach"]')?.getAttribute('data-tutorial-index')).toBe('1');
+  });
+
+  it('opens the finished tutorial board on the arena, with no coach (R9, L75-04)', () => {
+    fake.connection = connectionFor(makeFinishedView({ finalTable: makeTutorialArenaView(30), lobbyRules: null }));
+    renderUi(<App />, { advanceTimers: vi.advanceTimersByTime, reducedMotion: true });
+    expect([document.querySelector('[data-arena="next"]') !== null, document.querySelector('[data-zone="tutorial-coach"]')]).toEqual([true, null]);
   });
 });

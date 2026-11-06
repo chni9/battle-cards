@@ -7,12 +7,36 @@
  * death freeze.
  */
 
-import type { KitId, PlayingStateView, PublicPlayerView } from '@card-battle/shared';
+import {
+  TUTORIAL_BOT_HAND_CARD_IDS,
+  TUTORIAL_BOT_KIT_ID,
+  TUTORIAL_BOT_LIVES,
+  TUTORIAL_HUMAN_KIT_ID,
+  TUTORIAL_HUMAN_LIVES,
+  TUTORIAL_HUMAN_POINTS,
+  TUTORIAL_HUMAN_UPGRADE_POINTS,
+  TUTORIAL_LOOK_INDEX,
+  TUTORIAL_STEPS,
+  tutorialStepAt,
+  type CardId,
+  type CardInstance,
+  type KitId,
+  type PendingEffectView,
+  type PlayingStateView,
+  type PublicPlayerView,
+} from '@card-battle/shared';
 import { act } from 'react';
 import { expect, vi, type MockInstance } from 'vitest';
 
 import type { LayoutBox, Size } from '../../view-model/seat-layout';
-import { makeCard, makeEliminationReveal, makePlayer, makeTableView } from '../../view-model/test-fixtures';
+import {
+  makeCard,
+  makeEliminationReveal,
+  makePending,
+  makePlayer,
+  makeSelf,
+  makeTableView,
+} from '../../view-model/test-fixtures';
 import { STATUS_LABELS } from '../status-labels';
 import type { ArenaScreenProps } from './arena-screen';
 
@@ -290,3 +314,93 @@ export const ARENA_TEST_BOXES: {
   /** Check 1 (2026-11-06), measured at 1440×900: the 336 px log column leaves a 1104 px arena. */
   desktop: { viewport: { width: 1440, height: 900 }, arena: { width: 1104, height: 489 } },
 };
+
+/** The 16 human tutorial indices: 0, then odd 1–29 (`TUTORIAL_STEPS` actor 'human'; plan A.10, L75-04). */
+export const TUTORIAL_HUMAN_INDICES: readonly number[] = TUTORIAL_STEPS.filter((step) => step.actor === 'human').map(
+  (step) => step.index,
+);
+
+/** The incoming effect on 'me' from 'p1' that the script expects at these indices (bot plays at index − 1). */
+const TUTORIAL_INCOMING: Readonly<Record<number, CardId>> = {
+  3: 'basic-attack',
+  11: 'spy',
+  17: 'strong-attack',
+  19: 'thief',
+  29: 'strong-attack',
+};
+
+/** The POV's hand at `index`: the setup hand, then each scripted upgrade, sale and buy. */
+function tutorialHand(index: number): CardInstance[] {
+  const hand = [
+    makeCard('tax'),
+    makeCard('spy', { isUpgraded: index >= 6 }),
+    makeCard('basic-attack', { isUpgraded: index >= 24 }),
+    ...(index >= 10 ? [] : [makeCard('shield')]),
+    makeCard('shield', { instanceId: 'shield-2' }),
+  ];
+  return index >= 16 ? [...hand, makeCard('absorber')] : hand;
+}
+
+function tutorialLives(index: number): number {
+  if (index < 2) return TUTORIAL_HUMAN_LIVES;
+  return index >= 20 ? 4 : 1;
+}
+
+function tutorialUpgradePoints(index: number): number {
+  if (index < 6 || (index >= 14 && index < 24)) return TUTORIAL_HUMAN_UPGRADE_POINTS;
+  return 0;
+}
+
+/**
+ * A 2-seat tutorial view at `index` (plan A.10, L75-04): 'me' (Indestructible) vs bot 'p1' (Ghost),
+ * playKind 'tutorial', tutorialIndex = index, the POV's turn on human indices, and the hand, specials,
+ * resources and pending effects the script expects there (`packages/shared/src/tutorial/setup.ts` and
+ * the script). It keeps the setup's points at every index and replays no server state. 'p1' is
+ * Spy+-revealed from `TUTORIAL_LOOK_INDEX`. `overrides` spread last.
+ */
+export function makeTutorialArenaView(index: number, overrides: Partial<PlayingStateView> = {}): PlayingStateView {
+  const step = tutorialStepAt(index);
+  if (step === undefined) {
+    throw new RangeError(`no tutorial step at index ${String(index)}`);
+  }
+  const human = step.actor === 'human';
+  const self = makeSelf({
+    kitId: TUTORIAL_HUMAN_KIT_ID,
+    points: TUTORIAL_HUMAN_POINTS,
+    lives: tutorialLives(index),
+    upgradePoints: tutorialUpgradePoints(index),
+    hand: tutorialHand(index),
+    specialCards: index >= 20 ? [] : [makeCard('super-regeneration')],
+  });
+  const spied = {
+    lives: index >= 26 ? 1 : TUTORIAL_BOT_LIVES,
+    points: 10,
+    upgradePoints: 0,
+    shield: 0,
+    kitId: TUTORIAL_BOT_KIT_ID,
+    hand: TUTORIAL_BOT_HAND_CARD_IDS.map((id) => makeCard(id, { instanceId: `p1-${id}` })),
+    specialCards: [],
+  };
+  const players = [
+    makePlayer('me', { isYou: true }),
+    makePlayer('p1', { isBot: true, botDifficulty: 'normal', ...(index >= TUTORIAL_LOOK_INDEX ? { spied } : {}) }),
+  ];
+  const incoming = TUTORIAL_INCOMING[index];
+  const pendingEffects: PendingEffectView[] =
+    incoming === undefined
+      ? []
+      : [makePending({ id: `tut-${String(index)}`, sourcePlayerId: 'p1', targetPlayerId: 'me', cardId: incoming, queuedAt: index - 1 })];
+  return makeArenaView({
+    seatCount: 2,
+    overrides: {
+      playKind: 'tutorial',
+      tutorialIndex: index,
+      currentTurnPlayerId: human ? 'me' : 'p1',
+      turnSequence: index + 1,
+      players,
+      self,
+      pendingEffects,
+      ...overrides,
+    },
+  });
+}

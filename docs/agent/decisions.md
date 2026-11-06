@@ -6508,3 +6508,37 @@ and 12 (Lot 75 plan, Appendix A.7); `docs/backlog_v7_test_classification.md` (fx
 - **Constant.** `COMPACT_STRIP_PX` 61 → 67 (8 px padding + a 59 px thumb: 44 px wide at 3:4). The savings
   at 360 / 375 / 768 px are 118 / 122 / 195 (were 124 / 128 / 201).
 - **No rule, value or protocol change.**
+
+---
+
+## 2026-11-06 · [P] The tutorial on the arena: layers, callouts, coach slot and locks (L75-04)
+
+Source: technical spec v7 §6.12, §6.6.3, §6.1, §8.3, §14.3; the Lot 75 plan, Appendix A.8; controller
+rulings R7–R9 and open questions 1, 8 and 9 (2026-11-03).
+
+- **Layers.** `Z_INDEX` gains `hint` 84 and `coach` 86: above every sheet (50+) and Minimize bar (80+),
+  under the banner (90), the toast (95) and the `fx/` overlay (110). Bars clamp at `hint - 1`. V6 put
+  the coach at 110 and hints at 105 (the backlog L75-04 watch point); banners and toasts keep painting
+  above the coach (ruling 1).
+- **The coach** is the `ui/coach` `CoachPanel` in a `document.body` portal on `Z_INDEX.coach`, outside
+  every sheet, so no sheet makes it inert and a press on it never reaches a backdrop. Its slot is the
+  arena region's top-left, 8 px in, `min(22rem, 100% - 1rem)` wide, in every mode. Its mousedown is
+  prevented, so × and Got it keep the focus inside an open sheet; from the keyboard, × hands the focus to
+  Menu and Got it to the next step's Got it.
+- **Callouts** are one measured layer (`ui/coach/tutorial-callout.tsx`) that rings each
+  `[data-tutorial-highlight]` element, with an arrow outside the ring. It portals on `Z_INDEX.hint`,
+  which a tutorial room never uses for hints, and draws only the live layer: the live sheet's own targets
+  while a sheet is live, else the table's. The hand `ScrollArea`, the `overflow-hidden` arena and a
+  sheet body therefore never clip it; V2 needed `overflow: visible` on the card band. The orange is
+  `--threat-other`, with no new token. Real incoming threats keep the plate badges' `data-tone` rings.
+- **Locks** (§6.6.3; open questions 8 and 9). While the tour or the Look gate is up:
+  - the commit's `allow` (`!reconnecting && tutorial.allows(intent)`) vetoes every send silently, a
+    sub-choice answer included;
+  - no drag starts, Shop and Unspy do not open, and hand and special taps open nothing;
+  - seat taps stay live. Opening the seat sheet of a seat whose kit is visible clears the Look gate, once
+    per mount.
+  L75-05 adds the script half of `tutorial.allows`.
+- **Routing (R9).** `resolveTableUi` returns the preference for every room. The default stays the
+  classic table until L75-09.
+
+---

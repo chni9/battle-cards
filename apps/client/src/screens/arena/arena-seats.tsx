@@ -14,6 +14,9 @@
  *
  * Each seat is drawn at its mode's box, `model.layout.mode` (L75-02, §6.4). `data-seat-layout` is
  * `arc`, `grid`, or `band`: the landscape-compact top band, an arc in the layout model (L75-03, §6.4).
+ *
+ * L75-04 (§6.12; plan A.8.6, K7): `tutorial` marks every seat root `opponent` for the board tour, or
+ * the portrait of each listed seat `opponent-portrait` for the Look gate.
  */
 
 import { useEffect, useRef, type ReactElement } from 'react';
@@ -37,6 +40,8 @@ export interface ArenaSeatsProps {
   targeting?: SeatTargeting;
   /** L74-12: the seats a dragged card may land on, and the one under the pointer; absent outside a drag. */
   dropHighlight?: SeatDropHighlight;
+  /** L75-04: the tour's mark on every seat (`seats`), or the Look gate's on these seats' portraits. */
+  tutorial?: { readonly seats: boolean; readonly portraitIds: readonly string[] };
 }
 
 /** `over` under the pointer, `valid` when the seat takes the card, else no highlight. */
@@ -53,6 +58,7 @@ export function ArenaSeats({
   onOpenSeat,
   targeting,
   dropHighlight,
+  tutorial,
 }: ArenaSeatsProps): ReactElement {
   const byId = new Map(model.seats.map((seat) => [seat.playerId, seat]));
   const rootRef = useRef<HTMLDivElement>(null);
@@ -76,6 +82,14 @@ export function ArenaSeats({
         }
         const target = seatTargetFor(targeting, center.playerId);
         const drop = seatDrop(dropHighlight, center.playerId);
+        const highlight =
+          tutorial === undefined
+            ? undefined
+            : tutorial.seats
+              ? ('opponent' as const)
+              : tutorial.portraitIds.includes(center.playerId)
+                ? ('opponent-portrait' as const)
+                : undefined;
         return (
           <OpponentSeat
             key={center.playerId}
@@ -85,6 +99,7 @@ export function ArenaSeats({
             mode={model.layout.mode}
             {...(target !== null ? { target } : {})}
             {...(drop !== null ? { drop } : {})}
+            {...(highlight !== undefined ? { tutorialHighlight: highlight } : {})}
             onOpen={(id) => {
               onOpenSeat?.(id);
             }}

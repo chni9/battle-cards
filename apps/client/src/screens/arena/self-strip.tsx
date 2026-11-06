@@ -24,6 +24,9 @@
  * not fit one row at 360 px. It is the full strip's one JSX tree with other class strings, sizes and
  * captions, never a second branch, so L75-13's band flip re-renders the same elements: the kit
  * portrait keeps its focus and every pill keeps its flash. Every anchor is the full strip's.
+ *
+ * L75-04 (§6.12; plan A.8.6): `tutorialHighlight` marks the resources row (`resources`) or the kit
+ * portrait root (`kit`, through `KitPortrait dataAttributes`) for the board tour, in both strips.
  */
 
 import type { KitId } from '@card-battle/shared';
@@ -55,6 +58,8 @@ export interface SelfStripProps {
   readonly onLeave?: () => void;
   /** L75-03: one row with a thumb portrait and small pills, captions spoken only. Default false: the full strip. */
   readonly compact?: boolean;
+  /** L75-04: the board tour's mark on the resources row or the kit portrait; absent or null, none. */
+  readonly tutorialHighlight?: 'resources' | 'kit' | null;
 }
 
 const OWN_KIT_LABEL = 'Inspect your kit';
@@ -115,7 +120,14 @@ function FlashingPill(props: PillProps & { readonly resourceKind: ResourceKind; 
   );
 }
 
-export function SelfStrip({ model, onOpenKit, onOpenCard, onLeave, compact = false }: SelfStripProps): ReactElement | null {
+export function SelfStrip({
+  model,
+  onOpenKit,
+  onOpenCard,
+  onLeave,
+  compact = false,
+  tutorialHighlight = null,
+}: SelfStripProps): ReactElement | null {
   const { kitId, resources } = model;
   if (kitId === null || resources === null) {
     return null;
@@ -143,11 +155,13 @@ export function SelfStrip({ model, onOpenKit, onOpenCard, onLeave, compact = fal
             onOpenKit(kitId);
           }}
           ariaLabel={OWN_KIT_LABEL}
+          {...(tutorialHighlight === 'kit' ? { dataAttributes: { 'data-tutorial-highlight': 'kit' } } : {})}
         />
         <div className={compact ? 'contents' : 'flex min-w-0 flex-1 flex-col gap-2'}>
           <div
             data-zone="resources"
             data-hint-anchor="resources"
+            {...(tutorialHighlight === 'resources' ? { 'data-tutorial-highlight': 'resources' } : {})}
             className={compact ? 'flex min-w-0 items-center gap-1.5' : 'flex flex-wrap items-center gap-2'}
           >
             <FlashingPill

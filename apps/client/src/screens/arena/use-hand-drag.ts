@@ -17,6 +17,8 @@
  * the gesture. A change of `mode`, or a flip of the portrait bottom `band` (which resizes the arena, the
  * strip and the hand cards under a lifted card), ends a pressed or lifted drag like `pointercancel`: a
  * press ends with no ghost, a lifted card springs back, nothing is sent.
+ *
+ * L75-04 (plan A.8.7, §6.6.3): while `locked` (the tutorial tour or Look gate), no drag starts.
  */
 
 import type { PlayingStateView } from '@card-battle/shared';
@@ -62,6 +64,8 @@ export interface HandDragInput {
   mode?: LayoutMode;
   /** L75-13 (A.6): the portrait bottom band; a flip cancels the gesture as a mode change does. Absent: nothing changes. */
   band?: BottomBand;
+  /** L75-04 (A.8.7): the tutorial tour or Look gate locks the table; no drag starts. Default false. */
+  locked?: boolean;
 }
 
 export interface HandDragView {
@@ -262,7 +266,7 @@ export function useHandDrag(input: HandDragInput): {
       suppressClick.current = false;
       if (!event.isPrimary || event.button !== 0) return;
       const actions = cardActions(input.view, liveCardRefFor(source, input.view), input.ctx);
-      if (!canStartHandDrag(actions, input.targetingActive)) return;
+      if (!canStartHandDrag(actions, input.targetingActive, input.locked ?? false)) return;
       // Never `preventDefault`: a press that does not lift is a tap, and the tap still clicks.
       setPhase({
         kind: 'pressed',

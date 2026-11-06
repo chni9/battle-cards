@@ -62,6 +62,11 @@ describe('gesture and drag start guard (§6.6.5)', () => {
   ])('never starts a drag $label (actions locked)', ({ view, ctx }) => {
     expect(canStartHandDrag(cardActions(view, { zone: 'hand', instance: ATTACK }, ctx), false)).toBe(false);
   });
+
+  it('never starts a drag while the tutorial tour or Look gate locks the table (L75-04, §6.6.3)', () => {
+    expect([canStartHandDrag(held(ATTACK), false, true), canStartHandDrag(held(ATTACK), false, false), canStartHandDrag(held(ATTACK), false)])
+      .toEqual([false, true, true]);
+  });
 });
 
 describe('dispatchDrop maps each dropTarget result (§6.6.3, §6.6.4)', () => {

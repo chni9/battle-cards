@@ -25,7 +25,9 @@
  *   face, so neither filter reaches the red cross. At thumb size the badge is about a third of
  *   the face width.
  * - **Anchors:** `data-zone="kit-portrait"` and `data-eliminated` stay (`fx/play-flyout.ts` and
- *   the L74 self strip query them); `data-kit-face` and `data-kit-size` are new.
+ *   the L74 self strip query them); `data-kit-face` and `data-kit-size` are new. `dataAttributes`
+ *   (L75-04, the tutorial's `kit` highlight) adds `data-*` anchors to the root, spread before these,
+ *   so the portrait's own anchors win.
  */
 
 import type { LobbyKitSelection } from '@card-battle/shared';
@@ -46,6 +48,8 @@ export interface KitPortraitProps {
   onClick?: () => void;
   /** The button's accessible name; defaults to the kit name (", eliminated" added). Ignored without `onClick`. */
   ariaLabel?: string;
+  /** L75-04: extra `data-*` anchors on the root (button or span); `data-zone` and `data-kit-*` win. */
+  dataAttributes?: Readonly<Record<`data-${string}`, string>>;
 }
 
 type PortraitSize = NonNullable<KitPortraitProps['size']>;
@@ -140,6 +144,7 @@ export function KitPortrait({
   className = '',
   onClick,
   ariaLabel,
+  dataAttributes,
 }: KitPortraitProps): ReactElement {
   const alt = kitPortraitAlt(kitId);
   const face = faceFor(kitId);
@@ -168,6 +173,7 @@ export function KitPortrait({
   if (clickable) {
     return (
       <button
+        {...dataAttributes}
         {...anchors}
         type="button"
         aria-label={ariaLabel ?? (isEliminated ? eliminatedPortraitLabel(alt) : alt)}
@@ -181,7 +187,7 @@ export function KitPortrait({
     );
   }
   return (
-    <span {...anchors} className={rootClassName}>
+    <span {...dataAttributes} {...anchors} className={rootClassName}>
       {content}
     </span>
   );

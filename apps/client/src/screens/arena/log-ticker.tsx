@@ -5,7 +5,8 @@
  * "No actions yet". Its name holds its visible text (`Action log: {line}`). A tap opens the log
  * sheet and sends nothing (§6.6.4). `data-zone="log-collapsed"` stays the FX log endpoint
  * (`ui/fx-anchors.ts`). A card in the ticker is plain text: it takes no `onOpenCard`, because a
- * button holds no button.
+ * button holds no button. L75-04 (plan A.8.6): `tutorialHighlight` marks the button `action-log` for
+ * the board tour.
  */
 
 import type { PlayingStateView } from '@card-battle/shared';
@@ -21,15 +22,18 @@ export interface LogTickerProps {
   line: LogLine | null;
   view: PlayingStateView;
   onOpen: () => void;
+  /** L75-04: the board tour's `action-log` mark on the button. */
+  tutorialHighlight?: boolean;
 }
 
-export function LogTicker({ line, view, onOpen }: LogTickerProps): ReactElement {
+export function LogTicker({ line, view, onOpen, tutorialHighlight = false }: LogTickerProps): ReactElement {
   const label = tickerLabel(line);
 
   return (
     <button
       type="button"
       data-zone="log-collapsed"
+      {...(tutorialHighlight ? { 'data-tutorial-highlight': 'action-log' } : {})}
       aria-haspopup="dialog"
       aria-label={label}
       title={label}

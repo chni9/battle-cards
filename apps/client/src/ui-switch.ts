@@ -1,8 +1,8 @@
 /**
  * Temporary table switch (technical spec v7 §4.4 / L72-20): `?ui=next` selects the V7 arena
  * and persists `localStorage['card-battle.v7.ui']`, `?ui=classic` clears it, otherwise the
- * stored value applies. Tutorial rooms always get the classic table until L75 re-anchors the
- * tutorial. L75 flips the default, removes this module and clears the key.
+ * stored value applies. Tutorial rooms follow the switch since L75-04 (R9), as Classic rooms do.
+ * L75 flips the default, removes this module and clears the key.
  *
  * Every storage access sits in try/catch (private window, blocked site data): the switch then
  * degrades to the classic table, or to the query param for the current load, and never throws.
@@ -78,7 +78,11 @@ export function applyUiSwitchParam(param: UiSwitchParam, storage: UiSwitchStorag
   return param;
 }
 
-/** Tutorial rooms ignore the preference until L75 re-anchors the tutorial (spec v7 §4.4). */
+/**
+ * The preference, for every `playKind` (spec v7 §4.4): tutorial rooms follow the switch since L75-04,
+ * when the arena started hosting the tutorial (R9). `playKind` stays an input, so callers do not
+ * change until L75-09 removes the switch.
+ */
 export function resolveTableUi(input: { preference: TableUi; playKind: PlayKind }): TableUi {
-  return input.playKind === 'tutorial' ? 'classic' : input.preference;
+  return input.preference;
 }

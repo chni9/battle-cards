@@ -27,6 +27,9 @@
  * tables' cue on both edges). The fades are static and decorative: hidden from assistive technology,
  * they take no clicks, so a tap, a long press or a drag reaches the card under them, and a selected
  * or focused card (`z-10`) rises above them. They are the same under reduced motion.
+ *
+ * L75-04 (§6.12; plan A.8.6): `tutorial` marks a group (`hand` / `specials`, empty or not, Q60) for
+ * the board tour, and each spotlit card with its card id (V2), through `Card dataAttributes`.
  */
 
 import type { PlayingStateView } from '@card-battle/shared';
@@ -64,7 +67,17 @@ export interface HandFanProps {
   readonly rejected?: RejectCue | null;
   /** L75-03 / L75-13: a sized hand, `--hand-card-w` inline; absent, the Card clamp stands. */
   readonly cardWidthPx?: number;
+  /** L75-04: the tutorial's group mark and spotlit card instance ids; absent, nothing is marked. */
+  readonly tutorial?: HandFanTutorial;
 }
+
+/** L75-04 (plan A.8.6): the tour's group, and the hand or special cards the script spotlights. */
+export interface HandFanTutorial {
+  readonly group: 'hand' | 'specials' | null;
+  readonly instanceIds: readonly string[];
+}
+
+const NO_SPOTLIGHT: readonly string[] = [];
 
 type HandFanStyle = CSSProperties & {
   readonly '--hand-strips': string;
@@ -112,7 +125,16 @@ const REJECT_TRANSITION = { duration: durationS('slow') };
  */
 const HAND_CUE_CLASS = 'pointer-events-none absolute inset-y-0 w-10 from-v7-bg-0 to-transparent';
 
-export function HandFan({ view, ctx, selectedInstanceId, onOpenCard, drag, rejected = null, cardWidthPx }: HandFanProps): ReactElement {
+export function HandFan({
+  view,
+  ctx,
+  selectedInstanceId,
+  onOpenCard,
+  drag,
+  rejected = null,
+  cardWidthPx,
+  tutorial,
+}: HandFanProps): ReactElement {
   const model = handFanModel(view, ctx);
   const groups = [model.hand, model.specials];
   const style: HandFanStyle = {
@@ -133,6 +155,8 @@ export function HandFan({ view, ctx, selectedInstanceId, onOpenCard, drag, rejec
         <div className="mx-auto flex w-max items-end gap-3">
           <HandGroup
             zone="hand"
+            highlighted={tutorial?.group === 'hand'}
+            spotlit={tutorial?.instanceIds ?? NO_SPOTLIGHT}
             cards={model.hand}
             selectedInstanceId={selectedInstanceId}
             onOpenCard={onOpenCard}
@@ -141,6 +165,8 @@ export function HandFan({ view, ctx, selectedInstanceId, onOpenCard, drag, rejec
           />
           <HandGroup
             zone="specials"
+            highlighted={tutorial?.group === 'specials'}
+            spotlit={tutorial?.instanceIds ?? NO_SPOTLIGHT}
             cards={model.specials}
             selectedInstanceId={selectedInstanceId}
             onOpenCard={onOpenCard}
@@ -161,6 +187,10 @@ export function HandFan({ view, ctx, selectedInstanceId, onOpenCard, drag, rejec
 
 interface HandGroupProps {
   readonly zone: keyof typeof HAND_GROUP_COPY;
+  /** L75-04: the tour marks this group. */
+  readonly highlighted: boolean;
+  /** L75-04: the instance ids the script spotlights. */
+  readonly spotlit: readonly string[];
   readonly cards: readonly HandFanCard[];
   readonly selectedInstanceId: string | null;
   readonly onOpenCard: (source: HandCardSource) => void;
@@ -169,10 +199,15 @@ interface HandGroupProps {
 }
 
 /** An empty group keeps V2's caption and text (Q60); a filled one is named by its `aria-label`. */
-function HandGroup({ zone, cards, selectedInstanceId, onOpenCard, rejected, drag }: HandGroupProps): ReactElement {
+function HandGroup({ zone, highlighted, spotlit, cards, selectedInstanceId, onOpenCard, rejected, drag }: HandGroupProps): ReactElement {
   const copy = HAND_GROUP_COPY[zone];
   return (
-    <div data-zone={zone} data-hint-anchor={zone} className="flex items-end">
+    <div
+      data-zone={zone}
+      data-hint-anchor={zone}
+      {...(highlighted ? { 'data-tutorial-highlight': zone } : {})}
+      className="flex items-end"
+    >
       {cards.length === 0 ? (
         <p className={`flex min-h-11 ${EMPTY_GROUP_WIDTH_CLASS} flex-col justify-center px-1 font-v7-body text-v7-caption font-bold text-v7-text-2`}>
           <span>{copy.label}</span>
@@ -186,6 +221,7 @@ function HandGroup({ zone, cards, selectedInstanceId, onOpenCard, rejected, drag
               card={card}
               last={index === cards.length - 1}
               selected={card.source.instance.instanceId === selectedInstanceId}
+              spotlit={spotlit.includes(card.source.instance.instanceId)}
               onOpen={onOpenCard}
               rejected={rejected}
               {...(drag !== undefined ? { drag } : {})}
@@ -201,6 +237,7 @@ interface HandSlotProps {
   readonly card: HandFanCard;
   readonly last: boolean;
   readonly selected: boolean;
+  readonly spotlit: boolean;
   readonly onOpen: (source: HandCardSource) => void;
   readonly rejected: RejectCue | null;
   readonly drag?: HandFanDragProps;
@@ -210,7 +247,7 @@ interface HandSlotProps {
  * Not clipped: the card overflows its slot to the right, and a selected or focused card rises above
  * its neighbour. `touch-pan-x` leaves a horizontal pan to the browser's scroll (L74-12).
  */
-function HandSlot({ card, last, selected, onOpen, rejected, drag }: HandSlotProps): ReactElement {
+function HandSlot({ card, last, selected, spotlit, onOpen, rejected, drag }: HandSlotProps): ReactElement {
   const { instanceId } = card.source.instance;
   const lifted = drag?.liftedInstanceId === instanceId;
   return (
@@ -226,6 +263,7 @@ function HandSlot({ card, last, selected, onOpen, rejected, drag }: HandSlotProp
       <HandCard
         card={card}
         selected={selected}
+        spotlit={spotlit}
         onOpen={onOpen}
         rejectToken={rejected?.instanceId === instanceId ? rejected.reject : null}
       />
@@ -236,6 +274,8 @@ function HandSlot({ card, last, selected, onOpen, rejected, drag }: HandSlotProp
 interface HandCardProps {
   readonly card: HandFanCard;
   readonly selected: boolean;
+  /** L75-04: the script spotlights this card: `data-tutorial-highlight` carries its card id (V2). */
+  readonly spotlit: boolean;
   readonly onOpen: (source: HandCardSource) => void;
   /** L74-25: the reject this card's send drew, else null. A new one replays the spring-back. */
   readonly rejectToken: ActionRejectPayload | null;
@@ -249,7 +289,7 @@ interface HandCardProps {
  * (Lot 74 Part 1 final review, Minor 6). The reject spring-back (L74-25) counts and animates the
  * same way, and never on mount.
  */
-function HandCard({ card, selected, onOpen, rejectToken }: HandCardProps): ReactElement {
+function HandCard({ card, selected, spotlit, onOpen, rejectToken }: HandCardProps): ReactElement {
   const { instance } = card.source;
   const reduced = usePrefersReducedMotion();
   const [scope, animate] = useAnimate<HTMLDivElement>();
@@ -295,6 +335,7 @@ function HandCard({ card, selected, onOpen, rejectToken }: HandCardProps): React
         unplayable={card.unplayable}
         {...(card.description !== null ? { description: card.description } : {})}
         className="[--card-w:var(--hand-card-w)]"
+        {...(spotlit ? { dataAttributes: { 'data-tutorial-highlight': instance.cardId } } : {})}
         onActivate={() => {
           onOpen(card.source);
         }}

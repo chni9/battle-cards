@@ -16,6 +16,8 @@
  * - **Collapsed**, the list unmounts, so no zero-size `action-log-panel` is left for the FX
  *   (plan Review Focus 5); expanding again reopens on the newest line.
  * - Read-only (§6.6.4): the toggle and a card name send nothing.
+ * - L75-04 (plan A.8.6): `tutorialHighlight` marks the toggle `action-log` for the board tour,
+ *   expanded or collapsed.
  */
 
 import type { PlayingStateView } from '@card-battle/shared';
@@ -37,11 +39,20 @@ export interface LogPanelProps {
   model: LogModel;
   onToggle: () => void;
   onOpenCard: (source: CardSheetSource) => void;
+  /** L75-04: `data-tutorial-highlight="action-log"` on the toggle. */
+  tutorialHighlight?: boolean;
 }
 
 const TOGGLE_CLASS = `flex min-h-11 min-w-11 shrink-0 items-center gap-2 bg-v7-panel text-v7-text ${CHROME_SHAPE_SM_CLASS} ${CHROME_FOCUS_CLASS}`;
 
-export function LogPanel({ expanded, view, model, onToggle, onOpenCard }: LogPanelProps): ReactElement {
+export function LogPanel({
+  expanded,
+  view,
+  model,
+  onToggle,
+  onOpenCard,
+  tutorialHighlight = false,
+}: LogPanelProps): ReactElement {
   const listId = useId();
   const content = useRef<HTMLDivElement>(null);
   // The scrollport is the content's parent: the panel's own scroller, not a Sheet body.
@@ -55,6 +66,7 @@ export function LogPanel({ expanded, view, model, onToggle, onOpenCard }: LogPan
       <button
         type="button"
         data-zone="log-collapsed"
+        {...(tutorialHighlight ? { 'data-tutorial-highlight': 'action-log' } : {})}
         aria-expanded={expanded}
         {...(expanded ? { 'aria-controls': listId } : {})}
         aria-label={ACTION_LOG_OPEN_LABEL}

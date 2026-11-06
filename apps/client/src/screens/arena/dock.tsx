@@ -15,6 +15,10 @@
  *
  * Stats is the finished board's last button (§6.12, L74-24): EndScreen's reopen of Game over, called
  * directly because it is no `ArenaIntent`; EndScreen ignores it while Feedback is open.
+ *
+ * L75-04 (§6.6.3, §6.12; plan A.8.6, A.8.7): `tutorialHighlight` marks Draw or Shop for the tutorial.
+ * While `locked` (the tour or the Look gate), Shop and Unspy open nothing; Draw and Activate
+ * duplication still reach `commit`, whose `allow` vetoes them, so their latch stays live.
  */
 
 import type { PlayingStateView } from '@card-battle/shared';
@@ -60,6 +64,10 @@ export interface DockProps {
   onOpenShop?: () => void;
   /** Finished board: EndScreen's Stats reopen (§6.12). It is no ArenaIntent, so it is called directly. */
   onShowStats?: () => void;
+  /** L75-04: the tutorial's mark on Draw or Shop; absent or null, none. */
+  tutorialHighlight?: 'draw' | 'shop' | null;
+  /** L75-04: the tutorial tour or Look gate is up: Shop and Unspy open nothing. Default false. */
+  locked?: boolean;
 }
 
 /** `disabledReason` only while the model gives one (`exactOptionalPropertyTypes`). */
@@ -76,6 +84,8 @@ export function Dock({
   actionReject,
   onOpenShop,
   onShowStats,
+  tutorialHighlight = null,
+  locked = false,
 }: DockProps): ReactElement {
   const reduced = usePrefersReducedMotion();
   const [scope, animate] = useAnimate<HTMLSpanElement>();
@@ -110,6 +120,7 @@ export function Dock({
             aria-label={drawAriaLabel(draw.gain)}
             title={drawAriaLabel(draw.gain)}
             data-hint-anchor="draw"
+            {...(tutorialHighlight === 'draw' ? { 'data-tutorial-highlight': 'draw' } : {})}
             disabled={!draw.enabled}
             focusableWhenDisabled
             reserveReasonSlot
@@ -128,11 +139,19 @@ export function Dock({
           variant="secondary"
           icon="shop"
           data-hint-anchor="shop"
+          {...(tutorialHighlight === 'shop' ? { 'data-tutorial-highlight': 'shop' } : {})}
           reserveReasonSlot
           reasonLines={1}
           disabled={onOpenShop === undefined}
           focusableWhenDisabled
-          {...(onOpenShop !== undefined ? { onClick: onOpenShop } : {})}
+          {...(onOpenShop !== undefined
+            ? {
+                onClick: () => {
+                  if (locked) return;
+                  onOpenShop();
+                },
+              }
+            : {})}
         >
           {SHOP_ACTION_LABEL}
         </Button>
@@ -152,6 +171,7 @@ export function Dock({
           reserveReasonSlot
           {...reasonProps(unspy.reason)}
           onClick={() => {
+            if (locked) return;
             setUnspyOpen(true);
           }}
         >

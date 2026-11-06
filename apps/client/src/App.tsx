@@ -4,8 +4,8 @@
  * Admin is pathname `/admin` (Lot 61); `/inbox` redirects to `/admin/feedback`.
  * `/dev/ui` is the DEV-only V7 component gallery (technical spec v7 §4.2): it is lazily
  * imported behind `import.meta.env.DEV`, so production builds carry no gallery chunk.
- * The playing table follows the temporary `?ui=next` switch (technical spec v7 §4.4 / L72-20,
- * removed in L75); tutorial rooms always keep the classic table.
+ * The playing and finished tables follow the temporary `?ui=next` switch (technical spec v7 §4.4 / L72-20,
+ * removed in L75), tutorial rooms included since L75-04.
  */
 
 import { defaultLobbyRules } from '@card-battle/shared';

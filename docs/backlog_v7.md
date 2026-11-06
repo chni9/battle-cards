@@ -23,14 +23,14 @@ Status values: `To do` · `In progress` · `Done` · `Blocked`
 | 72 · Foundations | 21 | 21 |
 | 73 · View-model | 13 | 13 |
 | 74 · Arena I | 26 | 26 |
-| 75 · Arena II | 13 | 5 |
+| 75 · Arena II | 13 | 6 |
 | 76 · Home and lobby | 18 | 0 |
 | 77 · Game over | 8 | 0 |
 | 78 · Juice | 13 | 0 |
 | 79 · Sound and haptics | 5 | 0 |
 | 80 · Admin | 12 | 12 |
 | 81 · Close-out | 6 | 0 |
-| **Total** | **135** | **77** |
+| **Total** | **135** | **78** |
 
 ## Designer questions still open
 
@@ -187,7 +187,7 @@ Tutorial and hints on the arena, the table copy fixes, desktop and landscape-com
 | L75-01 | **Fix stale and misspelled hint and tutorial copy.** **Acceptance:** `hint-copy.test.ts` asserts the corrected bodies: none of the seven listed typos remains, `hidden-kit` names the upgraded Spy and a basic Spy's resources, and `reward` no longer opens with 'You eliminated'. Shared tutorial tests assert the new Opponent and Counter Spy sentences and that no tour or coach body contains ' !'. Tests that pin the latest What's new id are updated. v6 spec rows, `frontend.md` and `decisions.md` change in the same commit. `pnpm verify` green. | S | Low | Lot 73 | Done |
 | L75-02 | **Render the arena desktop layout.** **Acceptance:** Component tests (happy-dom) with a 1440×900 layout box: mode `desktop`, every opponent seat rendered in the ellipse container (grid when `seats()` says so), and the log panel toggles open and closed while keeping a rendered log element when collapsed. The dock sits in the hand row. A 768×1024 box renders portrait. Browser check at 1440×900 with 2, 4 and 8 seats: no page scroll, nothing cropped. `pnpm verify` green. | M | Medium | Lot 74 | Done |
 | L75-03 | **Render the arena landscape-compact layout.** **Acceptance:** A unit test covers the height-bound hand size helper. Component tests with 844×390 and 667×375 boxes: mode `landscape-compact`, seats in the band container in turn order, hand and dock in one row. A 360×740 box stays portrait. Browser check on a landscape phone with 8 seats: no page scroll, hand faces uncropped with readable chips. `pnpm verify` green. | M | Medium | Lot 74 | Done |
-| L75-04 | **Host tutorial coach, callouts, tour and Look gate.** **Acceptance:** Behavior tests use a tutorial view at index 0 in portrait, landscape-compact and desktop boxes. Each tour step marks exactly its mapped element, which exists even when empty (Q60), and Got it advances without sending an intent. Drag, Use and Draw send nothing during the tour. At index 9 every send stays blocked until the revealed opponent's seat sheet opens, then never again in that mount. The coach hides, reopens from the menu and reopens on new copy, and fake timers retitle it 'Play' after 20 s. The incoming Basic at index 3 is ringed in attack tone. The finished tutorial board has no coach. The flag opens 'Skip the tutorial?' and Skip only leaves. `pnpm verify` green. **Watch point:** `ui/layers.ts` `Z_INDEX` has no coach or hint layer, while V6 puts the coach at 110 and hints at 105, above dialogs. A coach under an open sheet would be dimmed, and a tap on it would close the sheet. Add a `coach` layer above `toast`, or record the order, before mounting the host. | L | **High** | L75-02, L75-03 | To do |
+| L75-04 | **Host tutorial coach, callouts, tour and Look gate.** **Acceptance:** Behavior tests use a tutorial view at index 0 in portrait, landscape-compact and desktop boxes. Each tour step marks exactly its mapped element, which exists even when empty (Q60), and Got it advances without sending an intent. Drag, Use and Draw send nothing during the tour. At index 9 every send stays blocked until the revealed opponent's seat sheet opens, then never again in that mount. The coach hides, reopens from the menu and reopens on new copy, and fake timers retitle it 'Play' after 20 s. The incoming Basic at index 3 is ringed in attack tone. The finished tutorial board has no coach. The flag opens 'Skip the tutorial?' and Skip only leaves. `pnpm verify` green. **Watch point:** `ui/layers.ts` `Z_INDEX` has no coach or hint layer, while V6 puts the coach at 110 and hints at 105, above dialogs. A coach under an open sheet would be dimmed, and a tap on it would close the sheet. Add a `coach` layer above `toast`, or record the order, before mounting the host. | L | **High** | L75-02, L75-03 | Done |
 | L75-05 | **Gate every arena commit path in the tutorial.** **Acceptance:** A table-driven behavior test covers every human index (0 and odd 1–29). At each index the highlighted control carries `data-tutorial-highlight` and the scripted intent reaches a mocked connection with the right payload. A wrong path (another card, Basic+ at index 3, buying Basic, a drop on Sell) sends nothing and shows 'This tutorial step asks for a different action.' A tutorial room under `?ui=next` renders the arena. The full tutorial (indices 0–30) is played to the win in the browser at 375×812. `pnpm verify` green. | L | **High** | L75-04 | To do |
 | L75-06 | **Re-anchor first-game hints on the arena.** **Acceptance:** Behavior tests with fake views: each id renders next to its anchor in all three layout modes. A table whose only opponent is base-Spied still selects `hidden-kit`; a Spy+ one does not. Opening the Shop sheet hides the card and dismisses `shop`. The reward hint stays over the reward sheet. Tutorial rooms and the finished board show no hint. Skipping or finishing the tutorial never writes `skipAll` (L46-03). The `hint-overlay.tsx` assertions in `hint-overlay.test.ts` are rewritten as these behavior tests. `pnpm verify` green. **Watch point:** landscape-compact host width `min(22rem, 100vw-1rem)`; header controls are in L72-17. | M | Medium | L75-01, L75-02, L75-03 | To do |
 | L75-07 | **Give the incoming-thief hint per-card copy.** **Acceptance:** Unit tests: each of the five card ids yields its own body, only Thief mentions the 10-point cap, and the copy map is typed over the five thief ids. An arena hint test shows the Spy Thief body for an incoming Spy Thief and the Thief body for an incoming Thief. `pnpm verify` green. | S | Low | L75-06 | To do |
@@ -197,6 +197,29 @@ Tutorial and hints on the arena, the table copy fixes, desktop and landscape-com
 | L75-11 | **Delete old table dialogs and orphaned components.** **Acceptance:** `apps/client/src/screens/table/` is gone, and nothing imports it or a deleted `design/` file. No test reads a deleted path. Product behaviors keep passing behavior tests: Spy shop face 2/4, UP buy/sell from the shared helpers, shop double-tap buy, Use disabled reasons (including Invisibility), sub-choice natural labels, the slot-drop Cancel intent and coach hide/reopen. Nothing is skipped. `pnpm verify` green. | L | Medium | L75-10, L76-02, L76-10, L76-13 | To do |
 | L75-12 | **Run the Lot 75 browser and design gate.** **Acceptance:** Every §12.3 table scenario passes on the arena default; issues found are fixed and re-verified; results recorded. `pnpm verify` green. | M | Medium | L75-01…L75-11, L75-13 | To do |
 | L75-13 | **Fit the 6–8 seat portrait grid and the plate on small phones.** **Acceptance:** At 360×740 and 375×812, with 8 seats and with a 2-seat Duplicator dock, no seat is covered by the central plate, checked by a pure geometry test and the Lot 75 gate. The layout choice (compact grid seats, a side-anchored plate, or a shorter strip) is a designer decision recorded in `decisions.md` before coding. | M | Medium | L74-26 | Done |
+
+### §6.12 tutorial highlight map (L75-04)
+
+Every `data-tutorial-highlight` id and the arena element that carries it (spec v7 §6.12, §14.3; Lot 75
+plan Appendix A.8.6). The attribute is present only while its highlight is live.
+
+| Id | Arena element |
+|---|---|
+| `your-zone` | the `self-strip`, `hand` and `dock` region roots |
+| `hand` / `specials` | the hand fan's `[data-zone="hand"]` / `[data-zone="specials"]` groups, empty or not |
+| `resources` | the self strip's `[data-zone="resources"]` row |
+| `incoming` | the plate, `[data-zone="pending"]` |
+| `shop` | the dock's Shop button (the tour; the script's `shop-*` steps until the Shop opens) |
+| `opponent` | every `[data-zone="opponent-seat"]` root |
+| `action-log` | the `[data-zone="log-collapsed"]` button: the log ticker (portrait, landscape-compact), the log panel toggle (desktop) |
+| `timer` | the top bar's `[data-top-bar="turn"]` card (banner and clock) |
+| `kit` | the self strip's kit portrait, `[data-zone="kit-portrait"]` |
+| `flag` | the top bar's flag (Skip tutorial) |
+| `opponent-portrait` (Look) | the Spy+-revealed seat's `[data-zone="opponent-portrait"]`; tapping the seat opens its seat sheet and clears the gate |
+| `draw` | the dock's Draw button (L75-05) |
+| `<cardId>` | each spotlit hand or special card (L75-05) |
+| `use` / `upgrade` / `sell` | the spotlit card's sheet button `[data-card-action]` (L75-05) |
+| `shop-upgrade-point` / `shop-absorber` / `shop-absorber-buy` | the Upgrade points Buy; the Absorber tile; Buy selected once Absorber is selected (L75-05) |
 
 ---
 
