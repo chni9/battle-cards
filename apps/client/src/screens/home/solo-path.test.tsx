@@ -9,6 +9,7 @@ import { act, screen, waitFor, within } from '@testing-library/react';
 import { beforeEach, describe, expect, it } from 'vitest';
 
 import { renderUi } from '../../test/render';
+import { v7SeatColor } from '../../ui/palette';
 import type { SoloMenuSeed } from '../solo-menu-seed';
 import { RANDOM_ONLY_SOLO_LINE } from '../kit-pick-copy';
 import { HomeScreen, type HomeScreenProps } from './home-screen';
@@ -27,6 +28,14 @@ const group = (name: string): HTMLElement => screen.getByRole('radiogroup', { na
 const radios = (name: string): HTMLElement[] => within(group(name)).getAllByRole('radio');
 const checked = (name: string): (string | null)[] =>
   radios(name).filter((radio) => radio.getAttribute('aria-checked') === 'true').map((radio) => radio.textContent);
+/** A hex as happy-dom reads back an inline background colour (the claim-seat-dialog test pattern). */
+function cssBackground(hex: string): string {
+  const probe = document.createElement('span');
+  probe.style.backgroundColor = hex;
+  return probe.style.backgroundColor;
+}
+const seatBackground = (count: number): string =>
+  within(group('Opponents')).getByRole('radio', { name: String(count) }).style.backgroundColor;
 const start = (): HTMLElement => screen.getByRole('button', { name: 'Start solo game' });
 const kitCard = (): HTMLElement => screen.getByRole('region', { name: 'Your kit' });
 const follows = (first: Node, second: Node): boolean =>
@@ -75,6 +84,7 @@ describe('Solo path (spec v7 §7.1, §11 Q7)', () => {
     expect(checked('Opponents')).toEqual(['7']); // wraps
     await user.click(within(group('Opponents')).getByRole('radio', { name: '4' }));
     expect(radios('Opponents').map((seat) => seat.getAttribute('data-solo-seat-filled'))).toEqual(['true', 'true', 'true', 'true', 'false', 'false', 'false']);
+    expect([1, 4, 5].map(seatBackground)).toEqual([cssBackground(v7SeatColor(1)), cssBackground(v7SeatColor(4)), '']); // a filled seat wears the hue its bot takes
     await user.keyboard('{ArrowDown}');
     expect(checked('Opponents')).toEqual(['5']);
     await user.click(start());
@@ -132,7 +142,9 @@ describe('Solo path (spec v7 §7.1, §11 Q7)', () => {
 describe('a solo launch with a sheet open (Part 2 Review Focus 5; spec v7 §11 Q8)', () => {
   it('disables every Solo control during the launch, and the rules strip still opens', async () => {
     const { user, props, rerender } = await openSolo();
+    expect(seatBackground(1)).toBe(cssBackground(v7SeatColor(1)));
     rerender(<HomeScreen {...props} soloLaunchPending />);
+    expect(seatBackground(1)).toBe(''); // the filled seats drop their hue for the off look
     expect([...radios('Opponents'), ...radios('Difficulty')].filter((radio) => !radio.hasAttribute('disabled'))).toEqual([]);
     expect(['Opponents', 'Difficulty'].map((name) => group(name).getAttribute('aria-disabled'))).toEqual(['true', 'true']);
     expect(['Choose kit', 'Start solo game'].filter((name) => !screen.getByRole('button', { name }).hasAttribute('disabled'))).toEqual([]);
