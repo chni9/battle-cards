@@ -189,6 +189,23 @@ describe('a vetoed send leaves its control live (Review Focus 2)', () => {
     expect(coachTitle()).toBe(tutorialStepAt(21)?.coach?.title);
   });
 
+  it('reconnecting: a send the step does not ask for is held by the lock, with no follow-coach copy, then shows it once connected (final review M3)', async () => {
+    const poison = makePersistent({ id: 'eff-poison', cardId: 'poison', counter: 3 });
+    const { user, props, rerender } = setup(1, { view: (view) => ({ ...view, self: { ...view.self, activePersistentEffects: [poison] } }) });
+    await user.click(within(region('self-strip')).getByRole('button', { name: 'Poison, 3 card lives' }));
+    await user.click(within(screen.getByRole('dialog', { name: 'Poison' })).getByRole('button', { name: DEACTIVATE_ACTION_LABEL }));
+    const deactivate = (): HTMLElement => within(screen.getByRole('dialog', { name: DEACTIVATE_CONFIRM_TITLE })).getByRole('button', { name: DEACTIVATE_ACTION_LABEL });
+    rerender(<ArenaScreen {...props} connectionStatus="reconnecting" />);
+    expect(isDisabled(deactivate())).toBe(true);
+    await user.click(deactivate());
+    expectNoArenaIntent(props);
+    expect(coachTitle()).toBe(tutorialStepAt(1)?.coach?.title);
+    rerender(<ArenaScreen {...props} connectionStatus="connected" />);
+    await user.click(deactivate());
+    expectNoArenaIntent(props);
+    expectFollowCoach();
+  });
+
   it("Draw: the tour's silent veto latches nothing, so after the last Got it the same Draw sends once", async () => {
     const { user, props } = setup(0);
     await user.click(dockButton('draw'));
