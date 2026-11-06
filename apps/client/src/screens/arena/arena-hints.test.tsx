@@ -116,6 +116,23 @@ describe('hint placement in every layout mode (§6.12, §14.3)', () => {
     }
   });
 
+  it('re-places the card when the arena region resizes, though its anchor did not (final review M4)', () => {
+    let rect = new DOMRect(40, 300, 76, 92);
+    const stub = stubArenaLayout(ARENA_TEST_BOXES.phone390.viewport, ARENA_TEST_BOXES.phone390.arena, {
+      rectFor: (element) => (element.matches('[data-hint-anchor="hidden-kit"]') ? rect : undefined),
+    });
+    layout = stub;
+    const { props } = caseFor('hidden-kit');
+    setup(props);
+    expect(shown()).toBe('hidden-kit');
+    // A band flip or a strip re-wrap moves the seat without resizing it: only the arena region reports it.
+    rect = new DOMRect(40, 380, 76, 92);
+    stub.resizeElement(region('arena'));
+    const slot = one('[data-hint-slot]');
+    const placed = placeHintCard(rect, { width: slot.offsetWidth, height: slot.offsetHeight }, ARENA_TEST_BOXES.phone390.viewport, { prefer: hintPlacePrefer('hidden-kit') });
+    expect([slot.style.top, slot.style.left]).toEqual([`${String(placed.top)}px`, `${String(placed.left)}px`]);
+  });
+
   it.each([['base-spy', 'hidden-kit'], ['spy-plus', null]] as const)('a lone %s opponent off turn selects %s (§6.3, Q66)', (tier, expected) => {
     setup({ view: makeArenaView({ seatCount: 2, tiers: { p1: tier }, overrides: { currentTurnPlayerId: 'p1' } }) });
     expect(shown()).toBe(expected);

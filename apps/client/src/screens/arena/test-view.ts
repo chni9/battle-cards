@@ -208,6 +208,8 @@ export interface ArenaLayoutStub {
   setViewport(width: number, height: number): void;
   /** Sets the box every unmatched element reports and fires every fake ResizeObserver callback. */
   setArena(width: number, height: number): void;
+  /** Fires only the fake ResizeObserver callbacks that observe `element` (an anchor that moved, or a region that resized). */
+  resizeElement(element: Element): void;
   /** Restores visualViewport, ResizeObserver and getBoundingClientRect. Callers also run it in afterEach. */
   restore(): void;
 }
@@ -232,8 +234,10 @@ export function stubArenaLayout(viewport: Size, arena: Size, options: ArenaLayou
   const box: Size = { width: arena.width, height: arena.height };
   const observers = new Set<FakeResizeObserver>();
   class FakeResizeObserver {
+    readonly targets = new Set<Element>();
     constructor(private readonly callback: ResizeObserverCallback) {}
-    observe(): void {
+    observe(target?: Element): void {
+      if (target !== undefined) this.targets.add(target);
       observers.add(this);
     }
     unobserve(): void {
@@ -268,6 +272,11 @@ export function stubArenaLayout(viewport: Size, arena: Size, options: ArenaLayou
         box.width = width;
         box.height = height;
         for (const observer of [...observers]) observer.fire();
+      });
+    },
+    resizeElement(element) {
+      act(() => {
+        for (const observer of [...observers]) if (observer.targets.has(element)) observer.fire();
       });
     },
     restore() {
