@@ -105,6 +105,13 @@ describe('arena FX endpoints (R6, L75-08)', () => {
     expect(measureFeltCenterRect()).toBeNull();
   });
 
+  it('a zero-size plate, as the classic table lays out, sends ghosts to the felt (L75-08 m2)', () => {
+    const felt = anchor({ 'data-zone': 'felt' }, new DOMRect(0, 0, 400, 500));
+    anchor({ 'data-zone': 'pending' }, new DOMRect(0, 0, 0, 0), felt);
+    anchor({ 'data-plate-landing': '' }, new DOMRect(0, 0, 0, 0), felt);
+    expect(centre(measureFeltCenterRect())).toEqual([200, 250]);
+  });
+
   it('the log endpoint is the first visible of the panel and the toggle (Review Focus 5)', () => {
     const panel = anchor({ 'data-zone': 'action-log-panel' }, new DOMRect(0, 0, 0, 0));
     const toggle = anchor({ 'data-zone': 'log-collapsed' }, new DOMRect(1396, 100, 44, 44));

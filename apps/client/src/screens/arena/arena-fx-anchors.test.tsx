@@ -58,7 +58,13 @@ const fxView = (seatCount: number): PlayingStateView => makeArenaView({ seatCoun
 const FX_VIEW: PlayingStateView = fxView(3);
 
 let layout: ArenaLayoutStub | null = null;
-afterEach(() => { layout?.restore(); layout = null; });
+/** Stand-ins appended to `document.body` (outside the render container): removed even when an assertion throws. */
+const standIns: HTMLElement[] = [];
+afterEach(() => {
+  layout?.restore();
+  layout = null;
+  for (const standIn of standIns.splice(0)) standIn.remove();
+});
 function one(selector: string): HTMLElement {
   const found = document.querySelector<HTMLElement>(selector);
   if (found === null) throw new Error(`no ${selector}`);
@@ -120,11 +126,11 @@ describe('FX anchor contract (R6, A.7.1)', () => {
     standIn.setAttribute('data-zone', 'action-log-panel');
     standIn.setAttribute('data-stand-in', '');
     document.body.append(standIn);
+    standIns.push(standIn);
     expect(queryActionLogAnchor()).toBe(toggle);
     expectCentredOn(measureTokenFlyout('point', 'gain')?.from, BOX.toggle, FAN.from);
     await user.click(toggle);
     expect(queryActionLogAnchor()).toBe(one('[data-arena-region="ticker"] [data-zone="action-log-panel"]'));
     expectCentredOn(measureTokenFlyout('point', 'gain')?.from, BOX.logPanel, FAN.from);
-    standIn.remove();
   });
 });
