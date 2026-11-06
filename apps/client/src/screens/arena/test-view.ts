@@ -277,16 +277,16 @@ export const ARENA_TEST_BOXES: {
   phone360: { viewport: { width: 360, height: 740 }, arena: { width: 360, height: 214 } },
   /** Back-solved from the 14 px overlap. */
   phone375: { viewport: { width: 375, height: 812 }, arena: { width: 375, height: 282 } },
-  /** Assumed: the grid fits the region; the plate does not, with 8 seats. */
-  phone390: { viewport: { width: 390, height: 844 }, arena: { width: 390, height: 300 } },
+  /** Check 1 (2026-11-06), measured with 3 seats: the full strip is 116 px at 390 (two pill rows), not 160. */
+  phone390: { viewport: { width: 390, height: 844 }, arena: { width: 390, height: 354 } },
   /** 214 − (174 − 100): the 2-seat Duplicator's two-row dock. */
   duplicator360: { viewport: { width: 360, height: 740 }, arena: { width: 360, height: 140 } },
-  /** `seat-layout.test.ts` TABLET (portrait). */
-  tablet: { viewport: { width: 768, height: 1024 }, arena: { width: 768, height: 560 } },
-  /** Derived: 390 − ≈ 89 top row − 125.5 hand row (L75-03 rule). */
-  landscape: { viewport: { width: 844, height: 390 }, arena: { width: 844, height: 176 } },
-  /** Derived: 375 − 89 − 124. */
-  landscapeSmall: { viewport: { width: 667, height: 375 }, arena: { width: 667, height: 162 } },
-  /** `seat-layout.test.ts` DESKTOP. */
-  desktop: { viewport: { width: 1440, height: 900 }, arena: { width: 1000, height: 600 } },
+  /** Check 1 (2026-11-06), measured at 768×1024 (portrait, full band). */
+  tablet: { viewport: { width: 768, height: 1024 }, arena: { width: 768, height: 469 } },
+  /** Check 1 (2026-11-06), measured with 8 seats: 390 − 91 top row − 141 bottom row. */
+  landscape: { viewport: { width: 844, height: 390 }, arena: { width: 844, height: 159 } },
+  /** Check 1 (2026-11-06), measured with 8 seats: 375 − 91 − 124. */
+  landscapeSmall: { viewport: { width: 667, height: 375 }, arena: { width: 667, height: 160 } },
+  /** Check 1 (2026-11-06), measured at 1440×900: the 336 px log column leaves a 1104 px arena. */
+  desktop: { viewport: { width: 1440, height: 900 }, arena: { width: 1104, height: 489 } },
 };

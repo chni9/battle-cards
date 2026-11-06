@@ -6488,3 +6488,23 @@ and 12 (Lot 75 plan, Appendix A.7); `docs/backlog_v7_test_classification.md` (fx
   behavior tests.
 
 ---
+
+## 2026-11-06 — Lot 75 Check 1: measured arena test boxes (L75-03, L75-13)
+
+- **Context.** The batched browser Check 1 (`?ui=next`, dedicated dev servers) re-measured every
+  `ARENA_TEST_BOXES` arena height against the live arena region.
+- **Confirmed, unchanged.** `phone360` 214 px (full strip 160, hand 131); `phone375` 282 px (strip 160,
+  hand 135); `duplicator360` 140 px (compact arena 258 less the 118 px the band gives back; the
+  Duplicator dock is 174 px).
+- **Updated** (`screens/arena/test-view.ts`):
+  - `phone390` 300 → 354 px. The plan had assumed it. At 390 px the full strip is 116 px (two pill rows),
+    not 160. A fresh game with 8 seats there can read a full band; a band held compact from a narrower width
+    stays compact, which is benign (`bottomBandSavingsPx` over-estimates wider than 375 px, as the L75-13
+    numbers note says).
+  - `landscape` 176 → 159 px (844×390, 8 seats: 390 − 91 top row − 141 bottom row); `landscapeSmall` 162 →
+    160 px (667×375: 375 − 91 − 124).
+  - `desktop` 1000×600 → 1104×489 (1440×900: the 336 px log column leaves a 1104 px arena).
+  - `tablet` 560 → 469 px (768×1024, portrait, full band).
+- **Constant.** `COMPACT_STRIP_PX` 61 → 67 (8 px padding + a 59 px thumb: 44 px wide at 3:4). The savings
+  at 360 / 375 / 768 px are 118 / 122 / 195 (were 124 / 128 / 201).
+- **No rule, value or protocol change.**
