@@ -13,8 +13,8 @@
  *   `ResizeObserver`, the `use-arena-layout-box.ts` pattern), so a mode change only moves the panel.
  *   While a live `[data-tutorial-highlight]` element (or its ring and arrow) overlaps that corner, the
  *   panel flips to the arena region's bottom edge (`placeCoach`, designer 2026-11-06, Check 2 stop item
- *   S4): at 375×812 the corner covered the opponent seat and the Incoming plate. The marks are measured
- *   as the callout layer measures them (live sheet layer, not inert, not empty), on each frame, because
+ *   S4): at 375×812 the corner covered the opponent seat and the Incoming plate. The marks are read
+ *   with the callout layer's own reader (`liveTutorialMarks`: live sheet layer, not inert, not empty), on each frame, because
  *   sheets and the fan move without notice.
  * - **Focus.** The slot's mousedown is prevented, so × and Got it never move focus out of an open
  *   sheet. From the keyboard, × first hands focus to the top bar's Menu (where Show coach lives), and
@@ -26,6 +26,7 @@ import { useLayoutEffect, useRef, useState, type ReactElement } from 'react';
 import { createPortal } from 'react-dom';
 
 import { CoachPanel } from '../../ui/coach/coach-panel';
+import { liveTutorialMarks } from '../../ui/coach/live-tutorial-marks';
 import { Z_INDEX } from '../../ui/layers';
 import { Button } from '../../ui/primitives/button';
 import { liveSheetId } from '../../ui/primitives/sheet-stack';
@@ -54,20 +55,6 @@ const UNMEASURED_SLOT: SlotPosition = { top: COACH_INSET_PX, left: COACH_INSET_P
 
 const toRect = (rect: DOMRect): Rect => ({ left: rect.left, top: rect.top, width: rect.width, height: rect.height });
 
-/** The live mark rects, with the callout layer's rules (`ui/coach/tutorial-callout.tsx`): the live sheet layer only, not inert, not empty. */
-function liveMarkRects(live: string | null): readonly Rect[] {
-  const marks: Rect[] = [];
-  for (const element of Array.from(document.querySelectorAll('[data-tutorial-highlight]'))) {
-    if (element.closest('[inert]') !== null) continue;
-    const sheetId = element.closest('[data-zone="sheet-overlay"]')?.getAttribute('data-sheet-id') ?? null;
-    if (sheetId !== live) continue;
-    const rect = element.getBoundingClientRect();
-    if (rect.width === 0 || rect.height === 0) continue;
-    marks.push(toRect(rect));
-  }
-  return marks;
-}
-
 export function TutorialCoachHost({ coach, onHide, onAck }: TutorialCoachHostProps): ReactElement {
   const box = useVisualViewportBox();
   const slotRef = useRef<HTMLDivElement>(null);
@@ -88,7 +75,7 @@ export function TutorialCoachHost({ coach, onHide, onAck }: TutorialCoachHostPro
         coach: { width: size.width, height: size.height },
         // In the host's coordinates, which start at the visual viewport's offset.
         arena: { ...rect, left: rect.left - box.offsetLeft, top: rect.top - box.offsetTop },
-        marks: liveMarkRects(liveSheetId(store.getSnapshot())).map((mark) => ({
+        marks: liveTutorialMarks(liveSheetId(store.getSnapshot())).map(({ rect: mark }) => ({
           ...mark,
           left: mark.left - box.offsetLeft,
           top: mark.top - box.offsetTop,

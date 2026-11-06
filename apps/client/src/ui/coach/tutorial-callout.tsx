@@ -30,6 +30,7 @@ import { motionAttribute } from '../primitives/chrome-classes';
 import { liveSheetId } from '../primitives/sheet-stack';
 import { useSheetStackStore } from '../primitives/sheet-stack-context';
 import { useVisualViewportBox } from '../use-visual-viewport-box';
+import { liveTutorialMarks } from './live-tutorial-marks';
 import { calloutPlacement, type CalloutArrowSide, type CalloutRect } from './tutorial-callout-geometry';
 
 export interface TutorialCalloutLayerProps {
@@ -84,19 +85,10 @@ export function TutorialCalloutLayer({ active }: TutorialCalloutLayerProps): Rea
   useLayoutEffect(() => {
     if (!active) return;
     const measure = (): void => {
-      const live = liveSheetId(store.getSnapshot());
-      const next: CalloutTarget[] = [];
-      for (const element of Array.from(document.querySelectorAll('[data-tutorial-highlight]'))) {
-        if (element.closest('[inert]') !== null) continue;
-        const sheetId = element.closest('[data-zone="sheet-overlay"]')?.getAttribute('data-sheet-id') ?? null;
-        if (sheetId !== live) continue;
-        const rect = element.getBoundingClientRect();
-        if (rect.width === 0 || rect.height === 0) continue;
-        next.push({
-          id: element.getAttribute('data-tutorial-highlight') ?? '',
-          rect: { left: rect.left - offsetLeft, top: rect.top - offsetTop, width: rect.width, height: rect.height },
-        });
-      }
+      const next: CalloutTarget[] = liveTutorialMarks(liveSheetId(store.getSnapshot())).map(({ id, rect }) => ({
+        id,
+        rect: { left: rect.left - offsetLeft, top: rect.top - offsetTop, width: rect.width, height: rect.height },
+      }));
       setTargets((current) => (sameTargets(current, next) ? current : next));
     };
     measure();

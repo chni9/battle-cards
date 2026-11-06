@@ -1288,8 +1288,10 @@ the new panel (`help/hint-overlay.tsx` renders it since L75-06).
   `aria-hidden`, and re-measures every animation frame while active. It draws the live sheet's own
   targets while a sheet is live, else the table's, and skips a zero-size or `inert` target, so no
   scroller, `overflow-hidden` region or sheet body clips it. Full motion pulses the ring's opacity;
-  reduced motion keeps it static (`data-motion`). Real incoming threats keep the plate badges' `data-tone`
-  rings and get no callout.
+  reduced motion keeps it static (`data-motion`). `live-tutorial-marks.ts` `liveTutorialMarks()` is the one
+  reader of the live marks (live sheet layer, not `inert`, not empty), shared with the coach's placement
+  so the coach never dodges a mark the layer does not draw. Real incoming threats keep the plate badges'
+  `data-tone` rings and get no callout.
 
 ## Table banners (ui/banner/, L72-18)
 
