@@ -1539,6 +1539,11 @@ Appendix A). Each Lot 74 task appends its bullet here, in task order.
     header, with V2's 'You are a spectator. Actions are locked while rewards (if any) resolve.'.
     A Reanimating POV keeps the seated strip, labeled by its 'Reanimating' badge, and the seated
     tiers. On the finished board neither header line nor Leave shows (the flag is Return home).
+  - The Watching header takes `compact` with the portrait band (`data-watching-header`, designer
+    2026-11-06): one row, Leave table as an icon with its name and `title`, the locked line spoken
+    only. `SpectatorStrip` (walk-in) and `SelfStrip` (eliminated) both pass it; `bandSavingsPx` credits
+    each POV its real saving, so an eliminated or walk-in POV, which has no hand cards to shrink, no
+    longer over-counts the hand term.
   - Leave table bumps `TopBar`'s `confirmRequest`, which opens the flag's leave confirm. The
     confirm's latch is per open (an epoch), so one press sends one leave.
   - POV elimination: when the POV becomes Watching, and on a first paint already Watching,

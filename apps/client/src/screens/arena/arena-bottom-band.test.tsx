@@ -9,10 +9,10 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { renderUi, type RenderUiOptions } from '../../test/render';
 import { heightBoundHandCardWidthPx } from '../../ui/card/hand-card-size';
-import { SEAT_BOX, type LayoutBox } from '../../view-model/seat-layout';
+import { layoutSeats, SEAT_BOX, type LayoutBox } from '../../view-model/seat-layout';
 import { makeCard, makeSelf } from '../../view-model/test-fixtures';
 import { ArenaScreen, type ArenaScreenProps } from './arena-screen';
-import { BAND_HYSTERESIS_PX, bottomBandSavingsPx, COMPACT_HAND_CARD_W_PX, PLATE_FOOTPRINT_PX } from './bottom-band';
+import { BAND_HYSTERESIS_PX, bandSavingsPx, bottomBandSavingsPx, COMPACT_HAND_CARD_W_PX, PLATE_FOOTPRINT_PX, plateOverlapPx } from './bottom-band';
 import { SEAT_GRID_GAP_PX } from './seat-geometry';
 import {
   ARENA_TEST_BOXES,
@@ -67,6 +67,41 @@ const pressAndLift = (): void => {
   fireEvent.pointerDown(within(one('[data-arena-region="hand"]')).getByRole('button', { name: 'Basic attack, 1 damage' }), { ...PRIMARY, ...PRESS });
   fireEvent.pointerMove(window, { ...PRIMARY, ...LIFT });
 };
+
+describe('the Watching header compacts with the band (designer 2026-11-06, S3)', () => {
+  /** What the plate covers once the band has given back this POV's real saving to a 360×740 arena. */
+  const overlapAfterCompacting = (view: PlayingStateView): number => {
+    const { viewport, arena } = ARENA_TEST_BOXES.phone360;
+    const grown = { width: arena.width, height: arena.height + bandSavingsPx(view, viewport.width) };
+    return plateOverlapPx(layoutSeats(view, { viewport, arena: grown }), grown, PLATE_FOOTPRINT_PX);
+  };
+
+  it('an eliminated POV at 360×740 with 8 seats goes compact: the strip and its Watching header, one row; no seat is left under the plate', () => {
+    const view = makeArenaView({ seatCount: 8, pov: 'eliminated', overrides: { currentTurnPlayerId: 'p1' } });
+    const { props } = setupAt(ARENA_TEST_BOXES.phone360, view);
+    expect([band(), strip(), one('[data-pov-strip]').getAttribute('data-watching-header')]).toEqual(['compact', 'compact', 'compact']);
+    expect(within(one('[data-pov-strip]')).getByRole('button', { name: 'Leave table' })).toBeTruthy();
+    expect(overlapAfterCompacting(view)).toBeLessThanOrEqual(0);
+    expectNoArenaIntent(props);
+  });
+
+  it('a walk-in at 360×740 with 8 seats goes compact too, and keeps Claim a seat and Leave table', () => {
+    const view = makeArenaView({ seatCount: 8, pov: 'walk-in' });
+    const stub = stubArenaLayout(ARENA_TEST_BOXES.phone360.viewport, ARENA_TEST_BOXES.phone360.arena);
+    layout = stub;
+    const props = makeArenaProps({ view, onReopenClaim: vi.fn() });
+    renderUi(<ArenaScreen {...props} />);
+    expect([band(), one('[data-spectator-strip]').getAttribute('data-spectator-strip'), one('[data-pov-strip]').getAttribute('data-watching-header')]).toEqual(['compact', 'compact', 'compact']);
+    const header = within(one('[data-pov-strip]'));
+    expect([header.getByRole('button', { name: 'Claim a seat' }), header.getByRole('button', { name: 'Leave table' })]).toHaveLength(2);
+    expect(overlapAfterCompacting(view)).toBeLessThanOrEqual(0);
+  });
+
+  it('keeps the full Watching strip while the band is full (3 seats at 360×740)', () => {
+    setupAt(ARENA_TEST_BOXES.phone360, makeArenaView({ seatCount: 3, pov: 'walk-in' }));
+    expect([band(), one('[data-spectator-strip]').getAttribute('data-spectator-strip'), one('[data-pov-strip]').getAttribute('data-watching-header')]).toEqual(['full', 'full', 'full']);
+  });
+});
 
 describe('the compact bottom band (R5)', () => {
   it('compacts at 360×740 with 8 seats: one-row strip, 52 px hand cards, the dock keeps its controls, every anchor stays', () => {

@@ -146,7 +146,7 @@ export function SelfStrip({
       data-self-strip={compact ? 'compact' : 'full'}
       className={`flex w-full flex-col gap-2 ${compact ? 'px-2 py-1' : 'px-4 py-2'}`}
     >
-      {model.pov === 'watching' && model.leave && onLeave !== undefined ? <WatchingHeader model={model} onLeave={onLeave} /> : null}
+      {model.pov === 'watching' && model.leave && onLeave !== undefined ? <WatchingHeader model={model} onLeave={onLeave} compact={compact} /> : null}
       <div className={compact ? 'flex min-w-0 flex-wrap items-center gap-x-2' : 'flex items-start gap-3'}>
         <KitPortrait
           kitId={kitId}

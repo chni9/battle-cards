@@ -569,6 +569,7 @@ function ArenaScreenInner(props: ArenaScreenProps): ReactElement {
         {strip.resources === null ? (
           <SpectatorStrip
             model={strip}
+            compact={mode === 'landscape-compact' || band === 'compact'}
             onLeave={requestLeaveConfirm}
             {...(props.onReopenClaim !== undefined ? { onClaimSeat: props.onReopenClaim } : {})}
           />

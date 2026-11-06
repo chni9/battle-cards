@@ -27,6 +27,7 @@ import {
   type SeatLayout,
   type Size,
 } from '../../view-model/seat-layout';
+import { povModeOf } from '../../view-model/seats';
 import { seatCenters, seatRect } from './seat-geometry';
 
 export type BottomBand = 'full' | 'compact';
@@ -72,6 +73,37 @@ export function bottomBandSavingsPx(viewportWidth: number): number {
 }
 
 /**
+ * The walk-in's Watching strip at 360 and 375 px, full: header panel, Claim a seat, Leave table and the
+ * locked line (183 px, measured in Check 1, 2026-11-06; S3). It has no kit and no hand.
+ */
+export const SPECTATOR_STRIP_FULL_PX = 183;
+/** The compact Watching strip: `py-1` (8 px), the header's `py-1` (8 px) and one 44 px row (title, Claim a seat, a Leave icon). */
+export const SPECTATOR_STRIP_COMPACT_PX = 60;
+/**
+ * What an eliminated POV's compact Watching header gives back inside its kit strip: the full header
+ * (`py-2`, the 44 px row, the 6 px gap and the two-line locked line, 102 px) less the compact one
+ * (`py-1` and the row, 52 px). Pill and line wrapping depend on font metrics, so this is a modelled
+ * constant that `BAND_HYSTERESIS_PX` backs up, and Check 3 re-measures it.
+ */
+export const WATCHING_HEADER_SAVING_PX = 50;
+
+/**
+ * The height (px) the compact band gives back for this POV (designer 2026-11-06, S3). A seated or
+ * reanimating POV: `bottomBandSavingsPx`. An eliminated POV holds no hand cards to shrink, so it gets the
+ * kit strip's saving and its Watching header's, without the hand term. A walk-in has no kit strip and no
+ * hand: only the Watching strip's own difference. The finished board shows an eliminated POV's strip without
+ * the header, so it is credited `WATCHING_HEADER_SAVING_PX` it does not give back.
+ */
+export function bandSavingsPx(view: PlayingStateView, viewportWidth: number): number {
+  if (view.isSpectator === true) {
+    return SPECTATOR_STRIP_FULL_PX - SPECTATOR_STRIP_COMPACT_PX;
+  }
+  return povModeOf(view) === 'watching'
+    ? FULL_STRIP_PX - COMPACT_STRIP_PX + WATCHING_HEADER_SAVING_PX
+    : bottomBandSavingsPx(viewportWidth);
+}
+
+/**
  * The plate rect in arena pixels for `mode`, `height` tall: bottom-anchored at `PLATE_BOX[mode]` and
  * growing upward, as `CentralPlate` draws it (its `bottom` style).
  */
@@ -114,7 +146,7 @@ export function bottomBandFor(view: PlayingStateView, box: LayoutBox, current: B
   if (layoutModeFor(box.viewport) !== 'portrait' || box.arena.width === 0) {
     return 'full';
   }
-  const slack = current === 'compact' ? bottomBandSavingsPx(box.viewport.width) + BAND_HYSTERESIS_PX : 0;
+  const slack = current === 'compact' ? bandSavingsPx(view, box.viewport.width) + BAND_HYSTERESIS_PX : 0;
   const judged: LayoutBox = { viewport: box.viewport, arena: { width: box.arena.width, height: box.arena.height - slack } };
   return plateOverlapPx(layoutSeats(view, judged), judged.arena, PLATE_FOOTPRINT_PX) > 0 ? 'compact' : 'full';
 }

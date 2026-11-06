@@ -8,7 +8,8 @@ import { describe, expect, it } from 'vitest';
 import { layoutSeats, PLATE_BOX, SEAT_BOX, type LayoutBox } from '../../view-model/seat-layout';
 import { makeSelf } from '../../view-model/test-fixtures';
 import {
-  BAND_HYSTERESIS_PX, bottomBandFor, bottomBandSavingsPx, COMPACT_HAND_CARD_W_PX, PLATE_FOOTPRINT_PX, plateOverlapPx, plateRect,
+  BAND_HYSTERESIS_PX, bandSavingsPx, bottomBandFor, bottomBandSavingsPx, COMPACT_HAND_CARD_W_PX, PLATE_FOOTPRINT_PX, plateOverlapPx, plateRect,
+  SPECTATOR_STRIP_COMPACT_PX, SPECTATOR_STRIP_FULL_PX, WATCHING_HEADER_SAVING_PX,
   type BottomBand,
 } from './bottom-band';
 import { SEAT_GRID_GAP_PX } from './seat-geometry';
@@ -39,6 +40,37 @@ describe('bottomBandSavingsPx (A.6)', () => {
   it('gives back the strip difference plus the hand height the 52 px cards save, rounded up', () => {
     expect(COMPACT_HAND_CARD_W_PX).toBe(52);
     expect([bottomBandSavingsPx(360), bottomBandSavingsPx(375), bottomBandSavingsPx(768)]).toEqual([118, 122, 195]);
+  });
+});
+
+describe('bandSavingsPx: the real saving of each POV (designer 2026-11-06, S3)', () => {
+  const walkIn = makeArenaView({ seatCount: 8, pov: 'walk-in' });
+  const eliminated = makeArenaView({ seatCount: 8, pov: 'eliminated' });
+  const reanimating = makeArenaView({ seatCount: 8, pov: 'reanimating' });
+
+  it('a seated or reanimating POV gives back the self strip and hand saving, unchanged', () => {
+    expect([bandSavingsPx(EIGHT, 360), bandSavingsPx(reanimating, 360)]).toEqual([bottomBandSavingsPx(360), bottomBandSavingsPx(360)]);
+  });
+
+  it('a walk-in gives back only the Watching strip difference: no kit strip, no hand cards', () => {
+    expect(bandSavingsPx(walkIn, 360)).toBe(SPECTATOR_STRIP_FULL_PX - SPECTATOR_STRIP_COMPACT_PX);
+    expect(SPECTATOR_STRIP_FULL_PX).toBe(183);
+  });
+
+  it('an eliminated POV gives back the kit strip and the Watching header difference, with no hand cards to shrink', () => {
+    const handTerm = bottomBandSavingsPx(360) - (160 - 67);
+    expect(handTerm).toBeGreaterThan(0);
+    expect(bandSavingsPx(eliminated, 360)).toBe(bottomBandSavingsPx(360) - handTerm + WATCHING_HEADER_SAVING_PX);
+  });
+
+  it('judges the band with that saving: a walk-in at 360×740 with 8 seats stays compact until the arena has its own savings and the slack to spare', () => {
+    const phone = ARENA_TEST_BOXES.phone360;
+    const savings = bandSavingsPx(walkIn, phone.viewport.width);
+    expect(savings).not.toBe(bottomBandSavingsPx(phone.viewport.width));
+    expect(bottomBandFor(walkIn, withArena(phone, THRESHOLD - 1), 'full')).toBe('compact');
+    expect(bottomBandFor(walkIn, withArena(phone, THRESHOLD - 1 + savings), 'compact')).toBe('compact');
+    expect(bottomBandFor(walkIn, withArena(phone, THRESHOLD + savings + BAND_HYSTERESIS_PX - 1), 'compact')).toBe('compact');
+    expect(bottomBandFor(walkIn, withArena(phone, THRESHOLD + savings + BAND_HYSTERESIS_PX), 'compact')).toBe('full');
   });
 });
 
