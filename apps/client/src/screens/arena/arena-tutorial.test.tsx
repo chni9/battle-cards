@@ -305,3 +305,52 @@ describe('tutorial table states (§6.10, §6.12, L51-07, Lot 45)', () => {
     expectNoArenaIntent(props);
   });
 });
+
+describe('the coach slot flips below its mark (designer 2026-11-06, S4)', () => {
+  const ARENA_RECT = new DOMRect(0, 100, 375, 282);
+  const SEAT_RECT = new DOMRect(150, 110, 76, 92);
+  const HAND_RECT = new DOMRect(0, 600, 375, 120);
+  const COACH_RECT = new DOMRect(0, 0, 352, 130);
+  /** The ticker row, well above the arena. */
+  const LOG_RECT = new DOMRect(0, 20, 375, 44);
+  const rectFor = (element: Element): DOMRect | undefined => {
+    if (element.getAttribute('data-arena-region') === 'arena') return ARENA_RECT;
+    if (element.hasAttribute('data-tutorial-coach-slot')) return COACH_RECT;
+    if (element.getAttribute('data-zone') === 'opponent-seat') return SEAT_RECT;
+    if (element.getAttribute('data-zone') === 'hand') return HAND_RECT;
+    if (element.getAttribute('data-zone') === 'log-collapsed') return LOG_RECT;
+    return undefined;
+  };
+  const slot = (): HTMLElement => one('[data-tutorial-coach-slot]');
+  const slotTop = (): number => Number.parseFloat(slot().style.top);
+  /** The arena top inset 8 px, or the arena bottom edge less the coach and 8 px. */
+  const TOP = ARENA_RECT.top + 8;
+  const BOTTOM = ARENA_RECT.top + ARENA_RECT.height - 8 - COACH_RECT.height;
+
+  it('sits top-left until the marked element overlaps it, flips to the arena bottom for the opponent mark, and returns', async () => {
+    const phone = ARENA_TEST_BOXES.phone375;
+    stub = stubArenaLayout(phone.viewport, phone.arena, { rectFor });
+    const { user } = setup(0);
+    // Step 0 marks 'your-zone', which the stub gives the arena box: it overlaps the corner, so use the first mark that does not.
+    await ack(user, 1);
+    expect(one('[data-tutorial-highlight]').getAttribute('data-tutorial-highlight')).toBe('hand');
+    expect([slotTop(), slot().style.left]).toEqual([TOP, '8px']);
+    await ack(user, 5);
+    expectMarked('opponent', all('[data-zone="opponent-seat"]'));
+    expect(slotTop()).toBe(BOTTOM);
+    await ack(user, 1);
+    expect(one('[data-tutorial-highlight]').getAttribute('data-tutorial-highlight')).toBe('action-log');
+    expect(slotTop()).toBe(TOP);
+  });
+
+  it('stays non-modal and above the sheets after a flip: the slot keeps the host layer and takes presses', async () => {
+    const phone = ARENA_TEST_BOXES.phone375;
+    stub = stubArenaLayout(phone.viewport, phone.arena, { rectFor });
+    const { user } = setup(0);
+    await ack(user, 6);
+    expect(slotTop()).toBe(BOTTOM);
+    const host = slot().closest<HTMLElement>('[data-tutorial-coach-host]');
+    expect([host?.style.zIndex, host?.style.pointerEvents, slot().style.pointerEvents]).toEqual([String(Z_INDEX.coach), 'none', 'auto']);
+    expect(coach()?.getAttribute('role')).toBeNull();
+  });
+});

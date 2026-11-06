@@ -8,9 +8,14 @@
  *   toasts. It sits outside every sheet, so no sheet makes it inert and a press on it never reaches a
  *   backdrop. The panel stays non-modal (no role, no focus taken), so a sheet's focus trap keeps Tab
  *   and Esc.
- * - **Slot (K8).** The panel sits at the `[data-arena-region="arena"]` region's top-left, 8 px in,
+ * - **Slot (K8, S4).** The panel sits at the `[data-arena-region="arena"]` region's top-left, 8 px in,
  *   `min(22rem, 100% - 1rem)` wide, in every mode. The host measures that region itself (a
  *   `ResizeObserver`, the `use-arena-layout-box.ts` pattern), so a mode change only moves the panel.
+ *   While a live `[data-tutorial-highlight]` element (or its ring and arrow) overlaps that corner, the
+ *   panel flips to the arena region's bottom edge (`placeCoach`, designer 2026-11-06, Check 2 stop item
+ *   S4): at 375×812 the corner covered the opponent seat and the Incoming plate. The marks are measured
+ *   as the callout layer measures them (live sheet layer, not inert, not empty), on each frame, because
+ *   sheets and the fan move without notice.
  * - **Focus.** The slot's mousedown is prevented, so × and Got it never move focus out of an open
  *   sheet. From the keyboard, × first hands focus to the top bar's Menu (where Show coach lives), and
  *   Got it hands it to the next step's Got it (else its ×). Only a Got it pressed with focus inside
@@ -23,8 +28,12 @@ import { createPortal } from 'react-dom';
 import { CoachPanel } from '../../ui/coach/coach-panel';
 import { Z_INDEX } from '../../ui/layers';
 import { Button } from '../../ui/primitives/button';
+import { liveSheetId } from '../../ui/primitives/sheet-stack';
+import { useSheetStackStore } from '../../ui/primitives/sheet-stack-context';
 import { useVisualViewportBox } from '../../ui/use-visual-viewport-box';
+import type { Rect } from '../../view-model/drop-target';
 import { GOT_IT_ACTION_LABEL, HIDE_COACH_ARIA_LABEL } from '../../view-model/table-copy';
+import { COACH_INSET_PX, placeCoach } from './coach-placement';
 import { MENU_LABEL } from './top-bar-model';
 import type { ArenaCoachView } from './use-arena-tutorial';
 
@@ -36,15 +45,28 @@ export interface TutorialCoachHostProps {
   onAck: () => void;
 }
 
-/** The panel's inset from the arena region's top-left corner. */
-const COACH_INSET_PX = 8;
-
 interface SlotPosition {
   readonly top: number;
   readonly left: number;
 }
 
 const UNMEASURED_SLOT: SlotPosition = { top: COACH_INSET_PX, left: COACH_INSET_PX };
+
+const toRect = (rect: DOMRect): Rect => ({ left: rect.left, top: rect.top, width: rect.width, height: rect.height });
+
+/** The live mark rects, with the callout layer's rules (`ui/coach/tutorial-callout.tsx`): the live sheet layer only, not inert, not empty. */
+function liveMarkRects(live: string | null): readonly Rect[] {
+  const marks: Rect[] = [];
+  for (const element of Array.from(document.querySelectorAll('[data-tutorial-highlight]'))) {
+    if (element.closest('[inert]') !== null) continue;
+    const sheetId = element.closest('[data-zone="sheet-overlay"]')?.getAttribute('data-sheet-id') ?? null;
+    if (sheetId !== live) continue;
+    const rect = element.getBoundingClientRect();
+    if (rect.width === 0 || rect.height === 0) continue;
+    marks.push(toRect(rect));
+  }
+  return marks;
+}
 
 export function TutorialCoachHost({ coach, onHide, onAck }: TutorialCoachHostProps): ReactElement {
   const box = useVisualViewportBox();
@@ -53,22 +75,42 @@ export function TutorialCoachHost({ coach, onHide, onAck }: TutorialCoachHostPro
   // Armed only by a Got it pressed with focus inside the slot (the keyboard), cleared on use.
   const refocus = useRef(false);
 
+  const store = useSheetStackStore();
   useLayoutEffect(() => {
     const arena = document.querySelector('[data-arena-region="arena"]');
     if (arena === null) return;
     const measure = (): void => {
-      const rect = arena.getBoundingClientRect();
-      const top = rect.top - box.offsetTop + COACH_INSET_PX;
-      const left = rect.left - box.offsetLeft + COACH_INSET_PX;
-      setSlot((previous) => (previous.top === top && previous.left === left ? previous : { top, left }));
+      const slotElement = slotRef.current;
+      if (slotElement === null) return;
+      const rect = toRect(arena.getBoundingClientRect());
+      const size = slotElement.getBoundingClientRect();
+      const placed = placeCoach({
+        coach: { width: size.width, height: size.height },
+        // In the host's coordinates, which start at the visual viewport's offset.
+        arena: { ...rect, left: rect.left - box.offsetLeft, top: rect.top - box.offsetTop },
+        marks: liveMarkRects(liveSheetId(store.getSnapshot())).map((mark) => ({
+          ...mark,
+          left: mark.left - box.offsetLeft,
+          top: mark.top - box.offsetTop,
+        })),
+      });
+      setSlot((previous) => (previous.top === placed.top && previous.left === placed.left ? previous : { top: placed.top, left: placed.left }));
     };
     measure();
     const observer = new ResizeObserver(measure);
     observer.observe(arena);
+    // The marks move with sheets and the fan, which no observer reports: re-measure each frame, as the callout layer does.
+    let frame = 0;
+    const tick = (): void => {
+      measure();
+      frame = window.requestAnimationFrame(tick);
+    };
+    frame = window.requestAnimationFrame(tick);
     return () => {
       observer.disconnect();
+      window.cancelAnimationFrame(frame);
     };
-  }, [box.offsetTop, box.offsetLeft, box.width, box.height]);
+  }, [box.offsetTop, box.offsetLeft, box.width, box.height, store, coach.messageKey]);
 
   useLayoutEffect(() => {
     if (!refocus.current) return;
