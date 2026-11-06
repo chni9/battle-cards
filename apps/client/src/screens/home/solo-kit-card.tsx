@@ -44,7 +44,7 @@ export function SoloKitCard({ selection, randomOnly, disabled, onOpenKitPicker }
       <h2 id={titleId} className="font-v7-display text-v7-title leading-none text-v7-text">
         {YOUR_KIT_TITLE}
       </h2>
-      <p className="mt-2 font-v7-body text-v7-body text-v7-text-2">{KIT_PICKER_LEAD}</p>
+      <p className="mt-2 text-pretty font-v7-body text-v7-body text-v7-text-2">{KIT_PICKER_LEAD}</p>
       <div className="mt-3 flex items-center gap-3">
         <KitPortrait kitId={selection} size="tile" />
         <div className="flex min-w-0 flex-col items-start gap-2">
