@@ -1684,7 +1684,7 @@ Appendix A). Each Lot 74 task appends its bullet here, in task order.
   `TutorialCoachHost` portals the `CoachPanel` on `Z_INDEX.coach` at the arena region's top-left, or on its bottom
   edge while a marked element (with its ring and arrow, `COACH_MARK_CLEARANCE_PX`) or, while the player is
   targeting, a valid target seat overlaps that corner and the bottom box would cover them strictly less
-  (`placeCoach`, designer 2026-11-06; marks read by `liveTutorialMarks`). During the board tour and the Look gate (`coach.tour`) the slots are the viewport's top and bottom edges and under the opponents, least-covering first (S-B1); × hides
+  (`placeCoach`, designer 2026-11-06; marks read by `liveTutorialMarks`). During the board tour and the Look gate (`coach.tour`) the slots are the viewport's top and bottom edges and under the opponents, least-covering first (S-B1), the top one under the top bar on desktop (S-C2); × hides
   it, Menu → Show coach (`icon="coach"`, between How to play and Action log) reopens it, and new copy
   reopens it. A press on it never moves focus, so it hides or advances over an open sheet. While the tour
   or the Look gate is up, the commit's `allow` vetoes every send silently, no drag starts, Shop and Unspy

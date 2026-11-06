@@ -19,7 +19,8 @@
  *   `[data-zone="opponent-seat"]` elements; designer 2026-11-06, Q2-5). During the board tour and the Look gate only
  *   (`coach.tour`: the table is locked), the slots are the visible viewport's top and bottom edges and
  *   the one under the opponents, the least-covering winning (designer 2026-11-06, Gate B stop item
- *   S-B1); script steps keep the arena-only slots so the hand and dock stay usable. The marks are read
+ *   S-B1), the top one starting under the top bar on desktop (Gate C, S-C2); script steps keep the arena-only
+ *   slots so the hand and dock stay usable. The marks are read
  *   with the callout layer's own reader (`liveTutorialMarks`: live sheet layer, not inert, not empty), on each frame, because
  *   sheets and the fan move without notice.
  * - **Focus.** The slot's mousedown is prevented, so × and Got it never move focus out of an open
@@ -37,7 +38,7 @@ import { Z_INDEX } from '../../ui/layers';
 import { Button } from '../../ui/primitives/button';
 import { liveSheetId } from '../../ui/primitives/sheet-stack';
 import { useSheetStackStore } from '../../ui/primitives/sheet-stack-context';
-import { useVisualViewportBox } from '../../ui/use-visual-viewport-box';
+import { useViewportMode, useVisualViewportBox } from '../../ui/use-visual-viewport-box';
 import type { Rect } from '../../view-model/drop-target';
 import { GOT_IT_ACTION_LABEL, HIDE_COACH_ARIA_LABEL } from '../../view-model/table-copy';
 import { COACH_INSET_PX, placeCoach } from './coach-placement';
@@ -84,6 +85,7 @@ const toRect = (rect: DOMRect): Rect => ({ left: rect.left, top: rect.top, width
 
 export function TutorialCoachHost({ coach, onHide, onAck }: TutorialCoachHostProps): ReactElement {
   const box = useVisualViewportBox();
+  const onDesktop = useViewportMode() === 'desktop';
   const slotRef = useRef<HTMLDivElement>(null);
   const [slot, setSlot] = useState<SlotPosition>(UNMEASURED_SLOT);
   // Armed only by a Got it pressed with focus inside the slot (the keyboard), cleared on use.
@@ -116,9 +118,18 @@ export function TutorialCoachHost({ coach, onHide, onAck }: TutorialCoachHostPro
         })),
         ...(row !== undefined ? { opponents: { ...row, left: row.left - box.offsetLeft, top: row.top - box.offsetTop } } : {}),
       };
+      // On desktop the top slot starts under the top bar (Gate C, S-C2), so the coach never hides the turn strip.
+      const topBar = onDesktop ? document.querySelector('[data-arena-region="top-bar"]')?.getBoundingClientRect() : undefined;
       // The tour and the Look gate lock the table, so their coach may sit over the self strip and the hand (S-B1); a script step keeps the arena.
       const placed = placeCoach(
-        coach.tour ? { ...shared, bounds: 'viewport', viewport: { left: 0, top: 0, width: box.width, height: box.height } } : shared,
+        coach.tour
+          ? {
+              ...shared,
+              bounds: 'viewport',
+              viewport: { left: 0, top: 0, width: box.width, height: box.height },
+              ...(topBar !== undefined ? { topBar: { ...toRect(topBar), left: topBar.left - box.offsetLeft, top: topBar.top - box.offsetTop } } : {}),
+            }
+          : shared,
       );
       setSlot((previous) => (previous.top === placed.top && previous.left === placed.left ? previous : { top: placed.top, left: placed.left }));
     };
@@ -136,7 +147,7 @@ export function TutorialCoachHost({ coach, onHide, onAck }: TutorialCoachHostPro
       observer.disconnect();
       window.cancelAnimationFrame(frame);
     };
-  }, [box.offsetTop, box.offsetLeft, box.width, box.height, store, coach.messageKey, coach.tour]);
+  }, [box.offsetTop, box.offsetLeft, box.width, box.height, store, coach.messageKey, coach.tour, onDesktop]);
 
   useLayoutEffect(() => {
     if (!refocus.current) return;

@@ -220,4 +220,44 @@ describe('placeCoach during the tour (S-B1)', () => {
     const placed = placeCoach(tour(SMALL, [SMALL.seat], SMALL.seat));
     expect(placed.top + SMALL.coach.height).toBeLessThanOrEqual(740 - COACH_INSET_PX);
   });
+
+  describe('under the top bar on desktop (Gate C stop item S-C2)', () => {
+    /** 1440×900: the 91 px top bar, then the 489 px arena; the Incoming coach is 237 px tall. */
+    const DESKTOP = {
+      viewport: { left: 0, top: 0, width: 1440, height: 900 } satisfies Rect,
+      arena: { left: 40, top: 91, width: 1104, height: 489 } satisfies Rect,
+      coach: { width: 352, height: 237 },
+      plate: { left: 600, top: 300, width: 160, height: 96 } satisfies Rect,
+    };
+    const TOP_BAR: Rect = { left: 0, top: 0, width: 1440, height: 91 };
+    const onDesktop = (marks: readonly Rect[], topBar?: Rect): CoachPlacementInput => ({
+      coach: DESKTOP.coach, arena: DESKTOP.arena, marks, bounds: 'viewport', viewport: DESKTOP.viewport,
+      ...(topBar !== undefined ? { topBar } : {}),
+    });
+
+    it('starts the viewport top slot below the top bar, 8 px under it', () => {
+      expect(placeCoach(onDesktop([DESKTOP.plate])).top).toBe(COACH_INSET_PX);
+      expect(placeCoach(onDesktop([DESKTOP.plate], TOP_BAR))).toEqual({
+        edge: 'top', top: TOP_BAR.top + TOP_BAR.height + COACH_INSET_PX, left: 48,
+      });
+    });
+
+    it('covers none of the top bar, where the viewport-top slot covered it', () => {
+      const covered = (top: number): number => Math.max(0, Math.min(top + DESKTOP.coach.height, TOP_BAR.height) - Math.max(top, 0));
+      expect(covered(placeCoach(onDesktop([DESKTOP.plate])).top)).toBeGreaterThan(0);
+      expect(covered(placeCoach(onDesktop([DESKTOP.plate], TOP_BAR)).top)).toBe(0);
+    });
+
+    it('still picks the least-covering slot, so a mark under the lowered top slot sends the coach to the bottom edge', () => {
+      const underBar: Rect = { left: 60, top: 270, width: 200, height: 80 };
+      expect(placeCoach(onDesktop([underBar])).edge).toBe('top');
+      expect(placeCoach(onDesktop([underBar], TOP_BAR))).toEqual({ edge: 'bottom', top: 900 - COACH_INSET_PX - DESKTOP.coach.height, left: 48 });
+    });
+
+    it('keeps the top slot inside the viewport when the top bar leaves no room under it', () => {
+      const tall: Rect = { left: 0, top: 0, width: 1440, height: 800 };
+      const placed = placeCoach(onDesktop([], tall));
+      expect(placed.top + DESKTOP.coach.height).toBeLessThanOrEqual(900 - COACH_INSET_PX);
+    });
+  });
 });

@@ -6,7 +6,7 @@
  * the default box; and designer 2026-11-06 (Q2-5) adds a third slot under the opponent row for when
  * both of those overlap the marks. Designer 2026-11-06 (Gate B stop item S-B1, option b): during the
  * tour only, when the table is locked, the slots may leave the arena for the viewport's top and bottom
- * edges. Pure: no DOM, no React; `tutorial-coach-host.tsx` measures and calls it.
+ * edges, and on desktop the top one starts under the top bar (Gate C stop item S-C2). Pure: no DOM, no React; `tutorial-coach-host.tsx` measures and calls it.
  */
 
 import type { Rect } from '../../view-model/drop-target';
@@ -60,6 +60,12 @@ export type CoachPlacementInput = CoachPlacementBase &
         readonly bounds: 'viewport';
         /** The visible viewport, in the same coordinates as `arena`. */
         readonly viewport: Rect;
+        /**
+         * The top bar, passed on desktop only (designer 2026-11-06, Gate C stop item S-C2): the top slot
+         * then starts `COACH_INSET_PX` under it, so the coach never hides the turn strip's text. On a
+         * phone the bar is too thin to spare the height, so the host passes none.
+         */
+        readonly topBar?: Rect;
       }
   );
 
@@ -103,7 +109,9 @@ export function placeCoach(input: CoachPlacementInput): CoachPlacement {
   };
   const atTop = coveredAt(topEdge);
   if (input.bounds === 'viewport') {
-    const slots: CoachPlacement[] = [{ edge: 'top', top: topEdge, left }, { edge: 'bottom', top: bottomEdge, left }];
+    const belowBar =
+      input.topBar === undefined ? topEdge : Math.min(bottomEdge, Math.max(topEdge, input.topBar.top + input.topBar.height + COACH_INSET_PX));
+    const slots: CoachPlacement[] = [{ edge: 'top', top: belowBar, left }, { edge: 'bottom', top: bottomEdge, left }];
     if (opponents !== undefined) {
       const underEdge = Math.min(bottomEdge, Math.max(topEdge, opponents.top + opponents.height + COACH_MARK_CLEARANCE_PX));
       slots.push({ edge: 'under-opponents', top: underEdge, left });

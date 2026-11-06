@@ -351,6 +351,19 @@ describe('the coach slot flips below its mark (designer 2026-11-06, S4; S-B1)', 
     expect(slotTop()).toBe(VIEWPORT_BOTTOM);
   });
 
+  it('on desktop the tour top slot starts under the top bar, so the turn strip stays readable (Gate C, S-C2)', async () => {
+    const desktop = ARENA_TEST_BOXES.desktop;
+    const TOP_BAR_RECT = new DOMRect(0, 0, desktop.viewport.width, 91);
+    stub = stubArenaLayout(desktop.viewport, desktop.arena, {
+      rectFor: (element) => (element.getAttribute('data-arena-region') === 'top-bar' ? TOP_BAR_RECT : rectFor(element)),
+    });
+    const { user } = setup(0);
+    await ack(user, 1);
+    expect(mode()).toBe('desktop');
+    expect(one('[data-tutorial-highlight]').getAttribute('data-tutorial-highlight')).toBe('hand');
+    expect(slotTop()).toBe(TOP_BAR_RECT.height + 8);
+  });
+
   it('during the Look gate, which locks the table too, leaves the arena for the viewport bottom edge (S-B1)', () => {
     const phone = ARENA_TEST_BOXES.phone375;
     stub = stubArenaLayout(phone.viewport, phone.arena, { rectFor });

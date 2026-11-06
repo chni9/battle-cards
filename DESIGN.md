@@ -1333,7 +1333,8 @@ deleted in L75-11.
   2026-11-06, Q2-5). During the board tour and the Look gate (the table is locked), those three slots are the visible
   viewport's top edge, its bottom edge (8px in) and the one under the opponent row, over the self strip and
   the hand: `placeCoach` takes the one that covers the marks and arrows least, a tie going to top, then
-  bottom, then under (designer 2026-11-06, Gate B S-B1); script steps keep the arena-only slots. Its mousedown is
+  bottom, then under (designer 2026-11-06, Gate B S-B1). On desktop the tour's top slot starts 8px under the top
+  bar, so the coach never hides the turn strip (designer 2026-11-06, Gate C S-C2); script steps keep the arena-only slots. Its mousedown is
   prevented, so a press never moves focus out of an open sheet; from the keyboard,
   × moves focus to the top bar's Menu (Show coach) and Got it to the next step's Got it. Got it is a
   full-width primary Button (`data-tutorial-ack="got-it"`). The panel reopens from Menu → Show coach

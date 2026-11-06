@@ -7034,3 +7034,17 @@ Source: technical spec v7 §6.12; Lot 75 plan Part 2; Gate B report S-B1 (`gate-
   Look gate locks the table on the same grounds as the tour. Client-only: no rule, value or protocol change
   (`PROTOCOL_VERSION` stays 45).
 
+---
+
+## 2026-11-06 · [P] Gate C stop item S-C2: on desktop the tour coach starts under the top bar
+
+Source: technical spec v7 §6.12; Gate C report S-C2 (`gate-report-p2-C.md`); designer 2026-11-06, option (b).
+
+- At 1440×900 the viewport-top slot of the tour and the Look gate (8, 8) covered 22% of the top bar, hiding
+  the left of the turn strip (`Round N`, `Your turn`, the timer label). Nothing was lost for play (the table
+  is locked), but the player lost the orientation line.
+- On **desktop** the top slot now starts 8 px under the top bar. `CoachPlacementInput` (viewport mode) gains
+  an optional `topBar` rect, which `tutorial-coach-host.tsx` measures and passes in desktop mode only: a phone's
+  top bar is too thin to spare the height, and its top-slot steps stay as S-B1 set them. The least-covering
+  choice among top, bottom and under-opponents is unchanged. Client-only: no rule, value or protocol change
+  (`PROTOCOL_VERSION` stays 45).
