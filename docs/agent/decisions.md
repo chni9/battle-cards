@@ -6918,3 +6918,25 @@ field changes.
   `[data-arena-region="arena"]` itself; the coach stays non-modal and above sheets.
 
 ---
+
+## 2026-11-06 · [P] The arena is the only table: the switch goes, the stale key is cleared (L75-09)
+
+Source: technical spec v7 §4.4, §10.4, §11 (Q37); Appendix A `global-app-router`, `global-client-storage`,
+`end-finished-board-shell`, `turn-strip-timers` (Notes); the Lot 75 plan, Part 2 (A.13). Supersedes
+the 2026-11-06 L75-04 routing line "The default stays the classic table until L75-09".
+
+- **Routing.** `App.tsx` (playing) and `EndScreen` (finished board) always mount `ArenaScreen`, Classic
+  and tutorial rooms alike. `ui-switch.ts`, its test and `EndScreenProps.tableUi` are deleted. The arena
+  root keeps `data-arena="next"`: it is an anchor every arena test selects on, not a switch value.
+- **The key.** `GameApp` removes `localStorage['card-battle.v7.ui']` once per page load
+  (`retired-table-switch.ts`), in try/catch: a blocked store skips it and nothing reads the key again.
+  `?ui=classic` and `?ui=next` are not read, so they are no-ops and stay in the address bar.
+- **What's new.** `lot-72-v7` is not on `main` (checked 2026-11-06), so the flip appends two items to
+  it (10 become 12): the table, and one grouped `Fixed some bugs.` item for the two fixes that go live
+  with it (the turn timer bar; Upgrade on an opponent's Shield, Q37). Designer 2026-11-06 answered
+  Q2-1 (default text kept) and Q2-2 (one grouped item, not two). The title stays "New look" (Q2-3, not
+  asked, default kept). Every string is listed in the Lot 75 PR for designer review.
+- **Not yet.** `screens/table.tsx` and `screens/table/**` still compile, unreachable, until L75-10 and
+  L75-11 delete them in the same PR.
+
+---

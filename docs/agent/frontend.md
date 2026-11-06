@@ -24,7 +24,9 @@ Lot 63 hub What’s new with a **New** additions section, Lot 63 pool-buy
 action-log fog, Lot 64 Gambler start specials / weighted Draw / gambling death).
 
 **V7 (visual redesign "Arcade Holo") is in progress** (`docs/technical_spec_v7.md` +
-Appendix A `docs/technical_spec_v7_parity.md`, `docs/backlog_v7.md`, Lots 72–81). It is
+Appendix A `docs/technical_spec_v7_parity.md`, `docs/backlog_v7.md`, Lots 72–81). Since L75-09
+the table, the finished board and tutorial rooms are the V7 arena; `?ui=` is ignored. The old
+`screens/table*` is deleted in L75-10 and L75-11. It is
 client-only and lands side by side: the V2 design system below still governs every screen
 until that screen's V7 lot lands (spec v7 §4.4). Product context: `/PRODUCT.md`. V7
 design-system record: `/DESIGN.md`. On conflict, **code > spec v7 §5
@@ -36,8 +38,8 @@ design-system record: `/DESIGN.md`. On conflict, **code > spec v7 §5
 |---|---|---|
 | Home | No room — hub → online (create/join) or solo; How to play + What’s new + Feedback; `?code=` opens Online with Join pre-filled | `screens/home/home-screen.tsx` (+ `screens/home/*`) + `how-to-play-dialog.tsx` + `whats-new-dialog.tsx` + `feedback/feedback-dialog.tsx` |
 | Lobby | `phase: 'lobby'` — V7 mini arena: seats in seat colors, Ready, host Start / Kick / bots, table rules strip, hidden kit pick, chat, code Copy / Share, Feedback | `screens/lobby/lobby-screen.tsx` + `screens/lobby/*` |
-| Table | `phase: 'playing'` — felt shell, opponents arc, center-stage log, queue, timers, hand, economy | `screens/table.tsx` (+ `screens/table/*`) · `?ui=next` → `screens/arena/arena-screen.tsx` (the V7 arena; see `## Arena (V7, ?ui=next)`) |
-| End | `phase: 'finished'` — closable awards gallery; Classic **Play again**; hub leave hits ask-once; the finished board follows the same switch (`tableUi`) | `screens/end.tsx` + `game-over-dialog.tsx` + `view-model/game-over-awards.ts` |
+| Table | `phase: 'playing'` — the V7 arena (top bar, seats around the plate, self strip, hand fan, dock; tutorial coach and first-game hints) | `screens/arena/arena-screen.tsx` (+ `screens/arena/*`; see `## Arena (V7)`) |
+| End | `phase: 'finished'` — closable awards gallery; Classic **Play again**; hub leave hits ask-once; the finished board is the arena on `finalTable` (L74-24, L75-09) | `screens/end.tsx` + `game-over-dialog.tsx` + `view-model/game-over-awards.ts` |
 | Claim | V7 `Dialog` over Lobby, Table and End when `claimableSeats` is non-empty — sit or stay; a walk-in reopens it with **Claim a seat** (arena strip, lobby banner) | `screens/claim-seat-dialog.tsx` + `claim-seat.ts` |
 | Admin | `pathname === '/admin'` — password-gated designer analytics; not a game phase; no hub link (Lot 61) | `screens/admin/admin-app.tsx` |
 | Inbox (legacy URL) | `/inbox` redirects to `/admin/feedback`; `GET /api/inbox` unchanged | `App.tsx` (redirect only) |
@@ -1028,16 +1030,16 @@ its payloads and `PROTOCOL_VERSION` do not change.
     `Log tail`. A null log tail reads `Log tail: —` like the other null fields, with no empty
     region (L80-12). The legacy `screens/inbox.tsx` is gone (L80-09).
 
-## Arena (V7, ?ui=next)
+## Arena (V7)
 
 Technical spec v7 §6 and §4.4; the Lot 74 plan (`docs/superpowers/plans/2026-10-21-v7-lot-74-arena-1.md`,
 Appendix A). Each Lot 74 task appends its bullet here, in task order.
 
-- `screens/arena/arena-screen.tsx` (L74-01, spec v7 §4.4): the switch. `App.tsx` (playing) and
-  `EndScreen` (finished board, `tableUi`) mount `ArenaScreen` when `resolveTableUi(...)` is
-  `'next'`: `?ui=next` was set, in a Classic or (since L75-04) a tutorial room. The default keeps
-  `TableScreen`. `ArenaScreenProps` extends `TableScreenProps` (L74-21), so App and EndScreen
-  mount each board in its own branch and `TableScreen` keeps its props.
+- `screens/arena/arena-screen.tsx` (L74-01, L75-09, spec v7 §4.4): the only table. `App.tsx` (playing)
+  and `EndScreen` (finished board) always mount `ArenaScreen`, tutorial rooms included. `?ui=next` and
+  `?ui=classic` are ignored, and `GameApp` clears the retired `card-battle.v7.ui` once at boot
+  (`retired-table-switch.ts`; a blocked store is a no-op). Until L75-10, `ArenaScreenProps` still extends
+  `TableScreenProps`.
 - Regions (L74-01, §6.1, Q60): `ARENA_REGIONS` (`arena-regions.ts`) in DOM order: `top-bar`,
   `ticker`, `arena`, `self-strip`, `hand`, `dock`. Each is a `data-arena-region` element that
   always renders. Each shows its content or an empty state, except a live walk-in's dock, which
@@ -1519,7 +1521,7 @@ Appendix A). Each Lot 74 task appends its bullet here, in task order.
   lobby `STATE_UPDATE` as it arrives and reset by every new room or leave; L74-26 moved it out of
   App's per-render cache, which missed the solo launch's rules when React rendered only the first
   playing view of that burst) and App passes `cachedLobbyRules(lobbyRules, view)`; EndScreen passes
-  `FinishedStateView.lobbyRules`. Both mount `ArenaScreen` and `TableScreen` in their own branch.
+  `FinishedStateView.lobbyRules`. Both always mount `ArenaScreen`, the only table since L75-09.
   App also calls `forgetChatSeen(gameCode)` from an effect keyed on the room's lobby phase and code,
   after the lobby has rendered, so a rematch's arena starts with the lobby chat lines seen (the
   L74-16 store; never from a message handler, where a mounted arena would seed the count again).
@@ -1563,8 +1565,8 @@ Appendix A). Each Lot 74 task appends its bullet here, in task order.
     screen. Chat, log, Shop and rules re-render from the live view, so they stay open and an
     unsent chat draft survives a claim (Part 2 final review).
 - `screens/arena/dock.tsx`, `dock-model.ts`; `screens/end.finished-board.test.tsx` (L74-24, spec v7
-  §4.4, §6.12): the finished board. `EndScreen` mounts the arena on `finalTable` behind `?ui=next`
-  (tutorial finishes too since L75-04) with `readOnly`: every intent locked, the clock '—', Shop browse-only, and
+  §4.4, §6.12): the finished board. `EndScreen` mounts the arena on `finalTable`, the only
+  finished board since L75-09 (tutorial finishes included) with `readOnly`: every intent locked, the clock '—', Shop browse-only, and
   inspect, log and read-only chat (no composer). The dock adds **Stats** (`primary`, V2's word)
   from `dock.stats`; it calls `onShowStats`, which reopens Game over and does nothing while
   Feedback is open (`canReopenEndStats`). `dockHasControls` counts Stats, so a walk-in's finished
@@ -1685,8 +1687,8 @@ Appendix A). Each Lot 74 task appends its bullet here, in task order.
   anchor and sits on the visual viewport in every mode; the overlay stays `z-[110]`, above every
   `Z_INDEX` layer.
 - `screens/arena/use-arena-tutorial.ts`, `tutorial-coach-host.tsx`, `ui/coach/tutorial-callout.tsx` (L75-04,
-  spec v7 §6.12, §6.6.3, §14.3): the tutorial on the arena. `?ui=next` opens tutorial rooms and their
-  finished board here (`resolveTableUi`, R9). `useArenaTutorial` keeps V2's state in the arena (`tourStep`,
+  spec v7 §6.12, §6.6.3, §14.3): the tutorial on the arena. Tutorial rooms and their finished
+  board always open here, as the arena is the only table since L75-09 (R9). `useArenaTutorial` keeps V2's state in the arena (`tourStep`,
   `portraitInspected`, the idle index, the dismissed coach key) and derives the coach (tour, then Look,
   then script copy; 'Play' after `TUTORIAL_IDLE_MS` on the POV's turn), the tour highlight and the locks.
   `TutorialCoachHost` portals the `CoachPanel` on `Z_INDEX.coach` at the arena region's top-left, or on its bottom
@@ -1729,8 +1731,8 @@ Appendix A). Each Lot 74 task appends its bullet here, in task order.
     sheet and returns when it is restored.
   - `HintOverlay` portals the `ui/coach` compact card on `Z_INDEX.hint` (DESIGN.md › Coach panel),
     next to the first visible `[data-hint-anchor]`: 15.5rem wide in portrait and desktop, 22rem in
-    landscape-compact. The card keeps its identity across a mode change. The old table mounts the
-    same overlay under `?ui=classic` until L75-09.
+    landscape-compact. The card keeps its identity across a mode change. The arena is the only table
+    that mounts it since L75-09.
 - `view-model/incoming-threat-diff.ts`, `help/hint-copy.ts` (L75-07, spec v7 §10.1, Q52; R12): the
   `incoming-thief` hint keeps its id, title 'Incoming', selector order and dismissal, and takes its
   body from `INCOMING_THIEF_HINT_BODY[earliestIncomingThief(view.pendingEffects, view.you)]`: the
@@ -2113,7 +2115,7 @@ rules above are unchanged — this section only covers how the client looks.
   `main`: private Draw, invisible players are not targets, Sentence chip
   inspect, hand layout stays put, point chips cap at 50, your kit portrait
   is one step larger, and the action log shows icon-only resource nets
-  (unspied card sales hide the payout; unspied shop buys hide the price; resolve lines show each seat’s gain or loss). `lot-68` (2026-09-29) shipped Ghost Tax+, Shield+ vs Imposition, and fixed some bugs. `lot-69` stays as written. `lot-71` (2026-10-06) shipped on `main`: Spy Thief chooses one opponent (the upgrade hits every living opponent), and forfeiting or leaving the table pays kill rewards at the same time to queued attackers unless one player is left. Active Poison does not. The host can hide kits, deal kits at random, and set human turns from 5 to 180 seconds; players chat in the lobby and at the table until the room closes, and eliminated players and spectators share a separate chat. A Ghost's points from lost lives show as +? until that Ghost is spied. `lot-72` (2026-10-07: active-slot drop cancel; no Poison tick during Block; the lobby host never passes to a bot) shipped on `main` (promote #79) before V7 Lot 72 merged. **V7 (technical spec v7 §10.4):** `lot-72-v7` (2026-10-26, "New look") is the open V7 entry; each V7 player-facing PR appends one Before / After item per screen area during the promotion freeze. New ids never reuse an existing id: seen-state (`ui/release-storage.ts`) is keyed by id. First item: the §10.5 catalog-text fix (After `Fixed some bugs.`). Second item: the classic tutorial's resources tip no longer shows a stray life icon (After `Fixed some bugs.`). Third item: the turn timer after a fifth-active picker cancel (server fix L82-01, After `Fixed some bugs.`). Fourth item: the played card no longer also lands in the pool after a fifth-active picker (server fix L82-02, After `Fixed some bugs.`). Fifth item: Cancel on the fifth-active picker refunds the play's points (designer rule change L82-03). Sixth item: past elimination flashes no longer replay after a reconnect or on the finished board (Q63, L74-17, After `Fixed some bugs.`). Seventh item: the Lot 76 copy fixes (How to play Kits, Your kit, the kit picker and its Random kit, the Online Create helper, Prophet's ability and the random-special versos; L76-03, After `Fixed some bugs.`). Eighth item: Lobby item (L76-09, rewritten by L76-12 and L76-17): the lobby shows each seat in its player color, everyone can open the table rules, and Share sends a link that fills in the code. Ninth item: Home item (L76-04, rewritten by L76-06 and L76-07): Home has the new look, How to play is a deck of cards you swipe through, and Feedback shows Sent once your note is saved. Tenth item: the tip and tutorial copy fixes (typos and outdated Spy and reward text; L75-01, After `Fixed some bugs.`). Sentence chips sit
+  (unspied card sales hide the payout; unspied shop buys hide the price; resolve lines show each seat’s gain or loss). `lot-68` (2026-09-29) shipped Ghost Tax+, Shield+ vs Imposition, and fixed some bugs. `lot-69` stays as written. `lot-71` (2026-10-06) shipped on `main`: Spy Thief chooses one opponent (the upgrade hits every living opponent), and forfeiting or leaving the table pays kill rewards at the same time to queued attackers unless one player is left. Active Poison does not. The host can hide kits, deal kits at random, and set human turns from 5 to 180 seconds; players chat in the lobby and at the table until the room closes, and eliminated players and spectators share a separate chat. A Ghost's points from lost lives show as +? until that Ghost is spied. `lot-72` (2026-10-07: active-slot drop cancel; no Poison tick during Block; the lobby host never passes to a bot) shipped on `main` (promote #79) before V7 Lot 72 merged. **V7 (technical spec v7 §10.4):** `lot-72-v7` (2026-10-26, "New look") is the open V7 entry; each V7 player-facing PR appends one Before / After item per screen area during the promotion freeze. New ids never reuse an existing id: seen-state (`ui/release-storage.ts`) is keyed by id. First item: the §10.5 catalog-text fix (After `Fixed some bugs.`). Second item: the classic tutorial's resources tip no longer shows a stray life icon (After `Fixed some bugs.`). Third item: the turn timer after a fifth-active picker cancel (server fix L82-01, After `Fixed some bugs.`). Fourth item: the played card no longer also lands in the pool after a fifth-active picker (server fix L82-02, After `Fixed some bugs.`). Fifth item: Cancel on the fifth-active picker refunds the play's points (designer rule change L82-03). Sixth item: past elimination flashes no longer replay after a reconnect or on the finished board (Q63, L74-17, After `Fixed some bugs.`). Seventh item: the Lot 76 copy fixes (How to play Kits, Your kit, the kit picker and its Random kit, the Online Create helper, Prophet's ability and the random-special versos; L76-03, After `Fixed some bugs.`). Eighth item: Lobby item (L76-09, rewritten by L76-12 and L76-17): the lobby shows each seat in its player color, everyone can open the table rules, and Share sends a link that fills in the code. Ninth item: Home item (L76-04, rewritten by L76-06 and L76-07): Home has the new look, How to play is a deck of cards you swipe through, and Feedback shows Sent once your note is saved. Tenth item: the tip and tutorial copy fixes (typos and outdated Spy and reward text; L75-01, After `Fixed some bugs.`). Eleventh item: the table is the V7 arena (L75-09). Twelfth item: one grouped bug-fix item for the turn timer bar and Upgrade on an opponent's Shield (§6.10; §11, Q37; After `Fixed some bugs.`; designer 2026-11-06). Sentence chips sit
   on the caster (remaining turns in red) and open catalog inspect (L65-03). Play / later caster ticks / fire flash
   the table-wide red banner. Player-visible work updates the open What’s new
   entry in the same commit. No accounts, no protocol fields. Idle hub is unlabeled (not “Not connected”). Top-right **Beta**
@@ -2134,7 +2136,7 @@ rules above are unchanged — this section only covers how the client looks.
   ringed. Shop is **not**
   auto-opened; illegal clicks do not send (`tutorial-follow-coach`
   copy on the coach). Client idle 20s retitles the coach **Play** (not during tour or Look).
-  On the arena (`?ui=next`) the same rules run through `useArenaTutorial` and `tutorial-gate.ts` (L75-04, L75-05; `## Arena (V7, ?ui=next)`).
+  On the arena, the only table since L75-09, the same rules run through `useArenaTutorial` and `tutorial-gate.ts` (L75-04, L75-05; `## Arena (V7)`).
   **First-game hints (L46):** Classic live table only (`playKind !== 'tutorial'`). Same
   `CoachPanel` chrome as tutorial but **compact and more transparent**, `data-zone="first-game-hint"`, Got it / Skip all.
   Since L75-06 `HintOverlay` is the V7 `ui/coach` card on `Z_INDEX.hint` for both tables (Arena section).
@@ -2543,19 +2545,12 @@ rules above are unchanged — this section only covers how the client looks.
   `kitId` is public on this screen (fogged walk-ins omit it — placeholder portrait +
   Hidden kit). `finalTable` living seats still follow Spy / elim / walk-in overlay.
   Client ranks recap numbers only (`view-model/game-over-awards.ts`); do not parse `exportLog`.
-- **Table UI switch (technical spec v7 §4.4 · L72-20, removed in L75):** `?ui=next` writes
-  `localStorage['card-battle.v7.ui'] = 'next'`, `?ui=classic` removes it, else the stored
-  value applies; applied once per page load (`useState` initializer in `GameApp`); tutorial
-  rooms follow it since L75-04. Read only by `App.tsx` (playing) and `EndScreen` (`tableUi`),
-  each via `const Board = … ? ArenaScreen : TableScreen` so source-text literals stay single.
-  `ArenaScreen` is the V7 arena since L74-01 (`## Arena (V7, ?ui=next)`). Storage access is `try/catch` and a
-  blocked store degrades to classic (or to the param for that load); the param is never
-  stripped from the URL.
+- **Retired table switch (technical spec v7 §4.4; L72-20, retired by L75-09):** the arena is the only table. `retired-table-switch.ts` removes `localStorage['card-battle.v7.ui']` once per page load, in try/catch. `?ui=` is never read or stripped.
 - **Client storage keys** (no accounts; every helper guards the storage accessor in try/catch,
-  and the V7 switch also guards each read and write): localStorage
+  and the retired-switch clear also guards its remove): localStorage
   `card-battle.v6.howToPlaySeen`, `card-battle.v6.lastSeenReleaseId`, `card-battle.v6.hints`,
-  `card-battle.v6.feedbackAsked.<gameCode>` and `card-battle.v7.ui` (table switch, L72-20,
-  removed in L75); sessionStorage `card-battle:reconnection-token` and
+  `card-battle.v6.feedbackAsked.<gameCode>` and `card-battle.v7.ui` (retired by L75-09: cleared once at boot,
+  never read); sessionStorage `card-battle:reconnection-token` and
   `card-battle.v6.inboxPassword`.
 - **`playCard`** may omit `targetPlayerId` (Tax, Regen, Shield, Mirror, and other self-only
   V1 cards) and may include `quantity` (Regen 1–4). Table (L12-08): click card → Dialog;

@@ -96,6 +96,14 @@ const RELEASE_NOTES_CATALOG = [
         before: 'Some tips and tutorial steps had typos or outdated Spy and reward text.',
         after: 'Fixed some bugs.',
       },
+      {
+        before: 'The game table was a light felt with lists, small cards and pop-up windows.',
+        after: 'The table is a dark arena: opponents sit around you, arrows show each attack, and you tap or drag a card to play it.',
+      },
+      {
+        before: "The turn timer bar could be wrong, and upgrading an opponent's Shield upgraded yours.",
+        after: 'Fixed some bugs.',
+      },
     ],
   },
   {

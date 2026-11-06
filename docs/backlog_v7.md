@@ -23,14 +23,14 @@ Status values: `To do` · `In progress` · `Done` · `Blocked`
 | 72 · Foundations | 21 | 21 |
 | 73 · View-model | 13 | 13 |
 | 74 · Arena I | 26 | 26 |
-| 75 · Arena II | 13 | 9 |
+| 75 · Arena II | 13 | 10 |
 | 76 · Home and lobby | 18 | 18 |
 | 77 · Game over | 8 | 0 |
 | 78 · Juice | 13 | 0 |
 | 79 · Sound and haptics | 5 | 0 |
 | 80 · Admin | 12 | 12 |
 | 81 · Close-out | 6 | 0 |
-| **Total** | **135** | **99** |
+| **Total** | **135** | **100** |
 
 ## Designer questions still open
 
@@ -192,7 +192,7 @@ Tutorial and hints on the arena, the table copy fixes, desktop and landscape-com
 | L75-06 | **Re-anchor first-game hints on the arena.** **Acceptance:** Behavior tests with fake views: each id renders next to its anchor in all three layout modes. A table whose only opponent is base-Spied still selects `hidden-kit`; a Spy+ one does not. Opening the Shop sheet hides the card and dismisses `shop`. The reward hint stays over the reward sheet. Tutorial rooms and the finished board show no hint. Skipping or finishing the tutorial never writes `skipAll` (L46-03). The `hint-overlay.tsx` assertions in `hint-overlay.test.ts` are rewritten as these behavior tests. `pnpm verify` green. **Watch point:** landscape-compact host width `min(22rem, 100vw-1rem)`; header controls are in L72-17. | M | Medium | L75-01, L75-02, L75-03 | Done |
 | L75-07 | **Give the incoming-thief hint per-card copy.** **Acceptance:** Unit tests: each of the five card ids yields its own body, only Thief mentions the 10-point cap, and the copy map is typed over the five thief ids. An arena hint test shows the Spy Thief body for an incoming Spy Thief and the Thief body for an incoming Thief. `pnpm verify` green. | S | Low | L75-06 | Done |
 | L75-08 | **Check FX and banner parity on arena anchors.** **Acceptance:** An anchor-contract behavior test renders the arena in the three modes and resolves every endpoint the `fx/` measure helpers query (seat, seat resource, self resource, kit portrait, hand instance, plate, log, dock, pending id) to an arena element. The product assertions of `play-flyout.test.ts` (L51-09 seat/dock scoping, L51-13 ghost sizing, L51-14 asCard-only chrome) get arena behavior tests. Browser scenarios (incoming attack, mutual cancel, Mirror, elimination + reward, Sentence, own Gambler wipe) show each FX and banner. `pnpm verify` green. | M | Medium | L75-02, L75-03 | Done |
-| L75-09 | **Flip the default table to the arena.** **Acceptance:** A component test renders `App` with a fake connection: the playing (Classic and tutorial) and finished phases mount the arena with no key, with `?ui=classic` and with a stale `card-battle.v7.ui`, and the key is gone after boot. `App.tsx` and `end.tsx` no longer import `screens/table`. Release-note tests are green on the updated entry. `pnpm verify` green. | M | **High** | L75-01, L75-05, L75-06, L75-07, L75-08, L75-13 | To do |
+| L75-09 | **Flip the default table to the arena.** **Acceptance:** A component test renders `App` with a fake connection: the playing (Classic and tutorial) and finished phases mount the arena with no key, with `?ui=classic` and with a stale `card-battle.v7.ui`, and the key is gone after boot. `App.tsx` and `end.tsx` no longer import `screens/table`. Release-note tests are green on the updated entry. `pnpm verify` green. | M | **High** | L75-01, L75-05, L75-06, L75-07, L75-08, L75-13 | Done |
 | L75-10 | **Delete the old table shell and classify its tests.** **Acceptance:** No test reads a deleted path. Every classification row names its class and its replacement test or decision. Product behaviors such as Draw with no word label, Unspy disabled under 10 points, Stats only on the finished board, four seat resource icons showing `?`, the flag confirm before Forfeit, and no `100dvh` / no page scroll still have passing tests. Nothing is skipped. `pnpm verify` green. | L | Medium | L75-09 | To do |
 | L75-11 | **Delete old table dialogs and orphaned components.** **Acceptance:** `apps/client/src/screens/table/` is gone, and nothing imports it or a deleted `design/` file. No test reads a deleted path. Product behaviors keep passing behavior tests: Spy shop face 2/4, UP buy/sell from the shared helpers, shop double-tap buy, Use disabled reasons (including Invisibility), sub-choice natural labels, the slot-drop Cancel intent and coach hide/reopen. Nothing is skipped. `pnpm verify` green. | L | Medium | L75-10, L76-02, L76-10, L76-13 | To do |
 | L75-12 | **Run the Lot 75 browser and design gate.** **Acceptance:** Every §12.3 table scenario passes on the arena default; issues found are fixed and re-verified; results recorded. `pnpm verify` green. | M | Medium | L75-01…L75-11, L75-13 | To do |

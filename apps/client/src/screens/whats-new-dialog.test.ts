@@ -23,7 +23,7 @@ describe("What's new catalog (L63-07, L65-05)", () => {
 
   it('pins the item and addition counts of each entry', () => {
     expect(latestReleaseNote().additions).toHaveLength(0);
-    expect(latestReleaseNote().items).toHaveLength(10);
+    expect(latestReleaseNote().items).toHaveLength(12);
     const lot72 = RELEASE_NOTES.find((note) => note.id === 'lot-72');
     expect(lot72?.items).toHaveLength(3);
     const lot71 = RELEASE_NOTES.find((note) => note.id === 'lot-71');

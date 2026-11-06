@@ -1,8 +1,7 @@
 /**
  * V7 arena shell (technical spec v7 §4.4, §6.1; Lot 74 plan Appendix A; L74-01).
  *
- * - §4.4: `App` (playing) and `EndScreen` (finished board) mount it behind the `?ui=next` switch
- *   (`ui-switch.ts`); the default keeps `TableScreen`; tutorial rooms follow the switch since L75-04.
+ * - §4.4: `App` (playing) and `EndScreen` (finished board) always mount it, tutorial rooms included (L75-09).
  * - §6.1 and Q60: six regions, in DOM order, that always render with their empty state. Later
  *   Lot 74 tasks render inside each region element and keep its attributes and anchors.
  * - §6.4 and L53-07: it fills `#root` with no viewport unit and never page-scrolls.
@@ -26,7 +25,7 @@
  * - §6.9 (L74-16): Chat opens the reducer-hosted chat sheet; its unread count lives in
  *   `chat-unread-store.ts`, and `onSendChat` is called directly (App-level, not an `ArenaIntent`).
  * - §6.12, §8.1, §8.3, Q63 (L74-17; plan A.9.2): `ArenaScreen` is a shell,
- *   `<TableFxProvider><ArenaScreenInner/></TableFxProvider>` like `TableScreen`, so the `fx/`
+ *   `<TableFxProvider><ArenaScreenInner/></TableFxProvider>` around the arena, so the `fx/`
  *   overlay draws over the arena. `ArenaScreenInner` runs the shared `useTableFxTriggers` (seeded
  *   elimination beats, log chips and ghosts, threat cues), mounts `TableBannerHost` once with the
  *   V2 table's mapping, and flies own intents from the commit helper's `onSent` (`ownIntentFxFor`).
@@ -189,7 +188,7 @@ export interface ArenaScreenProps extends TableScreenProps {
   connectionStatus: RoomConnectionStatus;
 }
 
-/** The FX provider shell (plan A.9.2), as `TableScreen`: the overlay draws over the arena. */
+/** The FX provider shell (plan A.9.2) (§6.12): the overlay draws over the arena. */
 export function ArenaScreen(props: ArenaScreenProps): ReactElement {
   return (
     <TableFxProvider>

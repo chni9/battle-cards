@@ -6,14 +6,14 @@
  */
 import { defaultLobbyRules, type StateView } from '@card-battle/shared';
 import { screen, waitFor, within } from '@testing-library/react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { App } from './App';
 import type { UseRoomConnectionResult } from './net/use-room-connection';
 import { chatSeenCount, markChatSeen } from './screens/arena/chat-unread-store';
 import { makeArenaView, makeTutorialArenaView } from './screens/arena/test-view';
+import { RETIRED_TABLE_SWITCH_KEY } from './retired-table-switch';
 import { renderUi } from './test/render';
-import { UI_SWITCH_STORAGE_KEY } from './ui-switch';
 import { makeFinishedView, makeLobbyView } from './view-model/test-fixtures';
 
 const fake = vi.hoisted(() => {
@@ -54,9 +54,11 @@ function region(name: string): HTMLElement {
 
 beforeEach(() => {
   localStorage.clear();
-  localStorage.setItem(UI_SWITCH_STORAGE_KEY, 'next');
   vi.useFakeTimers();
   vi.setSystemTime(T0);
+});
+afterEach(() => {
+  history.replaceState(null, '', '/');
 });
 
 describe('App and the arena', () => {
@@ -118,16 +120,55 @@ describe('App and the arena', () => {
     expect(document.querySelector('[data-arena="next"]')?.getAttribute('data-action-lock')).toBe('actions-locked');
   });
 
-  it('opens a tutorial room on the arena under ?ui=next, with its coach (R9, L75-04)', () => {
+  it('opens a tutorial room on the arena, with its coach (R9, L75-04, L75-09)', () => {
     fake.connection = connectionFor(makeTutorialArenaView(1));
     renderUi(<App />, { advanceTimers: vi.advanceTimersByTime, reducedMotion: true });
     expect(document.querySelector('[data-arena="next"]')).not.toBeNull();
     expect(document.querySelector('[data-zone="tutorial-coach"]')?.getAttribute('data-tutorial-index')).toBe('1');
   });
 
-  it('opens the finished tutorial board on the arena, with no coach (R9, L75-04)', () => {
+  it('opens the finished tutorial board on the arena, with no coach (R9, L75-04, L75-09)', () => {
     fake.connection = connectionFor(makeFinishedView({ finalTable: makeTutorialArenaView(30), lobbyRules: null }));
     renderUi(<App />, { advanceTimers: vi.advanceTimersByTime, reducedMotion: true });
     expect([document.querySelector('[data-arena="next"]') !== null, document.querySelector('[data-zone="tutorial-coach"]')]).toEqual([true, null]);
+  });
+});
+
+describe('the arena is the only table (spec v7 §4.4, L75-09)', () => {
+  const BOOTS = [
+    { boot: 'no key', search: '', stored: null },
+    { boot: '?ui=classic', search: '?ui=classic', stored: null },
+    { boot: "a stale 'next' key", search: '', stored: 'next' },
+    { boot: "?ui=classic over a stale 'next' key", search: '?ui=classic', stored: 'next' },
+  ] as const;
+  const TABLES = [
+    { table: 'a Classic table', view: (): StateView => makeArenaView() },
+    { table: 'a tutorial table', view: (): StateView => makeTutorialArenaView(1) },
+    { table: 'a finished Classic board', view: (): StateView => makeFinishedView({ finalTable: makeArenaView() }) },
+    { table: 'a finished tutorial board', view: (): StateView => makeFinishedView({ finalTable: makeTutorialArenaView(30), lobbyRules: null }) },
+  ] as const;
+  it.each(TABLES.flatMap((t) => BOOTS.map((b) => ({ ...t, ...b }))))('mounts the arena for $table with $boot, and the key is gone after boot', ({ view, search, stored }) => {
+    if (stored !== null) localStorage.setItem(RETIRED_TABLE_SWITCH_KEY, stored);
+    history.replaceState(null, '', `/${search}`);
+    fake.connection = connectionFor(view());
+    renderUi(<App />, { advanceTimers: vi.advanceTimersByTime, reducedMotion: true });
+    expect(document.querySelector('main[data-arena="next"]')).not.toBeNull();
+    expect(document.querySelector('.table-shell')).toBeNull();
+    expect(localStorage.getItem(RETIRED_TABLE_SWITCH_KEY)).toBeNull();
+  });
+
+  it('clears a stale key on a Home or lobby boot too, so no later table reads it', () => {
+    localStorage.setItem(RETIRED_TABLE_SWITCH_KEY, 'next');
+    fake.connection = connectionFor(makeLobbyView());
+    renderUi(<App />, { advanceTimers: vi.advanceTimersByTime, reducedMotion: true });
+    expect(localStorage.getItem(RETIRED_TABLE_SWITCH_KEY)).toBeNull();
+  });
+
+  it('leaves ?ui=classic in the address bar: the param is no longer read, so nothing strips it', () => {
+    history.replaceState(null, '', '/?ui=classic');
+    fake.connection = connectionFor(makeArenaView());
+    renderUi(<App />, { advanceTimers: vi.advanceTimersByTime, reducedMotion: true });
+    expect(document.querySelector('main[data-arena="next"]')).not.toBeNull();
+    expect(window.location.search).toBe('?ui=classic');
   });
 });
