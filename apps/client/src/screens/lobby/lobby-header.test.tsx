@@ -66,12 +66,19 @@ describe('LobbyHeader (spec v7 §7.2; parity lobby-header-status, lobby-game-cod
   });
 });
 
-describe('Alert dismiss focus (L76-14; browser gate D4)', () => {
+describe('Alert dismiss focus and Copy/Share grouping (L76-14, L76-17; browser gate D3, D4)', () => {
   it('moves focus to the lobby title when OK dismisses the alert, so it does not fall to the page', async () => {
     const { user, props } = renderLobby({ error: 'That seat was not found.' });
     await user.click(screen.getByRole('button', { name: LOBBY_DISMISS_LABEL }));
     expect(props.onDismissError).toHaveBeenCalledTimes(1);
     expect(document.activeElement).toBe(screen.getByRole('heading', { level: 1, name: LOBBY_TITLE }));
+  });
+  it('keeps Copy and Share in one group, so the pair wraps together under the code', () => {
+    renderLobby();
+    const copy = screen.getByRole('button', { name: COPY_LABEL });
+    const share = screen.getByRole('button', { name: SHARE_LABEL });
+    expect(copy.parentElement).toBe(share.parentElement);
+    expect(copy.parentElement?.children).toHaveLength(2);
   });
 });
 

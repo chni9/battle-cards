@@ -143,12 +143,14 @@ export function LobbyHeader({ gameCode, status, error, isHost, onDismissError }:
         </h2>
         <div className="mt-2 flex flex-wrap items-center gap-3">
           <p className="font-v7-display text-v7-display tracking-[0.2em] text-v7-text">{gameCode}</p>
-          <Button variant="secondary" icon="copy" onClick={copy}>
-            {COPY_LABEL}
-          </Button>
-          <Button variant="secondary" icon="share" onClick={share}>
-            {SHARE_LABEL}
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="secondary" icon="copy" onClick={copy}>
+              {COPY_LABEL}
+            </Button>
+            <Button variant="secondary" icon="share" onClick={share}>
+              {SHARE_LABEL}
+            </Button>
+          </div>
         </div>
         {isHost ? <p className="mt-2 font-v7-body text-v7-body font-bold text-v7-text-2">{HOST_LINE}</p> : null}
       </section>
