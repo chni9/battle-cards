@@ -8,13 +8,14 @@
  * the tutorial callouts share `Z_INDEX.hint` (K6). `note` is a no-op in a tutorial (V2; L46-03).
  */
 
+import { INCOMING_THIEF_HINT_BODY } from '../../help/hint-copy';
 import type { HintId } from '../../ui/hint-ids';
 import { useState } from 'react';
 import type { PlayingStateView, SubChoiceRequiredPayload } from '@card-battle/shared';
 
 import { applyHintPatch, readHintState } from '../../ui/help-storage';
 import { useSheetStackState } from '../../ui/primitives/sheet-stack-context';
-import { incomingAttackTargetingYouIds, incomingThiefTargetingYouIds } from '../../view-model/incoming-threat-diff';
+import { earliestIncomingThief, incomingAttackTargetingYouIds, incomingThiefTargetingYouIds } from '../../view-model/incoming-threat-diff';
 import type { PovMode, SeatModel } from '../../view-model/seats';
 import { hintIdsDismissedBy, selectHint, type HintDismissCause } from '../../view-model/select-hint';
 
@@ -32,6 +33,8 @@ export interface ArenaHintsInput {
 
 export interface ArenaHints {
   readonly hintId: HintId | null;
+  /** L75-07: the earliest-queued incoming thief's body, present only when hintId === 'incoming-thief'. */
+  readonly body?: string;
   readonly dialogOpen: boolean;
   readonly note: (cause: HintDismissCause) => void;
   readonly onGotIt: () => void;
@@ -93,5 +96,6 @@ export function useArenaHints({ view, readOnly, pov, isMyTurn, seats, subChoice 
   const onSkipAll = (): void => {
     setHintState((prev) => applyHintPatch(prev, { skipAll: true }));
   };
-  return { hintId, dialogOpen, note, onGotIt, onSkipAll };
+  const thief = hintId === 'incoming-thief' ? earliestIncomingThief(view.pendingEffects, view.you) : null;
+  return { hintId, ...(thief !== null ? { body: INCOMING_THIEF_HINT_BODY[thief] } : {}), dialogOpen, note, onGotIt, onSkipAll };
 }

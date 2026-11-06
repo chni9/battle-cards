@@ -9,9 +9,10 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { renderUi } from '../test/render';
 import { hintAnchorId, hintPlacePrefer, type HintId } from '../ui/hint-ids';
+import { CoachBody } from '../ui/coach/coach-panel';
 import { Z_INDEX } from '../ui/layers';
 import { GOT_IT_ACTION_LABEL, HIDE_COACH_ARIA_LABEL } from '../view-model/table-copy';
-import { HINT_COPY, SKIP_ALL_HINTS_LABEL } from './hint-copy';
+import { HINT_COPY, INCOMING_THIEF_HINT_BODY, SKIP_ALL_HINTS_LABEL } from './hint-copy';
 import { HintOverlay } from './hint-overlay';
 import { placeHintCard } from './place-hint-card';
 
@@ -32,12 +33,26 @@ function setup(hintId: HintId, dialogOpen = false) {
   return { onGotIt, onSkipAll, ...renderUi(<HintOverlay hintId={hintId} dialogOpen={dialogOpen} onGotIt={onGotIt} onSkipAll={onSkipAll} />) };
 }
 
+/** The text a CoachBody renders for `text` (glyphs and bold markers included), for comparison. */
+function coachText(text: string): string | null {
+  const probe = renderUi(<CoachBody text={text} />);
+  const value = probe.container.textContent;
+  probe.unmount();
+  return value;
+}
+
 afterEach(() => {
   vi.restoreAllMocks();
   for (const node of document.querySelectorAll('[data-hint-anchor]')) node.remove();
 });
 
 describe('HintOverlay (§6.12, L46-01, L46-02)', () => {
+  it('shows body in place of the HINT_COPY body, under the same title (L75-07)', () => {
+    renderUi(<HintOverlay hintId="incoming-thief" dialogOpen={false} onGotIt={vi.fn()} onSkipAll={vi.fn()} body={INCOMING_THIEF_HINT_BODY['card-thief']} />);
+    const card = screen.getByRole('complementary', { name: HINT_COPY['incoming-thief'].title });
+    expect(card.querySelector('p')?.textContent).toBe(coachText(INCOMING_THIEF_HINT_BODY['card-thief']));
+  });
+
   it('is a non-modal card: Got it and × call onGotIt, Skip all calls onSkipAll, no toggle, no focus taken', async () => {
     const { user, onGotIt, onSkipAll } = setup('draw');
     const card = screen.getByRole('complementary', { name: HINT_COPY.draw.title });

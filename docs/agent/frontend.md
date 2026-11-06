@@ -1711,6 +1711,13 @@ Appendix A). Each Lot 74 task appends its bullet here, in task order.
     next to the first visible `[data-hint-anchor]`: 15.5rem wide in portrait and desktop, 22rem in
     landscape-compact. The card keeps its identity across a mode change. The old table mounts the
     same overlay under `?ui=classic` until L75-09.
+- `view-model/incoming-threat-diff.ts`, `help/hint-copy.ts` (L75-07, spec v7 §10.1, Q52; R12): the
+  `incoming-thief` hint keeps its id, title 'Incoming', selector order and dismissal, and takes its
+  body from `INCOMING_THIEF_HINT_BODY[earliestIncomingThief(view.pendingEffects, view.you)]`: the
+  non-persistent thief effect on the POV with the smallest `queuedAt`, ties in wire order (the one
+  that resolves first, golden rule 3). One body per thief card (`INCOMING_THIEF_CARD_IDS`); only
+  Thief names the 10-point cap. `useArenaHints` returns it as `body`, and `HintOverlay body?`
+  replaces the `HINT_COPY` body.
 
 ## Design system (V2 · Lots 10+)
 
@@ -1842,7 +1849,7 @@ rules above are unchanged — this section only covers how the client looks.
   discriminant (spec v6 §12 #7). `HINT_COPY` follows technical spec v7 §10.1–§10.2 (L75-01); every copy change is listed in its PR for designer review.
   Auto-Got-it on Draw / Shop / play / portrait / hand or special inspect / attack- or
   thief-Incoming clear / confirm reward. × dismisses the same as Got it.
-  Card sits next to `data-hint-anchor` (no rings); `incoming-thief` reuses Incoming.
+  Card sits next to `data-hint-anchor` (no rings); `incoming-thief` reuses Incoming, with the earliest-queued thief's per-card body (L75-07).
   Hand / Specials anchors are the **card cluster** (`inline-flex`), not the flex-1 section;
   those two cards sit **beside** the cluster (top-aligned, left when it fits) so they are
   not dumped on the felt's left edge or over the other row. `leave` is not a hint id.

@@ -9,14 +9,16 @@ import { formatCardLabel, type PendingEffectView, type RewardChoiceRequiredPaylo
 import { act, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { SKIP_ALL_HINTS_LABEL } from '../../help/hint-copy';
+import { INCOMING_THIEF_HINT_BODY, SKIP_ALL_HINTS_LABEL } from '../../help/hint-copy';
 import { placeHintCard } from '../../help/place-hint-card';
 import { renderUi, type RenderUiOptions, type RenderUiResult } from '../../test/render';
+import { CoachBody } from '../../ui/coach/coach-panel';
 import { HINTS_STORAGE_KEY, readHintState, resetHelpStorage, writeHintState } from '../../ui/help-storage';
 import { HINT_IDS, hintAnchorId, hintPlacePrefer, type HintId } from '../../ui/hint-ids';
 import { Z_INDEX } from '../../ui/layers';
 import { MINIMIZE_LABEL } from '../../ui/ui-copy';
 import { SHOP_ACTION_LABEL } from '../../view-model/chrome-labels';
+import type { IncomingThiefCardId } from '../../view-model/incoming-threat-diff';
 import { GOT_IT_ACTION_LABEL, HIDE_COACH_ARIA_LABEL, RETURN_HOME_ARIA_LABEL, SKIP_TUTORIAL_ARIA_LABEL } from '../../view-model/table-copy';
 import { makeCard, makePending, makeSelf } from '../../view-model/test-fixtures';
 import { ArenaScreen, type ArenaScreenProps } from './arena-screen';
@@ -50,6 +52,13 @@ function one(selector: string, root: ParentNode = document): HTMLElement {
 }
 const shown = (): string | null => document.querySelector('[data-zone="first-game-hint"]')?.getAttribute('data-hint-id') ?? null;
 const hint = (): HTMLElement => one('[data-zone="first-game-hint"]');
+/** The text a CoachBody renders for `text` (glyphs and bold markers included), for comparison. */
+function coachText(text: string): string | null {
+  const probe = renderUi(<CoachBody text={text} />);
+  const value = probe.container.textContent;
+  probe.unmount();
+  return value;
+}
 const region = (name: string): HTMLElement => one(`[data-arena-region="${name}"]`);
 const openCard = (user: User, group: 'Hand' | 'Specials', cardId: 'tax' | 'super-regeneration'): Promise<void> =>
   user.click(within(screen.getByRole('list', { name: group })).getByRole('button', { name: formatCardLabel(cardId, false) }));
@@ -216,5 +225,19 @@ describe('dismissal (L46-01, L46-03)', () => {
     await useTax(user);
     expect(props.onPlayCard).toHaveBeenCalledTimes(1);
     expect(localStorage.getItem(HINTS_STORAGE_KEY)).toBeNull();
+  });
+});
+
+describe('incoming-thief body (L75-07, R12)', () => {
+  const thief = (cardId: IncomingThiefCardId, queuedAt: number): PendingEffectView =>
+    makePending({ id: `t-${cardId}`, sourcePlayerId: 'p1', targetPlayerId: 'me', cardId, queuedAt });
+  it.each<{ label: string; effects: readonly PendingEffectView[]; body: IncomingThiefCardId }>([
+    { label: 'an incoming Spy Thief', effects: [thief('spy-thief', 1)], body: 'spy-thief' },
+    { label: 'an incoming Thief', effects: [thief('thief', 1)], body: 'thief' },
+    { label: 'a Card Thief queued after an Attack Thief', effects: [thief('card-thief', 5), thief('attack-thief', 2)], body: 'attack-thief' },
+  ])('$label shows the $body body', ({ effects, body }) => {
+    setup({ view: makeArenaView({ overrides: { pendingEffects: [...effects] } }) });
+    expect(shown()).toBe('incoming-thief');
+    expect(hint().querySelector('p')?.textContent).toBe(coachText(INCOMING_THIEF_HINT_BODY[body]));
   });
 });

@@ -2,12 +2,14 @@
  * First-real-game hint copy — technical spec v6 §5.2 / L46-01; v7 §10.1–§10.2 (L75-01).
  */
 
-import { describe, expect, it } from 'vitest';
+import { formatCardLabel } from '@card-battle/shared';
+import { describe, expect, expectTypeOf, it } from 'vitest';
 
 import { DRAW_ACTION_LABEL, SHOP_ACTION_LABEL } from '../view-model/chrome-labels';
 import { HIDDEN_KIT_LABEL } from '../view-model/table-copy';
 
-import { HINT_COPY, SKIP_ALL_HINTS_LABEL } from './hint-copy';
+import { INCOMING_THIEF_CARD_IDS, type IncomingThiefCardId } from '../view-model/incoming-threat-diff';
+import { HINT_COPY, INCOMING_THIEF_HINT_BODY, SKIP_ALL_HINTS_LABEL } from './hint-copy';
 import { HINT_IDS } from '../ui/hint-ids';
 
 describe('hint copy (technical spec v6 §5.2)', () => {
@@ -82,5 +84,28 @@ describe('hint copy fixes (technical spec v7 §10.1, §10.2; L75-01)', () => {
     expect(body.startsWith('You eliminated')).toBe(false);
     expect(body).toContain('helped eliminate');
     expect(body).toContain('one shared timer');
+  });
+});
+
+describe('per-card incoming-thief copy (technical spec v7 §10.1, Q52; L75-07)', () => {
+  it('gives each of the five thieves its own body, naming its card, after you act, with no Shield', () => {
+    expect(new Set(INCOMING_THIEF_CARD_IDS.map((id) => INCOMING_THIEF_HINT_BODY[id])).size).toBe(INCOMING_THIEF_CARD_IDS.length);
+    for (const id of INCOMING_THIEF_CARD_IDS) {
+      expect(INCOMING_THIEF_HINT_BODY[id]).toContain(`**${formatCardLabel(id, false)}**`);
+      expect(INCOMING_THIEF_HINT_BODY[id]).toContain('**after you act**');
+      expect(INCOMING_THIEF_HINT_BODY[id]).not.toContain('Shield');
+    }
+  });
+
+  it('mentions the 10-point cap only for Thief', () => {
+    for (const id of INCOMING_THIEF_CARD_IDS) {
+      expect(/\b10\b/.test(INCOMING_THIEF_HINT_BODY[id])).toBe(id === 'thief');
+    }
+  });
+
+  it('is typed over exactly the five thief ids; the incoming-thief hint keeps its title with the Thief body', () => {
+    expectTypeOf(INCOMING_THIEF_HINT_BODY).toEqualTypeOf<Readonly<Record<IncomingThiefCardId, string>>>();
+    expect(new Set(Object.keys(INCOMING_THIEF_HINT_BODY))).toEqual(new Set(INCOMING_THIEF_CARD_IDS));
+    expect(HINT_COPY['incoming-thief']).toEqual({ title: 'Incoming', body: INCOMING_THIEF_HINT_BODY.thief });
   });
 });

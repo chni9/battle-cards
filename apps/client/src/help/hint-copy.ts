@@ -4,6 +4,7 @@
  */
 
 import type { HintId } from '../ui/hint-ids';
+import type { IncomingThiefCardId } from '../view-model/incoming-threat-diff';
 
 export const SKIP_ALL_HINTS_LABEL = 'Skip all';
 
@@ -11,6 +12,23 @@ export interface HintCopy {
   readonly title: string;
   readonly body: string;
 }
+
+/**
+ * Per-card `incoming-thief` bodies (technical spec v7 §10.1, Q52; rules spec §3 Thief, §5 the special thieves).
+ * Only Thief names the 10-point cap.
+ */
+export const INCOMING_THIEF_HINT_BODY: Readonly<Record<IncomingThiefCardId, string>> = {
+  thief:
+    'An opponent used **Thief** on you! It will take effect **after you act**. This will steal up to 10 points from you. You can counter it with Thief, or spend your points before it resolves.',
+  'card-thief':
+    'An opponent used **Card Thief** on you! It will take effect **after you act**. It takes one of your cards: a random one, or the card they choose if their Spy is on you. It cannot be countered.',
+  'spy-thief':
+    'An opponent used **Spy Thief** on you! It will take effect **after you act**. It steals all your points and shows them your kit, cards and resources for the rest of the game. It cannot be countered, so spend your points before it resolves.',
+  'upgrade-point-thief':
+    'An opponent used **Upgrade Point Thief** on you! It will take effect **after you act**. It takes all your upgrade points and removes the upgrade from your upgraded cards. It cannot be countered.',
+  'attack-thief':
+    'An opponent used **Attack Thief** on you! It will take effect **after you act**. It takes a random attack card from you, or all of them if it is upgraded. It cannot be countered.',
+};
 
 export const HINT_COPY: Record<HintId, HintCopy> = {
   'your-turn': {
@@ -39,7 +57,7 @@ export const HINT_COPY: Record<HintId, HintCopy> = {
   },
   'incoming-thief': {
     title: 'Incoming',
-    body: 'An opponent used **Thief** on you! It will take effect **after you act**. This will steal up to 10 points from you. You can counter it with Thief, or spend your points before it resolves.',
+    body: INCOMING_THIEF_HINT_BODY.thief,
   },
   'hidden-kit': {
     title: 'Hidden kit',

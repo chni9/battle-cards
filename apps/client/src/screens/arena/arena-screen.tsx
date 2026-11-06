@@ -652,7 +652,13 @@ function ArenaScreenInner(props: ArenaScreenProps): ReactElement {
       {/* Portaled to `document.body` on `Z_INDEX.toast`, mounted once (§6.12, L74-25): the V2 modal's copy in a toast. */}
       {/* Portaled to `document.body` on `Z_INDEX.hint`, under the coach, banners and toasts (L75-06; plan A.9.3). */}
       {hints.hintId !== null ? (
-        <HintOverlay hintId={hints.hintId} dialogOpen={hints.dialogOpen} onGotIt={hints.onGotIt} onSkipAll={hints.onSkipAll} />
+        <HintOverlay
+          hintId={hints.hintId}
+          dialogOpen={hints.dialogOpen}
+          onGotIt={hints.onGotIt}
+          onSkipAll={hints.onSkipAll}
+          {...(hints.body !== undefined ? { body: hints.body } : {})}
+        />
       ) : null}
       <RejectToast reject={props.actionReject} onDismiss={props.onDismissActionReject} />
       {/* The sheets are the last children of the arena root and never inside a clickable element: a React portal bubbles clicks to its ancestors. No `default`, so a new `ArenaSheet` variant fails `noImplicitReturns` until it gets a case. */}

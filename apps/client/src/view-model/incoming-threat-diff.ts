@@ -3,7 +3,7 @@
  * Presentation-only persistent chips (`persistent:…`) never trigger outline/cue.
  */
 
-import { isAttackCardId, type PendingEffectView } from '@card-battle/shared';
+import { isAttackCardId, type CardId, type PendingEffectView } from '@card-battle/shared';
 
 /** Legacy synthetic `persistent:` ids (V2 presentation chips, module deleted in L73-05) — never engine queue entries. */
 export function isPersistentPresentationId(effectId: string): boolean {
@@ -77,12 +77,39 @@ export function incomingAttackTargetingYouIds(
   return ids;
 }
 
+/** Action Thief plus the four special thieves (rules spec §3 Thief, §5). Spy is not a Thief. */
+export const INCOMING_THIEF_CARD_IDS = ['thief', 'card-thief', 'spy-thief', 'upgrade-point-thief', 'attack-thief'] as const satisfies readonly CardId[];
+export type IncomingThiefCardId = (typeof INCOMING_THIEF_CARD_IDS)[number];
+
+// A widened Set so the guard below needs no cast (same pattern as `CARD_IDS_THAT_ACT_ON_OPPONENTS` in shared card.ts).
+const INCOMING_THIEF_CARD_ID_SET = new Set<string>(INCOMING_THIEF_CARD_IDS);
+
+/** First-game `incoming-thief` hint: a type guard over the five thief ids. */
+export function isIncomingThiefCardId(cardId: string): cardId is IncomingThiefCardId {
+  return INCOMING_THIEF_CARD_ID_SET.has(cardId);
+}
+
 /**
- * Action Thief plus special Thief cards (`upgrade-point-thief`, `spy-thief`, …).
- * First-game `incoming-thief` hint. Spy is not a Thief.
+ * The thief on `you` that resolves first: the non-persistent thief effect with the smallest `queuedAt`, ties in
+ * wire order (golden rule 3, ascending `queuedAt`; L75-07, R12). Null when none.
  */
-export function isIncomingThiefCardId(cardId: string): boolean {
-  return cardId === 'thief' || cardId.endsWith('-thief');
+export function earliestIncomingThief(
+  pendingEffects: readonly PendingEffectView[],
+  you: string,
+): IncomingThiefCardId | null {
+  let best: { readonly cardId: IncomingThiefCardId; readonly queuedAt: number } | null = null;
+  for (const effect of pendingEffects) {
+    if (effect.targetPlayerId !== you || isPersistentPresentationId(effect.id)) {
+      continue;
+    }
+    if (!isIncomingThiefCardId(effect.cardId)) {
+      continue;
+    }
+    if (best === null || effect.queuedAt < best.queuedAt) {
+      best = { cardId: effect.cardId, queuedAt: effect.queuedAt };
+    }
+  }
+  return best === null ? null : best.cardId;
 }
 
 export function incomingThiefTargetingYouIds(

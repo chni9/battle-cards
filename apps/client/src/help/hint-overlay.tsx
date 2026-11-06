@@ -28,6 +28,8 @@ export interface HintOverlayProps {
   dialogOpen: boolean;
   onGotIt: () => void;
   onSkipAll: () => void;
+  /** L75-07: replaces HINT_COPY[hintId].body (the per-card incoming-thief copy). */
+  body?: string;
 }
 
 /** The first anchor with a laid-out box: a twin mounted at zero size never takes the card (`help/` imports no `fx/`, K2). */
@@ -39,7 +41,7 @@ function firstVisibleAnchor(selector: string): HTMLElement | null {
   return null;
 }
 
-export function HintOverlay({ hintId, dialogOpen, onGotIt, onSkipAll }: HintOverlayProps): ReactElement | null {
+export function HintOverlay({ hintId, dialogOpen, onGotIt, onSkipAll, body }: HintOverlayProps): ReactElement | null {
   const slotRef = useRef<HTMLDivElement>(null);
   const box = useVisualViewportBox();
   const mode = useViewportMode();
@@ -86,7 +88,7 @@ export function HintOverlay({ hintId, dialogOpen, onGotIt, onSkipAll }: HintOver
       window.removeEventListener('resize', place);
       vv?.removeEventListener('resize', place);
     };
-  }, [hintId, dialogOpen, mode]);
+  }, [hintId, dialogOpen, mode, body]);
 
   if (dialogOpen) return null;
 
@@ -108,7 +110,7 @@ export function HintOverlay({ hintId, dialogOpen, onGotIt, onSkipAll }: HintOver
           key={hintId}
           compact
           title={copy.title}
-          body={copy.body}
+          body={body ?? copy.body}
           zone="first-game-hint"
           extraAttrs={{ 'data-hint-id': hintId }}
           onHide={onGotIt}

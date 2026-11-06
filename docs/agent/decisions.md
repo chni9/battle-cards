@@ -6591,3 +6591,20 @@ Source: technical spec v7 §4.2, §6.3, §6.7, §6.12, §12.1; Appendix A Q66, `
   but hidden twin never takes it. The overlay has its own lookup: `help/` imports no `fx/` code.
 
 ---
+
+## 2026-11-06 · [P] Per-card incoming-thief hint copy, earliest-queued thief first (L75-07)
+
+Source: technical spec v7 §10.1 (Q52), §6.12; rules spec §1 Counter Rule, §3 Thief, §5 (Card Thief,
+Spy Thief after Lot 71, Upgrade Point Thief, Attack Thief); the Lot 75 plan A.9.4 and ruling R12.
+
+- **One body per thief card** (`INCOMING_THIEF_HINT_BODY`, typed over `INCOMING_THIEF_CARD_IDS`). The
+  old single body ("up to 10 points … counter it with Thief") was wrong for every special thief.
+  Only Thief names the 10-point cap; the special thieves say they cannot be countered (the Counter
+  Rule covers only Spy and Thief).
+- **Several thieves on the POV:** the earliest-queued one (smallest `queuedAt`, ties in wire order)
+  picks the body, because it resolves first (golden rule 3).
+- **Unchanged:** the id, the title 'Incoming', the selector order and the dismissal. The old table
+  passes no `body`, so it keeps the Thief body until L75-10. Every string is listed in the PR for
+  designer review.
+
+---
