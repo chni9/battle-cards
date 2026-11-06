@@ -253,6 +253,9 @@ function ArenaScreenInner(props: ArenaScreenProps): ReactElement {
   // The desktop log panel (§6.4, L75-02; open-question ruling 5): expanded on mount. It lives here, so a
   // mode change keeps it; it is not a sheet and never ends targeting.
   const [logPanelExpanded, setLogPanelExpanded] = useState(true);
+  // Menu → Action log on an already expanded panel changes nothing by itself: this counter has the panel
+  // answer by scrolling to the newest line and taking focus (final review M5).
+  const [logPanelNudge, setLogPanelNudge] = useState(0);
   // The portrait bottom band (§6.1, §6.4; L75-13, R5 "Bas plus court"): it compacts when the full band
   // would let the plate cover a seat, with hysteresis (`bottomBandFor`). Render-phase, as the targeting
   // end, never an effect.
@@ -463,8 +466,10 @@ function ArenaScreenInner(props: ArenaScreenProps): ReactElement {
           {...(props.onOpenFeedback !== undefined ? { onOpenFeedback: props.onOpenFeedback } : {})}
           onOpenLog={() => {
             // Desktop: the log is the panel, so Menu → Action log expands it and opens no sheet (A.4.1).
-            if (mode === 'desktop') setLogPanelExpanded(true);
-            else openSheet({ kind: 'log' });
+            if (mode === 'desktop') {
+              setLogPanelExpanded(true);
+              setLogPanelNudge((count) => count + 1);
+            } else openSheet({ kind: 'log' });
           }}
           {...(tableRules !== null
             ? {
@@ -488,6 +493,7 @@ function ArenaScreenInner(props: ArenaScreenProps): ReactElement {
         {mode === 'desktop' ? (
           <LogPanel
             expanded={logPanelExpanded}
+            nudge={logPanelNudge}
             view={view}
             model={logModel}
             onToggle={() => {

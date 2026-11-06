@@ -1606,7 +1606,8 @@ Appendix A). Each Lot 74 task appends its bullet here, in task order.
     "Action log", `aria-expanded`) that always renders, and when expanded a 320 px scrollport
     (`data-zone="action-log-panel"`) of the round-grouped lines (`LogRounds`, sticky `top-0` headers)
     that follows new lines within 48 px (`useLogFollow`, shared with the log sheet). Collapsed, the
-    list unmounts. The panel opens expanded; Menu → Action log expands it and opens no sheet. The
+    list unmounts. The panel opens expanded; Menu → Action log expands it and opens no sheet; on an open panel it scrolls to the newest line
+  and focuses the toggle (`nudge`). The
     dock sits right of the hand in the `hand` row.
   - The dock draws icon-only under 700 px of landscape-compact width (`dockIconOnly`, `Dock iconOnly`,
     designer 2026-11-06): Shop and Activate duplication lose their words, the controls sit in two

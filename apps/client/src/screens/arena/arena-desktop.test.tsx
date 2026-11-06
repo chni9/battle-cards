@@ -94,6 +94,17 @@ describe('desktop layout (§6.4, R3)', () => {
     expectNoArenaIntent(props);
   });
 
+  it('Menu → Action log on an expanded panel scrolls it to the newest line and focuses its toggle (final review M5)', async () => {
+    const { user } = setupAt(ARENA_TEST_BOXES.desktop);
+    const panel = one('[data-zone="action-log-panel"]');
+    // happy-dom lays nothing out: give the scrollport a height to scroll to, and scroll the reader away from the newest line.
+    Object.defineProperty(panel, 'scrollHeight', { configurable: true, value: 500 });
+    panel.scrollTop = 0;
+    await user.click(within(region('top-bar')).getByRole('button', { name: 'Menu' }));
+    await user.click(within(screen.getByRole('dialog', { name: 'Menu' })).getByRole('button', { name: 'Action log' }));
+    expect([panel.scrollTop, document.activeElement === logToggle(), screen.queryByRole('dialog', { name: 'Action log' })]).toEqual([500, true, null]);
+  });
+
   it.each<{ label: string; open: (user: UserEvent) => Promise<void>; dialog: string; desktop: 'center' | 'bottom' }>([
     { label: 'the card sheet', open: (user) => user.click(within(region('hand')).getByRole('button', { name: 'Basic attack, 1 damage' })), dialog: 'Basic attack', desktop: 'center' },
     { label: 'the seat sheet', open: (user) => user.click(within(region('arena')).getByRole('button', { name: 'p1' })), dialog: 'p1', desktop: 'center' },
