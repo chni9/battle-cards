@@ -7,10 +7,10 @@
  * It shows what the host set and nothing else: the human turn time as received (never clamped,
  * so a server default above 180 reads as sent), the Random mark when kits are dealt, and all 16
  * kits with the excluded ones named in words (`EXCLUDED_LABEL`), never by color or greyscale
- * alone (Q15). It has no editable control and its only button is Close, which also gives the
- * focus trap a target. With `editor` (the host, the solo menu: L76-09) the same sheet holds
- * `RulesEditor` and Close stays its only action; without it the sheet is the guests', walk-ins',
- * arena menu's and Game over's read-only view.
+ * alone (Q15). With `editor` (the host, the solo menu: L76-09) the sheet holds `RulesEditor` and
+ * Close stays its only action. Without it the sheet is the guests', walk-ins', arena menu's and Game
+ * over's read-only view: it has no editable control and its only button is Close, which also gives
+ * the focus trap a target.
  *
  * Only the portrait is dimmed. The name and the "Excluded" caption keep `--text-2` at full
  * opacity, so the state stays readable on `--panel`. The portrait is `aria-hidden`: the visible

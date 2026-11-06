@@ -6593,3 +6593,18 @@ Source: technical spec v7 §7.1 (`?code=XXXXXX` pre-fills Join; client only; nic
 - What's new at mount is unchanged: when the latest entry is unseen it opens above the gated How to play, as it does over a seeded solo menu.
 
 ---
+
+## 2026-11-06 · [P] The Lot 76 gate fix wave: focus hand-backs live in the callers (L76-18)
+
+Source: Lot 76 Part 2 final review (P2-m1 to P2-m5), the controller's browser pass D1 to D5, the design critique, and the Lot 76 plan Review Focus; technical spec v7 §6.7, §7.1, §7.2, §7.7.
+
+- **Sit here locks while reconnecting.** `ClaimSeatDialog` takes `locked`; App passes `status === 'reconnecting'` on the shared `claimDialog`. Sit here is disabled (still focusable, no reason line, the open Q39 decision) and Stay stays live. A pick that leaves the claimable set is forgotten, so it is not selected again if that seat returns.
+- **Focus returns to the control that opened the sheet, set by the caller.** The focus trap returns focus to the element that was focused when the sheet opened. Safari does not focus a button on click, so that element is `body` and the trap has nothing to return to. `RulesStrip` (every caller of the Table rules sheet) and `LobbySeats` (the Kick confirm: Cancel, Esc and the backdrop) now focus their own button on close. The primitives `sheet.tsx` and `dialog.tsx` are unchanged. A Kick that is sent, or a lock that closes the confirm, focuses nothing, because the seat is gone or the control is disabled.
+- **How to play opens on Next.** The first control in the DOM is the Previous chevron, which is `aria-disabled` on slide 1. `HowToPlayDialog` finds Next with a callback ref on the carousel's box and passes it as `initialFocusRef`.
+- **Home focuses the title on a mode switch.** The mode switch remounts the subtree, so the pressed tile or Back unmounts with focus on it. `HomeScreen` focuses the new `<h1>` (`tabIndex={-1}`) after any change of mode, the gated Skip and Got it included, and never on the first mount, so an invite arrival keeps its own start. The lobby alert's OK moves focus to the lobby `<h1>` before it dismisses.
+- **The Feedback Sent report latches per Sent**, not per open: `useOncePerOpen(open && sent)`.
+- **Layout.** Under 500px of viewport height the hub hides the card fan and drops the wordmark overlap, so the three tiles fit a landscape phone (844x390); 360, 375, 390 and 1440 are unchanged. The rules editor's kit grid takes 6rem columns (its buttons spend 18px on border and padding), so "Indestructible" no longer splits at 320. Copy and Share share one flex group so the pair wraps together.
+- **What's new item 9** is one short sentence per side: "Home was a plain menu, How to play was one long page, and Feedback closed without a word." / "Home has the new look, How to play is a deck of cards you swipe through, and Feedback shows Sent once your note is saved."
+- **Recorded, not fixable in Lot 76 (P2-m4).** On the classic table the shared V7 sheets (z-50) sit under the your-turn flash (z-90/91), so the flash paints over them for its duration. When a V2 `Dialog` opens over an open V7 sheet (the elimination-reward sub-choice, an opponent reveal), one Esc also closes the V7 sheet underneath, because the V7 listener sees only V7 sheets. The L76-06 entry's "Esc closes only it" holds only while no V2 dialog is open. Both vanish when L75-09 and L75-11 retire the classic table.
+
+---

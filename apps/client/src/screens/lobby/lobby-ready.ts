@@ -1,6 +1,6 @@
 /**
- * Lobby Ready chrome — L57-11 / L57-16 / PROTOCOL_VERSION 33.
- * Grey Start is not validation; the server still rejects `start-not-all-ready`.
+ * Lobby Start and Ready gating — L57-11 / PROTOCOL_VERSION 33. L76-12 retired the L57-16 chrome, so
+ * this is the pure gating. Grey Start is not validation; the server still rejects `start-not-all-ready`.
  */
 
 import { MIN_PLAYERS, type LobbySeatView, type LobbyStateView } from '@card-battle/shared';

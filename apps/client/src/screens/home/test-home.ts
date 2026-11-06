@@ -1,7 +1,7 @@
 /**
  * Test-only builders for Home component tests (Lot 76 plan Appendix A.3). Shipped code never imports
- * this file. `closeHomeDialog` finds the backdrop of the V2 Dialog and of the V7 Sheet / Dialog alike
- * (`dialog-overlay` / `sheet-overlay`), so Part 2's sheet rewrites keep the gate and What's new tests.
+ * this file. `closeHomeDialog` finds the backdrop of the V7 Sheet / Dialog (`sheet-overlay`): every
+ * Home dialog is one since L76-07.
  * 'swipe' needs `stubPhoneViewport()` (L76-05).
  */
 import { latestReleaseNote } from '@card-battle/shared';
@@ -61,7 +61,7 @@ export async function closeHomeDialog(user: UserEvent, name: string, way: HomeDi
   } else if (way === 'swipe') {
     swipeSheetDown(dialog);
   } else if (way === 'backdrop') {
-    const overlay = dialog.closest<HTMLElement>('[data-zone="dialog-overlay"], [data-zone="sheet-overlay"]');
+    const overlay = dialog.closest<HTMLElement>('[data-zone="sheet-overlay"]');
     if (overlay === null) throw new Error(`${name} has no backdrop`);
     await user.click(overlay);
   } else {

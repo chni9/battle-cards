@@ -256,7 +256,7 @@ and are mirrored in `ui/palette.ts` and `ui/motion/motion-tokens.ts`.
   Icon-only controls use `IconButton` (L72-08) for the aria-label and title (L59-01), never a
   bare `Icon`. Glyph paints are `V7_COLORS` hex only, with a 2-unit ink outline and a non-ink
   body. Never put an icon directly on a fill within CIEDE2000 20 of its body or motif token
-  (for example `point`, `shop`, `coach` or `feedback` on `--cta`, or `help` on `--cta-2`):
+  (for example `point`, `shop`, `coach`, `feedback`, `action` or `check` on `--cta`, `help` on `--cta-2`, or `attack` on `--danger`):
   put it in a `--bg-0` or `--panel` well. No emoji and no U+2715 cross in `ui/`
   (`ui/icons/no-emoji.test.ts`); use `Icon name="eliminated"` or `"close"`. The classic
   `SpyEyeIcon` and `ForfeitFlagIcon` (`screens/table/`) stay until L75. Details:
@@ -1592,7 +1592,7 @@ Spec v7 §7.1–§7.5 and §7.7; plan `docs/superpowers/plans/2026-10-21-v7-lot-
 
 - `screens/home/` (L76-01, spec v7 §4.2, §7.1): `home.tsx` split by component, with no visual or behavior change. `home-screen.tsx` (`HomeScreen`, `HomeScreenProps`; App imports it directly, no `index.ts`) holds every Home state, the New control and the four root dialogs. `home-hub.tsx`, `online-path.tsx`, `solo-path.tsx`, `tutorial-path.tsx`, `path-header.tsx`, `home-status.tsx`, `nickname-field.tsx` and `home-art.tsx` (`HomeArt`, `BetaCard`) hold no state, so Back keeps the solo picks. (`home-classes.ts` was deleted by L76-08: the fields are `TextField`s.)
 - `screens/home/home-gate.ts`, `home-whats-new.ts`, `solo-rules-state.ts` (L76-01): the pure rules `HomeScreen` follows; they read no storage (`ui/help-storage.ts` and `ui/release-storage.ts` do). `howToPlayCloseOutcome`: a gated close marks seen and enters the path with no What's new check; a manual Skip / Got it marks seen, a manual dismiss does not, and both re-check What's new. `whatsNewAutoScope`: 'current' while the latest entry is unseen, for the mount, Back-to-hub and manual How to play triggers (New opens 'history' itself). `initialSoloRulesState` / `applySoloRulesChange` / `soloLaunchKitSelection`: the Play again seed is read once at mount, only an in-range slider change sends the clock (Q3/Q31), an excluded pick falls back to Random, and Random only launches Random but keeps the pick.
-- `screens/home/home-screen.test.tsx`, `test-home.ts` (L76-01, spec v7 §12.1): the rendered Home suite. `test-home.ts` has `makeHomeProps`, `expectNoHomeIntent` (the commit rule: a test that opens or closes a dialog asserts no intent), `seedHomeStorage`, `enterHomePath` and `closeHomeDialog` (it finds the V2 and the V7 backdrop). They replace the four `screens/home.*.test.ts` source-text splits and the `home.tsx` reads of `whats-new-dialog.test.ts`, whose style-only New lines read `screens/home/home-screen.tsx` until L76-04. A test that sends feedback mocks `feedback/submit-feedback`.
+- `screens/home/home-screen.test.tsx`, `test-home.ts` (L76-01, spec v7 §12.1): the rendered Home suite. `test-home.ts` has `makeHomeProps`, `expectNoHomeIntent` (the commit rule: a test that opens or closes a dialog asserts no intent), `seedHomeStorage`, `enterHomePath` and `closeHomeDialog` (it finds the V7 sheet backdrop). They replace the four `screens/home.*.test.ts` source-text splits and the `home.tsx` reads of `whats-new-dialog.test.ts`, whose style-only New lines read `screens/home/home-screen.tsx` until L76-04. A test that sends feedback mocks `feedback/submit-feedback`.
 - `screens/lobby/lobby-screen.tsx` (L76-02, spec v7 §4.2, §7.2, §12.1): the V2 lobby moved as it is.
   App imports `./screens/lobby/lobby-screen` (no `index.ts`). `lobby-ready.ts`,
   `lobby-ready-mark.tsx` and `lobby-kit-picker.ts` moved beside it with their tests; the pure
@@ -1815,8 +1815,8 @@ Spec v7 §7.1–§7.5 and §7.7; plan `docs/superpowers/plans/2026-10-21-v7-lot-
   Back (`chevron-left`) and Feedback, the 'Card Battle' eyebrow, the path `<h1>`, the subtitle,
   `HomeStatus`. `HomeStatus`: the `homeStatusCopy` line (none when idle) and the error as an inline
   `role="alert"` line on `--panel-2` with a `--danger` inset ring, under the title, not dismissible
-  (§7.7). These files import nothing from `design/` or `bots/`; the Online, Tutorial and Solo bodies do
-  until L76-08 and L76-11. What's new item 9 is the Home item.
+  (§7.7). These files import nothing from `design/` or `bots/`; the Online, Tutorial and Solo bodies did
+  until L76-08 and L76-11. What's new item 9 is the Home item. A mode switch (a tile, Back, the gated Skip or Got it) focuses the new `<h1>` (`tabIndex={-1}`), never on the first mount (L76-18, P2-m5).
 - `screens/whats-new-dialog.tsx`, `screens/use-once-per-open.ts` (L76-05, spec v7 §7.1, §7.7, §10.4;
   L63-07, L65-05): What's new is a V7 `Dialog` (a bottom sheet on phones, centered on desktop; width
   `2xl`; `data-home-sheet="whats-new"`) with unchanged props. The `current` scope (the auto popup)
