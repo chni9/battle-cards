@@ -13,7 +13,7 @@ export interface CalloutRect {
 
 export type CalloutArrowSide = 'top' | 'bottom';
 
-/** The ring sits this far outside the target, so it never covers the target's own edge. */
+/** The ring sits this far outside the target, so it never covers the target's own edge, except where the screen edge clips it (Q2-6). */
 export const CALLOUT_RING_GAP_PX = 4;
 export const CALLOUT_ARROW_W_PX = 20;
 export const CALLOUT_ARROW_H_PX = 12;
@@ -34,12 +34,13 @@ export function calloutPlacement(
   viewport: { readonly width: number; readonly height: number },
 ): CalloutPlacement {
   const gap = CALLOUT_RING_GAP_PX;
-  const ring: CalloutRect = {
-    left: target.left - gap,
-    top: target.top - gap,
-    width: target.width + 2 * gap,
-    height: target.height + 2 * gap,
-  };
+  // Designer 2026-11-06 (Q2-6): a target flush with a screen edge would put the ring `gap` px off-screen,
+  // so each edge is clamped into `viewport`: on that side the ring closes in on the target instead.
+  const ringLeft = Math.max(0, target.left - gap);
+  const ringTop = Math.max(0, target.top - gap);
+  const ringRight = Math.min(viewport.width, target.left + target.width + gap);
+  const ringBottom = Math.min(viewport.height, target.top + target.height + gap);
+  const ring: CalloutRect = { left: ringLeft, top: ringTop, width: ringRight - ringLeft, height: ringBottom - ringTop };
   const side: CalloutArrowSide = target.top + target.height / 2 > viewport.height / 2 ? 'top' : 'bottom';
   const left = clamp(target.left + target.width / 2 - CALLOUT_ARROW_W_PX / 2, 0, viewport.width - CALLOUT_ARROW_W_PX);
   const rawTop = side === 'top' ? ring.top - CALLOUT_ARROW_H_PX : ring.top + ring.height;

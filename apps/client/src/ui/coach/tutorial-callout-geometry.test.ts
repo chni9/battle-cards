@@ -21,4 +21,25 @@ describe('calloutPlacement (spec v7 §6.12)', () => {
     expect(calloutPlacement({ left: 0, top: 600, width: 8, height: 40 }, PHONE).arrow.left).toBe(0);
     expect(calloutPlacement({ left: 384, top: 600, width: 6, height: 40 }, PHONE).arrow.left).toBe(PHONE.width - CALLOUT_ARROW_W_PX);
   });
+  it('insets the ring at the screen edges so it never draws off-screen (Q2-6)', () => {
+    // The your-zone mark: flush with the left and bottom edges of the visible box.
+    const placed = calloutPlacement({ left: 0, top: 744, width: 390, height: 100 }, PHONE);
+    expect(placed.ring.left).toBeGreaterThanOrEqual(0);
+    expect(placed.ring.top).toBeGreaterThanOrEqual(0);
+    expect(placed.ring.left + placed.ring.width).toBeLessThanOrEqual(PHONE.width);
+    expect(placed.ring.top + placed.ring.height).toBeLessThanOrEqual(PHONE.height);
+    // Only the clipped sides move: the top is still the 4 px gap out.
+    expect(placed.ring.top).toBe(744 - CALLOUT_RING_GAP_PX);
+  });
+  it('insets the right and top edges the same way', () => {
+    const placed = calloutPlacement({ left: 300, top: 0, width: 90, height: 40 }, PHONE);
+    expect(placed.ring.left + placed.ring.width).toBeLessThanOrEqual(PHONE.width);
+    expect(placed.ring.top).toBeGreaterThanOrEqual(0);
+    expect(placed.ring.left).toBe(300 - CALLOUT_RING_GAP_PX);
+  });
+  it('keeps the arrow outside the inset ring', () => {
+    const placed = calloutPlacement({ left: 0, top: 744, width: 390, height: 100 }, PHONE);
+    expect(placed.side).toBe('top');
+    expect(placed.arrow.top + placed.arrow.height).toBeLessThanOrEqual(placed.ring.top);
+  });
 });
