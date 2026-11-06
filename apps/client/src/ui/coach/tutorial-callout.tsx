@@ -10,6 +10,8 @@
  * - **Live layer only.** While a sheet is live (`liveSheetId`), only the targets inside that sheet's
  *   overlay draw; otherwise only the table's. A zero-size target, or one inside an `inert` subtree,
  *   is skipped.
+ * - **Inside its scrollport.** A target is ringed where its scrollport shows it, and a new step (or a
+ *   sheet going live) scrolls its targets into view once (`revealTutorialMarks`; L75-12 Gate C).
  * - **Measured every frame while active.** Sheets and the fan move under motion, which no observer
  *   reports, so the layer re-measures on each `requestAnimationFrame` and sets state only when a
  *   target moved, appeared or went away.
@@ -30,7 +32,7 @@ import { motionAttribute } from '../primitives/chrome-classes';
 import { liveSheetId } from '../primitives/sheet-stack';
 import { useSheetStackStore } from '../primitives/sheet-stack-context';
 import { useVisualViewportBox } from '../use-visual-viewport-box';
-import { liveTutorialMarks } from './live-tutorial-marks';
+import { liveTutorialMarkIds, liveTutorialMarks, revealTutorialMarks } from './live-tutorial-marks';
 import { CALLOUT_RING_STROKE_PX, calloutPlacement, type CalloutArrowSide, type CalloutRect } from './tutorial-callout-geometry';
 
 export interface TutorialCalloutLayerProps {
@@ -84,8 +86,16 @@ export function TutorialCalloutLayer({ active }: TutorialCalloutLayerProps): Rea
   const { offsetLeft, offsetTop } = box;
   useLayoutEffect(() => {
     if (!active) return;
+    // The layer and marks the reveal last ran for: a new step, or a sheet going live, scrolls its marks into view once.
+    let revealed: string | null = null;
     const measure = (): void => {
-      const next: CalloutTarget[] = liveTutorialMarks(liveSheetId(store.getSnapshot())).map(({ id, rect }) => ({
+      const live = liveSheetId(store.getSnapshot());
+      const key = `${live ?? ''}:${liveTutorialMarkIds(live)}`;
+      if (key !== revealed) {
+        revealed = key;
+        revealTutorialMarks(live);
+      }
+      const next: CalloutTarget[] = liveTutorialMarks(live).map(({ id, rect }) => ({
         id,
         rect: { left: rect.left - offsetLeft, top: rect.top - offsetTop, width: rect.width, height: rect.height },
       }));

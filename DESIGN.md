@@ -1349,7 +1349,10 @@ deleted in L75-11.
   scroller, `overflow-hidden` region or sheet body clips it. Full motion pulses the ring's opacity;
   reduced motion keeps it static (`data-motion`). `live-tutorial-marks.ts` `liveTutorialMarks()` is the one
   reader of the live marks (live sheet layer, not `inert`, not empty), shared with the coach's placement
-  so the coach never dodges a mark the layer does not draw. Real incoming threats keep the plate badges'
+  so the coach never dodges a mark the layer does not draw. A mark inside a scrollport (the landscape
+  hand, a sheet body) is ringed where its clipping ancestors show it, and a new step or a sheet going live
+  scrolls its marks into view once (`revealTutorialMarks`), so the Specials ring at 844×390 sits on the
+  specials, not on Draw beside the hand (L75-12 Gate C). Real incoming threats keep the plate badges'
   `data-tone` rings and get no callout.
 
 ## Table banners (ui/banner/, L72-18)
