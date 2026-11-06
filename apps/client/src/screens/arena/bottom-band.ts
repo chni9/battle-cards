@@ -55,8 +55,8 @@ export const BAND_HYSTERESIS_PX = 48;
  * cannot read, so this is a measured constant.
  */
 const FULL_STRIP_PX = 160;
-/** The compact strip: `py-1` (8 px) plus the 53 px thumb-portrait row (L75-03). */
-const COMPACT_STRIP_PX = 61;
+/** The compact strip: `py-1` (8 px) plus the 59 px thumb-portrait row (a 44 px wide, 3:4 thumb; measured in Check 1, 2026-11-06; L75-03). */
+const COMPACT_STRIP_PX = 67;
 /** The Card `hand` clamp's `19vw` (`clamp(64px,19vw,120px)`). */
 const HAND_VIEWPORT_SHARE = 0.19;
 

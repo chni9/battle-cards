@@ -38,7 +38,7 @@ describe('plate geometry (A.6)', () => {
 describe('bottomBandSavingsPx (A.6)', () => {
   it('gives back the strip difference plus the hand height the 52 px cards save, rounded up', () => {
     expect(COMPACT_HAND_CARD_W_PX).toBe(52);
-    expect([bottomBandSavingsPx(360), bottomBandSavingsPx(375), bottomBandSavingsPx(768)]).toEqual([124, 128, 201]);
+    expect([bottomBandSavingsPx(360), bottomBandSavingsPx(375), bottomBandSavingsPx(768)]).toEqual([118, 122, 195]);
   });
 });
 
@@ -90,8 +90,8 @@ describe('bottomBandFor (R5, Review Focus 4)', () => {
     const full: LayoutBox = { viewport: { width: 360, height: 640 }, arena: { width: 360, height: 40 } };
     expect(bottomBandFor(view, full, 'full')).toBe('compact');
     const compact = withArena(full, full.arena.height + bottomBandSavingsPx(full.viewport.width));
-    expect(compact.arena.height).toBe(164);
-    // The judged arena is 164 − (124 + 48) = −8 px: the seat sits wholly below the arena, still covered by the plate.
+    expect(compact.arena.height).toBe(158);
+    // The judged arena is 158 − (118 + 48) = −8 px: the seat sits wholly below the arena, still covered by the plate.
     expect(bottomBandFor(view, compact, 'compact')).toBe('compact');
   });
 
