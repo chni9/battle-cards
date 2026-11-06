@@ -58,9 +58,9 @@ describe('hint copy (technical spec v6 §5.2)', () => {
 });
 
 describe('hint copy fixes (technical spec v7 §10.1, §10.2; L75-01)', () => {
-  const TYPOS = ['you kit', 'you hand', 'stronger that', 'ressources', 'atteign', 'uo to', 'opponent !', ' !'] as const;
+  const TYPOS = ['you kit', 'you hand', 'stronger that', 'ressources', 'atteign', 'uo to', ' !'] as const;
 
-  it('carries none of the seven locked typos and no space before an exclamation mark (§10.2)', () => {
+  it('carries none of the locked typos and no space before an exclamation mark (§10.2)', () => {
     for (const id of HINT_IDS) {
       for (const typo of TYPOS) expect(HINT_COPY[id].body).not.toContain(typo);
     }

@@ -1606,8 +1606,8 @@ Appendix A). Each Lot 74 task appends its bullet here, in task order.
     "Action log", `aria-expanded`) that always renders, and when expanded a 320 px scrollport
     (`data-zone="action-log-panel"`) of the round-grouped lines (`LogRounds`, sticky `top-0` headers)
     that follows new lines within 48 px (`useLogFollow`, shared with the log sheet). Collapsed, the
-    list unmounts. The panel opens expanded; Menu → Action log expands it and opens no sheet; on an open panel it scrolls to the newest line
-  and focuses the toggle (`nudge`). The
+    list unmounts. The panel opens expanded; Menu → Action log expands it and opens no sheet; on an
+    open panel it scrolls to the newest line and focuses the toggle (`nudge`). The
     dock sits right of the hand in the `hand` row.
   - The dock draws icon-only under 700 px of landscape-compact width (`dockIconOnly`, `Dock iconOnly`,
     designer 2026-11-06): Shop and Activate duplication lose their words, the controls sit in two
@@ -1861,7 +1861,8 @@ rules above are unchanged — this section only covers how the client looks.
   shop → resources → hidden-kit. Spy stays on the Incoming strip without a hint card.
   Incoming-attack copy is spec §5.2 (equal cancels both; a weaker answer still hits them
   later — Lot 54). Do not invent `actionResolved` cancel-why copy if the wire has no
-  discriminant (spec v6 §12 #7). `HINT_COPY` follows technical spec v7 §10.1–§10.2 (L75-01); every copy change is listed in its PR for designer review.
+  discriminant (spec v6 §12 #7). `HINT_COPY` follows technical spec v7 §10.1–§10.2 (L75-01);
+  every copy change is listed in its PR for designer review.
   Auto-Got-it on Draw / Shop / play / portrait / hand or special inspect / attack- or
   thief-Incoming clear / confirm reward. × dismisses the same as Got it.
   Card sits next to `data-hint-anchor` (no rings); `incoming-thief` reuses Incoming, with the earliest-queued thief's per-card body (L75-07).
