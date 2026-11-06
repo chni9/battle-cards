@@ -2279,7 +2279,7 @@ rules above are unchanged — this section only covers how the client looks.
   Payloads unchanged (`steal-pick` instanceId, `pool-pick` instanceIds,
   consume `playCard` + `consumeInstanceId`, `special-pick` cardId).
 - **Rewards / reanimation / Regeneration (L44-06):** reward resource kinds use
-  tile chrome + existing `REWARD_KIND_COSTS` cost amounts (4/8/1);
+  tile chrome + the fixed 4 / 8 / 1 reward amounts (`screens/arena/sub-choice/reward-choice.tsx`);
   card kind is a card-tile grid (Confirm still two choices; log stays
   opaque). Reanimation wraps `KitPortrait` with the same chrome (not a third
   primitive). Regeneration is four click-to-commit buttons (`1 life` … `4 lives`);
