@@ -72,6 +72,10 @@
  *   marks Draw, the dock Shop until the Shop opens, each spotlit hand or special card, and that card's
  *   own sheet action.
  *
+ * - §6.12 (L75-06): first-game hints (`useArenaHints`): the L46 selector with Q66's kit-hidden input; causes from
+ *   the commit's `onSent` and the Shop, seat and card-sheet opens; `HintOverlay` hidden under read-only sheets
+ *   and non-reward sub-choices.
+ *
  * Import rule (L74-01 brief): `screens/arena/` imports only from `ui/`, `view-model/`, `fx/`,
  * `net/` (types), `help/`, `feedback/` and the shared screen modules. It never imports
  * `screens/table/` or `design/`; `TableScreenProps` is the one type `ArenaScreenProps` extends.
@@ -82,6 +86,7 @@ import { useCallback, useEffect, useEffectEvent, useRef, useState, type ReactEle
 
 import { TableFxProvider } from '../../fx/table-fx-context';
 import { useTableFxTriggers } from '../../fx/use-table-fx-triggers';
+import { HintOverlay } from '../../help/hint-overlay';
 import type { RoomConnectionStatus } from '../../net/use-room-connection';
 import { TableBannerHost } from '../../ui/banner/table-banner-host';
 import { heightBoundHandCardWidthPx } from '../../ui/card/hand-card-size';
@@ -108,6 +113,7 @@ import {
 } from '../../view-model/tutorial-coach-copy';
 import type { TableScreenProps } from '../table';
 import { createArenaCommit } from './arena-commit';
+import { hintCauseForCardSheet, hintCauseForIntent } from './arena-hint-causes';
 import {
   arenaAreaStyle,
   arenaGridStyle,
@@ -162,6 +168,7 @@ import { liveTargeting } from './targeting-model';
 import { ThreatLayer } from './threat-layer';
 import { TopBar } from './top-bar';
 import { TutorialCoachHost } from './tutorial-coach-host';
+import { useArenaHints } from './use-arena-hints';
 import { useArenaLayoutBox } from './use-arena-layout-box';
 import { useArenaTutorial } from './use-arena-tutorial';
 import { useHandDrag } from './use-hand-drag';
@@ -260,6 +267,15 @@ function ArenaScreenInner(props: ArenaScreenProps): ReactElement {
   const strip = selfStrip(view, ctx);
   // The tutorial (§6.12, L75-04; plan A.8.2): its state lives here, so a mode change keeps it.
   const tutorial = useArenaTutorial({ view, readOnly, isMyTurn: view.currentTurnPlayerId === view.you, selfEliminated: povEliminated });
+  // First-game hints (§6.12, L75-06; plan A.9.1): below the tutorial hook, above the commit statement (S3).
+  const hints = useArenaHints({
+    view,
+    readOnly,
+    pov: strip.pov,
+    isMyTurn: strip.isActive,
+    seats: seatsModel.seats,
+    subChoice: props.subChoice,
+  });
   // The single exit for every ArenaIntent (§6.6.4, Appendix A.6): built once per render; the handlers are read at call time.
   // `allow` drops any send while reconnecting (L74-25, D5), and the tutorial gate composes with that lock and
   // never replaces it (R8, plan A.8.4, K4). Own-intent FX fly after the send (Lot 14, A.9.3).
@@ -269,6 +285,9 @@ function ArenaScreenInner(props: ArenaScreenProps): ReactElement {
       const own = ownIntentFxFor(intent, context);
       if (own !== null) fx.ownIntent(own);
       setLastSent({ instanceId: context.instanceId ?? null, view });
+      // The hint cause rides the send, after the FX and the last-send record; `allow` is untouched (A.9.2).
+      const cause = hintCauseForIntent(intent);
+      if (cause !== null) hints.note(cause);
     },
   });
   // The board tour's mark (§6.12, plan A.8.6): one element set per step, absent outside the tour.
@@ -305,6 +324,8 @@ function ArenaScreenInner(props: ArenaScreenProps): ReactElement {
   // open-question ruling 9). Plan A.9.2 writes this opener's final order.
   const openCard = (source: CardSheetSource): void => {
     if (tutorial.locksTable && (source.kind === 'hand' || source.kind === 'special')) return;
+    const cause = hintCauseForCardSheet(source);
+    if (cause !== null) hints.note(cause);
     openSheet({ kind: 'card', source });
   };
   const tappedSeatId = openSeatId(sheets);
@@ -502,6 +523,7 @@ function ArenaScreenInner(props: ArenaScreenProps): ReactElement {
             if (tapGuard.guarded) return;
             // The Look exit (L75-04): a revealed seat's sheet clears the gate. Plan A.9.2 writes this opener's order.
             tutorial.onSeatOpened(playerId);
+            if (seatsModel.seats.find((seat) => seat.playerId === playerId)?.kitHidden === false) hints.note('inspect-opponent');
             openSheet({ kind: 'seat', playerId });
           }}
           {...(live === null ? {} : { targeting: { key: live.sheetKey, seatIds: live.seatIds, onTarget } })}
@@ -590,6 +612,7 @@ function ArenaScreenInner(props: ArenaScreenProps): ReactElement {
               if (tapGuard.guarded) return;
               // The tutorial tour and Look gate keep the Shop shut (L75-04). Plan A.9.2 writes this opener's order.
               if (tutorial.locksTable) return;
+              hints.note('open-shop');
               openSheet({ kind: 'shop' });
             }}
             {...(props.onShowStats !== undefined ? { onShowStats: props.onShowStats } : {})}
@@ -627,6 +650,10 @@ function ArenaScreenInner(props: ArenaScreenProps): ReactElement {
       ) : null}
       <TutorialCalloutLayer active={tutorial.active} />
       {/* Portaled to `document.body` on `Z_INDEX.toast`, mounted once (§6.12, L74-25): the V2 modal's copy in a toast. */}
+      {/* Portaled to `document.body` on `Z_INDEX.hint`, under the coach, banners and toasts (L75-06; plan A.9.3). */}
+      {hints.hintId !== null ? (
+        <HintOverlay hintId={hints.hintId} dialogOpen={hints.dialogOpen} onGotIt={hints.onGotIt} onSkipAll={hints.onSkipAll} />
+      ) : null}
       <RejectToast reject={props.actionReject} onDismiss={props.onDismissActionReject} />
       {/* The sheets are the last children of the arena root and never inside a clickable element: a React portal bubbles clicks to its ancestors. No `default`, so a new `ArenaSheet` variant fails `noImplicitReturns` until it gets a case. */}
       {arenaSheetEntries(sheets).map(({ sheet, key, open }) => {

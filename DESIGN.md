@@ -1192,8 +1192,8 @@ editor stay until L76.
 `table-tutorial-coach`, `table-first-game-hints`, `first-game-hint-host`, `tutorial-overlays`).
 `<CoachPanel title body zone onHide hideAriaLabel footer? extraAttrs? compact? />` and
 `<CoachBody text />` replace `design/components/coach-panel.tsx`, with the same props. That file,
-`screens/table/tutorial-coach.tsx`, `help/hint-overlay.tsx` and the `.tutorial-coach-panel` CSS
-stay until L75, which hosts the new panel.
+`screens/table/tutorial-coach.tsx` and the `.tutorial-coach-panel` CSS stay until L75, which hosts
+the new panel (`help/hint-overlay.tsx` renders it since L75-06).
 
 - **Element:** a hovering `<aside>` named by its title (`aria-labelledby` the `<h2>`, so it is a
   named complementary landmark). It is never a dialog or modal: no `role`, no `aria-modal`, no
@@ -1261,7 +1261,14 @@ stay until L75, which hosts the new panel.
   The tallest hint is `resources`, whose copy is 111px at 248px wide (the cap is 240px). All
   eleven tour steps (with Got it) also fit at 844×390 (130 to 175px). The script steps 17 and 19
   have no footer and keep the default cap, so at 844×390 they scroll by 18px and show the body
-  region. L75-06 owns the landscape-compact host width (a Watch point in the backlog).
+  region. The L75-06 hint host uses these two widths.
+- **First-game hint host (L75-06):** `help/hint-overlay.tsx` portals a `position: fixed` layer sized to
+  the visual viewport (`useVisualViewportBox`) to `document.body` on `Z_INDEX.hint` (84: above sheets
+  and bars, under the coach, banners, toasts and the `fx/` overlay). The layer is `pointer-events:
+  none`; only the card takes presses. The compact card is `min(15.5rem, 100vw - 1rem)` wide in
+  portrait and desktop and `min(22rem, 100vw - 1rem)` in landscape-compact. `placeHintCard` puts it
+  next to the first visible `[data-hint-anchor]` (else 0.5rem from the left and 7.5rem from the
+  bottom). Footer: Got it (`primary`) and Skip all (`quiet`), each `flex-1`, as in the gallery.
 - **Gallery:** the `/dev/ui` section `coach` (`ui/coach/coach.gallery.tsx`): the Tax tutorial
   coach with Got it, the Thief follow-up coach with a `+4 points` glyph and no footer, and the
   compact Draw hint with Got it and Skip all, all from the real shared copy.

@@ -667,9 +667,9 @@ and are mirrored in `ui/palette.ts` and `ui/motion/motion-tokens.ts`.
 
 - **`ui/coach/coach-panel.tsx`** provides `CoachPanel` and `CoachBody` (L72-17), with the props of
   `design/components/coach-panel.tsx` (`title`, `body`, `zone`, `onHide`, `hideAriaLabel`,
-  `footer?`, `extraAttrs?`, `compact?`). It is the L75 drop-in for `screens/table/tutorial-coach.tsx`
-  and `help/hint-overlay.tsx`, which keep the V6 panel, its `.tutorial-coach-panel` CSS and
-  their source-text tests (`tutorial-callout.test.ts`, `hint-overlay.test.ts`) until then. It is
+  `footer?`, `extraAttrs?`, `compact?`). It is the L75 drop-in for `screens/table/tutorial-coach.tsx`,
+  which keeps the V6 panel, its `.tutorial-coach-panel` CSS and
+  its source-text tests (`tutorial-callout.test.ts`) until then (`help/hint-overlay.tsx` renders it since L75-06). It is
   not a dialog (no `role`, no `aria-modal`, no focus move, no key handling, so Esc stays with the
   sheet stack) and has no Skip: Skip stays on the table flag (Lot 45), and the hint host passes
   "Got it" and "Skip all" as `footer`. The caller passes the hide label (`HIDE_COACH_ARIA_LABEL`).
@@ -696,7 +696,7 @@ and are mirrored in `ui/palette.ts` and `ui/motion/motion-tokens.ts`.
 - **Landscape-compact footer:** `CoachPanel` reads `useViewportMode()`. In `landscape-compact`
   a given `footer` renders inside the header row, between the title and the close control, and
   there is no footer row; elsewhere it stays below the body. A host passes the same `footer` in
-  every mode and sizes the card itself: L75 should use `min(15.5rem, 100vw - 1rem)` for hints in
+  every mode and sizes the card itself: the L75-06 hint host uses `min(15.5rem, 100vw - 1rem)` for hints in
   portrait and desktop and `min(22rem, 100vw - 1rem)` in landscape-compact (the measured fit).
   Tests mock `useViewportMode` the way `carousel.test.tsx` does.
 - **Reduced motion:** the panel renders at rest (`initial={false}`, no transform, no fade),
@@ -1691,6 +1691,26 @@ Appendix A). Each Lot 74 task appends its bullet here, in task order.
   then each spotlit hand or special card (`tutorialSpotlightInstanceIds`) and its own sheet's Use,
   Upgrade or Sell, and the dock Shop until the Shop opens on the step's tab. There the Upgrade points
   Buy, or the Absorber tile and then Buy selected, is marked: highlighted, never preselected.
+- `screens/arena/use-arena-hints.ts`, `arena-hint-causes.ts`; `help/hint-overlay.tsx` (L75-06, spec v7
+  §6.12, §6.3, Q66; L46): first-game hints run on the arena with V2's selector, gates and storage
+  (`selectHint`, `card-battle.v6.hints`): Classic, live, seated POV only. A tutorial room and the
+  finished board get none, and `note` is a no-op in a tutorial (L46-03: the arena leave confirm
+  imports no hint code, so Skip and finishing write nothing).
+  - Q66: `hasUnspiedLivingOpponent` is `seats.some((seat) => seat.kitHidden)`, so a base-Spied seat
+    counts as kit hidden in the selector and on the `hidden-kit` anchor.
+  - Causes: the commit's `onSent` (`hintCauseForIntent`: Draw; play, multi-attack, buy, sell,
+    upgrade, UP buy and sell, pool buy and Unspy are a playing intent; the reward Confirm is
+    `confirm-reward`; Deactivate and Activate duplication are none), the dock Shop (`open-shop`), a
+    seat sheet whose kit is visible (`inspect-opponent`), a hand or special card sheet
+    (`hintCauseForCardSheet`), and an attack or thief threat leaving the view. Each open notes its
+    cause after the tap guard and the tutorial lock, then opens.
+  - The card hides while any read-only sheet (Dialogs and the menu included), a non-reward
+    sub-choice or a minimized reward sheet is up. The reward hint stays over the expanded reward
+    sheet and returns when it is restored.
+  - `HintOverlay` portals the `ui/coach` compact card on `Z_INDEX.hint` (DESIGN.md › Coach panel),
+    next to the first visible `[data-hint-anchor]`: 15.5rem wide in portrait and desktop, 22rem in
+    landscape-compact. The card keeps its identity across a mode change. The old table mounts the
+    same overlay under `?ui=classic` until L75-09.
 
 ## Design system (V2 · Lots 10+)
 
@@ -1813,6 +1833,7 @@ rules above are unchanged — this section only covers how the client looks.
   On the arena (`?ui=next`) the same rules run through `useArenaTutorial` and `tutorial-gate.ts` (L75-04, L75-05; `## Arena (V7, ?ui=next)`).
   **First-game hints (L46):** Classic live table only (`playKind !== 'tutorial'`). Same
   `CoachPanel` chrome as tutorial but **compact and more transparent**, `data-zone="first-game-hint"`, Got it / Skip all.
+  Since L75-06 `HintOverlay` is the V7 `ui/coach` card on `Z_INDEX.hint` for both tables (Arena section).
   Selector ranks one undismissed topic from view facts: reward (while POV is choosing) →
   **attack** Incoming → **Thief** Incoming → (on turn) your-turn → draw → hand → specials →
   shop → resources → hidden-kit. Spy stays on the Incoming strip without a hint card.

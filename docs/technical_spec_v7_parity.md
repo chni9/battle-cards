@@ -2404,7 +2404,7 @@
   - Auto-dismissed by causes (draw, open shop, play, inspect, incoming cleared, confirm reward)
 - **Keep:**
   - The redesign must keep the data-hint-anchor targets: your-turn, draw, shop, hand, specials, resources, incoming, hidden-kit, reward (on the reward Dialog)
-- **Notes:** Owned by apps/client/src/help; listed here for the anchor contract. hasUnspiedLivingOpponent treats base-Spied seats as spied, so 'hidden-kit' stops after a base Spy even though the kit is still hidden.
+- **Notes:** Owned by apps/client/src/help; listed here for the anchor contract. hasUnspiedLivingOpponent treats base-Spied seats as spied, so 'hidden-kit' stops after a base Spy even though the kit is still hidden. Since L75-06 the arena passes `seats.some((seat) => seat.kitHidden)`, so a base-Spied seat counts as kit hidden (technical spec v7 §6.3, Q66); the old table keeps the base-Spied-as-spied value until L75-10.
 
 ### `walk-in-spectator-mode` — Walk-in spectator table mode
 
@@ -2782,7 +2782,7 @@
   - Copy verbatim from TUTORIAL_TOUR_STEPS
   - Highlight chrome: pulsing orange outline + arrow outside the highlight (TutorialCallout)
   - Order fixed: your zone, hand, specials, resources, Incoming, Shop, opponent, action log, timer, kit, flag
-- **Notes:** Lot 45 follow-up (2026-08-26). The tour 'opponent' copy says kits stay hidden until Spy reveals them (see openQuestions on Lot 69).
+- **Notes:** Lot 45 follow-up (2026-08-26). The tour 'opponent' copy says kits stay hidden until Spy reveals them (see openQuestions on Lot 69). Since L75-01 the Opponent step says kit and cards need an upgraded Spy or Spy Thief, or elimination, and a basic Spy shows only resources (technical spec v7 §10.1, Lot 69).
 
 ### `table-tutorial-look-gate` — Tutorial Look gate (forced portrait click)
 

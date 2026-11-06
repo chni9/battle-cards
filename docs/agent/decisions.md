@@ -6566,3 +6566,28 @@ ruling R8 and open question 8 (2026-11-03).
 - **Carry-forward fix:** the card-sheet Deactivate confirm closes only on a sent commit.
 
 ---
+
+## 2026-11-06 · [P] First-game hints on the arena: the Q66 input, the minimized reward sheet, V7 chrome (L75-06)
+
+Source: technical spec v7 §4.2, §6.3, §6.7, §6.12, §12.1; Appendix A Q66, `first-game-hint-host`,
+`table-first-game-hints`; the Lot 75 plan A.9 and ruling R11.
+
+- **Base-Spied seats count as kit hidden** (§6.3, Q66). The arena passes `seats.some((seat) =>
+  seat.kitHidden)` as `hasUnspiedLivingOpponent`, so the selector input and the `hidden-kit` anchor
+  agree: a base Spy shows resources, not the kit. The input keeps its name, because renaming it would
+  edit `screens/table.tsx` (R14). Under `?ui=classic` the old table keeps its pre-Q66 value until
+  L75-10 deletes it.
+- **The reward hint hides while the reward sheet is minimized** (R11, planner's pick). The Minimize
+  bar carries no anchor; the hint returns on restore. This needs no `ui/` change.
+- **Hidden under sheets.** The card hides while any read-only sheet-stack entry is up (every arena
+  sheet, Dialog and the menu), a minimized blocking sheet, or a non-reward sub-choice (V2's
+  `hintDialogOpen`). The reject toast is not a sheet and paints above the card (`Z_INDEX.toast`), so
+  it does not hide it.
+- **Chrome.** `HintOverlay` renders the `ui/coach` compact panel on `Z_INDEX.hint` and imports nothing
+  from `design/`. The V6 compact-chrome source assertion (classification row 91) is retired,
+  superseded by §6.12 and §4.2. Under `?ui=classic` the old table shows the V7 card too until the flip
+  (L75-09, same PR; contract open question 12).
+- **Anchor lookup.** The card takes the first `[data-hint-anchor]` with a non-zero rect, so a mounted
+  but hidden twin never takes it. The overlay has its own lookup: `help/` imports no `fx/` code.
+
+---
