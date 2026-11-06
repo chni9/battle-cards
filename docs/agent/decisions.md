@@ -6542,3 +6542,27 @@ rulings R7–R9 and open questions 1, 8 and 9 (2026-11-03).
   classic table until L75-09.
 
 ---
+
+## 2026-11-06 · [P] Every arena commit path is gated in the tutorial (L75-05)
+
+Source: technical spec v7 §6.12, §6.6.4, §6.8; the Lot 75 plan, Appendix A.8.4–A.8.6 and A.8.9; controller
+ruling R8 and open question 8 (2026-11-03).
+
+- **One gate.** `allow = !reconnecting && tutorial.allows(intent)`. `tutorialIntentOf` maps each
+  `ArenaIntent` kind through an exhaustive switch. Unspy, pool buys, Deactivate and Activate duplication
+  map to `other`, which no human step allows; the server rejects them the same way (`tutorial-follow-coach`).
+  V2 never gated Deactivate or the sub-choice answers.
+- **Sub-choice answers** pass outside the tour and the Look gate. The server gates only turn actions, and
+  a vetoed answer would strand the player under a blocking sheet.
+- **The veto lands on the send.** Use on a targeted card still enters targeting; the gate vetoes the
+  seat tap. V2 vetoed at Use. A veto shows the follow-coach copy, keeps the control live and flies no
+  own FX.
+- **Spotlights.** The card sheet marks Use, Upgrade or Sell only on the spotlit card's sheet; V2 marked
+  it on any card's sheet. The Shop highlights and never preselects (§6.8): the Absorber tile until it is
+  selected, then Buy selected.
+- **Kept:** `tutorialShopSpotlight`, because `view-model/shop.ts` uses it (the brief's removal was wrong,
+  R8), and the `arena-sheets.ts` early return, because no caller passes a Shop `tab`.
+- **Deleted:** `tutorialIncomingThreatIds` and `isTutorialIncomingThreatCard`, dead since L51-07.
+- **Carry-forward fix:** the card-sheet Deactivate confirm closes only on a sent commit.
+
+---

@@ -11,7 +11,7 @@ import { renderUi } from '../../test/render';
 import type { OwnIntentFx } from '../../view-model/fx-triggers';
 import { makeCard, makeSelf } from '../../view-model/test-fixtures';
 import { ArenaScreen } from './arena-screen';
-import { makeArenaProps, makeArenaView } from './test-view';
+import { makeArenaProps, makeArenaView, makeTutorialArenaView } from './test-view';
 
 const ownIntent = vi.hoisted(() => vi.fn<(fx: OwnIntentFx) => void>());
 vi.mock('../../fx/use-table-fx-triggers', () => ({ useTableFxTriggers: () => ({ ownIntent }) }));
@@ -70,5 +70,22 @@ describe('own-intent FX (L74-17, A.9.3)', () => {
     await user.click(within(region('dock')).getByRole('button', { name: /^Draw, plus / }));
     expect([props.onUpgradeCard, props.onSellCard, props.onDraw].map((spy) => vi.mocked(spy).mock.calls.length)).toEqual([1, 1, 1]);
     expect(ownIntent.mock.calls).toEqual([[{ kind: 'sell', instanceId: 'spy-1' }]]);
+  });
+
+  it('a tutorial veto flies nothing; the scripted send then flies once (L75-05, §6.12)', async () => {
+    const props = makeArenaProps({ view: makeTutorialArenaView(21) });
+    const { user } = renderUi(<ArenaScreen {...props} />, { reducedMotion: true });
+    const useIn = (id: string): HTMLElement => {
+      const button = document.querySelector<HTMLElement>(`[data-arena-sheet="card:${id}"] [data-card-action="use"]`);
+      if (button === null) throw new Error(`no Use for ${id}`);
+      return button;
+    };
+    await user.click(within(region('hand')).getByRole('button', { name: 'Shield' }));
+    await user.click(useIn('shield-2'));
+    expect(ownIntent).not.toHaveBeenCalled();
+    await user.keyboard('{Escape}');
+    await user.click(within(region('hand')).getByRole('button', { name: /^Tax/ }));
+    await user.click(useIn('tax-1'));
+    expect(ownIntent.mock.calls).toEqual([[{ kind: 'play', instanceId: 'tax-1' }]]);
   });
 });

@@ -30,6 +30,10 @@
  * moves focus into what replaced the focused button (final review, I2): the first row toggle on
  * entry; the Multi-attack entry on Cancel or a model reset, else the first enabled action, else
  * the panel.
+ *
+ * L75-05 (§6.12, §6.6.4; plan A.8.4, A.8.6): `tutorialAction` marks the tutorial's Use, Upgrade or Sell
+ * (`data-tutorial-highlight`), and the Deactivate confirm closes only on a sent commit, so a tutorial
+ * veto leaves it open with Deactivate live (carry-forward fix).
  */
 
 import { getCard, type PlayingStateView } from '@card-battle/shared';
@@ -50,6 +54,7 @@ import { Dialog } from '../../ui/primitives/dialog';
 import { Sheet } from '../../ui/primitives/sheet';
 import type { CostSign, StructuredCost } from '../../ui/structured-cost';
 import { CardEffectCopy } from '../../ui/text/card-effect-copy';
+import type { TutorialCardActionSpotlight } from '../../view-model/tutorial-coach-copy';
 import type { ArenaCommit, ArenaIntent } from './arena-commit';
 import { arenaSheetKey } from './arena-sheets';
 import {
@@ -103,6 +108,8 @@ export interface CardSheetProps {
   collapsed?: boolean;
   /** L74-10: the "Choose a target" bar shown while `collapsed`. */
   collapsedBar?: ReactNode;
+  /** L75-05: the tutorial's action mark; the matching `[data-card-action]` button carries `data-tutorial-highlight`. */
+  tutorialAction?: TutorialCardActionSpotlight;
 }
 
 /** Where focus goes once a multi-attack step swap has unmounted the focused button (final review, I2). */
@@ -209,19 +216,21 @@ export function CardSheet(props: CardSheetProps): ReactElement {
   const multiStep = multi !== null && model.multiAttack !== null ? { selection: multi, model: model.multiAttack } : null;
   const multiPayload = multiStep === null ? null : multiAttackPayload(multiStep.model, multiStep.selection);
 
-  function send(intent: ArenaIntent): void {
+  /** Whether the intent went out (L75-05): only the Deactivate confirm reads it; other callers ignore it. */
+  function send(intent: ArenaIntent): boolean {
     if (commit === undefined || committedFor.current === view) {
-      return;
+      return false;
     }
     // A held card names itself for the own-intent FX (L74-17, A.9.3); any other source sends one argument (D4).
     const sent =
       ref.zone === 'hand' || ref.zone === 'special' ? commit(intent, { instanceId: model.instanceId }) : commit(intent);
     // Only a send that went out latches the view and closes the sheet (L74 Part 2 final review).
     if (!sent) {
-      return;
+      return false;
     }
     committedFor.current = view;
     onClose();
+    return true;
   }
 
   function onUse(): void {
@@ -259,6 +268,7 @@ export function CardSheet(props: CardSheetProps): ReactElement {
       focusableWhenDisabled: true,
       // Always a reason (empty while enabled), so the Button keeps one tree as the reason comes and goes.
       disabledReason: availability.reason !== null ? DISABLED_REASON_COPY[availability.reason] : '',
+      ...(action.kind === props.tutorialAction ? { 'data-tutorial-highlight': action.kind } : {}),
     };
     switch (action.kind) {
       case 'use': {
@@ -486,8 +496,8 @@ export function CardSheet(props: CardSheetProps): ReactElement {
               focusableWhenDisabled
               disabledReason={deactivate !== undefined && deactivate.reason !== null ? DISABLED_REASON_COPY[deactivate.reason] : ''}
               onClick={() => {
-                setConfirming(false);
-                send({ kind: 'deactivatePersistent', payload: { effectId: model.instanceId } });
+                // Closes only on a sent commit: a vetoed send leaves the confirm open with Deactivate live (L75-05).
+                if (send({ kind: 'deactivatePersistent', payload: { effectId: model.instanceId } })) setConfirming(false);
               }}
             >
               {DEACTIVATE_ACTION_LABEL}

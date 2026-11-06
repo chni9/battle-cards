@@ -20,7 +20,6 @@ import {
   tutorialCoachTitle,
   tutorialEconomySpotlight,
   tutorialHighlightAt,
-  tutorialIncomingThreatIds,
   tutorialPortraitSpotlight,
   tutorialSendAllowed,
   tutorialShopSpotlight,
@@ -233,23 +232,6 @@ describe('tutorial spotlights (L45-05)', () => {
       { instanceId: 'b1', cardId: 'basic-attack', isUpgraded: false },
     ]);
     expect(ids).toEqual(['t1']);
-  });
-
-  it('marks incoming Attack, Spy, and Thief as threats', () => {
-    expect(
-      tutorialIncomingThreatIds(
-        [
-          { id: 'a', cardId: 'basic-attack' },
-          { id: 's', cardId: 'spy' },
-          { id: 't', cardId: 'thief' },
-          { id: 'x', cardId: 'tax' },
-        ],
-        true,
-      ),
-    ).toEqual(['a', 's', 't']);
-    expect(
-      tutorialIncomingThreatIds([{ id: 'a', cardId: 'basic-attack' }], false),
-    ).toEqual([]);
   });
 });
 

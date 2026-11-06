@@ -6,15 +6,18 @@
  * the Owner lot 74 `card-effect-copy` classification row asks for (L51-12).
  */
 import type { CardId, PlayingStateView } from '@card-battle/shared';
-import { screen, within } from '@testing-library/react';
+import { screen, waitFor, within } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
 import { glyphRoots, spokenTexts, visibleText } from '../../test/glyph-queries';
 import { renderUi } from '../../test/render';
 import type { ActionContext } from '../../view-model/action-lock';
 import { inPlayThumbs } from '../../view-model/card-actions';
+import { DEACTIVATE_CONFIRM_TITLE } from '../../view-model/table-copy';
 import { makeCard, makePersistent, makeSelf } from '../../view-model/test-fixtures';
+import type { ArenaCommit } from './arena-commit';
 import { CardSheet } from './card-sheet';
+import { DEACTIVATE_ACTION_LABEL } from './card-sheet-actions';
 import type { CardSheetSource } from './card-sheet-source';
 import { makeArenaView } from './test-view';
 
@@ -152,5 +155,21 @@ describe('CardSheet, read-only (spec v7 §6.6.1, L74-02)', () => {
     expect(onClose).toHaveBeenCalledTimes(1);
     await user.click(overlayOf(screen.getByRole('dialog', { name: 'Spy' })));
     expect(onClose).toHaveBeenCalledTimes(2);
+  });
+
+  it('closes the Deactivate confirm only on a sent commit: a veto keeps it open with Deactivate live (L75-05)', async () => {
+    const commit = vi.fn<ArenaCommit>().mockReturnValueOnce(false).mockReturnValue(true);
+    const onClose = vi.fn();
+    const { user } = renderUi(<CardSheet open source={inPlay('poison')} view={BOARD} ctx={LIVE} onClose={onClose} commit={commit} />);
+    await user.click(within(screen.getByRole('dialog', { name: 'Poison' })).getByRole('button', { name: DEACTIVATE_ACTION_LABEL }));
+    const press = async (): Promise<void> => {
+      await user.click(within(screen.getByRole('dialog', { name: DEACTIVATE_CONFIRM_TITLE })).getByRole('button', { name: DEACTIVATE_ACTION_LABEL }));
+    };
+    await press();
+    expect([onClose.mock.calls.length, screen.queryByRole('dialog', { name: DEACTIVATE_CONFIRM_TITLE }) !== null]).toEqual([0, true]);
+    await press();
+    const intent = { kind: 'deactivatePersistent', payload: { effectId: 'poison-e' } };
+    expect([commit.mock.calls, onClose.mock.calls.length]).toEqual([[[intent], [intent]], 1]);
+    await waitFor(() => { expect(screen.queryByRole('dialog', { name: DEACTIVATE_CONFIRM_TITLE })).toBeNull(); });
   });
 });

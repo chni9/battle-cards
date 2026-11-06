@@ -1228,7 +1228,7 @@ Appendix A). Each Lot 74 task appends its bullet here, in task order.
   `onActivateDuplication`) makes the intent a no-op. It never checks legality.
   `createArenaCommit(handlers, hooks?)` (L74-17): `hooks.onSent(intent, context)` runs after the
   send with the caller's `CommitContext` (or `{}`), and `hooks.allow` can veto a send (L74-25
-  while reconnecting; L75 `allowTutorialSend`). A caller with no context calls `commit(intent)`
+  while reconnecting; L75-04/05 `tutorial.allows`, composed with it). A caller with no context calls `commit(intent)`
   with one argument. `ArenaCommit` is `(intent, context?) => boolean` (Part 2 final review): false
   when `allow` vetoes or the optional handler is absent (no `onSent` then), true once the intent
   went out. Every latch, sheet close and targeting end keys on it: `dockCommit` returns it, the
@@ -1681,6 +1681,16 @@ Appendix A). Each Lot 74 task appends its bullet here, in task order.
   element `docs/backlog_v7.md` › §6.12 tutorial highlight map names. `TutorialCalloutLayer` rings the live
   ones (the live sheet's own, else the table's) on `Z_INDEX.hint` with an orange arrow outside them. The
   finished board (`readOnly`) has no coach, mark or lock.
+- `screens/arena/tutorial-gate.ts` (L75-05, spec v7 §6.6.4, §6.12, §6.8): `tutorialIntentOf` maps every
+  `ArenaIntent` to the V2 `TutorialSendIntent`; a held card is read from the hand, then the specials,
+  and Unspy, pool buys, Deactivate and duplication map to `other`. `tutorial.allows` vetoes any send
+  `tutorialSendAllowed` rejects at the index and shows 'Tutorial step' / 'This tutorial step asks for a
+  different action.' until the next allowed send; sub-choice answers pass outside the tour and Look. A
+  vetoed send keeps its control live (sheet, Draw and Shop latches, targeting, a drop that springs back,
+  the Deactivate confirm, which now closes only on a sent commit) and flies no own FX. Script marks: Draw,
+  then each spotlit hand or special card (`tutorialSpotlightInstanceIds`) and its own sheet's Use,
+  Upgrade or Sell, and the dock Shop until the Shop opens on the step's tab. There the Upgrade points
+  Buy, or the Absorber tile and then Buy selected, is marked: highlighted, never preselected.
 
 ## Design system (V2 · Lots 10+)
 
@@ -1800,6 +1810,7 @@ rules above are unchanged — this section only covers how the client looks.
   ringed. Shop is **not**
   auto-opened; illegal clicks do not send (`tutorial-follow-coach`
   copy on the coach). Client idle 20s retitles the coach **Play** (not during tour or Look).
+  On the arena (`?ui=next`) the same rules run through `useArenaTutorial` and `tutorial-gate.ts` (L75-04, L75-05; `## Arena (V7, ?ui=next)`).
   **First-game hints (L46):** Classic live table only (`playKind !== 'tutorial'`). Same
   `CoachPanel` chrome as tutorial but **compact and more transparent**, `data-zone="first-game-hint"`, Got it / Skip all.
   Selector ranks one undismissed topic from view facts: reward (while POV is choosing) →

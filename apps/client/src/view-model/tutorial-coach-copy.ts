@@ -4,7 +4,6 @@
  */
 
 import {
-  isAttackCardId,
   isTutorialLookPending,
   isTutorialTourActive,
   tutorialStepAt,
@@ -338,24 +337,6 @@ function matchesLegalKind(
     case 'bot-play-thief':
       return false;
   }
-}
-
-/** Incoming Attack, Spy, or Thief chips get the red threat callout. */
-export function isTutorialIncomingThreatCard(cardId: string): boolean {
-  return isAttackCardId(cardId) || cardId === 'spy' || cardId === 'thief';
-}
-
-export function tutorialIncomingThreatIds(
-  effects: readonly { readonly id: string; readonly cardId: string }[],
-  tutorial: boolean,
-): readonly string[] {
-  if (!tutorial) {
-    return [];
-  }
-
-  return effects
-    .filter((effect) => isTutorialIncomingThreatCard(effect.cardId))
-    .map((effect) => effect.id);
 }
 
 function idsWhere(

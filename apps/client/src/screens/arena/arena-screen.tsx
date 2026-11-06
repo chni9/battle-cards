@@ -67,6 +67,10 @@
  *   tour or the Look gate is up, the commit's `allow` vetoes every send (composed with the reconnect
  *   lock, never replacing it), no drag starts, Shop and Unspy stay shut and hand and special taps open
  *   nothing; a seat tap stays live, and opening a revealed seat's sheet clears Look once per mount.
+ * - §6.12, §6.6.4, §6.8 (L75-05; plan A.8.4–A.8.6): outside the locks the same `allow` vetoes any send
+ *   the step does not ask for (`tutorial-gate.ts`) and the coach shows the follow-coach copy. The script
+ *   marks Draw, the dock Shop until the Shop opens, each spotlit hand or special card, and that card's
+ *   own sheet action.
  *
  * Import rule (L74-01 brief): `screens/arena/` imports only from `ui/`, `view-model/`, `fx/`,
  * `net/` (types), `help/`, `feedback/` and the shared screen modules. It never imports
@@ -97,6 +101,11 @@ import { shop } from '../../view-model/shop';
 import { povHasWon } from '../../view-model/table-banner';
 import { threats } from '../../view-model/threats';
 import { turnClock } from '../../view-model/turn-clock';
+import {
+  tutorialCardActionSpotlight,
+  tutorialEconomySpotlight,
+  tutorialSpotlightInstanceIds,
+} from '../../view-model/tutorial-coach-copy';
 import type { TableScreenProps } from '../table';
 import { createArenaCommit } from './arena-commit';
 import {
@@ -265,6 +274,8 @@ function ArenaScreenInner(props: ArenaScreenProps): ReactElement {
   // The board tour's mark (§6.12, plan A.8.6): one element set per step, absent outside the tour.
   const tour = tutorial.tourHighlight;
   const yourZone = tour === 'your-zone' ? { 'data-tutorial-highlight': 'your-zone' } : {};
+  // The script's marks (L75-05, plan A.8.6): the spotlit hand and special cards, and that card's own sheet action.
+  const spotlit = tutorialSpotlightInstanceIds(tutorial.scriptHighlight, [...view.self.hand, ...view.self.specialCards]);
   // 'You are dead' over the arena (§6.12, L74-23): a Watching POV with a kit is a dead seat (a walk-in has none).
   // Not `povEliminated`, which feeds the banner host's `isEliminated` (Sentence banners) and is true while Reanimating.
   const povEliminationShown = usePovElimination({ dead: strip.pov === 'watching' && strip.kitId !== null, youWon: povWon });
@@ -297,6 +308,7 @@ function ArenaScreenInner(props: ArenaScreenProps): ReactElement {
     openSheet({ kind: 'card', source });
   };
   const tappedSeatId = openSeatId(sheets);
+  const shopOpen = sheets.open.some((sheet) => sheet.kind === 'shop');
   // The unread count lives in a page-lifetime store keyed by room, so a remount keeps it (§6.9, Q48).
   // Called unconditionally, so the hook order is stable.
   const chatUnread = useChatUnread({
@@ -560,7 +572,7 @@ function ArenaScreenInner(props: ArenaScreenProps): ReactElement {
           drag={handDrag.fanProps}
           rejected={rejectCue}
           {...(handCardWidthPx !== undefined ? { cardWidthPx: handCardWidthPx } : {})}
-          tutorial={{ group: tour === 'hand' || tour === 'specials' ? tour : null, instanceIds: [] }}
+          tutorial={{ group: tour === 'hand' || tour === 'specials' ? tour : null, instanceIds: spotlit }}
         />
       </div>
       <div {...regionLayout('dock')} data-zone="dock" {...yourZone} className={`px-2 pb-2${inHandRow('dock')}`}>
@@ -581,7 +593,10 @@ function ArenaScreenInner(props: ArenaScreenProps): ReactElement {
               openSheet({ kind: 'shop' });
             }}
             {...(props.onShowStats !== undefined ? { onShowStats: props.onShowStats } : {})}
-            tutorialHighlight={tour === 'shop' ? 'shop' : null}
+            // The tour's Shop, else the script's Draw, or its Shop until the Shop sheet opens (L75-05).
+            tutorialHighlight={
+              tour === 'shop' ? 'shop' : (tutorialEconomySpotlight(tutorial.scriptHighlight, shopOpen) ?? null)
+            }
             locked={tutorial.locksTable}
           />
         ) : null}
@@ -620,6 +635,12 @@ function ArenaScreenInner(props: ArenaScreenProps): ReactElement {
             // Always a boolean: re-tapping the lifted hand card ends targeting and reopens this sheet
             // in one reducer step (no `open={false}` in between), and only `false` un-collapses it.
             const collapsed = live?.sheetKey === key;
+            // The script's action mark, only on the spotlit card's own sheet (L75-05, plan A.8.6).
+            const spot =
+              (sheet.source.kind === 'hand' || sheet.source.kind === 'special') &&
+              spotlit.includes(sheet.source.instance.instanceId)
+                ? tutorialCardActionSpotlight(tutorial.scriptHighlight)
+                : undefined;
             return (
               <CardSheet
                 key={key}
@@ -633,6 +654,7 @@ function ArenaScreenInner(props: ArenaScreenProps): ReactElement {
                 }}
                 collapsed={collapsed}
                 {...(collapsed ? { collapsedBar: <TargetingBar onCancel={finishTargeting} /> } : {})}
+                {...(spot !== undefined ? { tutorialAction: spot } : {})}
                 onClose={() => {
                   closeSheet(sheet);
                 }}
