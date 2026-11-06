@@ -1336,8 +1336,9 @@ deleted in L75-11.
   (`icon="coach"`, distinct from How to play's `help`, Q45); there is no floating reopen control.
 - **Tutorial callouts (L75-04):** `ui/coach/tutorial-callout.tsx` `<TutorialCalloutLayer active />` rings
   every live `[data-tutorial-highlight]` element. `tutorial-callout-geometry.ts` places a 3px
-  `--threat-other` ring 4px outside the element, each edge clamped into the visible box so a target flush with a
-  screen edge (the `your-zone` mark) never has its ring drawn off-screen (designer 2026-11-06, Q2-6), and a 20×12 arrow outside the ring: above it when the
+  `--threat-other` ring 4px outside the element, painted as an outer 3px box-shadow
+  (`CALLOUT_RING_STROKE_PX`), with each edge of its box clamped 3px inside the visible box so a target flush with a
+  screen edge (the `your-zone` mark) never has its painted ring off-screen (designer 2026-11-06, Q2-6), and a 20×12 arrow outside the ring: above it when the
   element's centre is in the lower half of the visible box, else below, clamped into the box. The layer
   portals on `Z_INDEX.hint` (a tutorial room never shows a first-game hint), `pointer-events: none` and
   `aria-hidden`, and re-measures every animation frame while active. It draws the live sheet's own

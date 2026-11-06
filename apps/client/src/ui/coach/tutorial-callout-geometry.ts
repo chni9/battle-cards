@@ -15,6 +15,8 @@ export type CalloutArrowSide = 'top' | 'bottom';
 
 /** The ring sits this far outside the target, so it never covers the target's own edge, except where the screen edge clips it (Q2-6). */
 export const CALLOUT_RING_GAP_PX = 4;
+/** The ring is painted as an outer stroke this thick (`tutorial-callout.tsx` reads it for its box-shadow), outside its box. */
+export const CALLOUT_RING_STROKE_PX = 3;
 export const CALLOUT_ARROW_W_PX = 20;
 export const CALLOUT_ARROW_H_PX = 12;
 
@@ -34,13 +36,20 @@ export function calloutPlacement(
   viewport: { readonly width: number; readonly height: number },
 ): CalloutPlacement {
   const gap = CALLOUT_RING_GAP_PX;
-  // Designer 2026-11-06 (Q2-6): a target flush with a screen edge would put the ring `gap` px off-screen,
-  // so each edge is clamped into `viewport`: on that side the ring closes in on the target instead.
-  const ringLeft = Math.max(0, target.left - gap);
-  const ringTop = Math.max(0, target.top - gap);
-  const ringRight = Math.min(viewport.width, target.left + target.width + gap);
-  const ringBottom = Math.min(viewport.height, target.top + target.height + gap);
-  const ring: CalloutRect = { left: ringLeft, top: ringTop, width: ringRight - ringLeft, height: ringBottom - ringTop };
+  // Designer 2026-11-06 (Q2-6): the ring is painted with an outer stroke (`CALLOUT_RING_STROKE_PX`), so each
+  // edge of its box is clamped `stroke` px inside `viewport`: the whole painted ring stays on screen, and on a
+  // clipped side it closes in on the target. A target wholly off-screen gets a zero-size ring, never a negative one.
+  const stroke = CALLOUT_RING_STROKE_PX;
+  const ringLeft = Math.max(stroke, target.left - gap);
+  const ringTop = Math.max(stroke, target.top - gap);
+  const ringRight = Math.min(viewport.width - stroke, target.left + target.width + gap);
+  const ringBottom = Math.min(viewport.height - stroke, target.top + target.height + gap);
+  const ring: CalloutRect = {
+    left: ringLeft,
+    top: ringTop,
+    width: Math.max(0, ringRight - ringLeft),
+    height: Math.max(0, ringBottom - ringTop),
+  };
   const side: CalloutArrowSide = target.top + target.height / 2 > viewport.height / 2 ? 'top' : 'bottom';
   const left = clamp(target.left + target.width / 2 - CALLOUT_ARROW_W_PX / 2, 0, viewport.width - CALLOUT_ARROW_W_PX);
   const rawTop = side === 'top' ? ring.top - CALLOUT_ARROW_H_PX : ring.top + ring.height;

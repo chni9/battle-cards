@@ -31,7 +31,7 @@ import { liveSheetId } from '../primitives/sheet-stack';
 import { useSheetStackStore } from '../primitives/sheet-stack-context';
 import { useVisualViewportBox } from '../use-visual-viewport-box';
 import { liveTutorialMarks } from './live-tutorial-marks';
-import { calloutPlacement, type CalloutArrowSide, type CalloutRect } from './tutorial-callout-geometry';
+import { CALLOUT_RING_STROKE_PX, calloutPlacement, type CalloutArrowSide, type CalloutRect } from './tutorial-callout-geometry';
 
 export interface TutorialCalloutLayerProps {
   /** The tutorial is live (`useArenaTutorial(...).active`); inactive, the layer draws nothing. */
@@ -125,8 +125,16 @@ export function TutorialCalloutLayer({ active }: TutorialCalloutLayerProps): Rea
           // Ids repeat (the three `your-zone` regions, every `opponent` seat): the order is the DOM's.
           <div key={`${target.id}:${String(index)}`} data-tutorial-callout={target.id} data-callout-arrow={placed.side} data-motion={motion}>
             <div
-              className={`absolute rounded-v7-chrome-sm ring-3 ring-v7-threat-other${reduced ? '' : ' animate-pulse'}`}
-              style={{ left: placed.ring.left, top: placed.ring.top, width: placed.ring.width, height: placed.ring.height }}
+              data-callout-ring=""
+              className={`absolute rounded-v7-chrome-sm${reduced ? '' : ' animate-pulse'}`}
+              style={{
+                left: placed.ring.left,
+                top: placed.ring.top,
+                width: placed.ring.width,
+                height: placed.ring.height,
+                // An outer stroke, the width `calloutPlacement` insets the box by so it never draws off-screen (Q2-6).
+                boxShadow: `0 0 0 ${String(CALLOUT_RING_STROKE_PX)}px ${V7_COLORS['threat-other']}`,
+              }}
             />
             <CalloutArrow side={placed.side} rect={placed.arrow} />
           </div>

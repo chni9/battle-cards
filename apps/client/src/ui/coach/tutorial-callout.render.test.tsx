@@ -8,6 +8,7 @@ import { renderUi } from '../../test/render';
 import { Z_INDEX } from '../layers';
 import { Sheet } from '../primitives/sheet';
 import { TutorialCalloutLayer } from './tutorial-callout';
+import { CALLOUT_RING_STROKE_PX } from './tutorial-callout-geometry';
 
 const TARGET = new DOMRect(100, 600, 80, 120);
 afterEach(() => { vi.restoreAllMocks(); });
@@ -34,6 +35,12 @@ describe('TutorialCalloutLayer (spec v7 §6.12, §8.3)', () => {
     expect([callout?.getAttribute('data-callout-arrow'), callout?.hasAttribute('data-tutorial-highlight')]).toEqual(['top', false]);
     expect([root?.parentElement === document.body, root?.style.zIndex, root?.style.pointerEvents, root?.getAttribute('aria-hidden')])
       .toEqual([true, String(Z_INDEX.hint), 'none', 'true']);
+  });
+  it('paints the ring with the stroke the geometry insets for (Q2-6)', () => {
+    stubRects();
+    renderUi(draw());
+    const ring = document.querySelector<HTMLElement>('[data-tutorial-callout="draw"] [data-callout-ring]');
+    expect(ring?.style.boxShadow).toContain(`0 0 0 ${String(CALLOUT_RING_STROKE_PX)}px`);
   });
   it('draws nothing while inactive', () => {
     stubRects();

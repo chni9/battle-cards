@@ -95,6 +95,14 @@ describe('placeCoach (S4)', () => {
       expect(placeCoach({ coach: COACH, arena: ARENA, marks: [seat, band], opponents }).edge).toBe('top');
     });
 
+    it('never moves for nothing: an opponent row above the arena clamps to the top-left, which is not a move', () => {
+      // The raw slot (row bottom + clearance) is above the arena; clamped, it is the top-left box, covering
+      // the marks exactly as much, so the coach stays at `top` and never rises above the arena.
+      const above: Rect = { left: 150, top: 0, width: 76, height: 50 };
+      const placed = placeCoach({ coach: COACH, arena: ARENA, marks: [plate, seat], opponents: above });
+      expect(placed).toEqual({ edge: 'top', top: ARENA.top + COACH_INSET_PX, left: ARENA.left + COACH_INSET_PX });
+    });
+
     it('keeps the slot inside the arena, whatever the opponent row', () => {
       const low: Rect = { left: 150, top: 300, width: 76, height: 92 };
       const placed = placeCoach({ coach: COACH, arena: ARENA, marks: [plate, low, seat], opponents: low });

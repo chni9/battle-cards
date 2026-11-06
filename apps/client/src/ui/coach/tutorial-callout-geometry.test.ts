@@ -1,7 +1,7 @@
 /** Tutorial callout geometry: technical spec v7 §6.12 (the arrow sits outside the highlight); L75-04. */
 import { describe, expect, it } from 'vitest';
 
-import { CALLOUT_ARROW_H_PX, CALLOUT_ARROW_W_PX, CALLOUT_RING_GAP_PX, calloutPlacement } from './tutorial-callout-geometry';
+import { CALLOUT_ARROW_H_PX, CALLOUT_ARROW_W_PX, CALLOUT_RING_GAP_PX, CALLOUT_RING_STROKE_PX, calloutPlacement, type CalloutRect } from './tutorial-callout-geometry';
 
 const PHONE = { width: 390, height: 844 };
 
@@ -21,21 +21,47 @@ describe('calloutPlacement (spec v7 §6.12)', () => {
     expect(calloutPlacement({ left: 0, top: 600, width: 8, height: 40 }, PHONE).arrow.left).toBe(0);
     expect(calloutPlacement({ left: 384, top: 600, width: 6, height: 40 }, PHONE).arrow.left).toBe(PHONE.width - CALLOUT_ARROW_W_PX);
   });
-  it('insets the ring at the screen edges so it never draws off-screen (Q2-6)', () => {
-    // The your-zone mark: flush with the left and bottom edges of the visible box.
-    const placed = calloutPlacement({ left: 0, top: 744, width: 390, height: 100 }, PHONE);
-    expect(placed.ring.left).toBeGreaterThanOrEqual(0);
-    expect(placed.ring.top).toBeGreaterThanOrEqual(0);
-    expect(placed.ring.left + placed.ring.width).toBeLessThanOrEqual(PHONE.width);
-    expect(placed.ring.top + placed.ring.height).toBeLessThanOrEqual(PHONE.height);
-    // Only the clipped sides move: the top is still the 4 px gap out.
-    expect(placed.ring.top).toBe(744 - CALLOUT_RING_GAP_PX);
+  /** The ring as painted: its box plus the outer stroke (`CALLOUT_RING_STROKE_PX`). */
+  const painted = (ring: CalloutRect): CalloutRect => ({
+    left: ring.left - CALLOUT_RING_STROKE_PX,
+    top: ring.top - CALLOUT_RING_STROKE_PX,
+    width: ring.width + 2 * CALLOUT_RING_STROKE_PX,
+    height: ring.height + 2 * CALLOUT_RING_STROKE_PX,
   });
-  it('insets the right and top edges the same way', () => {
-    const placed = calloutPlacement({ left: 300, top: 0, width: 90, height: 40 }, PHONE);
-    expect(placed.ring.left + placed.ring.width).toBeLessThanOrEqual(PHONE.width);
-    expect(placed.ring.top).toBeGreaterThanOrEqual(0);
-    expect(placed.ring.left).toBe(300 - CALLOUT_RING_GAP_PX);
+  const expectOnScreen = (target: CalloutRect, viewport = PHONE): void => {
+    const { ring } = calloutPlacement(target, viewport);
+    const out = painted(ring);
+    expect(out.left).toBeGreaterThanOrEqual(0);
+    expect(out.top).toBeGreaterThanOrEqual(0);
+    expect(out.left + out.width).toBeLessThanOrEqual(viewport.width);
+    expect(out.top + out.height).toBeLessThanOrEqual(viewport.height);
+  };
+  it('keeps the painted ring, box plus stroke, on screen at the left and bottom edges (Q2-6)', () => {
+    // The your-zone mark: flush with the left and bottom edges of the visible box.
+    expectOnScreen({ left: 0, top: 744, width: 390, height: 100 });
+    expectOnScreen({ left: 0, top: 744, width: 390, height: 100 }, { width: 360, height: 740 + 100 });
+  });
+  it('keeps the painted ring on screen at the right and top edges', () => {
+    expectOnScreen({ left: 300, top: 0, width: 90, height: 40 });
+    expectOnScreen({ left: 0, top: 0, width: 390, height: 844 });
+  });
+  it('only moves the clipped sides: the others keep the full gap', () => {
+    const { ring } = calloutPlacement({ left: 0, top: 744, width: 390, height: 100 }, PHONE);
+    expect(ring.top).toBe(744 - CALLOUT_RING_GAP_PX);
+    const right = calloutPlacement({ left: 300, top: 300, width: 90, height: 40 }, PHONE).ring;
+    expect(right.left).toBe(300 - CALLOUT_RING_GAP_PX);
+  });
+  it('never gives the ring a negative size for a target wholly off-screen', () => {
+    for (const target of [
+      { left: 500, top: 100, width: 40, height: 40 },
+      { left: -100, top: 100, width: 40, height: 40 },
+      { left: 100, top: 900, width: 40, height: 40 },
+      { left: 100, top: -100, width: 40, height: 40 },
+    ]) {
+      const { ring } = calloutPlacement(target, PHONE);
+      expect(ring.width).toBeGreaterThanOrEqual(0);
+      expect(ring.height).toBeGreaterThanOrEqual(0);
+    }
   });
   it('keeps the arrow outside the inset ring', () => {
     const placed = calloutPlacement({ left: 0, top: 744, width: 390, height: 100 }, PHONE);
