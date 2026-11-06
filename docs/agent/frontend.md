@@ -3339,3 +3339,35 @@ old arena; not an app defect).
   points under an eligible incoming attack; no repeat of the Lot 74 case in portrait or on desktop.
 - **Design scan.** Not exercised (no live-server scan this run). `.impeccable/config.json` parses with 29
   `ignoreValues`, as the plan expects.
+
+#### Check 2 (L75-04, L75-05; 2026-11-06, `f32eba34`, PROTOCOL 45)
+
+Same dedicated servers (Vite `:5273`, Colyseus `:2667`), `?ui=next`, reduced motion off. Tutorial rooms
+(room codes are not shown by the arena; the finished board printed **MOZCOM**), nicks G75Tour (375×812, the
+full run 0 to 30), G75Desk (1440×900), G75Land (844×390), G75Menu (375×812). The pane was hidden, so
+`requestAnimationFrame` ran at about 1 Hz: callout rings were read after waiting 1.5 s, not from a frame sample.
+
+- **Full tutorial 0 to 30 at 375×812:** pass. Played to the win through the arena only; `Tutorial complete`
+  then View board: the arena with no coach, mark, callout or lock.
+- **Tour, 11 marks (375×812, 1440×900, 844×390):** pass for count, copy, ring and arrow in the viewport and the
+  arrow outside its ring. At 1440×900 and 844×390 the coach covers no marked element. At 375×812 the coach
+  covers 91% of the Opponent seat and 61% of the Incoming plate: **stop item S4**. The `your-zone` ring sits 4 px
+  outside the viewport at the left and bottom edges (the target is flush with the edge): minor, not fixed.
+- **Coach over the card sheet and the Shop:** pass. It paints above both; × closed the coach and the card sheet
+  stayed open; Got it pressed above an open Menu sheet advanced the step and kept the sheet.
+- **Look gate at 9:** pass for the gate (a seat tap opens the seat sheet and clears it, then the Sell coach
+  shows). The gate's ring and arrow sit under the coach (the portrait is 100% covered at 375×812): **S4**.
+- **Orange rings and arrows:** pass for Draw, Tax Use, Spy Upgrade, Sell, Shop Buy (Upgrade points), the
+  Absorber tile, Buy selected, and every spotlit hand and special card, inside the sheets too.
+- **Wrong paths:** pass, each shows `Tutorial step` / `This tutorial step asks for a different action.`:
+  another card (Use on Shield at 0), Upgrade on Basic at 3, a drop of Basic on Sell at 11 (the card springs
+  back), Basic selected then Buy selected in the Shop at 15 (the Shop stays open).
+- **'Play' nudge after 20 s idle:** pass (title `Play`, the step's body, at index 11).
+- **Second run, Skip mid-tour from the flag (1440×900):** pass: confirm, back to the hub, no Game over.
+- **Targeting under the coach:** at 375×812 the target seat is only an 8 px strip above the coach, and a tap there
+  sends. Hiding the coach with × also works (**S4**).
+- **Static callouts under reduced motion:** not exercised (the motion library reads the media query once at load
+  and `resize_window` cannot emulate it); `data-motion` and the static ring have unit tests.
+- **Callout frame cost:** the pane was hidden, so no 60 Hz frame sample was possible. One tick (the
+  `[data-tutorial-highlight]` query plus its `getBoundingClientRect` reads) takes 0.003 ms with one to three marked
+  elements and a clean layout, so the per-frame re-measure is cheap; a sample under a visible pane is left to L75-12.
