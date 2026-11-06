@@ -107,6 +107,14 @@ describe('How to play cards (spec v7 §7.1)', () => {
   });
 });
 
+describe('How to play initial focus (P2 critique c)', () => {
+  it('opens with focus on Next, never on the Previous chevron that is disabled on the first slide', () => {
+    renderOpen();
+    expect(document.activeElement).toBe(button('Next'));
+    expect(button('Previous').getAttribute('aria-disabled')).toBe('true');
+  });
+});
+
 describe('How to play paging (spec v7 §7.1, §8.3)', () => {
   it('pages by the chevrons, the keyboard and a swipe, announces the position, and never closes', async () => {
     const { user, onClose } = renderOpen();

@@ -9,7 +9,7 @@
  */
 
 import type { CardId } from '@card-battle/shared';
-import type { ReactElement } from 'react';
+import { useRef, type ReactElement } from 'react';
 
 import { Card } from '../ui/card/card';
 import type { IconName } from '../ui/icons/icon-names';
@@ -129,6 +129,9 @@ function HowToPlayCard({ section }: { readonly section: HowToPlaySection }): Rea
 
 export function HowToPlayDialog({ open, onClose }: HowToPlayDialogProps): ReactElement {
   const once = useOncePerOpen(open);
+  // Initial focus: Next. The first control in the DOM is the Previous chevron, which is aria-disabled
+  // on slide 1 (P2 critique c). A callback ref on the carousel's box finds Next as the box mounts.
+  const nextRef = useRef<HTMLElement | null>(null);
   const close = (reason: HowToPlayCloseReason): void => {
     once(() => {
       onClose(reason);
@@ -152,6 +155,7 @@ export function HowToPlayDialog({ open, onClose }: HowToPlayDialogProps): ReactE
       onClose={() => {
         close('dismiss');
       }}
+      initialFocusRef={nextRef}
       actions={
         <>
           <Button
@@ -174,7 +178,12 @@ export function HowToPlayDialog({ open, onClose }: HowToPlayDialogProps): ReactE
       }
     >
       <p className="font-v7-body text-v7-body text-v7-text-2">{PRIMER_LINE}</p>
-      <div className="mt-3">
+      <div
+        ref={(box) => {
+          nextRef.current = box?.querySelector<HTMLElement>(`button[aria-label="${NEXT_LABEL}"]`) ?? null;
+        }}
+        className="mt-3"
+      >
         <Carousel label="How to play" slides={slides} previousLabel={PREVIOUS_LABEL} nextLabel={NEXT_LABEL} />
       </div>
     </Dialog>
