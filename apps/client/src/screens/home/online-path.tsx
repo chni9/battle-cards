@@ -10,6 +10,7 @@ import type { RoomConnectionStatus } from '../../net/use-room-connection';
 import { Button } from '../../ui/primitives/button';
 import { CHROME_SHAPE_CLASS } from '../../ui/primitives/chrome-classes';
 import { TextField } from '../../ui/primitives/text-field';
+import { INVITE_CODE_LENGTH } from '../lobby/invite-link';
 import { ONLINE_CREATE_HELPER } from './home-copy';
 import { NicknameField } from './nickname-field';
 import { PathHeader } from './path-header';
@@ -77,7 +78,7 @@ export function OnlinePath({
             label="Game code"
             size="lg"
             value={joinCode}
-            maxLength={6}
+            maxLength={INVITE_CODE_LENGTH}
             autoComplete="off"
             autoCapitalize="characters"
             spellCheck={false}

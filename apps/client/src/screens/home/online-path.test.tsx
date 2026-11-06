@@ -91,8 +91,11 @@ describe('Online path (spec v7 §7.1, §5.2; L57-07)', () => {
     expect(screen.getByRole('alert').textContent).toBe('room "ABCDEF" not found');
     expect(title()).toBe(HOME_PATH_LABEL.online);
     expect([field('Nickname').value, field('Game code').value]).toEqual(['Ada', 'ABCDEF']);
+    expect(field('Game code').getAttribute('autocapitalize')).toBe('characters');
     await user.click(button('Join'));
     expect([vi.mocked(props.onCreate).mock.calls.length, vi.mocked(props.onJoin).mock.calls.length]).toEqual([1, 2]);
+    await user.click(button('Create')); // the failure re-armed Create too, not only Join
+    expect([vi.mocked(props.onCreate).mock.calls.length, vi.mocked(props.onJoin).mock.calls.length]).toEqual([2, 2]);
   });
 
   it('locks Nickname, Game code, Create and Join while connecting', async () => {
