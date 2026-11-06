@@ -14,7 +14,7 @@ import { DISABLED_REASON_COPY } from '../../view-model/action-reasons';
 import { makeCard, makePersistent, makeSelf } from '../../view-model/test-fixtures';
 import { ArenaScreen } from './arena-screen';
 import { HandFan, type HandFanProps } from './hand-fan';
-import { expectNoArenaIntent, makeArenaProps, makeArenaView } from './test-view';
+import { ARENA_TEST_BOXES, expectNoArenaIntent, makeArenaProps, makeArenaView, stubArenaLayout } from './test-view';
 
 const LIVE: ActionContext = { subChoice: null, readOnly: false };
 const MIRROR_OPEN: SubChoiceRequiredPayload = { kind: 'mirror', eligibleEffectIds: [], deadlineMs: 1 };
@@ -277,6 +277,25 @@ describe('hand scroll fades (Q87-4, designer 2026-11-03; L75-13)', () => {
     // Decorative: not announced, and a tap or drag reaches the card under it.
     const left = document.querySelector('[data-scroll-cue="start"]');
     expect([left?.getAttribute('aria-hidden'), left?.className.includes('pointer-events-none')]).toEqual(['true', true]);
+  });
+
+  it('re-reads the edges when the scroller or its content resizes, with no scroll event (L75-13 m3)', () => {
+    const stub = stubArenaLayout(ARENA_TEST_BOXES.phone390.viewport, ARENA_TEST_BOXES.phone390.arena);
+    try {
+      renderUi(fan(viewWith({ hand: SEVEN.map((id) => makeCard(id)) })));
+      const box = { scrollWidth: 360, clientWidth: 360, scrollLeft: 0 };
+      const region = stubScroller(box);
+      stub.resizeElement(region);
+      expect(fades()).toEqual([false, false]);
+      box.scrollWidth = 900; // the window narrowed: the same cards now overflow
+      stub.resizeElement(region);
+      expect(fades()).toEqual([false, true]);
+      box.scrollWidth = 360; // content shrank: the first child resizes
+      stub.resizeElement(region.firstElementChild ?? region);
+      expect(fades()).toEqual([false, false]);
+    } finally {
+      stub.restore();
+    }
   });
 
   it('with no overflow: neither fade shows', () => {
