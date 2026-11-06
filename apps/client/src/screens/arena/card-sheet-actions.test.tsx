@@ -9,7 +9,7 @@ import { fireEvent, screen, within } from '@testing-library/react';
 import type { UserEvent } from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 
-import { visibleText } from '../../test/glyph-queries';
+import { visibleLeafTexts, visibleText } from '../../test/glyph-queries';
 import { renderUi } from '../../test/render';
 import type { ActionContext } from '../../view-model/action-lock';
 import { DISABLED_REASON_COPY } from '../../view-model/action-reasons';
@@ -74,8 +74,7 @@ describe('card sheet actions (L74-08)', () => {
     const { user } = renderArena(viewWith({ upgradePoints: 2, hand: [makeCard('spy')] }));
     const sheet = await openCard(user, 'Hand', 'Spy', 'Spy');
     expect(visibleText(sheet)).not.toMatch(/\bUP\b/);
-    // Each visible leaf on its own: a stray 'UP' glued to a neighbour ('UPSpy') has no word boundary in the joined text.
-    expect(Array.from(sheet.querySelectorAll('*')).filter((node) => node.children.length === 0 && node.closest('.sr-only') === null && /\bUP\b/.test(node.textContent)).length).toBe(0);
+    expect(visibleLeafTexts(sheet).filter((text) => /\bUP\b/.test(text))).toEqual([]);
     expect(within(sheet).getByRole('button', { name: 'Upgrade minus 1 upgrade point' }).getAttribute('aria-disabled')).toBeNull();
   });
 

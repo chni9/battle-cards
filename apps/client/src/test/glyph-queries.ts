@@ -16,6 +16,13 @@ export function visibleText(element: Element): string {
   return clone.textContent;
 }
 
+/** The text of each visible leaf on its own, so a stray word glued to a neighbour ('UPSpy') still shows. */
+export function visibleLeafTexts(element: Element): string[] {
+  return Array.from(element.querySelectorAll('*'))
+    .filter((node) => node.children.length === 0 && node.closest('.sr-only') === null)
+    .map((node) => node.textContent);
+}
+
 /** What a screen reader hears from the glyphs: every `.sr-only` text, in document order. */
 export function spokenTexts(element: Element): string[] {
   return Array.from(element.querySelectorAll('.sr-only'), (node) => node.textContent);

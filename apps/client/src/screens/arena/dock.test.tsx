@@ -9,7 +9,7 @@ import { act, screen, within } from '@testing-library/react';
 import type { UserEvent } from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 
-import { visibleText } from '../../test/glyph-queries';
+import { visibleLeafTexts, visibleText } from '../../test/glyph-queries';
 import { renderUi, type RenderUiOptions } from '../../test/render';
 import { DUR_BASE_MS } from '../../ui/motion/motion-tokens';
 import { DISABLED_REASON_COPY, type DisabledReason } from '../../view-model/action-reasons';
@@ -141,8 +141,16 @@ describe('no UP on the dock (L43-02, L75-10)', () => {
   it('never shows the UP abbreviation on the dock, and keeps the Draw, Shop and Unspy names (L43-02, L75-10)', () => {
     setup(withSeat(viewWith({ points: 20, upgradePoints: 2 }), 'p1', SPYING));
     expect(visibleText(dock())).not.toMatch(/\bUP\b/);
-    expect(Array.from(dock().querySelectorAll('*')).filter((node) => node.children.length === 0 && node.closest('.sr-only') === null && /\bUP\b/.test(node.textContent)).length).toBe(0);
-    expect([draw(), within(dock()).getByRole('button', { name: 'Shop' }), unspy()]).toHaveLength(3);
+    expect(visibleLeafTexts(dock()).filter((text) => /\bUP\b/.test(text))).toEqual([]);
+    expect([draw(), within(dock()).getByRole('button', { name: 'Shop' }), unspy()].every((button) => button.isConnected)).toBe(true);
+  });
+});
+
+describe('Stats only on the finished board (§6.12, L74-24, L75-10)', () => {
+  it('shows no Stats while the game is playing, even when the screen is handed a Stats reopen', () => {
+    setup(makeArenaView(), { onShowStats: vi.fn() });
+    expect(within(dock()).queryByRole('button', { name: 'Stats' })).toBeNull();
+    expect(within(dock()).getByRole('button', { name: 'Shop' })).toBeTruthy();
   });
 });
 

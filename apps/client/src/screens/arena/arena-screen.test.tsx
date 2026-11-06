@@ -103,7 +103,7 @@ describe('ArenaScreen shell (spec v7 §6.1, L74-01)', () => {
     const root = arenaRoot(renderUi(<ArenaScreen {...makeArenaProps()} />).container);
     expect(root.getAttribute('data-layout-mode')).toBe(mode);
     for (const name of ['h-full', 'w-full', 'overflow-hidden']) expect(root.classList.contains(name)).toBe(true);
-    expect(`${root.className} ${root.getAttribute('style') ?? ''}`).not.toMatch(/\d+d?vh|w-screen|h-screen/);
+    expect(`${root.className} ${root.getAttribute('style') ?? ''}`).not.toMatch(/\d+[dsl]?vh|w-screen|h-screen/);
   });
 
   it.each<{ label: string; overrides: Partial<ArenaScreenProps>; lock: string }>([

@@ -243,6 +243,19 @@ describe('hand fan in the arena (L74-07)', () => {
   });
 });
 
+describe('hand row layout (L53-07, L75-10)', () => {
+  it('keeps the hand and specials in one scrolling row, packed to its width and centered, never wrapped', () => {
+    renderUi(fan(viewWith({ hand: [makeCard('basic-attack'), makeCard('spy')], specialCards: [makeCard('poison')] })));
+    const scroller = document.querySelector<HTMLElement>('[data-hand-fan] [data-scroll-axis="x"]');
+    const row = group('Hand').closest('[data-zone="hand"]')?.parentElement;
+    expect(scroller).not.toBeNull();
+    expect(row?.parentElement).toBe(scroller);
+    expect(row?.classList.contains('w-max') && row.classList.contains('mx-auto')).toBe(true);
+    expect(row?.className).not.toMatch(/flex-wrap|justify-/);
+    expect(row?.contains(group('Specials'))).toBe(true);
+  });
+});
+
 describe('hand scroll fades (Q87-4, designer 2026-11-03; L75-13)', () => {
   const SEVEN = ['basic-attack', 'strong-attack', 'super-attack', 'spy', 'shield', 'tax', 'thief'] as const;
   /** The hand's scroller; happy-dom has no layout, so a test gives it the box a browser would report. */
