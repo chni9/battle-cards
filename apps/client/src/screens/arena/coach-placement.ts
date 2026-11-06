@@ -4,7 +4,9 @@
  * 375×812 that corner is directly over the opponent seat and the Incoming plate, so the coach hid what
  * the tour marked. It now flips to the arena's bottom edge, but only while a marked element overlaps
  * the default box; and designer 2026-11-06 (Q2-5) adds a third slot under the opponent row for when
- * both of those overlap the marks. Pure: no DOM, no React; `tutorial-coach-host.tsx` measures and calls it.
+ * both of those overlap the marks. Designer 2026-11-06 (Gate B stop item S-B1, option b): during the
+ * tour only, when the table is locked, the slots may leave the arena for the viewport's top and bottom
+ * edges. Pure: no DOM, no React; `tutorial-coach-host.tsx` measures and calls it.
  */
 
 import type { Rect } from '../../view-model/drop-target';
@@ -29,10 +31,13 @@ export interface CoachPlacement {
   readonly left: number;
 }
 
-export interface CoachPlacementInput {
+/** The arena-only slots (script steps), or the viewport's edges (tour steps). */
+export type CoachBounds = 'arena' | 'viewport';
+
+interface CoachPlacementBase {
   /** The measured coach panel. */
   readonly coach: Size;
-  /** The `[data-arena-region="arena"]` rect. The bottom position keeps the coach above its bottom edge, clear of the self strip, the hand and the dock. */
+  /** The `[data-arena-region="arena"]` rect. With arena bounds the bottom position keeps the coach above its bottom edge, clear of the self strip, the hand and the dock. */
   readonly arena: Rect;
   /** The live `[data-tutorial-highlight]` rects: the marked element or elements. */
   readonly marks: readonly Rect[];
@@ -42,6 +47,21 @@ export interface CoachPlacementInput {
    */
   readonly opponents?: Rect;
 }
+
+export type CoachPlacementInput = CoachPlacementBase &
+  (
+    | { readonly bounds?: 'arena' }
+    | {
+        /**
+         * The tour (S-B1): the table is locked, so the coach may sit over the self strip and the hand.
+         * The top and bottom slots are the viewport's edges, and the least-covering of top, bottom and
+         * under-opponents wins, a tie going to the earlier of them.
+         */
+        readonly bounds: 'viewport';
+        /** The visible viewport, in the same coordinates as `arena`. */
+        readonly viewport: Rect;
+      }
+  );
 
 /** The area of `a` ∩ `b`, 0 when they only touch. */
 function overlapArea(a: Rect, b: Rect): number {
@@ -67,15 +87,30 @@ function withCallout(mark: Rect): Rect {
  * (designer 2026-11-06, Q2-5) takes over if it covers them strictly less than the top-left does. A
  * coach taller than the arena keeps its top edge inside it.
  */
-export function placeCoach({ coach, arena, marks, opponents }: CoachPlacementInput): CoachPlacement {
-  const left = arena.left + COACH_INSET_PX;
-  const topEdge = arena.top + COACH_INSET_PX;
-  const bottomEdge = Math.max(topEdge, arena.top + arena.height - COACH_INSET_PX - coach.height);
+export function placeCoach(input: CoachPlacementInput): CoachPlacement {
+  const { coach, arena, marks, opponents } = input;
+  const region = input.bounds === 'viewport' ? input.viewport : arena;
+  // The viewport case keeps the coach on screen sideways too; the arena case is unchanged.
+  const left =
+    input.bounds === 'viewport'
+      ? Math.max(region.left, Math.min(arena.left + COACH_INSET_PX, region.left + region.width - coach.width))
+      : arena.left + COACH_INSET_PX;
+  const topEdge = region.top + COACH_INSET_PX;
+  const bottomEdge = Math.max(topEdge, region.top + region.height - COACH_INSET_PX - coach.height);
   const coveredAt = (top: number): number => {
     const box: Rect = { left, top, width: coach.width, height: coach.height };
     return marks.reduce((sum, mark) => sum + overlapArea(box, withCallout(mark)), 0);
   };
   const atTop = coveredAt(topEdge);
+  if (input.bounds === 'viewport') {
+    const slots: CoachPlacement[] = [{ edge: 'top', top: topEdge, left }, { edge: 'bottom', top: bottomEdge, left }];
+    if (opponents !== undefined) {
+      const underEdge = Math.min(bottomEdge, Math.max(topEdge, opponents.top + opponents.height + COACH_MARK_CLEARANCE_PX));
+      slots.push({ edge: 'under-opponents', top: underEdge, left });
+    }
+    // `reduce` keeps the earlier slot on a tie: top, then bottom, then under.
+    return slots.reduce((best, slot) => (coveredAt(slot.top) < coveredAt(best.top) ? slot : best));
+  }
   if (atTop === 0) return { edge: 'top', top: topEdge, left };
   const atBottom = coveredAt(bottomEdge);
   if (atBottom < atTop) return { edge: 'bottom', top: bottomEdge, left };

@@ -80,6 +80,8 @@ export interface ArenaCoachView {
   readonly open: boolean;
   /** Tour steps only: the Got it footer. */
   readonly showAck: boolean;
+  /** `tourActive`: the table is locked for the board tour, so the coach may leave the arena (`placeCoach`, S-B1). */
+  readonly tour: boolean;
 }
 
 export interface ArenaTutorial {
@@ -148,6 +150,7 @@ export function useArenaTutorial({ view, readOnly, isMyTurn, selfEliminated }: A
       messageKey,
       open: isTutorialCoachOpen(messageKey, dismissedKey),
       showAck: presentation.showAck,
+      tour: tourActive,
     };
   }
 

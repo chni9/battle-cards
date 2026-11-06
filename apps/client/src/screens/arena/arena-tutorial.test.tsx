@@ -307,7 +307,7 @@ describe('tutorial table states (§6.10, §6.12, L51-07, Lot 45)', () => {
   });
 });
 
-describe('the coach slot flips below its mark (designer 2026-11-06, S4)', () => {
+describe('the coach slot flips below its mark (designer 2026-11-06, S4; S-B1)', () => {
   const ARENA_RECT = new DOMRect(0, 100, 375, 282);
   const SEAT_RECT = new DOMRect(150, 110, 76, 92);
   const HAND_RECT = new DOMRect(0, 600, 375, 120);
@@ -327,21 +327,37 @@ describe('the coach slot flips below its mark (designer 2026-11-06, S4)', () => 
   /** The arena top inset 8 px, or the arena bottom edge less the coach and 8 px. */
   const TOP = ARENA_RECT.top + 8;
   const BOTTOM = ARENA_RECT.top + ARENA_RECT.height - 8 - COACH_RECT.height;
+  /** The tour's slots are the visible viewport's edges (the arena box above is 100-382 of a 375×812 viewport). */
+  const VIEWPORT_TOP = 8;
+  const VIEWPORT_BOTTOM = ARENA_TEST_BOXES.phone375.viewport.height - 8 - COACH_RECT.height;
 
-  it('sits top-left until the marked element overlaps it, flips to the arena bottom for the opponent mark, and returns', async () => {
+  it('during the tour sits on the viewport top edge until a mark overlaps it, then on the viewport bottom edge (S-B1)', async () => {
     const phone = ARENA_TEST_BOXES.phone375;
     stub = stubArenaLayout(phone.viewport, phone.arena, { rectFor });
     const { user } = setup(0);
-    // Step 0 marks 'your-zone', which the stub gives the arena box: it overlaps the corner, so use the first mark that does not.
+    // Step 0 marks 'your-zone', which the stub gives the arena box: use the first mark that does not overlap the top edge.
     await ack(user, 1);
     expect(one('[data-tutorial-highlight]').getAttribute('data-tutorial-highlight')).toBe('hand');
-    expect([slotTop(), slot().style.left]).toEqual([TOP, '8px']);
+    // The tour leaves the arena: the top slot is the viewport's, above the arena region (K8's 108 px).
+    expect([slotTop(), slot().style.left]).toEqual([VIEWPORT_TOP, '8px']);
+    expect(slotTop()).toBeLessThan(TOP);
     await ack(user, 5);
     expectMarked('opponent', all('[data-zone="opponent-seat"]'));
-    expect(slotTop()).toBe(BOTTOM);
+    expect(slotTop()).toBe(VIEWPORT_BOTTOM);
+    expect(slotTop() + COACH_RECT.height).toBeGreaterThan(ARENA_RECT.top + ARENA_RECT.height);
     await ack(user, 1);
     expect(one('[data-tutorial-highlight]').getAttribute('data-tutorial-highlight')).toBe('action-log');
-    expect(slotTop()).toBe(TOP);
+    // The ticker row sits under the viewport's top edge: the coach stays at the bottom edge.
+    expect(slotTop()).toBe(VIEWPORT_BOTTOM);
+  });
+
+  it('on a script step keeps the coach inside the arena, so the hand and the dock stay playable (S-B1)', () => {
+    const phone = ARENA_TEST_BOXES.phone375;
+    stub = stubArenaLayout(phone.viewport, phone.arena, { rectFor });
+    setup(3);
+    expect(all('[data-tutorial-ack]')).toEqual([]);
+    expect(slotTop()).toBeGreaterThanOrEqual(TOP);
+    expect(slotTop() + COACH_RECT.height).toBeLessThanOrEqual(ARENA_RECT.top + ARENA_RECT.height - 8);
   });
 
   it('dodges the valid target seats while the player is targeting, though no tutorial mark is on them (final review I1)', async () => {
@@ -363,7 +379,7 @@ describe('the coach slot flips below its mark (designer 2026-11-06, S4)', () => 
     stub = stubArenaLayout(phone.viewport, phone.arena, { rectFor });
     const { user } = setup(0);
     await ack(user, 6);
-    expect(slotTop()).toBe(BOTTOM);
+    expect(slotTop()).toBe(VIEWPORT_BOTTOM);
     const host = slot().closest<HTMLElement>('[data-tutorial-coach-host]');
     expect([host?.style.zIndex, host?.style.pointerEvents, slot().style.pointerEvents]).toEqual([String(Z_INDEX.coach), 'none', 'auto']);
     expect(coach()?.getAttribute('role')).toBeNull();

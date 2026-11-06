@@ -7015,3 +7015,22 @@ Source: technical spec v7 §6.12; Lot 75 plan Part 2 Appendix B; designer 2026-1
 - Client-only UI placement: no rule, value or protocol change (`PROTOCOL_VERSION` stays 45).
 
 ---
+
+## 2026-11-06 · [P] Gate B stop item S-B1: the tour coach may leave the arena
+
+Source: technical spec v7 §6.12; Lot 75 plan Part 2; Gate B report S-B1 (`gate-report-p2-B.md`); designer
+2026-11-06, option (b).
+
+- At 375×812 the Incoming coach is about 237 px tall in a 282 px arena (214 px at 360×740), so every slot
+  clamped inside the arena still covered the tour's marks (Incoming 61% at 375 and 100% at 360, Opponent
+  84-91%, plus the Look gate and Action log arrows). Accepting it (a) and shrinking the coach (c) were
+  not chosen.
+- During the **tour** steps only, when the table is locked, the coach slots are the viewport's top edge,
+  its bottom edge and under the opponents, over the self strip and the hand. `placeCoach` picks the one
+  that covers the marks and arrows least, breaking ties top, then bottom, then under. **Script** steps
+  keep the arena-only slots, so the hand and dock stay playable.
+- `CoachPlacementInput` gains `bounds: 'viewport'` with the viewport rect; `ArenaCoachView.tour` (from
+  `tourActive`) tells `tutorial-coach-host.tsx`. The Look gate also locks the table but is not a tour
+  step, so it keeps the arena-only slots. Client-only: no rule, value or protocol change
+  (`PROTOCOL_VERSION` stays 45).
+

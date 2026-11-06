@@ -5,7 +5,7 @@
 import { describe, expect, it } from 'vitest';
 
 import type { Rect } from '../../view-model/drop-target';
-import { COACH_INSET_PX, COACH_MARK_CLEARANCE_PX, placeCoach } from './coach-placement';
+import { COACH_INSET_PX, COACH_MARK_CLEARANCE_PX, placeCoach, type CoachPlacementInput } from './coach-placement';
 
 /** A 375×812 phone's arena region and the coach panel at `min(22rem, 100% − 1rem)` wide. */
 const ARENA: Rect = { left: 0, top: 100, width: 375, height: 282 };
@@ -109,5 +109,108 @@ describe('placeCoach (S4)', () => {
       expect(placed.top + COACH.height).toBeLessThanOrEqual(ARENA.top + ARENA.height - COACH_INSET_PX);
       expect(placed.top).toBeGreaterThanOrEqual(ARENA.top + COACH_INSET_PX);
     });
+  });
+});
+
+/**
+ * The tour's slots leave the arena (designer 2026-11-06, Gate B stop item S-B1, option b): the table is
+ * locked, so the coach may sit over the self strip and the hand. Measured geometry from Gate B.
+ */
+describe('placeCoach during the tour (S-B1)', () => {
+  /** 375×812: the arena region is 135–417 and the Incoming coach 237 px tall. */
+  const PHONE = {
+    viewport: { left: 0, top: 0, width: 375, height: 812 } satisfies Rect,
+    arena: { left: 0, top: 135, width: 375, height: 282 } satisfies Rect,
+    coach: { width: 352, height: 237 },
+    plate: { left: 128, top: 335, width: 120, height: 82 } satisfies Rect,
+    seat: { left: 150, top: 145, width: 76, height: 92 } satisfies Rect,
+  };
+  /** 360×740: the arena region is 135–349 and the coach 214 px tall. */
+  const SMALL = {
+    viewport: { left: 0, top: 0, width: 360, height: 740 } satisfies Rect,
+    arena: { left: 0, top: 135, width: 360, height: 214 } satisfies Rect,
+    coach: { width: 344, height: 214 },
+    plate: { left: 120, top: 262, width: 120, height: 87 } satisfies Rect,
+    seat: { left: 142, top: 145, width: 76, height: 92 } satisfies Rect,
+  };
+  const HAND: Rect = { left: 0, top: 560, width: 375, height: 140 };
+  /** The share of `marks` (with the callout reach) the placed coach covers. */
+  const cover = (input: CoachPlacementInput, marks: readonly Rect[]): number => {
+    const placed = placeCoach(input);
+    const box = { left: placed.left, top: placed.top, width: input.coach.width, height: input.coach.height };
+    return marks.reduce((sum, mark) => {
+      const reach = { left: mark.left - COACH_MARK_CLEARANCE_PX, top: mark.top - COACH_MARK_CLEARANCE_PX, width: mark.width + 40, height: mark.height + 40 };
+      const width = Math.min(box.left + box.width, reach.left + reach.width) - Math.max(box.left, reach.left);
+      const height = Math.min(box.top + box.height, reach.top + reach.height) - Math.max(box.top, reach.top);
+      return sum + (width > 0 && height > 0 ? width * height : 0);
+    }, 0);
+  };
+  const tour = (g: typeof PHONE, marks: readonly Rect[], opponents?: Rect): CoachPlacementInput => ({
+    coach: g.coach, arena: g.arena, marks, bounds: 'viewport', viewport: g.viewport, ...(opponents !== undefined ? { opponents } : {}),
+  });
+  const script = (g: typeof PHONE, marks: readonly Rect[], opponents?: Rect): CoachPlacementInput => ({
+    coach: g.coach, arena: g.arena, marks, ...(opponents !== undefined ? { opponents } : {}),
+  });
+
+  it('covers the Incoming mark 0% at 375×812, where the arena-only slots covered it', () => {
+    const marks = [PHONE.plate];
+    expect(cover(script(PHONE, marks, PHONE.seat), marks)).toBeGreaterThan(0);
+    expect(cover(tour(PHONE, marks, PHONE.seat), marks)).toBe(0);
+    // The top slot is the viewport's top edge, 8 px in.
+    expect(placeCoach(tour(PHONE, marks, PHONE.seat))).toEqual({ edge: 'top', top: COACH_INSET_PX, left: COACH_INSET_PX });
+  });
+
+  it('puts the coach on the viewport bottom edge for the Opponent mark, over the locked hand', () => {
+    const marks = [PHONE.seat];
+    expect(cover(script(PHONE, marks, PHONE.seat), marks)).toBeGreaterThan(0);
+    expect(cover(tour(PHONE, marks, PHONE.seat), marks)).toBe(0);
+    expect(placeCoach(tour(PHONE, marks, PHONE.seat))).toEqual({
+      edge: 'bottom', top: 812 - COACH_INSET_PX - PHONE.coach.height, left: COACH_INSET_PX,
+    });
+  });
+
+  it('takes the slot under the opponents when the top and bottom edges both hide a mark', () => {
+    const marks = [PHONE.seat, HAND];
+    const placed = placeCoach(tour(PHONE, marks, PHONE.seat));
+    expect(placed).toEqual({ edge: 'under-opponents', top: PHONE.seat.top + PHONE.seat.height + COACH_MARK_CLEARANCE_PX, left: COACH_INSET_PX });
+    expect(cover(tour(PHONE, marks, PHONE.seat), marks)).toBe(0);
+  });
+
+  it('breaks a tie in the order top, bottom, under', () => {
+    // A mark spanning the whole viewport is covered equally by every slot of the same coach.
+    const everything: Rect = { left: 0, top: 0, width: 375, height: 812 };
+    expect(placeCoach(tour(PHONE, [], PHONE.seat)).edge).toBe('top');
+    expect(placeCoach(tour(PHONE, [everything], PHONE.seat)).edge).toBe('top');
+    // Top covers the seat; bottom and under cover it equally (nothing): bottom wins over under.
+    expect(placeCoach(tour(PHONE, [PHONE.seat], PHONE.seat)).edge).toBe('bottom');
+  });
+
+  it('keeps the coach inside the viewport, even beside an offset arena', () => {
+    const placed = placeCoach({ ...tour(PHONE, [PHONE.seat], PHONE.seat), arena: { ...PHONE.arena, left: 40 } });
+    expect(placed.left).toBeGreaterThanOrEqual(0);
+    expect(placed.left + PHONE.coach.width).toBeLessThanOrEqual(375);
+    expect(placed.top).toBeGreaterThanOrEqual(0);
+    expect(placed.top + 237).toBeLessThanOrEqual(812);
+  });
+
+  it('on a script step keeps the coach inside the arena, so the hand and the dock stay free', () => {
+    for (const marks of [[PHONE.plate], [PHONE.seat], [PHONE.seat, PHONE.plate]]) {
+      const placed = placeCoach(script(PHONE, marks, PHONE.seat));
+      expect(placed.top).toBeGreaterThanOrEqual(PHONE.arena.top + COACH_INSET_PX);
+      expect(placed.top + PHONE.coach.height).toBeLessThanOrEqual(Math.max(PHONE.arena.top + COACH_INSET_PX + PHONE.coach.height, PHONE.arena.top + PHONE.arena.height - COACH_INSET_PX));
+      expect(placed.top).toBeLessThan(PHONE.arena.top + PHONE.arena.height);
+    }
+    // The measured case: the arena-only coach stays at the top-left of the arena, covering the Incoming mark.
+    expect(placeCoach(script(PHONE, [PHONE.plate], PHONE.seat))).toEqual({ edge: 'top', top: PHONE.arena.top + COACH_INSET_PX, left: COACH_INSET_PX });
+  });
+
+  it('clears the Incoming and Opponent marks and the Action log arrow at 360×740', () => {
+    const log: Rect = { left: 0, top: 98, width: 360, height: 40 };
+    for (const marks of [[SMALL.plate], [SMALL.seat], [log]]) {
+      expect(cover(script(SMALL, marks, SMALL.seat), marks)).toBeGreaterThan(0);
+      expect(cover(tour(SMALL, marks, SMALL.seat), marks)).toBe(0);
+    }
+    const placed = placeCoach(tour(SMALL, [SMALL.seat], SMALL.seat));
+    expect(placed.top + SMALL.coach.height).toBeLessThanOrEqual(740 - COACH_INSET_PX);
   });
 });
