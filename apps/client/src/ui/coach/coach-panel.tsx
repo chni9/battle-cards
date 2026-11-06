@@ -82,8 +82,9 @@ const TITLE_CLASS: Readonly<Record<'default' | 'compact', string>> = {
   compact: 'text-v7-body',
 };
 const BODY_CLASS: Readonly<Record<'default' | 'compact', string>> = {
-  default: 'flex-1 px-3 py-2 text-v7-body leading-relaxed',
-  compact: 'flex-1 px-2 py-1.5 text-v7-caption leading-snug',
+  // `text-pretty`: a short last line ("action.") no longer hangs alone (L75-12 Gate C, Impeccable `straggler`).
+  default: 'flex-1 px-3 py-2 text-v7-body leading-relaxed text-pretty',
+  compact: 'flex-1 px-2 py-1.5 text-v7-caption leading-snug text-pretty',
 };
 const FOOTER_CLASS: Readonly<Record<'default' | 'compact', string>> = {
   default: 'flex-col gap-2 px-3 py-2',

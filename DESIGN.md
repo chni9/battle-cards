@@ -1255,7 +1255,8 @@ deleted in L75-11.
   10px blur, max height `min(36vh, 15rem)` (V6: `min(32vh, 12rem)`; see Fit below). The
   header is `--panel-2` with a 2px `--ink` rule under it (padding `px-3 py-2`, compact
   `px-2 py-1`): the title in Lilita One 20px (compact 14px), then the close control. The body is
-  a `ScrollArea` in Nunito 700, 14px with line height 1.625 (compact 12px, 1.375). The footer
+  a `ScrollArea` in Nunito 700, 14px with line height 1.625 (compact 12px, 1.375), wrapped with
+  `text-wrap: pretty` so a one-word last line does not hang alone (L75-12 Gate C). The footer
   slot, only when given, has a 2px `--ink` rule above it and stacks in a column (compact: a
   row), with `px-3 py-2` (compact `px-2 py-1.5`).
 - **Why 72% is the floor:** the compact card hovers over any table content, white card faces
