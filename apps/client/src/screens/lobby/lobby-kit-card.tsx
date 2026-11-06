@@ -99,7 +99,7 @@ export function LobbyKitCard({ selection, rules, walkIn, isHost, locked, onChoos
         <h2 id={titleId} className={TITLE_CLASS}>
           {YOUR_KIT_TITLE}
         </h2>
-        <p className={`mt-2 ${BODY_CLASS}`}>{KIT_PRIVACY_COPY}</p>
+        <p className={`mt-2 text-pretty ${BODY_CLASS}`}>{KIT_PRIVACY_COPY}</p>
         <div className="mt-3 flex items-center gap-3">
           <KitPortrait kitId={selection} size="tile" />
           <div className="flex min-w-0 flex-col items-start gap-2">
