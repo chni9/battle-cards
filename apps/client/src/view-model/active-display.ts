@@ -20,11 +20,3 @@ export function persistentToCardInstance(
     isUpgraded: effect.isUpgraded,
   };
 }
-
-export function shieldActiveInstance(isUpgraded: boolean): CardInstance {
-  return {
-    instanceId: ACTIVE_SHIELD_INSTANCE_ID,
-    cardId: 'shield',
-    isUpgraded,
-  };
-}

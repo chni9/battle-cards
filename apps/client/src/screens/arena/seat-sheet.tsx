@@ -189,7 +189,7 @@ export function SeatSheet({ open, seat, view, threatModel, onClose, onOpenKit, o
     <Sheet
       open={open}
       mode="read-only"
-      placement="bottom"
+      placement="auto"
       title={title}
       onClose={onClose}
       dataAttributes={{ 'data-arena-sheet': arenaSheetKey({ kind: 'seat', playerId: seat.playerId }) }}

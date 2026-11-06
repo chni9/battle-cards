@@ -22,6 +22,8 @@
  *   only the landing card, the badges and the chips take presses, so the plate's empty area never
  *   swallows a tap on a grid seat it overlaps. `measureDropZones` reads the root's rect, so the
  *   drop zone is unchanged.
+ * - **Tutorial (L75-04, plan A.8.6).** `tutorialHighlight` marks the root `incoming` for the board
+ *   tour, empty or not; a real incoming threat keeps its badge's `data-tone` ring and gets no mark.
  */
 
 import { formatCardLabel, type PlayingStateView } from '@card-battle/shared';
@@ -54,6 +56,8 @@ export interface CentralPlateProps {
   // No `ref`: L74-12 measures the `data-zone="pending"` root in the DOM (`measureDropZones`).
   /** L74-12: lit while an untargeted card is dragged; `over` under the pointer. */
   dropHighlight?: PlateDropHighlight | null;
+  /** L75-04: the board tour's `incoming` mark on the root. */
+  tutorialHighlight?: boolean;
 }
 
 const BADGE_CLASS = `pointer-events-auto inline-flex min-h-11 min-w-11 items-center gap-1 rounded-v7-chrome-sm bg-v7-panel-2 px-1.5 text-v7-text ring-2 ring-inset ${CHROME_FOCUS_CLASS}`;
@@ -159,7 +163,15 @@ function RecurringChipView({
   );
 }
 
-export function CentralPlate({ view, model, mode, arena, onOpenCard, dropHighlight }: CentralPlateProps): ReactElement {
+export function CentralPlate({
+  view,
+  model,
+  mode,
+  arena,
+  onOpenCard,
+  dropHighlight,
+  tutorialHighlight = false,
+}: CentralPlateProps): ReactElement {
   const center = plateCenterFor(mode, arena);
   const size = PLATE_BOX[mode];
   const landing = lastPlayedCard(view.actionLog);
@@ -169,6 +181,7 @@ export function CentralPlate({ view, model, mode, arena, onOpenCard, dropHighlig
     <section
       data-zone="pending"
       data-hint-anchor="incoming"
+      {...(tutorialHighlight ? { 'data-tutorial-highlight': 'incoming' } : {})}
       {...(drop !== null ? { 'data-drop': drop } : {})}
       aria-label={INCOMING_OPEN_LABEL}
       style={{

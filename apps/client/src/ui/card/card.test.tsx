@@ -14,6 +14,7 @@ import { renderUi } from '../../test/render';
 import { ALL_ART_CARD_IDS, CARDS_WITH_ACTIVATED_ART, artFor } from '../asset-lookup';
 import { Card } from './card';
 import { CARD_NAME_FIT, CARD_SIZES, HIDDEN_CARD_LABEL, cardNameFontSize, type CardCounterKind } from './card-face';
+import { HAND_CARD_MAX_W_PX, HAND_CARD_MIN_W_PX } from './hand-card-size';
 
 const FAMILIES: readonly CardType[] = ['attack', 'action', 'special'];
 const UP = '[data-card-face="up"]';
@@ -611,5 +612,12 @@ describe('hidden gem (fix round 1 B4)', () => {
       rerender(<Card face="hidden" family={family} size="hand" />);
       expect(classes(el(container, '[data-card-layer="emblem"]'))).toContain(gems[family]);
     }
+  });
+});
+
+describe('the hand clamp (L75-03)', () => {
+  it('is the clamp the landscape hand size rule bounds to: Tailwind needs the literal, so this ties it to HAND_CARD_MIN_W_PX and HAND_CARD_MAX_W_PX', () => {
+    const { container } = renderUi(<Card size="hand" instance={inst('tax')} />);
+    expect(container.innerHTML).toContain(`[--card-w-size:clamp(${String(HAND_CARD_MIN_W_PX)}px,19vw,${String(HAND_CARD_MAX_W_PX)}px)]`);
   });
 });

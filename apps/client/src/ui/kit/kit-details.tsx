@@ -4,8 +4,8 @@
  * kit picker's description step) and §11 (portrait `alt` = kit name). Appendix A:
  * `kit-inspect-dialog`, `lobby-kit-picker-dialog`, `home-solo-kit-picker`; L27-05 (duplicate
  * specials keep their own keys), L30-05 (every `KitTraits` field has a section), L51-04
- * (versos with counts). L72-15. It replaces `screens/table/kit-inspect-details.tsx` on V7
- * surfaces; that file and its duplicated copy stay until L75 and L76.
+ * (versos with counts). L72-15. It replaced `screens/table/kit-inspect-details.tsx`, deleted in
+ * L75-11.
  *
  * - **Sections:** a header (the sheet portrait and the kit name), then the groups of
  *   `KIT_DETAILS_SECTION_IDS`, each a `<section data-kit-section>` headed by an `<h3>`, in

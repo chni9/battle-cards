@@ -9,10 +9,13 @@ import type { SubChoiceRequiredPayload } from '@card-battle/shared';
 import { act, fireEvent, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
+import { visibleText } from '../../test/glyph-queries';
 import { renderUi, type RenderUiOptions } from '../../test/render';
 import { TABLE_BANNER_MS } from '../../view-model/table-banner';
+import { selfStrip } from '../../view-model/self-strip';
 import { makePending, makeSelf } from '../../view-model/test-fixtures';
 import { ArenaScreen, type ArenaScreenProps } from './arena-screen';
+import { SpectatorStrip } from './spectator-strip';
 import { expectNoArenaIntent, makeArenaProps, makeArenaView } from './test-view';
 
 const MIRROR: SubChoiceRequiredPayload = { kind: 'mirror', eligibleEffectIds: [], deadlineMs: 1 };
@@ -44,6 +47,28 @@ const tiers = (): (string | null)[] =>
 
 afterEach(() => {
   vi.restoreAllMocks();
+});
+
+describe('the compact Watching header (designer 2026-11-06, S3)', () => {
+  const watchingModel = () => selfStrip(makeArenaView({ pov: 'walk-in' }), { subChoice: null, readOnly: false });
+  const headerOf = (): HTMLElement => {
+    const found = document.querySelector<HTMLElement>('[data-pov-strip]');
+    if (found === null) throw new Error('no Watching header');
+    return found;
+  };
+
+  it('compact: one row, Leave table as an icon with its name, the locked line spoken only; full: unchanged', () => {
+    const { rerender } = renderUi(<SpectatorStrip model={watchingModel()} onLeave={vi.fn()} compact />);
+    const compact = within(headerOf());
+    const leave = compact.getByRole('button', { name: 'Leave table' });
+    expect([visibleText(leave).trim(), leave.querySelector('[data-icon="flag"]') !== null, leave.getAttribute('title')]).toEqual(['', true, 'Leave table']);
+    expect(visibleText(headerOf()).includes(HIDDEN)).toBe(false);
+    expect(compact.getByText(HIDDEN)).toBeTruthy();
+    rerender(<SpectatorStrip model={watchingModel()} onLeave={vi.fn()} />);
+    const full = within(headerOf());
+    expect(visibleText(full.getByRole('button', { name: 'Leave table' })).trim()).toBe('Leave table');
+    expect(visibleText(headerOf()).includes(HIDDEN)).toBe(true);
+  });
 });
 
 describe('Watching strip (spec v7 §6.12, Q38, §7.2)', () => {

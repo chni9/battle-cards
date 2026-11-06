@@ -20,8 +20,6 @@ import {
   tutorialCoachTitle,
   tutorialEconomySpotlight,
   tutorialHighlightAt,
-  tutorialIncomingThreatIds,
-  tutorialPortraitSpotlight,
   tutorialSendAllowed,
   tutorialShopSpotlight,
   tutorialSpotlightInstanceIds,
@@ -56,7 +54,6 @@ describe('resolveTutorialCoach (L45-05)', () => {
     const coach = resolveTutorialCoach(8);
     expect(coach?.title).toBe('Spy');
     expect(tutorialHighlightAt(8)).toBeNull();
-    expect(tutorialPortraitSpotlight(tutorialHighlightAt(8))).toBe(false);
   });
 
   it('board tour copy wins at index 0 until Got it finishes', () => {
@@ -233,23 +230,6 @@ describe('tutorial spotlights (L45-05)', () => {
       { instanceId: 'b1', cardId: 'basic-attack', isUpgraded: false },
     ]);
     expect(ids).toEqual(['t1']);
-  });
-
-  it('marks incoming Attack, Spy, and Thief as threats', () => {
-    expect(
-      tutorialIncomingThreatIds(
-        [
-          { id: 'a', cardId: 'basic-attack' },
-          { id: 's', cardId: 'spy' },
-          { id: 't', cardId: 'thief' },
-          { id: 'x', cardId: 'tax' },
-        ],
-        true,
-      ),
-    ).toEqual(['a', 's', 't']);
-    expect(
-      tutorialIncomingThreatIds([{ id: 'a', cardId: 'basic-attack' }], false),
-    ).toEqual([]);
   });
 });
 

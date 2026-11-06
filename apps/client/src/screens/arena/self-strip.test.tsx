@@ -16,7 +16,7 @@ import { screen, within } from '@testing-library/react';
 import type { ReactElement } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 
-import { visibleText } from '../../test/glyph-queries';
+import { spokenTexts, visibleText } from '../../test/glyph-queries';
 import { renderUi } from '../../test/render';
 import type { ActionContext } from '../../view-model/action-lock';
 import { DISABLED_REASON_COPY } from '../../view-model/action-reasons';
@@ -312,5 +312,38 @@ describe('self strip and in-play card sheet in the arena (L74-09)', () => {
     const { user } = renderCardSheet({ kind: 'in-play', thumb: ownShield }, view, commit);
     await user.click(within(screen.getByRole('dialog', { name: 'Shield' })).getByRole('button', { name: UPGRADE }));
     expect(commit.mock.calls).toStrictEqual([[{ kind: 'upgradeCard', payload: { instanceId: 'active-shield' } }]]);
+  });
+});
+
+function renderCompact(view: PlayingStateView) {
+  const onOpenCard = vi.fn();
+  const result = renderUi(<SelfStrip model={selfStrip(view, LIVE)} compact onOpenKit={vi.fn()} onOpenCard={onOpenCard} />);
+  return { ...result, onOpenCard };
+}
+
+describe('SelfStrip compact (L75-03, L75-13)', () => {
+  it('is one row: the thumb kit portrait and four small pills whose captions are spoken, not shown', () => {
+    const { container } = renderCompact(viewWith({ lives: 9, shield: 4, points: 12, upgradePoints: 1 }));
+    expect(container.querySelector('[data-self-strip]')?.getAttribute('data-self-strip')).toBe('compact');
+    expect(screen.getByRole('button', { name: 'Inspect your kit' }).getAttribute('data-kit-size')).toBe('thumb');
+    const resources = container.querySelector('[data-zone="resources"]');
+    if (resources === null) throw new Error('no resources zone');
+    expect(resources.getAttribute('data-hint-anchor')).toBe('resources');
+    const pills = Array.from(resources.querySelectorAll('[data-resource-kind]'));
+    expect(pills.map((pill) => pill.getAttribute('data-resource-kind'))).toEqual(['life', 'shield', 'point', 'upgradePoint']);
+    expect(pills.map((pill) => [visibleText(pill), spokenTexts(pill), pill.getAttribute('data-size')])).toEqual([
+      ['9', ['Lives 9'], 'sm'], ['4', ['Shield 4'], 'sm'], ['12', ['Points 12'], 'sm'], ['1', ['Upgrade points 1'], 'sm'],
+    ]);
+  });
+
+  it('keeps the flow badges and the in-play thumbs, and a thumb still opens its sheet', async () => {
+    const view = makeArenaView({ overrides: {
+      self: makeSelf({ activePersistentEffects: [POISON] }),
+      players: [makePlayer('me', { isYou: true, blockTurnsRemaining: 2 }), makePlayer('p1'), makePlayer('p2')],
+    } });
+    const { user, onOpenCard } = renderCompact(view);
+    expect(screen.getByText('Block · 2 left')).toBeTruthy();
+    await user.click(screen.getByRole('button', { name: 'Poison, 3 card lives' }));
+    expect(onOpenCard.mock.calls[0]?.[0]).toMatchObject({ kind: 'in-play' });
   });
 });

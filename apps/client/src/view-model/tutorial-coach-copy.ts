@@ -4,7 +4,6 @@
  */
 
 import {
-  isAttackCardId,
   isTutorialLookPending,
   isTutorialTourActive,
   tutorialStepAt,
@@ -102,7 +101,7 @@ export function isTutorialCoachOpen(
   return coachKey !== null && dismissedKey !== coachKey;
 }
 
-export type CoachResourceKind = 'point' | 'life' | 'upgradePoint' | 'shield';
+type CoachResourceKind = 'point' | 'life' | 'upgradePoint' | 'shield';
 
 export type CoachBodyPart =
   | { readonly kind: 'text'; readonly text: string; readonly bold: boolean }
@@ -288,10 +287,6 @@ export function tutorialShopSpotlight(
   return undefined;
 }
 
-export function tutorialPortraitSpotlight(highlight: TutorialHighlight): boolean {
-  return highlight === 'opponent-portrait';
-}
-
 function matchesLegalKind(
   legalKind: TutorialLegalKind,
   intent: TutorialSendIntent,
@@ -338,24 +333,6 @@ function matchesLegalKind(
     case 'bot-play-thief':
       return false;
   }
-}
-
-/** Incoming Attack, Spy, or Thief chips get the red threat callout. */
-export function isTutorialIncomingThreatCard(cardId: string): boolean {
-  return isAttackCardId(cardId) || cardId === 'spy' || cardId === 'thief';
-}
-
-export function tutorialIncomingThreatIds(
-  effects: readonly { readonly id: string; readonly cardId: string }[],
-  tutorial: boolean,
-): readonly string[] {
-  if (!tutorial) {
-    return [];
-  }
-
-  return effects
-    .filter((effect) => isTutorialIncomingThreatCard(effect.cardId))
-    .map((effect) => effect.id);
 }
 
 function idsWhere(

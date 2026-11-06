@@ -17,6 +17,8 @@
  *   the Watching strip's Leave table reaches it.
  * - The finished board hands Feedback to its parent (`onOpenFeedback`, L47-03); the live arena
  *   owns its `FeedbackDialog`.
+ * - L75-04 (§6.12; plan A.8.3, A.8.6): `tutorialHighlight` marks the turn card (`timer`) or the flag
+ *   (`flag`) for the board tour, and `onShowCoach` adds Menu → Show coach while the coach is hidden.
  */
 
 import type { PlayingStateView } from '@card-battle/shared';
@@ -65,6 +67,10 @@ export interface TopBarProps {
   clock: TurnClockModel;
   /** Each new value opens the leave confirm as a flag tap does (the Watching strip's Leave table). */
   confirmRequest?: number;
+  /** L75-04: Menu → Show coach, passed only while the tutorial coach is hidden (plan A.8.3). */
+  onShowCoach?: () => void;
+  /** L75-04: the board tour's mark on the turn card (`timer`) or the flag (`flag`); absent or null, none. */
+  tutorialHighlight?: 'timer' | 'flag' | null;
 }
 
 export function TopBar({
@@ -80,6 +86,8 @@ export function TopBar({
   chatUnread = 0,
   clock,
   confirmRequest,
+  onShowCoach,
+  tutorialHighlight = null,
 }: TopBarProps): ReactElement {
   const [menuOpen, setMenuOpen] = useState(false);
   const [howToPlayOpen, setHowToPlayOpen] = useState(false);
@@ -101,7 +109,7 @@ export function TopBar({
     setConfirm((current) => ({ open: true, epoch: current.epoch + 1 }));
   };
 
-  const banner = turnBannerOf(view);
+  const banner = turnBannerOf(view, readOnly);
   const bannerText = turnBannerText(banner);
   const block = activeBlockLabel(view);
   const flag = arenaFlag(view, readOnly);
@@ -132,7 +140,10 @@ export function TopBar({
   return (
     <>
       <div className="flex items-start gap-2">
-        <div data-top-bar="turn" className={`min-w-0 flex-1 bg-v7-panel px-3 py-1.5 ${CHROME_SHAPE_SM_CLASS}`}>
+        <div
+          data-top-bar="turn"
+          {...(tutorialHighlight === 'timer' ? { 'data-tutorial-highlight': 'timer' } : {})}
+          className={`min-w-0 flex-1 bg-v7-panel px-3 py-1.5 ${CHROME_SHAPE_SM_CLASS}`}>
           <p data-top-bar="round" className="font-v7-body text-v7-caption font-bold text-v7-text-2">
             {topBarRoundLabel(view)}
           </p>
@@ -181,6 +192,7 @@ export function TopBar({
               aria-label={flag.ariaLabel}
               aria-haspopup="dialog"
               icon="flag"
+              {...(tutorialHighlight === 'flag' ? { 'data-tutorial-highlight': 'flag' } : {})}
               onClick={openConfirm}
             />
           ) : null}
@@ -204,6 +216,7 @@ export function TopBar({
         onHowToPlay={() => {
           setHowToPlayOpen(true);
         }}
+        {...(onShowCoach !== undefined ? { onShowCoach } : {})}
         {...(onOpenLog !== undefined ? { onOpenLog } : {})}
         {...(onOpenRules !== undefined ? { onOpenRules } : {})}
       />

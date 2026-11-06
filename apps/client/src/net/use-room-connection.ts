@@ -117,7 +117,7 @@ export interface RoomConnection {
   /** Inline string for home/lobby alerts and connection failures. */
   error: string | null;
   /**
-   * Last illegal-action reject (L39-02). Table shows IllegalActionDialog;
+   * Last illegal-action reject (L39-02). The arena shows its reject toast;
    * lobby/home ignore `code` and use `error` / `message`.
    */
   actionReject: ActionRejectPayload | null;
@@ -181,7 +181,7 @@ export interface UseRoomConnectionResult extends RoomConnection {
   leaveGame: () => Promise<void>;
   /** Playing forfeit — send FORFEIT, keep the socket (L43-06). */
   forfeit: () => void;
-  /** Dismiss IllegalActionDialog (clears actionReject + inline error). */
+  /** Dismiss the arena's reject toast (clears actionReject + inline error). */
   clearActionReject: () => void;
   startGame: () => void;
   startSoloGame: (options: StartSoloGameOptions) => Promise<void>;
@@ -251,7 +251,7 @@ export function useRoomConnection(): UseRoomConnectionResult {
           ...previous,
           status: 'connected',
           view: payload,
-          // Keep IllegalActionDialog open until dismiss — bot/peer state sync must not close it.
+          // Keep the arena's reject toast up until dismiss — bot/peer state sync must not close it.
           error: previous.actionReject !== null ? previous.error : null,
           gameCode: payload.gameCode,
           soloLaunchPending:

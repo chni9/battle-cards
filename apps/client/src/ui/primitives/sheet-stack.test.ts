@@ -61,7 +61,7 @@ describe('sheet stack inertness and layers', () => {
     const s = min(openAll(ro('card'), ro('kit'), bl('reward'), bl('steal')), 'steal');
     expect(['card', 'kit', 'reward', 'steal', 'missing'].map((id) => sheetZIndex(s, id)))
       .toEqual([Z_INDEX.sheet, Z_INDEX.sheet + 1, Z_INDEX.sheet + 2, Z_INDEX.sheetBar, Z_INDEX.sheet]);
-    expect(Z_INDEX).toEqual({ dragGhost: 40, sheet: 50, sheetBar: 80, banner: 90, toast: 95 });
+    expect(Z_INDEX).toEqual({ dragGhost: 40, sheet: 50, sheetBar: 80, hint: 84, coach: 86, banner: 90, toast: 95 });
   });
   it('returns the same state when an update changes nothing', () => {
     const s = openAll(ro('card'));
@@ -71,6 +71,11 @@ describe('sheet stack inertness and layers', () => {
     expect(setSheetMinimized(s, 'missing', true)).toBe(s);
     expect(setSheetDismissLocked(s, 'card', false)).toBe(s);
     expect(closeSheet(s, 'card').entries).toEqual([]);
+  });
+  it('clamps Minimize bars under the hint layer, so no bar paints over a hint or the coach (L75-04)', () => {
+    const ids = ['b1', 'b2', 'b3', 'b4', 'b5'];
+    const s = ids.reduce((state, id) => min(state, id), openAll(...ids.map(bl)));
+    expect(ids.map((id) => sheetZIndex(s, id))).toEqual([80, 81, 82, 83, Z_INDEX.hint - 1]);
   });
 });
 

@@ -6,7 +6,9 @@
  * `economy-bar`, A.9.3 and A.9.4 (L74-14).
  *
  * It renders `shop(view, ctx)` and decides nothing (golden rule 8): every enabled state, reason
- * and price comes from the model. It does not render the tutorial `highlight` (L75).
+ * and price comes from the model. The tutorial `highlight` (L75-05, §6.8) is marked, never preselected:
+ * on the Upgrade points tab, its Buy; on the Cards tab, the Absorber tile until Absorber is selected,
+ * then Buy selected (`data-tutorial-highlight`).
  *
  * - **Cards.** One tile per shared card, a button around a decorative `Card size="tile"` at the
  *   kit's tier. A tap selects (Basic attack by default); the footer's Buy selected sends
@@ -86,16 +88,19 @@ interface BuyButtonProps {
   /** The model's availability; `undefined` (no selected tile) renders disabled with no reason. */
   availability: ActionAvailability | undefined;
   onPress: () => void;
+  /** L75-05: the tutorial's mark on this buy (`data-tutorial-highlight`); absent, none. */
+  highlight?: string;
   children: ReactNode;
 }
 
 /** A footer buy: focusable while disabled, with the model's reason as visible text (§11, Q39). */
-function BuyButton({ action, variant, availability, onPress, children }: BuyButtonProps): ReactElement {
+function BuyButton({ action, variant, availability, onPress, highlight, children }: BuyButtonProps): ReactElement {
   const reason = availability?.reason ?? null;
   return (
     <Button
       variant={variant}
       data-shop-action={action}
+      {...(highlight !== undefined ? { 'data-tutorial-highlight': highlight } : {})}
       focusableWhenDisabled
       disabled={availability?.enabled !== true}
       {...(reason !== null ? { disabledReason: DISABLED_REASON_COPY[reason] } : {})}
@@ -122,6 +127,8 @@ interface ShopTileProps {
   onSelect: (cardId: SharedCardId) => void;
   onBuy: (intent: ArenaIntent) => void;
   onOpenCard: (source: CardSheetSource) => void;
+  /** L75-05: the tutorial marks this tile (`shop-absorber`); absent or false, none. */
+  highlight?: boolean;
 }
 
 /**
@@ -129,7 +136,7 @@ interface ShopTileProps {
  * order with its name, its tap and double tap do nothing, and the press still reaches the
  * long-press wrapper in every engine. It keeps full colour, as the hand does off-turn.
  */
-function ShopTile({ tile, selected, browseOnly, onSelect, onBuy, onOpenCard }: ShopTileProps): ReactElement {
+function ShopTile({ tile, selected, browseOnly, onSelect, onBuy, onOpenCard, highlight = false }: ShopTileProps): ReactElement {
   const inspect = (): void => {
     onOpenCard({ kind: 'shop', cardId: tile.cardId, isUpgraded: tile.instance.isUpgraded });
   };
@@ -140,6 +147,7 @@ function ShopTile({ tile, selected, browseOnly, onSelect, onBuy, onOpenCard }: S
         <button
           type="button"
           data-shop-tile={tile.cardId}
+          {...(highlight ? { 'data-tutorial-highlight': 'shop-absorber' } : {})}
           aria-pressed={selected}
           aria-label={shopTileLabel(tile)}
           {...(browseOnly ? { 'aria-disabled': true } : {})}
@@ -219,6 +227,8 @@ export function ShopSheet({
   }
 
   const selectedTile = model.cards.tiles.find((entry) => entry.cardId === selected);
+  // The tutorial's Absorber step (§6.8): the tile is marked until it is selected, then Buy selected is.
+  const absorberStep = model.highlight?.item === 'absorber';
   const { special, pool, upgradePoints } = model;
 
   function renderPanel(): ReactElement {
@@ -242,6 +252,7 @@ export function ShopSheet({
                   onSelect={setSelected}
                   onBuy={buy}
                   onOpenCard={onOpenCard}
+                  highlight={absorberStep && tile.highlighted && selected !== tile.cardId}
                 />
               ))}
             </ul>
@@ -297,6 +308,7 @@ export function ShopSheet({
             onPress={() => {
               buy({ kind: 'buyCard', payload: { cardId: selected } });
             }}
+            {...(absorberStep && selectedTile?.highlighted === true ? { highlight: 'shop-absorber-buy' } : {})}
           >
             {CARD_BUY_LABEL}
           </BuyButton>
@@ -339,6 +351,7 @@ export function ShopSheet({
               onPress={() => {
                 buy({ kind: 'buyUpgradePoint' });
               }}
+              {...(model.highlight?.item === 'upgrade-point' ? { highlight: 'shop-upgrade-point' } : {})}
             >
               {BUY_UPGRADE_POINT_LABEL}{' '}
               <span className="inline-flex items-center gap-1">
@@ -373,7 +386,7 @@ export function ShopSheet({
     <Sheet
       open={open}
       mode="read-only"
-      placement="bottom"
+      placement="auto"
       height="full"
       title={SHOP_ACTION_LABEL}
       onClose={onClose}

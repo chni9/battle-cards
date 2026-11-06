@@ -53,12 +53,12 @@ describe('Table rules recall (§6.11)', () => {
     expect(within(menu).getByRole('button', { name: 'How to play' })).toBeTruthy();
   });
 
-  it('reads FinishedStateView.lobbyRules on the finished board (EndScreen, ?ui=next)', async () => {
+  it('reads FinishedStateView.lobbyRules on the finished board (EndScreen)', async () => {
     // Game over opens after the banner timer: frozen here, so the board's menu stays on top.
     vi.useFakeTimers();
     const view = makeFinishedView({ finalTable: makeArenaView(), lobbyRules: RULES });
     const { user } = renderUi(
-      <EndScreen view={view} actionReject={null} onDismissActionReject={vi.fn()} statusLabel={STATUS_LABELS.connected} nowMs={0} onLeave={vi.fn()} tableUi="next" />,
+      <EndScreen view={view} actionReject={null} onDismissActionReject={vi.fn()} statusLabel={STATUS_LABELS.connected} nowMs={0} onLeave={vi.fn()} />,
       { advanceTimers: vi.advanceTimersByTime },
     );
     await user.click(within(await openMenu(user)).getByRole('button', { name: 'Table rules' }));

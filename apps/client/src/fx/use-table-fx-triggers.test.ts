@@ -31,7 +31,7 @@ function anchor(attributes: Readonly<Record<string, string>>, rect: DOMRect, par
   vi.spyOn(element, 'getBoundingClientRect').mockReturnValue(rect);
   return element;
 }
-/** The felt center (plate + hand band), the log endpoint and p1's seat, as the arena lays them out. */
+/** The plate, the hand band, the log endpoint and p1's seat, as the arena lays them out. */
 function tableAnchors(): void {
   anchor({ 'data-zone': 'pending' }, new DOMRect(100, 300, 120, 96));
   anchor({ 'data-zone': 'card-band' }, new DOMRect(0, 600, 400, 120));
@@ -80,7 +80,7 @@ describe('useTableFxTriggers (L74-17)', () => {
     ]);
   });
 
-  it('pulses the source seat and the incoming-collapsed anchor once per fresh incoming threat, after a silent first paint (L39-05, L53-07)', () => {
+  it('pulses the source seat once per fresh incoming threat, after a silent first paint; collapsed chrome gets no cue (L39-05, R6)', () => {
     anchor({ 'data-zone': 'opponent-seat', 'data-player-id': 'p1' }, new DOMRect(10, 10, 76, 92));
     anchor({ 'data-zone': 'incoming-collapsed' }, new DOMRect(300, 20, 44, 44));
     const old = makePending({ id: 'old', sourcePlayerId: 'p1', targetPlayerId: 'me', cardId: 'basic-attack' });
@@ -89,10 +89,9 @@ describe('useTableFxTriggers (L74-17)', () => {
     expect(sent(enqueue)).toEqual([]);
     rerender(input({ ...view, pendingEffects: [old, makePending({ id: 'new', sourcePlayerId: 'p1', targetPlayerId: 'me', cardId: 'basic-attack' })] }));
     const events = sent(enqueue);
-    expect(events.map((event) => event.kind)).toEqual(['threatOutline', 'targetingCue', 'targetingCue']);
+    expect(events.map((event) => event.kind)).toEqual(['threatOutline', 'targetingCue']);
     expect(events.flatMap((event) => (event.kind === 'targetingCue' ? [event.from] : []))).toEqual([
       { left: 10, top: 10, width: 76, height: 92 },
-      { left: 300, top: 20, width: 44, height: 44 },
     ]);
   });
 
@@ -115,11 +114,11 @@ describe('useTableFxTriggers (L74-17)', () => {
     rerender(input({ ...view, actionLog: [PLAY] }));
     const ghosts = sent(enqueue).filter((event) => event.kind === 'tokenFlyout' && event.asCard === true);
     expect(ghosts).toHaveLength(1);
-    // p1's seat (10, 10, 76 × 92) and the plate / card-band midpoint, each as a 48 × 72 card.
+    // p1's seat (10, 10, 76 × 92) and the plate's centre (L75-08: the plate, not the plate / card-band midpoint), each as a 48 × 72 card.
     expect(ghosts[0]).toMatchObject({
       artUrl: getCardArtUrl('spy', { isUpgraded: false }),
       from: { left: 24, top: 20, width: 48, height: 72 },
-      to: { left: 156, top: 468, width: 48, height: 72 },
+      to: { left: 136, top: 312, width: 48, height: 72 },
     });
   });
 

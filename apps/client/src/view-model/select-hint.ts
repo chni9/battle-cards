@@ -20,6 +20,7 @@ export interface SelectHintInput {
   readonly hasIncomingThief: boolean;
   /** POV is choosing an elimination reward (sub-choice). */
   readonly hasRewardChoice: boolean;
+  /** A living opponent whose kit the POV cannot see: unspied or base-Spied (technical spec v7 §6.3, Appendix A Q66). The arena passes `seats.some((seat) => seat.kitHidden)` (L75-06). */
   readonly hasUnspiedLivingOpponent: boolean;
 }
 

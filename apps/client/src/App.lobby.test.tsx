@@ -30,11 +30,6 @@ vi.mock('./net/use-room-connection', () => ({
   },
 }));
 
-/**
- * `ui-switch.ts`'s key, written out: until L75-09 flips the default, a stored `next` keeps the playing
- * branch on the arena (as `App.arena.test.tsx` does). L75-09 deletes that module and clears the key.
- */
-const ARENA_SWITCH_KEY = 'card-battle.v7.ui';
 const NOT_READY: ActionRejectPayload = { code: 'start-not-all-ready', message: ACTION_REJECT_MESSAGE['start-not-all-ready'] };
 const KICKED: ActionRejectPayload = { code: 'kicked', message: ACTION_REJECT_MESSAGE.kicked };
 
@@ -53,7 +48,6 @@ function rejected(view: StateView | null, clearActionReject: () => void): UseRoo
 
 beforeEach(() => {
   localStorage.clear();
-  localStorage.setItem(ARENA_SWITCH_KEY, 'next');
   markLatestReleaseSeen(); // Home would open What's new over its status block on mount
   vi.useFakeTimers();
 });

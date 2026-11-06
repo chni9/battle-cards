@@ -2,9 +2,8 @@
  * V7 table banners (technical spec v7 §6.12, §8.1, §8.3): the center-screen cues of L51-06
  * (Your turn, You are being attacked, You are dead, You won!), the table-wide Sentence lines of
  * L63-03 and the own-Gambler wipe line of L67-01. Which cue fires stays in
- * `view-model/table-banner.ts`; this host only queues, times and paints them. It replaces
- * `screens/table/your-turn-flash.tsx` when L74-17 mounts it in the arena; the classic table
- * keeps that file until L75.
+ * `view-model/table-banner.ts`; this host only queues, times and paints them. It replaced
+ * the V2 `screens/table/your-turn-flash.tsx` (deleted in L75-10).
  *
  * - Three lanes (cue, Sentence, wipe), each a queue of `BannerItem`s showing its head for
  *   exactly `TABLE_BANNER_MS`. The hide timer is keyed on the head's item key, so a banner

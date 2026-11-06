@@ -21,7 +21,7 @@ import { STATUS_LABELS } from './status-labels';
 
 const OPTIONS: RenderUiOptions = { reducedMotion: true, advanceTimers: vi.advanceTimersByTime };
 function endProps(view: FinishedStateView, onLeave: () => void = vi.fn()): EndScreenProps {
-  return { view, actionReject: null, onDismissActionReject: vi.fn(), statusLabel: STATUS_LABELS.connected, nowMs: 0, onLeave, tableUi: 'next' };
+  return { view, actionReject: null, onDismissActionReject: vi.fn(), statusLabel: STATUS_LABELS.connected, nowMs: 0, onLeave };
 }
 function renderEnd(finalTable: PlayingStateView, finished: FinishedViewOverrides = {}) {
   const onLeave = vi.fn<() => void>();

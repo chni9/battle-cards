@@ -1,9 +1,8 @@
 /**
  * V7 arena shell (technical spec v7 §4.4, §6.1; Lot 74 plan Appendix A; L74-01).
  *
- * - §4.4: `App` (playing) and `EndScreen` (finished board) mount it behind the `?ui=next` switch
- *   (`ui-switch.ts`, unchanged since L72-20); the default and tutorial rooms keep `TableScreen`.
- * - §6.1 and Q60: six regions, top to bottom, that always render with their empty state. Later
+ * - §4.4: `App` (playing) and `EndScreen` (finished board) always mount it, tutorial rooms included (L75-09).
+ * - §6.1 and Q60: six regions, in DOM order, that always render with their empty state. Later
  *   Lot 74 tasks render inside each region element and keep its attributes and anchors.
  * - §6.4 and L53-07: it fills `#root` with no viewport unit and never page-scrolls.
  * - §4.3 and Appendix A.2: the action lock is computed once per render and models are passed
@@ -26,7 +25,7 @@
  * - §6.9 (L74-16): Chat opens the reducer-hosted chat sheet; its unread count lives in
  *   `chat-unread-store.ts`, and `onSendChat` is called directly (App-level, not an `ArenaIntent`).
  * - §6.12, §8.1, §8.3, Q63 (L74-17; plan A.9.2): `ArenaScreen` is a shell,
- *   `<TableFxProvider><ArenaScreenInner/></TableFxProvider>` like `TableScreen`, so the `fx/`
+ *   `<TableFxProvider><ArenaScreenInner/></TableFxProvider>` around the arena, so the `fx/`
  *   overlay draws over the arena. `ArenaScreenInner` runs the shared `useTableFxTriggers` (seeded
  *   elimination beats, log chips and ghosts, threat cues), mounts `TableBannerHost` once with the
  *   V2 table's mapping, and flies own intents from the commit helper's `onSent` (`ownIntentFxFor`).
@@ -34,7 +33,7 @@
  *   and empties the drag zones by itself.
  * - §4.1, §6.10 (L74-21): the arena records the `TURN_STARTED` sighting (`useTurnStartedRecord`),
  *   computes `turnClock(...)` once per render and hands it to the top bar. `ArenaScreenProps`
- *   extends `TableScreenProps` with the raw payload and the room's cached lobby rules.
+ *   adds the raw payload and the room's cached lobby rules to the board props.
  * - §6.11 (L74-22): Menu → Table rules opens the rules sheet from `tableRulesRecall` over
  *   `props.cachedLobbyRules`; the entry is hidden while it is null. The arena never derives the
  *   rules: App (live) and EndScreen (finished) choose the source.
@@ -52,19 +51,58 @@
  *   chat sheet and the Watching strip's Claim a seat stay available (S3, S11; designer 2026-11-02).
  *   Server rejects show `RejectToast`; the held card the last send spent springs back in the hand
  *   when the reject arrives before any state update since that send (`rejectCueFor`).
+ * - §6.4 (L75-02): one layout mode per render, on `data-layout-mode`; `<main>` is a grid per mode and
+ *   the regions keep their elements; desktop puts the log panel in the ticker region and centres the
+ *   card, Shop and seat sheets.
+ * - §6.4, §5.4 (L75-03): landscape-compact: the top bar and ticker share the top row, seats sit in the
+ *   band, and the compact strip, the hand (height-bound size) and the dock share one row; a mode change
+ *   cancels a drag.
+ * - §6.1, §6.4 (L75-13, R5 'Bas plus court'): in portrait, when the full bottom band would let the plate
+ *   footprint cover a seat, the band compacts (`data-bottom-band`): a compact strip and 52 px hand cards;
+ *   the dock keeps its controls.
+ * - §6.12, §6.6.3, §14.3 (L75-04; plan A.8): the tutorial. `useArenaTutorial` keeps the tour, Look,
+ *   idle and hidden-coach state here; `TutorialCoachHost` portals the coach on `Z_INDEX.coach` and
+ *   `TutorialCalloutLayer` rings each `data-tutorial-highlight` element on `Z_INDEX.hint`. While the
+ *   tour or the Look gate is up, the commit's `allow` vetoes every send (composed with the reconnect
+ *   lock, never replacing it), no drag starts, Shop and Unspy stay shut and hand and special taps open
+ *   nothing; a seat tap stays live, and opening a revealed seat's sheet clears Look once per mount.
+ * - §6.12, §6.6.4, §6.8 (L75-05; plan A.8.4–A.8.6): outside the locks the same `allow` vetoes any send
+ *   the step does not ask for (`tutorial-gate.ts`) and the coach shows the follow-coach copy. The script
+ *   marks Draw, the dock Shop until the Shop opens, each spotlit hand or special card, and that card's
+ *   own sheet action.
+ *
+ * - §6.12 (L75-06): first-game hints (`useArenaHints`): the L46 selector with Q66's kit-hidden input; causes from
+ *   the commit's `onSent` and the Shop, seat and card-sheet opens; `HintOverlay` hidden under read-only sheets
+ *   and non-reward sub-choices.
  *
  * Import rule (L74-01 brief): `screens/arena/` imports only from `ui/`, `view-model/`, `fx/`,
  * `net/` (types), `help/`, `feedback/` and the shared screen modules. It never imports
- * `screens/table/` or `design/`; `TableScreenProps` is the one type `ArenaScreenProps` extends.
+ * `screens/table/` or `design/`.
  */
 
-import type { LobbyRules, SentenceAnnouncementLogEntry, TurnStartedPayload } from '@card-battle/shared';
+import type {
+  ActionResolvedPayload,
+  LobbyRules,
+  PlayingStateView,
+  ResolveSubChoicePayload,
+  SentenceAnnouncementLogEntry,
+  SHARED_CARD_IDS,
+  SubChoiceRequiredPayload,
+  TurnStartedPayload,
+} from '@card-battle/shared';
 import { useCallback, useEffect, useEffectEvent, useRef, useState, type ReactElement } from 'react';
 
 import { TableFxProvider } from '../../fx/table-fx-context';
 import { useTableFxTriggers } from '../../fx/use-table-fx-triggers';
-import type { RoomConnectionStatus } from '../../net/use-room-connection';
+import { HintOverlay } from '../../help/hint-overlay';
+import type {
+  ActionRejectPayload,
+  PlayCardOptions,
+  RoomConnectionStatus,
+} from '../../net/use-room-connection';
 import { TableBannerHost } from '../../ui/banner/table-banner-host';
+import { heightBoundHandCardWidthPx } from '../../ui/card/hand-card-size';
+import { TutorialCalloutLayer } from '../../ui/coach/tutorial-callout';
 import { v7SeatColor } from '../../ui/palette';
 import { liveSheetId } from '../../ui/primitives/sheet-stack';
 import { useSheetStackStore } from '../../ui/primitives/sheet-stack-context';
@@ -74,15 +112,30 @@ import { actionLock, type ActionContext } from '../../view-model/action-lock';
 import { selfStrip } from '../../view-model/self-strip';
 import { log } from '../../view-model/log';
 import { tableRulesRecall } from '../../view-model/rules-recall';
+import type { LayoutMode } from '../../view-model/seat-layout';
 import { seats } from '../../view-model/seats';
 import { shop } from '../../view-model/shop';
 import { povHasWon } from '../../view-model/table-banner';
 import { threats } from '../../view-model/threats';
 import { turnClock } from '../../view-model/turn-clock';
-import type { TableScreenProps } from '../table';
+import {
+  tutorialCardActionSpotlight,
+  tutorialEconomySpotlight,
+  tutorialSpotlightInstanceIds,
+} from '../../view-model/tutorial-coach-copy';
 import { createArenaCommit } from './arena-commit';
-import { arenaRegionAttributes } from './arena-regions';
+import { hintCauseForCardSheet, hintCauseForIntent } from './arena-hint-causes';
+import {
+  ARENA_TICKER_CLASS,
+  arenaAreaStyle,
+  arenaGridStyle,
+  arenaRegionAttributes,
+  arenaRowAttributes,
+  arenaRowOf,
+  type ArenaRegion,
+} from './arena-regions';
 import { ArenaSeats } from './arena-seats';
+import { bottomBandFor, COMPACT_HAND_CARD_W_PX, type BottomBand } from './bottom-band';
 import {
   arenaSheetEntries,
   arenaSheetKey,
@@ -103,12 +156,13 @@ import { CentralPlate } from './central-plate';
 import { ChatSheet } from './chat-sheet';
 import { useChatUnread } from './chat-unread-store';
 import { Dock, type DockCommit } from './dock';
-import { dockHasControls } from './dock-model';
+import { dockHasControls, dockIconOnly } from './dock-model';
 import { plateDropHighlight, seatDropHighlight } from './hand-drag';
 import { HandDragLayer } from './hand-drag-layer';
 import { HandFan } from './hand-fan';
 import { selectedHandInstanceId } from './hand-fan-model';
 import { KitSheet } from './kit-sheet';
+import { LogPanel } from './log-panel';
 import { LogSheet } from './log-sheet';
 import { LogTicker } from './log-ticker';
 import { ownIntentFxFor } from './own-intent-fx';
@@ -125,14 +179,64 @@ import { TargetingBar } from './targeting';
 import { liveTargeting } from './targeting-model';
 import { ThreatLayer } from './threat-layer';
 import { TopBar } from './top-bar';
+import { TutorialCoachHost } from './tutorial-coach-host';
+import { useArenaHints } from './use-arena-hints';
 import { useArenaLayoutBox } from './use-arena-layout-box';
+import { useArenaTutorial } from './use-arena-tutorial';
 import { useHandDrag } from './use-hand-drag';
 import { usePovElimination } from './use-pov-elimination';
 import { useTapGuard } from './use-tap-guard';
 import { useTurnStartedRecord } from './use-turn-started-record';
 
-/** Plan A.9.1: the first widening. L74-23 adds `onReopenClaim?`, L74-25 `connectionStatus`. */
-export interface ArenaScreenProps extends TableScreenProps {
+/**
+ * The board props (`TableScreenProps` until L75-10, moved verbatim), then the L74 widenings
+ * (plan A.9.1, A.14): L74-21 `lastTurnStarted` and `cachedLobbyRules`, L74-23 `onReopenClaim?`,
+ * L74-25 `connectionStatus`.
+ */
+export interface ArenaScreenProps {
+  view: PlayingStateView;
+  /** Illegal-action reject for modal (L39-02); null when none. */
+  actionReject: ActionRejectPayload | null;
+  onDismissActionReject: () => void;
+  statusLabel: string;
+  nowMs: number;
+  deadlineMs: number | null;
+  lastActionResolved: ActionResolvedPayload | null;
+  subChoice: SubChoiceRequiredPayload | null;
+  onDraw: () => void;
+  onPlayCard: (instanceId: string, options?: PlayCardOptions) => void;
+  onPlayMultipleAttacks: (
+    attacks: readonly { instanceId: string; targetPlayerId: string }[],
+  ) => void;
+  onResolveSubChoice: (payload: ResolveSubChoicePayload) => void;
+  onBuyCard: (cardId: (typeof SHARED_CARD_IDS)[number]) => void;
+  onSellCard: (instanceId: string) => void;
+  onUpgradeCard: (instanceId: string) => void;
+  onBuyUpgradePoint: () => void;
+  onBuySpecialCard: () => void;
+  onBuyPoolCard: () => void;
+  onClearSpy: (targetPlayerId: string) => void;
+  onSellUpgradePoint: () => void;
+  onLeave: () => void;
+  /** Alive flag Forfeit — send FORFEIT, keep the socket (L43-06). */
+  onForfeit: () => void;
+  /** In-game chat. The table ignores it while the finished board is read-only. */
+  onSendChat: (body: string) => void;
+  onDeactivatePersistent?: (effectId: string) => void;
+  onActivateDuplication?: () => void;
+  /**
+   * Finished board (PROTOCOL 24): lock all intents; keep inspect / log / Shop browse.
+   */
+  readOnly?: boolean;
+  /** Reopen game-over stats when `readOnly`. */
+  onShowStats?: () => void;
+  /**
+   * Finished board: parent owns Feedback so Game over stats / ask / `!` never stack
+   * (L47-03). Live table omits this and keeps its own Dialog.
+   */
+  onOpenFeedback?: () => void;
+  /** Finished-board winner for the POV (L51-06). */
+  youWon?: boolean;
   /** L74-21: the raw TURN_STARTED payload; the arena records its receive time and turnSequence (§4.1). */
   lastTurnStarted: TurnStartedPayload | null;
   /** L74-21: this room's last lobby rules (App: `cachedLobbyRules(cache, view)`, this room, Classic only; EndScreen: `view.lobbyRules ?? null`); null when unknown. */
@@ -143,7 +247,7 @@ export interface ArenaScreenProps extends TableScreenProps {
   connectionStatus: RoomConnectionStatus;
 }
 
-/** The FX provider shell (plan A.9.2), as `TableScreen`: the overlay draws over the arena. */
+/** The FX provider shell (plan A.9.2, §6.12): the overlay draws over the arena. */
 export function ArenaScreen(props: ArenaScreenProps): ReactElement {
   return (
     <TableFxProvider>
@@ -169,20 +273,10 @@ function ArenaScreenInner(props: ArenaScreenProps): ReactElement {
   const reconnecting = props.connectionStatus === 'reconnecting';
   const ctx: ActionContext = { subChoice: props.subChoice, readOnly, reconnecting };
   const lock = actionLock(view, ctx);
-  // The FX triggers both boards share (L74-17): seeded elimination beats (Q63), log chips and ghosts, threat cues.
+  // The arena's FX triggers (L74-17): seeded elimination beats (Q63), log chips and ghosts, threat cues.
   const fx = useTableFxTriggers({ view, lastActionResolved: props.lastActionResolved, subChoice: props.subChoice });
   // The last send and the view it left from, for the reject spring-back (§6.6.2, L74-25).
   const [lastSent, setLastSent] = useState<LastSent | null>(null);
-  // The single exit for every ArenaIntent (§6.6.4, Appendix A.6): built once per render; the handlers are read at call time.
-  // `allow` drops any send while reconnecting (L74-25, D5). Own-intent FX fly after the send (Lot 14, A.9.3).
-  const commit = createArenaCommit(props, {
-    allow: () => !reconnecting,
-    onSent: (intent, context) => {
-      const own = ownIntentFxFor(intent, context);
-      if (own !== null) fx.ownIntent(own);
-      setLastSent({ instanceId: context.instanceId ?? null, view });
-    },
-  });
   // The spring-back key (L74-25): read once per new reject, render-phase, never an effect. Only the
   // card the last send spent, and only when no state update came since that send (`rejectCueFor`).
   // The reject consumes the record, so an unrelated later reject (chat, forfeit, claim) with no
@@ -203,10 +297,54 @@ function ArenaScreenInner(props: ArenaScreenProps): ReactElement {
   const povSeat = seatIndexOf(view, view.you);
   const arenaRef = useRef<HTMLDivElement>(null);
   const layoutBox = useArenaLayoutBox(arenaRef);
+  // The desktop log panel (§6.4, L75-02; open-question ruling 5): expanded on mount. It lives here, so a
+  // mode change keeps it; it is not a sheet and never ends targeting.
+  const [logPanelExpanded, setLogPanelExpanded] = useState(true);
+  // Menu → Action log on an already expanded panel changes nothing by itself: this counter has the panel
+  // answer by scrolling to the newest line and taking focus (final review M5).
+  const [logPanelNudge, setLogPanelNudge] = useState(0);
+  // The portrait bottom band (§6.1, §6.4; L75-13, R5 "Bas plus court"): it compacts when the full band
+  // would let the plate cover a seat, with hysteresis (`bottomBandFor`). Render-phase, as the targeting
+  // end, never an effect.
+  const [band, setBand] = useState<BottomBand>('full');
+  const nextBand = bottomBandFor(view, layoutBox, band);
+  if (nextBand !== band) setBand(nextBand);
   const seatsModel = seats(view, layoutBox);
+  // The shell's single layout mode (§6.4, R1): every region's grid area and row read it.
+  const mode: LayoutMode = seatsModel.layout.mode;
   const threatModel = threats(view, props.subChoice);
   // The POV strip and, in `.dock`, its dock: computed once here, L74-13 reads `strip.dock` (Appendix A.2).
   const strip = selfStrip(view, ctx);
+  // The tutorial (§6.12, L75-04; plan A.8.2): its state lives here, so a mode change keeps it.
+  const tutorial = useArenaTutorial({ view, readOnly, isMyTurn: view.currentTurnPlayerId === view.you, selfEliminated: povEliminated });
+  // First-game hints (§6.12, L75-06; plan A.9.1): below the tutorial hook, above the commit statement (S3).
+  const hints = useArenaHints({
+    view,
+    readOnly,
+    pov: strip.pov,
+    isMyTurn: strip.isActive,
+    seats: seatsModel.seats,
+    subChoice: props.subChoice,
+  });
+  // The single exit for every ArenaIntent (§6.6.4, Appendix A.6): built once per render; the handlers are read at call time.
+  // `allow` drops any send while reconnecting (L74-25, D5), and the tutorial gate composes with that lock and
+  // never replaces it (R8, plan A.8.4, K4). Own-intent FX fly after the send (Lot 14, A.9.3).
+  const commit = createArenaCommit(props, {
+    allow: (intent) => !reconnecting && tutorial.allows(intent),
+    onSent: (intent, context) => {
+      const own = ownIntentFxFor(intent, context);
+      if (own !== null) fx.ownIntent(own);
+      setLastSent({ instanceId: context.instanceId ?? null, view });
+      // The hint cause rides the send, after the FX and the last-send record; `allow` is untouched (A.9.2).
+      const cause = hintCauseForIntent(intent);
+      if (cause !== null) hints.note(cause);
+    },
+  });
+  // The board tour's mark (§6.12, plan A.8.6): one element set per step, absent outside the tour.
+  const tour = tutorial.tourHighlight;
+  const yourZone = tour === 'your-zone' ? { 'data-tutorial-highlight': 'your-zone' } : {};
+  // The script's marks (L75-05, plan A.8.6): the spotlit hand and special cards, and that card's own sheet action.
+  const spotlit = tutorialSpotlightInstanceIds(tutorial.scriptHighlight, [...view.self.hand, ...view.self.specialCards]);
   // 'You are dead' over the arena (§6.12, L74-23): a Watching POV with a kit is a dead seat (a walk-in has none).
   // Not `povEliminated`, which feeds the banner host's `isEliminated` (Sentence banners) and is true while Reanimating.
   const povEliminationShown = usePovElimination({ dead: strip.pov === 'watching' && strip.kitId !== null, youWon: povWon });
@@ -232,10 +370,16 @@ function ArenaScreenInner(props: ArenaScreenProps): ReactElement {
     setSheets((current) => closeArenaSheet(current, sheet));
   }, [setSheets]);
   // Every face (hand, plate, self strip, seat sheet, drop choice) opens its card sheet the same way.
+  // While the tutorial tour or Look gate locks the table, a hand or special tap opens nothing (V2;
+  // open-question ruling 9). Plan A.9.2 writes this opener's final order.
   const openCard = (source: CardSheetSource): void => {
+    if (tutorial.locksTable && (source.kind === 'hand' || source.kind === 'special')) return;
+    const cause = hintCauseForCardSheet(source);
+    if (cause !== null) hints.note(cause);
     openSheet({ kind: 'card', source });
   };
   const tappedSeatId = openSeatId(sheets);
+  const shopOpen = sheets.open.some((sheet) => sheet.kind === 'shop');
   // The unread count lives in a page-lifetime store keyed by room, so a remount keeps it (§6.9, Q48).
   // Called unconditionally, so the hook order is stable.
   const chatUnread = useChatUnread({
@@ -296,6 +440,14 @@ function ArenaScreenInner(props: ArenaScreenProps): ReactElement {
     finishTargeting();
   });
   const targeting = live !== null;
+  // A region's grid area and row in this mode (plan A.3). Only attributes change, so a mode change remounts no region.
+  const regionLayout = (region: ArenaRegion) => ({
+    ...arenaRegionAttributes(region),
+    ...arenaRowAttributes(region, mode),
+    style: arenaAreaStyle(region),
+  });
+  // A region beside the hand in one row centres on it (landscape-compact strip; landscape and desktop dock).
+  const inHandRow = (region: ArenaRegion): string => (arenaRowOf(region, mode) === 'hand' ? ' self-center' : '');
   // The dock's exit (L74-13): the same commit, silenced while the tap guard is up, so the second tap
   // of a double tap on the bar's Cancel or a target cannot land on Draw, Unspy or Activate duplication.
   // It returns the commit's own result, false under the tap guard or a veto, so the dock latches only
@@ -312,8 +464,19 @@ function ArenaScreenInner(props: ArenaScreenProps): ReactElement {
     targetingActive: targeting,
     commit,
     openChoice: openCard,
+    mode,
+    band,
+    locked: tutorial.locksTable,
   });
   const dragging = handDrag.view?.phase === 'dragging' ? handDrag.view : null;
+  // The hand's sized width (A.5.1): height-bound in landscape-compact (L75-03), 52 px in the compact
+  // portrait band (L75-13); otherwise the Card clamp stands.
+  const handCardWidthPx =
+    mode === 'landscape-compact'
+      ? heightBoundHandCardWidthPx(layoutBox.viewport.height)
+      : band === 'compact'
+        ? COMPACT_HAND_CARD_W_PX
+        : undefined;
 
   useEffect(() => {
     if (!targeting) return;
@@ -331,9 +494,12 @@ function ArenaScreenInner(props: ArenaScreenProps): ReactElement {
       data-zone="table"
       data-arena="next"
       data-action-lock={lock ?? 'none'}
-      className="v7-ground relative flex h-full w-full min-w-0 flex-col overflow-hidden font-v7-body text-v7-text"
+      data-layout-mode={mode}
+      data-bottom-band={band}
+      style={arenaGridStyle(mode)}
+      className="v7-ground relative grid h-full w-full min-w-0 overflow-hidden font-v7-body text-v7-text"
     >
-      <div {...arenaRegionAttributes('top-bar')} className="shrink-0 px-2 pt-2">
+      <div {...regionLayout('top-bar')} className="min-w-0 px-2 pt-2">
         {/* In flow above the bar (designer 2026-11-02): it pushes the board down and covers no control (L74-25). */}
         <ReconnectBanner reconnecting={reconnecting} />
         {/* `onLeave` and `onForfeit` are App-level, not ArenaIntents (Appendix A.6): the bar calls them from its confirm.
@@ -346,7 +512,11 @@ function ArenaScreenInner(props: ArenaScreenProps): ReactElement {
           onForfeit={props.onForfeit}
           {...(props.onOpenFeedback !== undefined ? { onOpenFeedback: props.onOpenFeedback } : {})}
           onOpenLog={() => {
-            openSheet({ kind: 'log' });
+            // Desktop: the log is the panel, so Menu → Action log expands it and opens no sheet (A.4.1).
+            if (mode === 'desktop') {
+              setLogPanelExpanded(true);
+              setLogPanelNudge((count) => count + 1);
+            } else openSheet({ kind: 'log' });
           }}
           {...(tableRules !== null
             ? {
@@ -361,23 +531,41 @@ function ArenaScreenInner(props: ArenaScreenProps): ReactElement {
           chatUnread={chatUnread}
           clock={clock}
           confirmRequest={leaveRequest}
+          tutorialHighlight={tour === 'timer' || tour === 'flag' ? tour : null}
+          {...(tutorial.coach !== null && !tutorial.coach.open ? { onShowCoach: tutorial.onShowCoach } : {})}
         />
       </div>
-      <div {...arenaRegionAttributes('ticker')} className="shrink-0 px-2">
-        <LogTicker
-          line={logModel.ticker}
-          view={view}
-          onOpen={() => {
-            openSheet({ kind: 'log' });
-          }}
-        />
+      <div {...regionLayout('ticker')} className={ARENA_TICKER_CLASS[mode]}>
+        {/* Desktop: the right-hand log column (§6.4, A.4.1). Elsewhere the one-line ticker opens the log sheet. */}
+        {mode === 'desktop' ? (
+          <LogPanel
+            expanded={logPanelExpanded}
+            nudge={logPanelNudge}
+            view={view}
+            model={logModel}
+            onToggle={() => {
+              setLogPanelExpanded((open) => !open);
+            }}
+            onOpenCard={openCard}
+            tutorialHighlight={tour === 'action-log'}
+          />
+        ) : (
+          <LogTicker
+            line={logModel.ticker}
+            view={view}
+            onOpen={() => {
+              openSheet({ kind: 'log' });
+            }}
+            tutorialHighlight={tour === 'action-log'}
+          />
+        )}
       </div>
       {/* Measured here (L74-04): relative, overflow-hidden, no padding, so its box is the seats' positioning box (Appendix A.3). */}
       <div
         ref={arenaRef}
-        {...arenaRegionAttributes('arena')}
+        {...regionLayout('arena')}
         data-zone="felt"
-        className="relative min-h-0 flex-1 overflow-hidden"
+        className="relative min-h-0 min-w-0 overflow-hidden"
       >
         <ArenaSeats
           model={seatsModel}
@@ -386,10 +574,23 @@ function ArenaScreenInner(props: ArenaScreenProps): ReactElement {
           onOpenSeat={(playerId) => {
             // The second tap of a double tap that ended targeting lands here once the bar is gone.
             if (tapGuard.guarded) return;
+            // The Look exit (L75-04): a revealed seat's sheet clears the gate. Plan A.9.2 writes this opener's order.
+            tutorial.onSeatOpened(playerId);
+            if (seatsModel.seats.find((seat) => seat.playerId === playerId)?.kitHidden === false) hints.note('inspect-opponent');
             openSheet({ kind: 'seat', playerId });
           }}
           {...(live === null ? {} : { targeting: { key: live.sheetKey, seatIds: live.seatIds, onTarget } })}
           {...(dragging === null ? {} : { dropHighlight: seatDropHighlight(dragging.zones, dragging.hover) })}
+          {...(tutorial.active
+            ? {
+                tutorial: {
+                  seats: tour === 'opponent',
+                  portraitIds: tutorial.lookPending
+                    ? seatsModel.seats.filter((seat) => seat.tier === 'spy-plus').map((seat) => seat.playerId)
+                    : [],
+                },
+              }
+            : {})}
         />
         {/* After the seats, so they paint above them: arrows at z 10, the plate at z 20, both under the sheets. */}
         <ThreatLayer
@@ -406,29 +607,44 @@ function ArenaScreenInner(props: ArenaScreenProps): ReactElement {
           arena={layoutBox.arena}
           onOpenCard={openCard}
           dropHighlight={dragging === null ? null : plateDropHighlight(dragging.zones, dragging.hover)}
+          tutorialHighlight={tour === 'incoming'}
         />
         {/* Last in the arena region, over the seats and the plate; never over a sub-choice (§6.12, L74-23). */}
         <PovEliminationOverlay visible={povEliminationShown && props.subChoice === null} />
       </div>
-      <div {...arenaRegionAttributes('self-strip')} data-zone="private-zone" data-player-id={view.you} className="shrink-0 px-2">
+      <div
+        {...regionLayout('self-strip')}
+        data-zone="private-zone"
+        data-player-id={view.you}
+        {...yourZone}
+        className={`min-w-0 px-2${inHandRow('self-strip')}`}
+      >
         {strip.resources === null ? (
           <SpectatorStrip
             model={strip}
+            compact={mode === 'landscape-compact' || band === 'compact'}
             onLeave={requestLeaveConfirm}
             {...(props.onReopenClaim !== undefined ? { onClaimSeat: props.onReopenClaim } : {})}
           />
         ) : (
           <SelfStrip
             model={strip}
+            compact={mode === 'landscape-compact' || band === 'compact'}
             onOpenKit={(kitId) => {
               openSheet({ kind: 'kit', kitId });
             }}
             onOpenCard={openCard}
             onLeave={requestLeaveConfirm}
+            tutorialHighlight={tour === 'resources' || tour === 'kit' ? tour : null}
           />
         )}
       </div>
-      <div {...arenaRegionAttributes('hand')} data-zone="card-band" className="min-w-0 shrink-0">
+      {/*
+        Outside portrait the region clips its overflow: the retired V2 `index.css` landscape rule
+        clipped this zone (it shares the V2 `card-band` name). Kept so the arena looks as it did
+        before L75-10, except in degenerate boxes (plan A.18).
+      */}
+      <div {...regionLayout('hand')} data-zone="card-band" {...yourZone} className={mode === 'portrait' ? 'min-w-0' : 'min-w-0 overflow-hidden'}>
         <HandFan
           view={view}
           ctx={ctx}
@@ -436,9 +652,11 @@ function ArenaScreenInner(props: ArenaScreenProps): ReactElement {
           onOpenCard={openCard}
           drag={handDrag.fanProps}
           rejected={rejectCue}
+          {...(handCardWidthPx !== undefined ? { cardWidthPx: handCardWidthPx } : {})}
+          tutorial={{ group: tour === 'hand' || tour === 'specials' ? tour : null, instanceIds: spotlit }}
         />
       </div>
-      <div {...arenaRegionAttributes('dock')} data-zone="dock" className="shrink-0 px-2 pb-2">
+      <div {...regionLayout('dock')} data-zone="dock" {...yourZone} className={`px-2 pb-2${inHandRow('dock')}`}>
         {/* A live walk-in has no controls (Q38): the region stays, empty. On the finished board its dock is Stats alone. An eliminated Watching POV keeps the disabled dock (A.8 ruling 7). */}
         {dockHasControls(strip.dock) ? (
           <Dock
@@ -451,9 +669,18 @@ function ArenaScreenInner(props: ArenaScreenProps): ReactElement {
             onOpenShop={() => {
               // The second tap of a double tap on the targeting bar's Cancel lands here once the bar is gone, as on a seat.
               if (tapGuard.guarded) return;
+              // The tutorial tour and Look gate keep the Shop shut (L75-04). Plan A.9.2 writes this opener's order.
+              if (tutorial.locksTable) return;
+              hints.note('open-shop');
               openSheet({ kind: 'shop' });
             }}
             {...(props.onShowStats !== undefined ? { onShowStats: props.onShowStats } : {})}
+            // The tour's Shop, else the script's Draw, or its Shop until the Shop sheet opens (L75-05).
+            tutorialHighlight={
+              tour === 'shop' ? 'shop' : (tutorialEconomySpotlight(tutorial.scriptHighlight, shopOpen) ?? null)
+            }
+            locked={tutorial.locksTable}
+            iconOnly={dockIconOnly(layoutBox.viewport)}
           />
         ) : null}
       </div>
@@ -476,15 +703,41 @@ function ArenaScreenInner(props: ArenaScreenProps): ReactElement {
         {...(povSeat !== null ? { seatColor: v7SeatColor(povSeat) } : {})}
         deadCue={false}
       />
+      {/* The tutorial (L75-04, plan A.8.1): the coach on `Z_INDEX.coach`, the callouts on `Z_INDEX.hint`, both portaled
+          to `document.body` outside every sheet. Their place never depends on the mode, so a rotation remounts neither. */}
+      {tutorial.coach?.open === true ? (
+        <TutorialCoachHost coach={tutorial.coach} onHide={tutorial.onHideCoach} onAck={tutorial.onAck} />
+      ) : null}
+      <TutorialCalloutLayer active={tutorial.active} />
+      {/* Portaled to `document.body` on `Z_INDEX.hint`, under the coach, banners and toasts (L75-06; plan A.9.3). */}
+      {hints.hintId !== null ? (
+        <HintOverlay
+          hintId={hints.hintId}
+          dialogOpen={hints.dialogOpen}
+          onGotIt={hints.onGotIt}
+          onSkipAll={hints.onSkipAll}
+          {...(hints.body !== undefined ? { body: hints.body } : {})}
+        />
+      ) : null}
       {/* Portaled to `document.body` on `Z_INDEX.toast`, mounted once (§6.12, L74-25): the V2 modal's copy in a toast. */}
       <RejectToast reject={props.actionReject} onDismiss={props.onDismissActionReject} />
-      {/* The sheets are the last children of the arena root and never inside a clickable element: a React portal bubbles clicks to its ancestors. No `default`, so a new `ArenaSheet` variant fails `noImplicitReturns` until it gets a case. */}
+      {/*
+        The sheets are the last children of the arena root and never inside a clickable element: a
+        React portal bubbles clicks to its ancestors. No `default`, so a new `ArenaSheet` variant
+        fails `noImplicitReturns` until it gets a case.
+      */}
       {arenaSheetEntries(sheets).map(({ sheet, key, open }) => {
         switch (sheet.kind) {
           case 'card': {
             // Always a boolean: re-tapping the lifted hand card ends targeting and reopens this sheet
             // in one reducer step (no `open={false}` in between), and only `false` un-collapses it.
             const collapsed = live?.sheetKey === key;
+            // The script's action mark, only on the spotlit card's own sheet (L75-05, plan A.8.6).
+            const spot =
+              (sheet.source.kind === 'hand' || sheet.source.kind === 'special') &&
+              spotlit.includes(sheet.source.instance.instanceId)
+                ? tutorialCardActionSpotlight(tutorial.scriptHighlight)
+                : undefined;
             return (
               <CardSheet
                 key={key}
@@ -498,6 +751,7 @@ function ArenaScreenInner(props: ArenaScreenProps): ReactElement {
                 }}
                 collapsed={collapsed}
                 {...(collapsed ? { collapsedBar: <TargetingBar onCancel={finishTargeting} /> } : {})}
+                {...(spot !== undefined ? { tutorialAction: spot } : {})}
                 onClose={() => {
                   closeSheet(sheet);
                 }}

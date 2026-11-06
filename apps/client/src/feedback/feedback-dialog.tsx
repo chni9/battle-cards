@@ -2,7 +2,7 @@
  * The Feedback sheet (technical spec v7 §7.7 amended, §5.2, §11 Q71; L47-03, L47-06, L57-05;
  * L76-07). A V7 `Dialog`: a bottom sheet on phones and a centered panel on desktop, in the sheet
  * stack. Ask mode is the same Lot 47 ticket with Skip and the lead line; manual has Cancel. The
- * props are unchanged, so Home, the lobby, the arena, the classic table and End mount it as
+ * props are unchanged, so Home, the lobby, the arena and End mount it as
  * before; the parent marks asked (End) and closes the sheet on `onDismiss`. It never leaves the
  * game.
  *

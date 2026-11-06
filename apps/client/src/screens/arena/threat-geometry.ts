@@ -11,7 +11,7 @@
 
 import { V7_COLORS, v7SeatColor } from '../../ui/palette';
 import type { Point } from '../../view-model/drop-target';
-import { plateCenterFor, type SeatLayout, type Size } from '../../view-model/seat-layout';
+import { plateCenterFor, type LayoutMode, type SeatLayout, type Size } from '../../view-model/seat-layout';
 import {
   gridThreatEntries,
   seatThreatIds,
@@ -21,10 +21,19 @@ import {
   type ThreatLabel,
   type ThreatsModel,
 } from '../../view-model/threats';
-import { SEAT_RENDER_BOX, seatCenters } from './seat-geometry';
+import { seatCenters, seatRenderBox } from './seat-geometry';
 
-/** Where an arrow leaves or reaches a seat: about half the 76 px seat. Tuned at the browser gate (§14.3). */
-export const ARROW_SEAT_TRIM_PX = 40;
+/** Clear space between an arrow's end and the seat's edge (it gave the 76 px seat its 40 px trim at the Lot 74 browser gate). */
+export const ARROW_SEAT_GAP_PX = 2;
+/**
+ * Where an arrow leaves or reaches a seat: half the drawn seat's width plus `ARROW_SEAT_GAP_PX`, so
+ * the shaft and the head stop at the seat's edge in every mode. The portrait and landscape seats are
+ * 76 px wide (40 px, as tuned at the Lot 74 gate); the desktop seat is 120 px wide (62 px), where a
+ * 40 px trim drew the head over the resource chips (Lot 75 Check 1).
+ */
+export function arrowSeatTrimPx(mode: LayoutMode, box?: Size): number {
+  return seatRenderBox(mode, box).width / 2 + ARROW_SEAT_GAP_PX;
+}
 /** Where an arrow leaves or reaches the plate. */
 export const ARROW_PLATE_TRIM_PX = 44;
 /** The side step between arrows fanned between one seat pair. */
@@ -159,6 +168,7 @@ export function threatArrows(input: ThreatGeometryInput): readonly ThreatArrow[]
           return new Set([...incoming, ...outgoing]);
         })();
 
+  const seatTrim = arrowSeatTrimPx(layout.mode, layout.box);
   return visible.flatMap(({ entry, from, to }) => {
     const ids = pairs.get(pairKey(entry)) ?? [entry.effectId];
     const canonical = (ids.indexOf(entry.effectId) - (ids.length - 1) / 2) * ARROW_FAN_SPACING_PX;
@@ -166,8 +176,8 @@ export function threatArrows(input: ThreatGeometryInput): readonly ThreatArrow[]
     // arrow of a pair on one screen side per index.
     const offset = entry.sourcePlayerId < entry.targetPlayerId ? canonical : -canonical;
     const geometry = arrowPath(from, to, {
-      trimStart: entry.sourcePlayerId === povId ? ARROW_PLATE_TRIM_PX : ARROW_SEAT_TRIM_PX,
-      trimEnd: entry.targetPlayerId === povId ? ARROW_PLATE_TRIM_PX : ARROW_SEAT_TRIM_PX,
+      trimStart: entry.sourcePlayerId === povId ? ARROW_PLATE_TRIM_PX : seatTrim,
+      trimEnd: entry.targetPlayerId === povId ? ARROW_PLATE_TRIM_PX : seatTrim,
       offset,
     });
     if (geometry === null) {
@@ -189,7 +199,8 @@ export interface FanOutMark {
 export function fanOutMarks(input: Omit<ThreatGeometryInput, 'tappedSeatId'>): readonly FanOutMark[] {
   const { model, layout, arena, povId } = input;
   const anchors = anchorsOf(layout, arena, povId);
-  const { width, height } = SEAT_RENDER_BOX;
+  // The badge corner of the seat as drawn in this mode (L75-02).
+  const { width, height } = seatRenderBox(layout.mode, layout.box);
   return model.fanOuts.flatMap((group) => {
     const burst = anchors.get(group.sourcePlayerId);
     if (burst === undefined) {

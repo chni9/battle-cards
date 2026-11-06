@@ -119,7 +119,7 @@ describe('ui/tokens.css (technical spec v7 §5.2, §5.3, §5.7)', () => {
     const css = tokensCss.replace(COMMENT, '');
     expect(css).toContain('.v7-ground {');
     expect(css).not.toMatch(/(^|[\s,}])(html|body|#root)\s*[{,]/);
-    expect(css).not.toMatch(/\d+d?vh/);
+    expect(css).not.toMatch(/\d+[dsl]?vh/);
     for (const hex of [V7_COLORS['glow-a'], V7_COLORS['glow-b']]) {
       const rgb = [1, 3, 5].map((at) => Number.parseInt(hex.slice(at, at + 2), 16)).join(' ');
       expect(css).toContain(`rgb(${rgb} / 0.3)`);

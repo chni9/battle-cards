@@ -3,8 +3,18 @@
  */
 import { describe, expect, it } from 'vitest';
 
+import { viewportModeFor } from '../../ui/viewport-mode';
 import { makeEliminationReveal } from '../../view-model/test-fixtures';
-import { ARENA_SPIED_RESOURCES, arenaSpies, expectNoArenaIntent, makeArenaProps, makeArenaView } from './test-view';
+import {
+  ARENA_SPIED_RESOURCES,
+  ARENA_TEST_BOXES,
+  arenaSpies,
+  expectNoArenaIntent,
+  makeArenaProps,
+  makeArenaView,
+  makeTutorialArenaView,
+  TUTORIAL_HUMAN_INDICES,
+} from './test-view';
 
 describe('arena test views (Appendix A.4)', () => {
   it('seats me then p1…p7 in turn order with me as the POV, 3 seats by default', () => {
@@ -72,5 +82,34 @@ describe('arena test views (Appendix A.4)', () => {
     expect(() => {
       expectNoArenaIntent(props);
     }).toThrow();
+  });
+
+  it('names each layout test box after its mode (R1)', () => {
+    const modes = Object.fromEntries(Object.entries(ARENA_TEST_BOXES).map(([name, box]) => [name, viewportModeFor(box.viewport)]));
+    expect(modes).toEqual({
+      phone360: 'portrait', phone375: 'portrait', phone390: 'portrait', duplicator360: 'portrait', tablet: 'portrait',
+      landscape: 'landscape-compact', landscapeSmall: 'landscape-compact', desktop: 'desktop', desktopShort: 'desktop',
+    });
+  });
+
+  it('lists the 16 human tutorial indices: 0, then odd 1–29 (L75-04)', () => {
+    expect(TUTORIAL_HUMAN_INDICES).toEqual([0, 1, 3, 5, 7, 9, 11, 13, 15, 17, 19, 21, 23, 25, 27, 29]);
+  });
+
+  it('builds a 2-seat tutorial view per index from the setup and the script, overrides last (L75-04)', () => {
+    const ids = (index: number): string[] => makeTutorialArenaView(index).self.hand.map((card) => card.instanceId);
+    const start = makeTutorialArenaView(0);
+    expect([start.playKind, start.tutorialIndex, start.you, start.currentTurnPlayerId, start.self.kitId, start.players.map((p) => p.id)])
+      .toEqual(['tutorial', 0, 'me', 'me', 'indestructible', ['me', 'p1']]);
+    expect([ids(0), start.self.specialCards.map((card) => card.instanceId), start.players[1]?.isBot, start.players[1]?.spied])
+      .toEqual([['tax-1', 'spy-1', 'basic-attack-1', 'shield-1', 'shield-2'], ['super-regeneration-1'], true, undefined]);
+    expect(makeTutorialArenaView(2).currentTurnPlayerId).toBe('p1');
+    expect(makeTutorialArenaView(3).pendingEffects.map((e) => [e.id, e.cardId, e.sourcePlayerId, e.targetPlayerId])).toEqual([['tut-3', 'basic-attack', 'p1', 'me']]);
+    expect([makeTutorialArenaView(8).players[1]?.spied, makeTutorialArenaView(9).players[1]?.spied?.kitId]).toEqual([undefined, 'ghost']);
+    expect(makeTutorialArenaView(7).self.hand.find((card) => card.cardId === 'spy')?.isUpgraded).toBe(true);
+    expect([ids(11), ids(17)]).toEqual([['tax-1', 'spy-1', 'basic-attack-1', 'shield-2'], ['tax-1', 'spy-1', 'basic-attack-1', 'shield-2', 'absorber-1']]);
+    expect([makeTutorialArenaView(21).self.specialCards, makeTutorialArenaView(25).self.hand.find((card) => card.cardId === 'basic-attack')?.isUpgraded]).toEqual([[], true]);
+    expect(makeTutorialArenaView(5, { gameCode: 'TUTOR1' }).gameCode).toBe('TUTOR1');
+    expect(() => makeTutorialArenaView(31)).toThrow(RangeError);
   });
 });

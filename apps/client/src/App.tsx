@@ -4,8 +4,8 @@
  * Admin is pathname `/admin` (Lot 61); `/inbox` redirects to `/admin/feedback`.
  * `/dev/ui` is the DEV-only V7 component gallery (technical spec v7 §4.2): it is lazily
  * imported behind `import.meta.env.DEV`, so production builds carry no gallery chunk.
- * The playing table follows the temporary `?ui=next` switch (technical spec v7 §4.4 / L72-20,
- * removed in L75); tutorial rooms always keep the classic table.
+ * The playing and finished tables are the V7 arena (`screens/arena/`), tutorial rooms included; `?ui=` is
+ * ignored and the retired switch key is cleared at boot (technical spec v7 §4.4, L75-09).
  * `?code=` pre-fills Join and opens Online once (L76-17).
  */
 
@@ -15,7 +15,7 @@ import { lazy, Suspense, useEffect, useMemo, useState } from 'react';
 import { isDevUiRoute } from './dev/dev-ui-route';
 import { useRoomConnection } from './net/use-room-connection';
 import { AdminApp } from './screens/admin/admin-app';
-import { ArenaScreen } from './screens/arena/arena-screen';
+import { ArenaScreen, type ArenaScreenProps } from './screens/arena/arena-screen';
 import { forgetChatSeen } from './screens/arena/chat-unread-store';
 import { ClaimSeatDialog } from './screens/claim-seat-dialog';
 import { claimStayLabel, shouldShowClaimPicker } from './screens/claim-seat';
@@ -26,13 +26,7 @@ import { LobbyScreen } from './screens/lobby/lobby-screen';
 import { shouldClearRejectOnPhaseChange } from './screens/reject-phase';
 import { soloMenuSeed, type SoloMenuSeed } from './screens/solo-menu-seed';
 import { STATUS_LABELS } from './screens/status-labels';
-import { TableScreen, type TableScreenProps } from './screens/table';
-import {
-  applyUiSwitchParam,
-  browserUiSwitchStorage,
-  parseUiSwitchParam,
-  resolveTableUi,
-} from './ui-switch';
+import { browserRemovableStorage, clearRetiredTableSwitch } from './retired-table-switch';
 import { cachedLobbyRules } from './view-model/rules-recall';
 
 const UiGallery = import.meta.env.DEV
@@ -123,10 +117,6 @@ function GameApp() {
   const [nowMs, setNowMs] = useState(() => Date.now());
   const [claimDismissedKey, setClaimDismissedKey] = useState<string | null>(null);
   const [pendingSoloMenu, setPendingSoloMenu] = useState<SoloMenuSeed | null>(null);
-  // Once per page load, never per 250 ms tick: ?ui= writes or clears the stored choice.
-  const [tablePreference] = useState(() =>
-    applyUiSwitchParam(parseUiSwitchParam(window.location.search), browserUiSwitchStorage()),
-  );
 
   // A reject belongs to the screen it arrived on (spec v7 §7.2, Q26/Q29; A.9 ruling 7; supersedes the
   // L39 carry-over across phases): a change between two view phases clears it, and a change to or from
@@ -170,6 +160,11 @@ function GameApp() {
       forgetChatSeen(lobbyGameCode);
     }
   }, [lobbyGameCode]);
+
+  // Once per page load (spec v7 §4.4, L75-09): the retired opt-in key is cleared, and `?ui=` is never read.
+  useEffect(() => {
+    clearRetiredTableSwitch(browserRemovableStorage());
+  }, []);
 
   useEffect(() => {
     if (inviteCode === null) {
@@ -223,7 +218,6 @@ function GameApp() {
           statusLabel={STATUS_LABELS[status]}
           connectionStatus={status}
           nowMs={nowMs}
-          tableUi={resolveTableUi({ preference: tablePreference, playKind: view.playKind })}
           onLeave={leave}
           {...(view.playKind === 'classic' && !walkInSpectator
             ? {
@@ -252,7 +246,7 @@ function GameApp() {
   }
 
   if (view?.phase === 'playing') {
-    const boardProps: TableScreenProps = {
+    const boardProps: ArenaScreenProps = {
       view,
       actionReject,
       onDismissActionReject: clearActionReject,
@@ -278,29 +272,25 @@ function GameApp() {
       onLeave: leave,
       onForfeit: forfeit,
       onSendChat: sendChat,
+      lastTurnStarted,
+      cachedLobbyRules: cachedLobbyRules(lobbyRules, view),
+      // The raw status (L74-25, §6.12): the arena's Reconnecting… banner and its game-input lock.
+      connectionStatus: status,
     };
     return (
       <>
-        {resolveTableUi({ preference: tablePreference, playKind: view.playKind }) === 'next' ? (
-          <ArenaScreen
-            {...boardProps}
-            lastTurnStarted={lastTurnStarted}
-            cachedLobbyRules={cachedLobbyRules(lobbyRules, view)}
-            // The raw status (L74-25, §6.12): the arena's Reconnecting… banner and its game-input lock.
-            connectionStatus={status}
-            // Claim a seat (L74-23, §7.2, Q24): a walk-in only, while seats are claimable, as V2's
-            // `shouldShowClaimPicker`. A null dismissed key shows the picker again beside the board.
-            {...(walkInSpectator && claimableSeats.length > 0
-              ? {
-                  onReopenClaim: () => {
-                    setClaimDismissedKey(null);
-                  },
-                }
-              : {})}
-          />
-        ) : (
-          <TableScreen {...boardProps} />
-        )}
+        <ArenaScreen
+          {...boardProps}
+          // Claim a seat (L74-23, §7.2, Q24): a walk-in only, while seats are claimable, as V2's
+          // `shouldShowClaimPicker`. A null dismissed key shows the picker again beside the board.
+          {...(walkInSpectator && claimableSeats.length > 0
+            ? {
+                onReopenClaim: () => {
+                  setClaimDismissedKey(null);
+                },
+              }
+            : {})}
+        />
         {claimDialog}
       </>
     );

@@ -12,9 +12,6 @@ export const MOTION_PULSE_S = 0.45;
 /** How long resource gain/loss color + float label stay visible. */
 export const RESOURCE_FLASH_MS = 900;
 
-/** Stagger between list rows (Assassin multi). */
-export const MOTION_STAGGER_S = 0.08;
-
 /**
  * Token / buy-sell card travel length (seconds). This is the flyout speed knob.
  * Raise it to slow chips (try 0.7–0.9). Overlay TTL must stay above this × 1000.

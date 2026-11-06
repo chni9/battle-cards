@@ -2457,7 +2457,7 @@
   - Auto-dismissed by causes (draw, open shop, play, inspect, incoming cleared, confirm reward)
 - **Keep:**
   - The redesign must keep the data-hint-anchor targets: your-turn, draw, shop, hand, specials, resources, incoming, hidden-kit, reward (on the reward Dialog)
-- **Notes:** Owned by apps/client/src/help; listed here for the anchor contract. hasUnspiedLivingOpponent treats base-Spied seats as spied, so 'hidden-kit' stops after a base Spy even though the kit is still hidden.
+- **Notes:** Owned by apps/client/src/help; listed here for the anchor contract. hasUnspiedLivingOpponent treats base-Spied seats as spied, so 'hidden-kit' stops after a base Spy even though the kit is still hidden. Since L75-06 the arena passes `seats.some((seat) => seat.kitHidden)`, so a base-Spied seat counts as kit hidden (technical spec v7 §6.3, Q66); the old table keeps the base-Spied-as-spied value until L75-10.
 
 ### `walk-in-spectator-mode` — Walk-in spectator table mode
 
@@ -2791,7 +2791,7 @@
   - The hint card has no rings or arrows; it sits next to data-hint-anchor (L46-02)
   - applyHintPatch merges onto the previous state so a later write cannot drop an earlier dismissal
   - DOM anchors (data-hint-anchor): 'your-turn' on section[data-zone='timers']; 'draw' on the economy Draw button; 'shop' on the economy Shop button; 'hand' / 'specials' on the card-band [data-card-row] cluster (w-max) or its 'Empty' / 'None' placeholder; 'resources' on [data-zone='resources']; 'incoming' on the Incoming collapsed button or [data-zone='incoming-pending'] (incoming-thief reuses it, hintAnchorId); 'hidden-kit' on every living opponent seat article without a Spy+ or death reveal (first match wins); 'reward' on the sub-choice Dialog panel. Hint root: data-zone='first-game-hint', data-hint-id={id}
-- **Notes:** Lot 46 (L46-01..03) with the 2026-08-28 extensions, the 08-29 placement fix and the copy rewrite. The selector's hasUnspiedLivingOpponent uses spied===undefined (base Spy counts as spied), while the hidden-kit anchor uses 'no Spy+ reveal'. Source-text tests (hint-overlay.test.ts, tutorial-hints-independence.test.ts) assert literal table.tsx code such as "subChoice?.kind === 'elimination-reward'" and the exact onSkipAll arrow body.
+- **Notes:** Lot 46 (L46-01..03) with the 2026-08-28 extensions, the 08-29 placement fix and the copy rewrite. The selector's hasUnspiedLivingOpponent uses spied===undefined (base Spy counts as spied), while the hidden-kit anchor uses 'no Spy+ reveal'. Source-text tests (hint-overlay.test.ts, tutorial-hints-independence.test.ts) assert literal table.tsx code such as "subChoice?.kind === 'elimination-reward'" and the exact onSkipAll arrow body. Since L75-01 the Keep line "Copy is normative and locked … typos included" no longer holds: technical spec v7 §10.1–§10.2 supersede it, and `HINT_COPY` carries the fixed copy.
 
 ### `table-tutorial-coach` — Tutorial coach chat
 
@@ -2835,7 +2835,7 @@
   - Copy verbatim from TUTORIAL_TOUR_STEPS
   - Highlight chrome: pulsing orange outline + arrow outside the highlight (TutorialCallout)
   - Order fixed: your zone, hand, specials, resources, Incoming, Shop, opponent, action log, timer, kit, flag
-- **Notes:** Lot 45 follow-up (2026-08-26). The tour 'opponent' copy says kits stay hidden until Spy reveals them (see openQuestions on Lot 69).
+- **Notes:** Lot 45 follow-up (2026-08-26). The tour 'opponent' copy says kits stay hidden until Spy reveals them (see openQuestions on Lot 69). Since L75-01 the Opponent step says kit and cards need an upgraded Spy or Spy Thief, or elimination, and a basic Spy shows only resources (technical spec v7 §10.1, Lot 69).
 
 ### `table-tutorial-look-gate` — Tutorial Look gate (forced portrait click)
 

@@ -1,5 +1,5 @@
 /**
- * Coach panel — technical spec v7 §4.2 (rebuilt in `ui/` before `screens/table/` is deleted),
+ * Coach panel — technical spec v7 §4.2 (rebuilt in `ui/` before `screens/table/` was deleted, L75-11),
  * §6.12 (the tutorial coach and the first-game hints keep their behavior and are restyled) and
  * §8.3 (reduced motion). Appendix A `table-tutorial-coach`, `table-first-game-hints`,
  * `first-game-hint-host` and `tutorial-overlays`. L72-17.
@@ -10,7 +10,7 @@
  * (L75); the panel has no `className`. It has no Skip control either: Skip lives on the table
  * flag (Lot 45), and the first-game hint host puts its own "Skip all" in `footer`.
  *
- * The props are those of the V6 `design/components/coach-panel.tsx`, which this replaces for L75.
+ * The props are those of the V6 coach panel, which this replaced (`design/components/coach-panel.tsx`, deleted in L75-11).
  * The caller passes `hideAriaLabel`, and every string comes from the shared tutorial and hint
  * copy (`parseCoachBody` splits it; this file invents no words). The root's `data-zone` and the
  * caller's `extraAttrs` (`data-tutorial-index`, `data-hint-id`, ...) are anchors that tests and
@@ -82,8 +82,9 @@ const TITLE_CLASS: Readonly<Record<'default' | 'compact', string>> = {
   compact: 'text-v7-body',
 };
 const BODY_CLASS: Readonly<Record<'default' | 'compact', string>> = {
-  default: 'flex-1 px-3 py-2 text-v7-body leading-relaxed',
-  compact: 'flex-1 px-2 py-1.5 text-v7-caption leading-snug',
+  // `text-pretty`: a short last line ("action.") no longer hangs alone (L75-12 Gate C, Impeccable `straggler`).
+  default: 'flex-1 px-3 py-2 text-v7-body leading-relaxed text-pretty',
+  compact: 'flex-1 px-2 py-1.5 text-v7-caption leading-snug text-pretty',
 };
 const FOOTER_CLASS: Readonly<Record<'default' | 'compact', string>> = {
   default: 'flex-col gap-2 px-3 py-2',

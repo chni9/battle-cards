@@ -3,7 +3,7 @@
 import { act, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { renderUi } from '../test/render';
-import { useViewportMode, useVisualViewportBox } from './use-visual-viewport-box';
+import { isTextEntryElement, useViewportMode, useVisualViewportBox } from './use-visual-viewport-box';
 
 type FakeViewport = EventTarget & { width: number; height: number; offsetTop: number; offsetLeft: number };
 
@@ -99,5 +99,87 @@ describe('useViewportMode (technical spec v7 §6.4)', () => {
       window.dispatchEvent(new Event('resize'));
     });
     expect(screen.getByTestId('mode').textContent).toBe('portrait');
+  });
+});
+
+function HoldProbe() {
+  const mode = useViewportMode();
+  const { width, height } = useVisualViewportBox();
+  return (
+    <div>
+      <output data-testid="mode">{mode}</output>
+      <output data-testid="box">{`${width}x${height}`}</output>
+      <input aria-label="Message" />
+      <input aria-label="Contact" />
+    </div>
+  );
+}
+
+describe('useViewportMode keyboard hold (L75-02, ruling 7, U1)', () => {
+  afterEach(() => { vi.restoreAllMocks(); });
+
+  it('holds its mode while a text field has focus and follows on blur; the box stays live', async () => {
+    const { user } = renderUi(<HoldProbe />);
+    const field = screen.getByRole('textbox', { name: 'Message' });
+    await user.click(field);
+    resize(390, 420); // the keyboard opens: the visible box shrinks under 500 px
+    expect([screen.getByTestId('mode').textContent, screen.getByTestId('box').textContent]).toEqual(['portrait', '390x420']);
+    act(() => { field.blur(); });
+    expect(screen.getByTestId('mode').textContent).toBe('landscape-compact');
+  });
+
+  it('keeps the hold across a move from one text field to another, though Chrome reports <body> as active in between (Lot 75 Check 1)', async () => {
+    const { user } = renderUi(<HoldProbe />);
+    const fieldA = screen.getByRole('textbox', { name: 'Message' });
+    const fieldB = screen.getByRole('textbox', { name: 'Contact' });
+    await user.click(fieldA);
+    resize(390, 300); // the keyboard opens on a short phone: 390 wide over 300 tall would read landscape-compact
+    expect(screen.getByTestId('mode').textContent).toBe('portrait');
+    // Chrome runs blur(A) and focusout(A, relatedTarget B) while document.activeElement is <body>; focus(B) and
+    // focusin(B) follow. happy-dom switches the active element first, which hid the flip from the earlier test.
+    const active = vi.spyOn(document, 'activeElement', 'get').mockReturnValue(document.body);
+    act(() => { fieldA.dispatchEvent(new FocusEvent('focusout', { bubbles: true, relatedTarget: fieldB })); });
+    expect(screen.getByTestId('mode').textContent).toBe('portrait');
+    active.mockReturnValue(fieldB);
+    act(() => { fieldB.dispatchEvent(new FocusEvent('focusin', { bubbles: true, relatedTarget: fieldA })); });
+    expect(screen.getByTestId('mode').textContent).toBe('portrait');
+    active.mockRestore();
+    act(() => { fieldA.blur(); }); // a real blur with no field to land on ends the hold
+    expect(screen.getByTestId('mode').textContent).toBe('landscape-compact');
+  });
+
+  it('ends the hold when the focus leaves for something that is not a text field', async () => {
+    const { user } = renderUi(<HoldProbe />);
+    const fieldA = screen.getByRole('textbox', { name: 'Message' });
+    await user.click(fieldA);
+    resize(390, 300);
+    expect(screen.getByTestId('mode').textContent).toBe('portrait');
+    const active = vi.spyOn(document, 'activeElement', 'get').mockReturnValue(document.body);
+    act(() => { fieldA.dispatchEvent(new FocusEvent('focusout', { bubbles: true, relatedTarget: document.body })); });
+    active.mockRestore();
+    expect(screen.getByTestId('mode').textContent).toBe('landscape-compact');
+  });
+});
+
+describe('isTextEntryElement (L75-02 m6)', () => {
+  const input = (type: string): HTMLInputElement => Object.assign(document.createElement('input'), { type });
+
+  it('accepts a textarea, a text-like input and a contenteditable element', () => {
+    const editable = document.createElement('div');
+    // happy-dom reflects `isContentEditable` from the attribute only for a connected element.
+    editable.setAttribute('contenteditable', 'true');
+    document.body.append(editable);
+    expect([
+      isTextEntryElement(document.createElement('textarea')),
+      ...['text', 'search', 'email', 'password', 'number', 'url'].map((type) => isTextEntryElement(input(type))),
+      isTextEntryElement(editable),
+    ]).toEqual([true, true, true, true, true, true, true, true]);
+    editable.remove();
+  });
+
+  it('rejects the input types that bring up no keyboard, a plain element and null', () => {
+    const types = ['button', 'checkbox', 'color', 'file', 'hidden', 'image', 'radio', 'range', 'reset', 'submit'];
+    expect(types.map((type) => isTextEntryElement(input(type)))).toEqual(types.map(() => false));
+    expect([isTextEntryElement(document.createElement('div')), isTextEntryElement(document.createElement('button')), isTextEntryElement(null)]).toEqual([false, false, false]);
   });
 });

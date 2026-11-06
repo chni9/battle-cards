@@ -6,12 +6,15 @@
  */
 import type { SubChoiceRequiredPayload } from '@card-battle/shared';
 import { within } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it } from 'vitest';
 
 import { renderUi } from '../../test/render';
 import { ARENA_REGIONS } from './arena-regions';
 import { ArenaScreen, type ArenaScreenProps } from './arena-screen';
-import { expectNoArenaIntent, makeArenaProps, makeArenaView } from './test-view';
+import { ARENA_TEST_BOXES, expectNoArenaIntent, makeArenaProps, makeArenaView, stubArenaLayout, type ArenaLayoutStub } from './test-view';
+
+let layout: ArenaLayoutStub | null = null;
+afterEach(() => { layout?.restore(); layout = null; });
 
 const MIRROR_OPEN: SubChoiceRequiredPayload = { kind: 'mirror', eligibleEffectIds: [], deadlineMs: 1 };
 
@@ -89,6 +92,18 @@ describe('ArenaScreen shell (spec v7 §6.1, L74-01)', () => {
       expect(root.classList.contains(name)).toBe(true);
     }
     expect(root.className).not.toMatch(/vh|w-screen|h-screen/);
+  });
+
+  it.each([
+    { box: 'phone390', mode: 'portrait' },
+    { box: 'landscape', mode: 'landscape-compact' },
+    { box: 'desktop', mode: 'desktop' },
+  ] as const)('fills its parent in $mode mode with no viewport unit and no page scroll (L53-07, §6.4; L75-10)', ({ box, mode }) => {
+    layout = stubArenaLayout(ARENA_TEST_BOXES[box].viewport, ARENA_TEST_BOXES[box].arena);
+    const root = arenaRoot(renderUi(<ArenaScreen {...makeArenaProps()} />).container);
+    expect(root.getAttribute('data-layout-mode')).toBe(mode);
+    for (const name of ['h-full', 'w-full', 'overflow-hidden']) expect(root.classList.contains(name)).toBe(true);
+    expect(`${root.className} ${root.getAttribute('style') ?? ''}`).not.toMatch(/\d+[dsl]?vh|w-screen|h-screen/);
   });
 
   it.each<{ label: string; overrides: Partial<ArenaScreenProps>; lock: string }>([

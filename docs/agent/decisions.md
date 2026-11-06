@@ -6608,3 +6608,456 @@ Source: Lot 76 Part 2 final review (P2-m1 to P2-m5), the controller's browser pa
 - **Recorded, not fixable in Lot 76 (P2-m4).** On the classic table the shared V7 sheets (z-50) sit under the your-turn flash (z-90/91), so the flash paints over them for its duration. When a V2 `Dialog` opens over an open V7 sheet (the elimination-reward sub-choice, an opponent reveal), one Esc also closes the V7 sheet underneath, because the V7 listener sees only V7 sheets. The L76-06 entry's "Esc closes only it" holds only while no V2 dialog is open. Both vanish when L75-09 and L75-11 retire the classic table.
 
 ---
+
+## 2026-11-03 · [P] "Bas plus court": the portrait bottom band compacts when the plate would cover a seat (L75-13, designer)
+
+- **Source.** Designer, 2026-11-03, answering the L74-26 gate's stop item (the plate covers grid
+  row 2 of an 8-seat table by 82 px at 360×740 and by 14 px at 375×812; a Duplicator's two-row dock
+  does the same to a 2-seat table at 360 px). Lot 75 plan, controller ruling R5. Supersedes
+  nothing: the 2026-11-03 L74-26 entry asked for this choice.
+- **Rule.** In portrait, when the seat grid plus the plate's footprint do not fit the arena region,
+  the bottom band compacts. The self strip goes to one row with a smaller portrait, the hand cards
+  get smaller, and the dock keeps its controls. The trigger is a pure geometry helper over the
+  layout box and the seats, not a fixed seat count, with hysteresis so the band never flaps at the
+  threshold. `SEAT_BOX` and `PLATE_BOX` do not change.
+- **Rejected.** Compact grid seats and a side-anchored plate.
+- **Follow-up.** L75-13 appends the measured numbers in a new dated entry.
+
+---
+
+## 2026-11-04 · [P] Hint and tutorial copy fixes supersede the locked copy (L75-01)
+
+Source: technical spec v7 §10, §10.1, §10.2 (designer 2026-10-20, Q11 = B); the Lot 75 plan, ruling
+R10. Supersedes "2026-08-29 · First-game hint copy rewrite (main)": `HINT_COPY` and the tutorial
+coach and tour copy are no longer locked, typos included.
+
+- **Fixed (§10.2):** "you kit", "you hand", "stronger that", "ressources", "atteign" (the sentence
+  is rewritten as "If your lives reach 0, you are eliminated."), "uo to" and "opponent !". The space
+  before "!" in five `TUTORIAL_STEPS` bodies (indices 3, 11, 17, 27, 29) is the same typo class
+  (L75-01 Review line).
+- **Rewritten (§10.1):** `hidden-kit` and the tour Opponent step (Lot 69: kit and cards need an
+  upgraded Spy or Spy Thief, or elimination; a basic Spy shows only resources); Counter Spy (the
+  designer's sentence); `reward` (Lot 71: helping eliminate, one shared timer).
+- **Unchanged:** hint ids, titles, the selector, auto-dismiss, `your-turn`, and the single
+  `incoming-thief` body (its per-card copy is L75-07). The What's new entry `lot-72-v7` gains one
+  `Fixed some bugs.` item. Every string is listed in the PR for designer review.
+
+---
+
+## 2026-11-04 · [P] V7 arena desktop: one grid per mode, the log column, centred sheets (L75-02)
+
+Source: technical spec v7 §6.1, §6.4, §6.9, §7.7; controller rulings R1, R2, R3 and open-question
+rulings 5 and 7 (Lot 75 plan, Appendix A.2–A.4).
+
+- **Thresholds.** The mode is `viewportModeFor` (§6.4 as amended). The L75-02 brief's "width ≥ 1024
+  and height ≥ 700" was stale: 1024×600 is desktop, and 768×1024 is portrait.
+- **One grid, no wrappers.** `<main>` switches its grid template per mode, and every region keeps its
+  element, so owner-local sheets, drafts and latches survive a rotation.
+- **Desktop log.** The panel replaces the ticker (§6.4). It opens expanded, 320 px wide, with a 44 px
+  rail when collapsed. The collapsed list unmounts, so the toggle is then the only log endpoint.
+  **Designer 2026-11-03:** expanded on mount and 320 px, kept.
+- **Centred sheets.** The card, Shop and seat sheets resolve `placement="auto"`. The Sheet primitive
+  already had it, so no `ui/` change. On desktop the Shop keeps the Sheet's 28rem width cap.
+- **Seat box per mode.** Desktop seats are drawn at 120×136, with a tile portrait (72×96) and a 40 px
+  resource column. The portrait anatomy is unchanged.
+- **Keyboard hold (ruling 7).** While a text `input`, a `textarea` or a contenteditable element has
+  focus, `useArenaLayoutBox` keeps the viewport box it had when focus arrived. The mode, and every
+  size read from the viewport, holds until blur. U1 (controller): `ui/`'s `useViewportMode()` holds
+  its mode the same way, through the shared `useTextEntryFocused()` (`ui/use-visual-viewport-box.ts`),
+  so the coach, Carousel and the hint hosts agree with the arena. `useVisualViewportBox()` stays
+  live, so a sheet or toast still sits above the keyboard. `Sheet` reads that live box for
+  `placement="auto"`, so its placement follows the keyboard, not the held mode. That is harmless:
+  `auto` is `bottom` in both portrait and landscape-compact, and the two differ only on desktop.
+- **Test window (R2).** The client happy-dom window defaults to 390×844. At `c6941bec`, all 287
+  client test files stayed green with it, so no per-file stub was needed.
+- **Ground scanlines (Q87-5, designer 2026-11-03).** The Lot 72 ground keeps its 1 px scanlines
+  every 3 px. The detector's `repeating-stripes-gradient` finding on them is ignored, scoped to
+  `ui/tokens.css` (`.impeccable/config.json`), as the two halo rules are. Spec v7 §12.4 asks for the
+  designer's approval before any other ignore, and this is it. Nothing else is ignored.
+- **Turn label (Q87-3, designer 2026-11-03).** The turn label keeps truncating at 375 px, with its
+  `title`. No change.
+
+---
+
+## 2026-11-04 · [P] V7 arena landscape-compact: the band, the hand size rule, the compact strip (L75-03)
+
+Source: technical spec v7 §5.4, §6.1, §6.4; controller ruling R4 and open-question rulings 6 and 7
+(Lot 75 plan, Appendix A.3, A.5); plan Review Focus 1.
+
+- **Rows.** The top bar and the ticker share the top row, the seats sit in one band in turn order,
+  and the compact self strip, the hand and the dock share the bottom row. **Designer question**
+  (open question 6): this composition? Default: yes.
+- **Hand size.** A landscape hand card is a quarter of the visible height tall, clamped to 64–120 px
+  (`heightBoundHandCardWidthPx`): 65 px at 390 px, the 64 px floor at 375 px.
+- **Compact strip.** One row: the thumb kit portrait and four small pills. Their captions are spoken
+  and in `title`, but not shown, because four captioned pills do not fit one row at 360 px. The flow
+  badges and the thumbs keep their own lines, so the in-play cards cost the full and the compact
+  strip the same height (L75-13 relies on it). **Designer question:** captions off in the compact
+  strip (L43-01 keeps them on the full strip)? Default: off.
+- **Seat box.** `SEAT_BOX['landscape-compact']` goes from 76×84 to 76×92 (§14.3 tuning). The band now
+  draws the portrait anatomy, which had been clipped 4 px at the arena top.
+- **Drag.** A mode change cancels a pressed or lifted drag: its drop rects were measured for the
+  old layout.
+- **Ticker column.** The band grid's third column is `minmax(10rem, auto)`, and the ticker cell has
+  no width of its own (`w-0 min-w-full`). A track sized `auto` takes its items' max-content, and a
+  truncated line's max-content is the whole line, so a long log line would have widened the column
+  and starved the hand (`min-w-0` alone only lowers the minimum). Now the dock sets the column, and
+  the floor keeps the ticker when the dock is empty (a walk-in).
+
+---
+
+## 2026-11-04 · [P] "Bas plus court": the compact band's numbers (L75-13)
+
+Source: the plan-commit entry "Bas plus court" (designer 2026-11-03, R5), which this one only
+quantifies; plan Appendix A.6 and Review Focus 4; the Lot 74 gate (G1, G2, G4).
+
+- **Trigger.** Portrait only. The band compacts when a seat would meet the plate's 122 px footprint
+  (open-question ruling 2) above the full band. The model reproduces the gate's measurements
+  (82 px at 360×740, 14 px at 375×812 with the empty 96 px plate).
+- **Sizes.** Compact hand cards are 52 px wide. The compact strip is 61 px against the full
+  strip's 160 px at 360–375 px. The savings are `ceil(99 + 1.5 × (clamp(64, 19vw, 120) − 52))`:
+  124 px at 360 and 128 px at 375. An 8-seat table at 360×740 gets a 338 px arena, 16 px over the
+  322 px it needs.
+- **No flap (S1).** Flow badges and thumbs cost both strips the same, and the savings are rounded up.
+  An upgraded-shield pill can add a fourth pill row to the full strip at 360 px, so the model can
+  miss about 44 px of saving. A compact band therefore returns to full only when the full band's
+  arena would clear the plate with `BAND_HYSTERESIS_PX` = 48 px to spare; full → compact keeps the
+  plain threshold. From about 385 px the full strip drops to two pill rows, so the constant
+  over-estimates and the band only returns to full later. Check 1 re-measures the arena heights,
+  and this note is updated if they differ (open-question ruling 3).
+- **Monotone overlap.** A seat counts as covered by `max(0, seat bottom − plate top)`, not by its
+  intersection with the plate, because the plate is pinned to the arena's bottom edge and the grid
+  places its rows from the arena top. With the intersection, an arena of 8 px or less read 0, and a
+  short compact arena (a 2-seat Duplicator at 360×640: 40 px full, 164 px compact, judged −8 px)
+  flapped between the bands. The unmeasured guard is a 0-wide arena only.
+- **Designer question:** at 52 px the longest card names fall to the 10 px floor and may wrap
+  mid-word (DESIGN.md › Card › Name). Accept, or hide names at that size? Default: accept.
+- **Hand scroll cue (Q87-4, designer 2026-11-03: fade added).** A hand that overflows shows a
+  static fade on its right edge, and on its left edge once scrolled away from the start. It
+  reuses the admin tables' pattern (`screens/admin/admin-scroll-cue.ts`, L80-12) in
+  `hand-scroll-cue.ts`, because that code is private to `screens/admin/`; the fade is `--bg-0`
+  into nothing, 40 px wide, and static under reduced motion.
+
+---
+
+## 2026-11-04 · [P] V7 FX anchors: the plate is the felt centre, the log is visible-first, collapsed chrome retires (L75-08)
+
+Source: technical spec v7 §6.1, §6.4, §6.9, §6.12; controller ruling R6 and open-question rulings 4
+and 12 (Lot 75 plan, Appendix A.7); `docs/backlog_v7_test_classification.md` (fx rows).
+
+- **Plate target.** `measureFeltCenterRect` returns a 48×72 rect on the plate's landing frame
+  (`[data-plate-landing]`, else `[data-zone="pending"]`), else on the felt, else null. The V2
+  midpoint of the plate and the card band put arena ghosts between the plate and the self strip.
+- **Visible-first log.** `queryActionLogAnchor` is `queryFirstVisible([panel, collapsed])`: a log
+  list that is mounted but zero-size (a collapsed panel, a depth-hidden log sheet) never wins.
+  `queryPendingFlashAnchor` reads the same way, so a zero-size arrow label never hides the plate
+  badge that carries the same effect id (Appendix A.7.1, "first visible").
+- **Retired:**
+  - `queryOpponentsCollapsedAnchor` and the collapsed tails of the seat and resource lookups;
+  - `measureIncomingCollapsedCue` and its second targeting cue;
+  - `OPPONENTS_COLLAPSED_ZONE`, `INCOMING_PENDING_ZONE` and `INCOMING_COLLAPSED_ZONE`;
+  - `queryIncomingAnchor` now names the plate.
+
+  They are superseded by §6.4 (landscape-compact replaces the V6 short-viewport collapse), §6.1
+  (every region always renders), §6.9 (an always-rendered log endpoint) and §6.12 (FX on arena
+  anchors). No arena element carried them, so no arena FX is lost. Under `?ui=classic` the old
+  table loses only the fallbacks for chrome it collapses, until L75-10 deletes it.
+- **Tests.** `play-flyout.test.ts` › 'aims flyouts at collapsed chrome …' (L53-07) retires, and its
+  owner moves from L75-10 to L75-08. The L51-13 source read and the overlay source read become
+  behavior tests.
+
+---
+
+## 2026-11-06 — Lot 75 Check 1: measured arena test boxes (L75-03, L75-13)
+
+- **Context.** The batched browser Check 1 (`?ui=next`, dedicated dev servers) re-measured every
+  `ARENA_TEST_BOXES` arena height against the live arena region.
+- **Confirmed, unchanged.** `phone360` 214 px (full strip 160, hand 131); `phone375` 282 px (strip 160,
+  hand 135); `duplicator360` 140 px (compact arena 258 less the 118 px the band gives back; the
+  Duplicator dock is 174 px).
+- **Updated** (`screens/arena/test-view.ts`):
+  - `phone390` 300 → 354 px. The plan had assumed it. At 390 px the full strip is 116 px (two pill rows),
+    not 160. A fresh game with 8 seats there can read a full band; a band held compact from a narrower width
+    stays compact, which is benign (`bottomBandSavingsPx` over-estimates wider than 375 px, as the L75-13
+    numbers note says).
+  - `landscape` 176 → 159 px (844×390, 8 seats: 390 − 91 top row − 141 bottom row); `landscapeSmall` 162 →
+    160 px (667×375: 375 − 91 − 124).
+  - `desktop` 1000×600 → 1104×489 (1440×900: the 336 px log column leaves a 1104 px arena).
+  - `tablet` 560 → 469 px (768×1024, portrait, full band).
+- **Constant.** `COMPACT_STRIP_PX` 61 → 67 (8 px padding + a 59 px thumb: 44 px wide at 3:4). The savings
+  at 360 / 375 / 768 px are 118 / 122 / 195 (were 124 / 128 / 201).
+- **No rule, value or protocol change.**
+
+---
+
+## 2026-11-06 · [P] The tutorial on the arena: layers, callouts, coach slot and locks (L75-04)
+
+Source: technical spec v7 §6.12, §6.6.3, §6.1, §8.3, §14.3; the Lot 75 plan, Appendix A.8; controller
+rulings R7–R9 and open questions 1, 8 and 9 (2026-11-03).
+
+- **Layers.** `Z_INDEX` gains `hint` 84 and `coach` 86: above every sheet (50+) and Minimize bar (80+),
+  under the banner (90), the toast (95) and the `fx/` overlay (110). Bars clamp at `hint - 1`. V6 put
+  the coach at 110 and hints at 105 (the backlog L75-04 watch point); banners and toasts keep painting
+  above the coach (ruling 1).
+- **The coach** is the `ui/coach` `CoachPanel` in a `document.body` portal on `Z_INDEX.coach`, outside
+  every sheet, so no sheet makes it inert and a press on it never reaches a backdrop. Its slot is the
+  arena region's top-left, 8 px in, `min(22rem, 100% - 1rem)` wide, in every mode. Its mousedown is
+  prevented, so × and Got it keep the focus inside an open sheet; from the keyboard, × hands the focus to
+  Menu and Got it to the next step's Got it.
+- **Callouts** are one measured layer (`ui/coach/tutorial-callout.tsx`) that rings each
+  `[data-tutorial-highlight]` element, with an arrow outside the ring. It portals on `Z_INDEX.hint`,
+  which a tutorial room never uses for hints, and draws only the live layer: the live sheet's own targets
+  while a sheet is live, else the table's. The hand `ScrollArea`, the `overflow-hidden` arena and a
+  sheet body therefore never clip it; V2 needed `overflow: visible` on the card band. The orange is
+  `--threat-other`, with no new token. Real incoming threats keep the plate badges' `data-tone` rings.
+- **Locks** (§6.6.3; open questions 8 and 9). While the tour or the Look gate is up:
+  - the commit's `allow` (`!reconnecting && tutorial.allows(intent)`) vetoes every send silently, a
+    sub-choice answer included;
+  - no drag starts, Shop and Unspy do not open, and hand and special taps open nothing;
+  - seat taps stay live. Opening the seat sheet of a seat whose kit is visible clears the Look gate, once
+    per mount.
+  L75-05 adds the script half of `tutorial.allows`.
+- **Routing (R9).** `resolveTableUi` returns the preference for every room. The default stays the
+  classic table until L75-09.
+
+---
+
+## 2026-11-06 · [P] Every arena commit path is gated in the tutorial (L75-05)
+
+Source: technical spec v7 §6.12, §6.6.4, §6.8; the Lot 75 plan, Appendix A.8.4–A.8.6 and A.8.9; controller
+ruling R8 and open question 8 (2026-11-03).
+
+- **One gate.** `allow = !reconnecting && tutorial.allows(intent)`. `tutorialIntentOf` maps each
+  `ArenaIntent` kind through an exhaustive switch. Unspy, pool buys, Deactivate and Activate duplication
+  map to `other`, which no human step allows; the server rejects them the same way (`tutorial-follow-coach`).
+  V2 never gated Deactivate or the sub-choice answers.
+- **Sub-choice answers** pass outside the tour and the Look gate. The server gates only turn actions, and
+  a vetoed answer would strand the player under a blocking sheet.
+- **The veto lands on the send.** Use on a targeted card still enters targeting; the gate vetoes the
+  seat tap. V2 vetoed at Use. A veto shows the follow-coach copy, keeps the control live and flies no
+  own FX.
+- **Spotlights.** The card sheet marks Use, Upgrade or Sell only on the spotlit card's sheet; V2 marked
+  it on any card's sheet. The Shop highlights and never preselects (§6.8): the Absorber tile until it is
+  selected, then Buy selected.
+- **Kept:** `tutorialShopSpotlight`, because `view-model/shop.ts` uses it (the brief's removal was wrong,
+  R8), and the `arena-sheets.ts` early return, because no caller passes a Shop `tab`.
+- **Deleted:** `tutorialIncomingThreatIds` and `isTutorialIncomingThreatCard`, dead since L51-07.
+- **Carry-forward fix:** the card-sheet Deactivate confirm closes only on a sent commit.
+
+---
+
+## 2026-11-06 · [P] First-game hints on the arena: the Q66 input, the minimized reward sheet, V7 chrome (L75-06)
+
+Source: technical spec v7 §4.2, §6.3, §6.7, §6.12, §12.1; Appendix A Q66, `first-game-hint-host`,
+`table-first-game-hints`; the Lot 75 plan A.9 and ruling R11.
+
+- **Base-Spied seats count as kit hidden** (§6.3, Q66). The arena passes `seats.some((seat) =>
+  seat.kitHidden)` as `hasUnspiedLivingOpponent`, so the selector input and the `hidden-kit` anchor
+  agree: a base Spy shows resources, not the kit. The input keeps its name, because renaming it would
+  edit `screens/table.tsx` (R14). Under `?ui=classic` the old table keeps its pre-Q66 value until
+  L75-10 deletes it.
+- **The reward hint hides while the reward sheet is minimized** (R11, planner's pick). The Minimize
+  bar carries no anchor; the hint returns on restore. This needs no `ui/` change.
+- **Hidden under sheets.** The card hides while any read-only sheet-stack entry is up (every arena
+  sheet, Dialog and the menu), a minimized blocking sheet, or a non-reward sub-choice (V2's
+  `hintDialogOpen`). The reject toast is not a sheet and paints above the card (`Z_INDEX.toast`), so
+  it does not hide it.
+- **Chrome.** `HintOverlay` renders the `ui/coach` compact panel on `Z_INDEX.hint` and imports nothing
+  from `design/`. The V6 compact-chrome source assertion (classification row 91) is retired,
+  superseded by §6.12 and §4.2. Under `?ui=classic` the old table shows the V7 card too until the flip
+  (L75-09, same PR; contract open question 12).
+- **Anchor lookup.** The card takes the first `[data-hint-anchor]` with a non-zero rect, so a mounted
+  but hidden twin never takes it. The overlay has its own lookup: `help/` imports no `fx/` code.
+
+---
+
+## 2026-11-06 · [P] Per-card incoming-thief hint copy, earliest-queued thief first (L75-07)
+
+Source: technical spec v7 §10.1 (Q52), §6.12; rules spec §1 Counter Rule, §3 Thief, §5 (Card Thief,
+Spy Thief after Lot 71, Upgrade Point Thief, Attack Thief); the Lot 75 plan A.9.4 and ruling R12.
+
+- **One body per thief card** (`INCOMING_THIEF_HINT_BODY`, typed over `INCOMING_THIEF_CARD_IDS`). The
+  old single body ("up to 10 points … counter it with Thief") was wrong for every special thief.
+  Only Thief names the 10-point cap; the special thieves say they cannot be countered (the Counter
+  Rule covers only Spy and Thief).
+- **Several thieves on the POV:** the earliest-queued one (smallest `queuedAt`, ties in wire order)
+  picks the body, because it resolves first (golden rule 3).
+- **Unchanged:** the id, the title 'Incoming', the selector order and the dismissal. The old table
+  passes no `body`, so it keeps the Thief body until L75-10. Every string is listed in the PR for
+  designer review.
+
+---
+
+## 2026-11-06 · [P] Lot 75 Part 1 stop items: shrink the desktop seats, an icon dock, a compact Watching header, a coach that flips (L75-02, L75-03, L75-13, L75-04)
+
+Source: Lot 75 Check 1 and Check 2 stop items S1–S4 (`.superpowers/sdd/2026-10-21-v7-lot-75-arena-2/check-1-report.md`,
+`check-2-report.md`); technical spec v7 §6.1, §6.4, §6.12, §14.3; designer rulings of 2026-11-06. No rule, value or protocol
+field changes.
+
+- **S1: a short desktop arena shrinks the seats; the hand keeps its size** (designer). `desktopSeatBox(arena, seatCount,
+  isWalkIn)` (`view-model/seat-layout.ts`) returns `SEAT_BOX.desktop` (120×136) while the layout it gives clears the plate's
+  visible footprint and stays inside the arena, else the largest box down to `SEAT_BOX.portrait` (76×92) that does, else the
+  portrait box. The footprint is the 74 px landing frame (`DESKTOP_PLATE_FOOTPRINT_PX`); incoming badges grow upward and rely on
+  the press-through, as in portrait, or no box could clear the plate at 1024×600. An unmeasured arena keeps 120×136. The layout
+  carries the box (`SeatLayout.box`, desktop only) so the seats, the grid, the arrows and the band helper read one number. A box
+  under the desktop height draws the portrait anatomy (it fits 76×92). The 1024×600 arena (688×189) is back-solved from the
+  1440×900 measurement; with 7 opponents no box fits there (the ellipse stacks seats at its flanks), so the seats fall to the
+  portrait floor and the plate still covers some: shrinking alone does not clear 8 seats at that size, and the browser check
+  re-measures it.
+- **S2: an icon-only dock on narrow landscape** (designer; follows the Lot 59 label-free dock). Under 700 px of viewport width in
+  landscape-compact (`dockIconOnly`), Shop and Activate duplication show their icon only, in a two-column dock with no reason
+  line; every control keeps its accessible name and its reason in `title` and `aria-describedby`. At 667×375 the dock then
+  fits the 10 rem (160 px) column floor, so the hand gets 667 − 287 (strip) − 160 = 220 px, about three 64 px cards (two
+  needed). 844×390 is unchanged.
+- **S3: the Watching header compacts with the portrait band** (designer). `WatchingHeader` and `SpectatorStrip` take
+  `compact`, as the self strip does: one row, the locked line spoken only. The band helper reads the Watching strip's own full and
+  compact heights, not the self strip's, so it decides correctly. Hysteresis stays as it is.
+- **S4: the tutorial coach flips below its mark** (designer). The coach stays at the arena's top-left (K8) unless the element
+  currently marked overlaps that default box; then it sits on the arena region's bottom edge, clear of the bottom band and the
+  dock. `placeCoach` is pure over the coach rect, the arena rect and the mark rects. The host still measures
+  `[data-arena-region="arena"]` itself; the coach stays non-modal and above sheets.
+
+---
+
+## 2026-11-06 · [P] The arena is the only table: the switch goes, the stale key is cleared (L75-09)
+
+Source: technical spec v7 §4.4, §10.4, §11 (Q37); Appendix A `global-app-router`, `global-client-storage`,
+`end-finished-board-shell`, `turn-strip-timers` (Notes); the Lot 75 plan, Part 2 (A.13). Supersedes
+the 2026-11-06 L75-04 routing line "The default stays the classic table until L75-09".
+
+- **Routing.** `App.tsx` (playing) and `EndScreen` (finished board) always mount `ArenaScreen`, Classic
+  and tutorial rooms alike. `ui-switch.ts`, its test and `EndScreenProps.tableUi` are deleted. The arena
+  root keeps `data-arena="next"`: it is an anchor every arena test selects on, not a switch value.
+- **The key.** `GameApp` removes `localStorage['card-battle.v7.ui']` once per page load
+  (`retired-table-switch.ts`), in try/catch: a blocked store skips it and nothing reads the key again.
+  `?ui=classic` and `?ui=next` are not read, so they are no-ops and stay in the address bar.
+- **What's new.** `lot-72-v7` is not on `main` (checked 2026-11-06), so the flip appends two items to
+  it (10 become 12): the table, and one grouped `Fixed some bugs.` item for the two fixes that go live
+  with it (the turn timer bar; Upgrade on an opponent's Shield, Q37). Designer 2026-11-06 answered
+  Q2-1 (default text kept) and Q2-2 (one grouped item, not two). The title stays "New look" (Q2-3, not
+  asked, default kept). Every string is listed in the Lot 75 PR for designer review.
+- **Not yet.** `screens/table.tsx` and `screens/table/**` still compile, unreachable, until L75-10 and
+  L75-11 delete them in the same PR.
+
+---
+
+## 2026-11-06 · [P] The old table shell retires: its tests are classified, its V2 layout rules go (L75-10)
+
+Source: technical spec v7 §12.1, §4.2, §6.1, §6.4, §6.5, §6.9, §6.12, §11; the Lot 75 plan, Part 2
+(A.14, A.17, A.18); `docs/backlog_v7_test_classification.md` rows 52, 82, 86–87, 92–94, 96, 98–101,
+114–149, 170–187.
+
+- **Deleted:** `screens/table.tsx`, the shell under `screens/table/` (table-shell, felt-collapse,
+  card-band, card-band-fit, opponent-zone, private-zone, economy-bar, pending-queue, timers,
+  flow-status-badges, active-persistent-thumb, sentence-chip, spy-eye-icon, forfeit-flag-icon,
+  your-turn-flash, table-chat) and `view-model/pending-chip-tone.ts`, with 20 test files.
+- **Retired old-layout assertions** (§12.1), each superseded as its row says: the collapse order and
+  the collapsed-chrome buttons (§6.4 layout modes, §6.1 every region renders, §6.9 the log), the
+  nowrap opponent row and the two landscape columns (§6.4 arc, grid and landscape-compact), the
+  compact Incoming strip and Incoming on the identity row (§6.1 item 2, §6.5 plate badges), the
+  `w-max` band and its fit maths (§5.4, §6.1 item 4), the V2 callout and coach chrome (§6.12, §5.1,
+  §5.7, §8.3), the economy-bar CTA chrome and the Draw pulse (§6.1 item 5, §5.3, §8).
+- **Kept behaviors** have arena behavior tests, named in each row. New in this commit: the three-mode
+  fill test, the hand-region clip test and two "no UP on chrome" tests (L43-02).
+- **Row 132** (Gambler Draw red above 10): the code kept the red state (parity `economy-bar` Keep,
+  `selfStrip().dock.draw.hot`), so its red half is product behavior tested by the dock; only the
+  change pulse retires. The code wins over the row's prospective text (AGENTS.md §2); listed in the PR.
+- **`index.css`:** the V2 table rules go. The landscape `[data-zone="card-band"] { overflow: hidden }`
+  also matched the arena hand region (same zone name), so the arena keeps it as a class on that region
+  in desktop and landscape-compact (A.18; a portrait-orientation box under 500 px tall, the keyboard case, now
+  clips too); the `:has([data-tutorial-highlight])` twin goes, because the L75-04 callout layer is a portal.
+  `[role="dialog"]` and the dialog overlay rules stay for Game over.
+- **Props:** `ArenaScreenProps` owns the 29 board fields verbatim (A.14), so the arena imports nothing
+  from `screens/table/`. `deadlineMs` stays although the arena ignores it (L73-13): dropping it is
+  dead-code work (L81-01), not part of the flip.
+- **Dead exports** removed with their last importer: `shieldActiveInstance`, `cardPlayNeedsConsume`
+  (A.17). Copy citations that name a V2 file as their source stay.
+
+---
+
+## 2026-11-06 · [P] The old table dialogs and orphaned design components retire (L75-11)
+
+Source: technical spec v7 §12.1, §4.2, §6.6.1, §6.7, §6.8, §6.12, §11, §15 (L76 before L75's lobby
+deletions); the Lot 75 plan, Part 2 (A.15–A.18); classification rows 19–21, 46–49, 72, 81, 83–85,
+102–113, 134, 150–169, 188–189, 197–198.
+
+- **Deleted:** the rest of `screens/table/` (the directory is gone), `screens/illegal-action-dialog.tsx`,
+  `action-log/action-log-panel.tsx`, `bots/format-bot-reason.ts` (dead since the Why control stayed hidden,
+  L45-05; its only reference was a string in the deleted panel test), and 14 `design/components/` files with no importer left: animated-card,
+  bot-seat-label, card-choice-tile, card-effect-copy, card, choice-tile-chrome, coach-panel, connection-badge,
+  cost-display, effect-text-icons, icon-button, life-count-badge, seat-tile, tooltip. 19 test files go.
+- **Kept for Game over (L77):** `design/components/` button, dialog, kit-portrait, player-name and
+  resource-icon, which `screens/game-over-dialog.tsx` imports, with `kit-portrait.test.ts` and
+  `dialog.dialog-width.test.ts`; the `[role="dialog"]` rules in `index.css` stay with them.
+- **No lobby repointing.** Lot 76 (PR #89) already rebuilt the lobby on `ui/`; nothing outside the old
+  table imported `ChatLog` or `KitInspectDetails`.
+- **Moved, not retired:** the four kit-inspect logic tests, verbatim, to `view-model/` beside their modules.
+- **Retired old-layout assertions:** SeatTile pickers, compact dialog CTAs, choice-tile chrome, the PNG
+  resource icons and the V2 callout and coach CSS (§6.6.2, §6.6.1, §6.7, §5.3, §5.6, §6.12). Every kept
+  behavior names its arena or `ui/` test in its row.
+- **Dead exports** removed with their last importer: `MOTION_STAGGER_S`, `activeUpgradeInstanceId` (the
+  V2 opponent-Shield path, Q37), `CoachResourceKind` (it lost `export`; its own file still uses it).
+
+---
+
+## 2026-11-06 · [P] Gate B designer answers: the tutorial coach slot and the callout ring (Q2-5, Q2-6)
+
+Source: technical spec v7 §6.12; Lot 75 plan Part 2 Appendix B; designer 2026-11-06.
+
+- **Q2-5, not accepted: fixed.** At 375×812 the coach still covered part of the Incoming tour mark
+  from both the top-left and the bottom slot. `placeCoach` gets a third slot under the opponent row,
+  used when both of the others overlap the marks and it covers them strictly less than the top-left
+  does. `CoachPlacementInput` gains the opponent row's rect (`opponents`, optional: absent, the
+  two-slot result is unchanged), measured by `tutorial-coach-host.tsx` from the opponent seats.
+- **Q2-6, not accepted: fixed.** The `your-zone` callout ring sat 4px outside a target that touches
+  the left or bottom screen edge, so it drew off-screen. `calloutPlacement` insets the ring into the
+  visible box; the arrow keeps its own clamp.
+- Client-only UI placement: no rule, value or protocol change (`PROTOCOL_VERSION` stays 45).
+
+---
+
+## 2026-11-06 · [P] Gate B stop item S-B1: the tour coach may leave the arena
+
+Source: technical spec v7 §6.12; Lot 75 plan Part 2; Gate B report S-B1 (`gate-report-p2-B.md`); designer
+2026-11-06, option (b).
+
+- At 375×812 the Incoming coach is about 237 px tall in a 282 px arena (214 px at 360×740), so every slot
+  clamped inside the arena still covered the tour's marks (Incoming 61% at 375 and 100% at 360, Opponent
+  84-91%, plus the Look gate and Action log arrows). Accepting it (a) and shrinking the coach (c) were
+  not chosen.
+- During the **tour** steps and the **Look gate** only, when the table is locked, the coach slots are the viewport's top edge,
+  its bottom edge and under the opponents, over the self strip and the hand. `placeCoach` picks the one
+  that covers the marks and arrows least, breaking ties top, then bottom, then under. **Script** steps
+  keep the arena-only slots, so the hand and dock stay playable.
+- `CoachPlacementInput` gains `bounds: 'viewport'` with the viewport rect; `ArenaCoachView.tour` (from
+  `tourActive || lookPending`, i.e. `locksTable`) tells `tutorial-coach-host.tsx`. Controller ruling: the
+  Look gate locks the table on the same grounds as the tour. Client-only: no rule, value or protocol change
+  (`PROTOCOL_VERSION` stays 45).
+
+---
+
+## 2026-11-06 · [P] Gate C stop item S-C2: on desktop the tour coach starts under the top bar
+
+Source: technical spec v7 §6.12; Gate C report S-C2 (`gate-report-p2-C.md`); designer 2026-11-06, option (b).
+
+- At 1440×900 the viewport-top slot of the tour and the Look gate (8, 8) covered 22% of the top bar, hiding
+  the left of the turn strip (`Round N`, `Your turn`, the timer label). Nothing was lost for play (the table
+  is locked), but the player lost the orientation line.
+- On **desktop** the top slot now starts 8 px under the top bar. `CoachPlacementInput` (viewport mode) gains
+  an optional `topBar` rect, which `tutorial-coach-host.tsx` measures and passes in desktop mode only: a phone's
+  top bar is too thin to spare the height, and its top-slot steps stay as S-B1 set them. The least-covering
+  choice among top, bottom and under-opponents is unchanged. Client-only: no rule, value or protocol change
+  (`PROTOCOL_VERSION` stays 45).
+
+---
+
+## 2026-11-06 · [P] Gate C stop item S-C3: the finished board's turn strip names nobody (L74-03)
+
+Source: technical spec v7 §6.1 item 1; Gate C report S-C3 (`gate-report-p2-C.md`); designer 2026-11-06, option (a).
+
+- After a game ends the finished board keeps the last `currentTurnPlayerId`, so the turn strip read
+  `Round N / Your turn` for the player who lost. `turnBannerOf(view, readOnly)` now returns `none` on the
+  finished board, which shows the existing `NO_TURN_OWNER_LABEL` (`—`), the clock's `none` mode already
+  being there. No new string. The Block line under the strip keeps reading the last active seat: not
+  part of this ruling, and listed in the PR notes. Client-only: no rule, value or protocol change
+  (`PROTOCOL_VERSION` stays 45).

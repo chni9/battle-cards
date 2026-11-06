@@ -44,9 +44,9 @@ export function classifyHandGesture(delta: Point): HandGesture {
   return 'pending';
 }
 
-/** §6.6.3: never off-turn or locked (canDrag), never while targeting (L74-10). L75 adds the tour and Look gate. */
-export function canStartHandDrag(actions: CardActionsModel, targetingActive: boolean): boolean {
-  return actions.canDrag && !targetingActive;
+/** §6.6.3: never off-turn or locked (canDrag), never while targeting (L74-10), never while the tutorial tour or Look gate locks the table (`locked`, L75-04). */
+export function canStartHandDrag(actions: CardActionsModel, targetingActive: boolean, locked = false): boolean {
+  return actions.canDrag && !targetingActive && !locked;
 }
 
 /** The card's model on the latest view (`liveCardRefFor`), or null once it left the hand. */

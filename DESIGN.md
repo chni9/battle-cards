@@ -252,7 +252,8 @@ Tailwind utilities: `font-v7-display`, `font-v7-card`, `font-v7-body`, `text-v7-
 input under 16px. One exception: a hand card's name may shrink below 11px so its longest word
 never breaks (Card, L72-12). It happens only for names whose widest word is long, on viewports
 from 320px up to about 367px (a hand card under 69.75px): about 10.8px at 360px, and 10.04px at
-337px and below, on the 64px clamp floor. The 10px floor is never reached by a catalog name. It
+337px and below, on the 64px clamp floor. The 10px floor is never reached by a catalog name, except
+in the compact portrait band (L75-13), whose 52px hand cards reach it. It
 waits on the designer (decisions.md 2026-10-27).
 
 **The Vital Rule.** Own lives are at least 20px and the incoming damage badge at least 22px on
@@ -265,8 +266,20 @@ a 375 px phone.
 
 Phone portrait first (375 px, up to eight seats, no horizontal page scroll); desktop is
 derived and a landscape phone is a compact mode (spec v7 §2 Q2, §6.4). Touch targets are at
-least 44px. The layout mode comes from one rule (Primitives › Viewport modes); seat arc, grid
-and sheet placement land in later lots.
+least 44px. The layout mode comes from one rule (Primitives › Viewport modes). The arena lays
+its six regions on a CSS grid per mode (L75-02). Portrait is one column. Desktop has a
+full-width top bar over the arena, the self strip and a hand-and-dock row on the left, and a
+collapsible log column on the right (320 px, a 44 px rail when collapsed). The card, Shop and
+seat sheets are centred dialogs on desktop (`placement="auto"`), and desktop seats are drawn
+at 120×136 with a tile kit portrait, shrinking toward the 76×92 portrait box (and its anatomy)
+when the arena is too short for them (`desktopSeatBox`). Landscape-compact (L75-03) puts the top bar and the ticker
+in one top row, the seats in one band, and the compact self strip, the hand and the dock in one
+bottom row. In portrait the bottom band compacts when the plate would cover a seat (L75-13, 'Bas
+plus court'): the compact self strip and 52 px hand cards; the dock keeps its controls. A hand that
+overflows its row shows a static 40 px fade (`--bg-0` into nothing) on its right edge, and on its
+left edge once it is scrolled away from the start (L75-13, Q87-4, designer 2026-11-03). It is the
+admin tables' scroll cue (L80-12) on both edges, decorative (`aria-hidden`, no pointer events) and
+the same under reduced motion.
 
 The page ground is the opt-in class **`.v7-ground`** (`ui/tokens.css`, `@layer components`):
 `--bg-0` under a `--bg-1` to `--bg-0` gradient, the two halos (`--glow-a` top left, `--glow-b`
@@ -433,7 +446,7 @@ Not ready is the existing `close` cross, so the two states differ by shape and n
   `Icon name="eliminated"` or `"close"`.
 - The `/dev/ui` gallery section `icons` (`ui/icons/icons.gallery.tsx`, L72-08) shows every
   glyph at 32px with its name, and `help` and `coach` labelled side by side (Q45).
-- The classic table's `SpyEyeIcon` and `ForfeitFlagIcon` (`screens/table/`) stay until L75.
+- The classic table's `SpyEyeIcon` and `ForfeitFlagIcon` were deleted with the old table shell (L75-10).
 
 ## Illustrations
 
@@ -713,11 +726,13 @@ shipped string.
 (`sheet-stack.ts`, pure; `sheet-stack-context.ts`, the store) that implements spec v7 §6.7.
 The V2 rule "one Esc closes every open Dialog" does not apply to V7 surfaces.
 
-- **Layers** (`ui/layers.ts`, `Z_INDEX`): `dragGhost` 40, `sheet` 50, `sheetBar` 80, `banner` 90, `toast` 95.
+- **Layers** (`ui/layers.ts`, `Z_INDEX`): `dragGhost` 40, `sheet` 50, `sheetBar` 80, `hint` 84, `coach` 86,
+  `banner` 90, `toast` 95 (L75-04: hints and the tutorial coach paint above every sheet and Minimize bar
+  and under banners and toasts; the `fx/` overlay stays on top at 110).
   Sheets and Toast portal to `document.body`, so the layers are global, and a caller's
   `<form>` or transformed ancestor never captures them. Inside a layer the stack assigns
   `sheet + n` to everything on the sheet layer and `sheetBar + n` to Minimize bars, clamped
-  below the next layer.
+  below the next layer: bars clamp below `hint` (`hint - 1`), so no bar paints over a hint or the coach.
 - **Drag ghost** (`Z_INDEX.dragGhost`, L74-12, spec v7 §6.6.5): the arena's hand-drag ghost and
   Sell zone are the one overlay outside Sheet / Dialog / Toast: a `pointer-events: none` portal
   to `document.body`, mounted only during a drag, below every sheet.
@@ -820,13 +835,20 @@ The V2 rule "one Esc closes every open Dialog" does not apply to V7 surfaces.
 - **Motion:** the scrim fades over `--dur-fast`; a bottom panel rises 24px and a centered one
   scales from 0.98, with opacity, over `--dur-base` on the entrance ease; the toast drops 12px.
   Under reduced motion all three only fade.
+- **Keyboard** (L75-02, ruling 7, U1): `Sheet` and `Toast` follow the live `useVisualViewportBox()`,
+  so they sit above a phone keyboard. `useViewportMode()` holds its mode while a text field has
+  focus (`useTextEntryFocused()`, `ui/use-visual-viewport-box.ts`) and follows on blur, so the
+  arena, the coach and `Carousel` keep one mode while the player types. A move from one text field
+  to another (a `focusout` whose `relatedTarget` is a text field) keeps the hold: Chrome reports
+  `<body>` as the active element between the two events. `Sheet`
+  `placement="auto"` reads the live box, so it differs from the held mode only on desktop.
 
 ## Cost glyphs and effect copy (L72-11)
 
 `ui/card/glyph-amount.ts`, `ui/card/cost-amount.tsx`, `ui/text/effect-text-with-icons.tsx` and
 `ui/text/card-effect-copy.tsx` (spec v7 §6.6.1; Appendix A `global-card-effect-copy-inline-icons`).
 They are the V7 successors of the V2 `CostDisplay`, `EffectTextWithIcons` and `CardEffectCopy`
-in `design/components/`, which stay until L75 (and L77 for Game over) retire their consumers. Catalog text is
+in `design/components/`, which L75-11 deleted. Catalog text is
 rendered as it is; the copy fixes of §10.5 are L72-13's.
 
 - **Icon map** (`glyphAmountIcon`, one `GlyphAmount` shape for the structured costs and for the
@@ -874,7 +896,7 @@ rendered as it is; the copy fixes of §10.5 are L72-13's.
 `ui/card/card.tsx` and `ui/card/card-face.ts` (L72-12; spec v7 §5.3, §5.4, §5.5, §6.6.5, §8.2,
 §8.3; Appendix A `global-card-face`, `global-activated-art-guard`,
 `global-art-lot63-gambler-roulette`, `active-persistent-thumbs`, `sentence-chips`). It is the
-only V7 card renderer; the V2 `design/components/card.tsx` stays for the classic screens.
+only V7 card renderer; the V2 `design/components/card.tsx` was deleted in L75-11.
 
 - **API:** `<Card size instance damageMultiplier? counter? selected? unplayable? description?
   onActivate? className? dataAttributes? />`, or `<Card face="hidden" family size … />` for a Spy
@@ -900,8 +922,12 @@ only V7 card renderer; the V2 `design/components/card.tsx` stays for the classic
   (measured: a hand card in a 220px default flex row stays 71×107 at 375px). `--card-w` is an
   `@property` that does not inherit (`ui/tokens.css`): a container's value never resizes the
   cards inside it, so a lifted or sheet card in a hand row keeps its size. `--card-w` is the
-  only resize path; L75's landscape-compact hand derives it from the visible height. The
-  non-spec widths are picks for the L72-21 critique.
+  only resize path. **Hand size rule (L75-03):** in landscape-compact the hand fan sets
+  `--hand-card-w` to `heightBoundHandCardWidthPx(visible height)` (`ui/card/hand-card-size.ts`): a
+  card a quarter of the visible height tall, clamped to the `hand` clamp's 64–120 px (65 px at
+  390 px tall). The compact portrait band (L75-13) sets 52 px (`COMPACT_HAND_CARD_W_PX`), below
+  the 64 px floor: the 44 px strip and the 16 px chips hold, and the longest names fall to the
+  10 px name floor. The non-spec widths are picks for the L72-21 critique.
 - **Overflow:** the selected lift (8px up, 105%), the focus ring (8px around), the counter
   glow (4px out plus a 12px blur) and the counter badge (8px under the bottom edge) reach past
   the 2:3 box. A scroll or `overflow-hidden` parent pads for them: about 16px around active
@@ -925,7 +951,8 @@ only V7 card renderer; the V2 `design/components/card.tsx` stays for the classic
   (5.798em with tight tracking), needs a strip of 63.8px at 11px, that is a 69.75px hand card
   (97 % of the face, face = card − 4px), reached at a 367px viewport (19vw). From about 367px
   down to 337px, where the 64px clamp floor starts, such a name shrinks from 11px to 10.04px,
-  and stays at 10.04px below; the 10px floor itself is never reached by a catalog name.
+  and stays at 10.04px below; the 10px floor itself is never reached by a catalog name, except in the
+  compact portrait band (L75-13), whose 52px hand cards reach it.
   Measured: on a 375px phone every hand name stays 11px; at 360px "Regeneration" is about 10.8px
   (face 64.4px); at 320px the smallest is 10.04px.
   "Upgrade Point Thief" and "Super Regeneration" take two lines. Where `cqi` is unsupported, the
@@ -1004,8 +1031,7 @@ only V7 card renderer; the V2 `design/components/card.tsx` stays for the classic
 `global-text-input-no-ios-zoom`). One `<ChatLog messages players canWrite onSend inputLabel?
 placeholder? sendLocked? />` is shared by the lobby (L76), the arena chat sheet (L74) and the read-only Game
 over chat (L77). The lobby already uses it, inside `LobbyChatPanel` (L76-13: a collapsible
-`--panel` card under the seats, open from the start); the V6 `screens/table/chat-log.tsx` stays
-until L75 deletes the classic table.
+`--panel` card under the seats, open from the start).
 
 - **Box:** `h-52`, `--panel-2` fill, `rounded-v7-chrome-sm`, `px-3 py-2`, no hard shadow, like
   the text input. It is a `ScrollArea` (`axis="y"`) named "Chat" (`CHAT_LOG_LABEL`, the V6 copy
@@ -1058,9 +1084,10 @@ until L75 deletes the classic table.
 `kit.gallery.tsx` (spec v7 §4.2, §5.5, §6.6.5, §7.3, §11; Appendix A `kit-inspect-dialog`,
 `lobby-kit-picker-dialog`, `home-solo-kit-picker`, `global-art-catalog`). They replace the V2
 `design/components/kit-portrait.tsx` and `screens/table/kit-inspect-details.tsx` on V7 surfaces;
-the classic files and their duplicated copy stay until L75.
+the V2 `design/components/kit-portrait.tsx` stays only for Game over; `kit-inspect-details.tsx` was
+deleted in L75-11.
 
-- **KitPortrait:** `<KitPortrait kitId size? isEliminated? className? onClick? ariaLabel? />`,
+- **KitPortrait:** `<KitPortrait kitId size? isEliminated? className? onClick? ariaLabel? dataAttributes? />`,
   `kitId` a `KitId`, `'random'` or `null` (not revealed). Widths are `thumb` 40, `tile` 72,
   `sheet` 96 and `hero` 160 px at 3:4 (default `tile`), radius `--card-radius`, shadow
   `--card-shadow`. The face is the base drawing from `artFor` on the `--card-face-0` to
@@ -1075,7 +1102,8 @@ the classic files and their duplicated copy stay until L75.
   and `aria-label` for a code face). Anchors: `data-zone="kit-portrait"` and
   `data-eliminated` (kept from V2 for `fx/play-flyout.ts` and the L74 self strip), plus
   `data-kit-face="art" | "hidden" | "random"`, `data-kit-size` and, inside, `data-kit-layer`
-  (`face`, `badge`). The root sets `select-none` and `-webkit-touch-callout: none`; long-press
+  (`face`, `badge`). `dataAttributes` (L75-04) adds `data-*` anchors to the root; its own
+  `data-zone="kit-portrait"` and `data-kit-*` win. The root sets `select-none` and `-webkit-touch-callout: none`; long-press
   belongs to the caller (§6.6.5).
 - **Eliminated:** the face is greyscale and dimmed to 70 % brightness (a grey kit such as Ghost
   or Warrior would otherwise read as alive), and the `eliminated` icon (a `--danger` cross in a
@@ -1213,9 +1241,8 @@ the classic files and their duplicated copy stay until L75.
 `ui/coach/coach-panel.tsx` and `coach.gallery.tsx` (spec v7 §4.2, §6.12, §8.3; Appendix A
 `table-tutorial-coach`, `table-first-game-hints`, `first-game-hint-host`, `tutorial-overlays`).
 `<CoachPanel title body zone onHide hideAriaLabel footer? extraAttrs? compact? />` and
-`<CoachBody text />` replace `design/components/coach-panel.tsx`, with the same props. That file,
-`screens/table/tutorial-coach.tsx`, `help/hint-overlay.tsx` and the `.tutorial-coach-panel` CSS
-stay until L75, which hosts the new panel.
+`<CoachBody text />` replace `design/components/coach-panel.tsx`, with the same props
+(`help/hint-overlay.tsx` renders it since L75-06).
 
 - **Element:** a hovering `<aside>` named by its title (`aria-labelledby` the `<h2>`, so it is a
   named complementary landmark). It is never a dialog or modal: no `role`, no `aria-modal`, no
@@ -1228,7 +1255,8 @@ stay until L75, which hosts the new panel.
   10px blur, max height `min(36vh, 15rem)` (V6: `min(32vh, 12rem)`; see Fit below). The
   header is `--panel-2` with a 2px `--ink` rule under it (padding `px-3 py-2`, compact
   `px-2 py-1`): the title in Lilita One 20px (compact 14px), then the close control. The body is
-  a `ScrollArea` in Nunito 700, 14px with line height 1.625 (compact 12px, 1.375). The footer
+  a `ScrollArea` in Nunito 700, 14px with line height 1.625 (compact 12px, 1.375), wrapped with
+  `text-wrap: pretty` so a one-word last line does not hang alone (L75-12 Gate C). The footer
   slot, only when given, has a 2px `--ink` rule above it and stacks in a column (compact: a
   row), with `px-3 py-2` (compact `px-2 py-1.5`).
 - **Why 72% is the floor:** the compact card hovers over any table content, white card faces
@@ -1283,10 +1311,51 @@ stay until L75, which hosts the new panel.
   The tallest hint is `resources`, whose copy is 111px at 248px wide (the cap is 240px). All
   eleven tour steps (with Got it) also fit at 844×390 (130 to 175px). The script steps 17 and 19
   have no footer and keep the default cap, so at 844×390 they scroll by 18px and show the body
-  region. L75-06 owns the landscape-compact host width (a Watch point in the backlog).
+  region. The L75-06 hint host uses these two widths.
+- **First-game hint host (L75-06):** `help/hint-overlay.tsx` portals a `position: fixed` layer sized to
+  the visual viewport (`useVisualViewportBox`) to `document.body` on `Z_INDEX.hint` (84: above sheets
+  and bars, under the coach, banners, toasts and the `fx/` overlay). The layer is `pointer-events:
+  none`; only the card takes presses. The compact card is `min(15.5rem, 100vw - 1rem)` wide in
+  portrait and desktop and `min(22rem, 100vw - 1rem)` in landscape-compact. `placeHintCard` puts it
+  next to the first visible `[data-hint-anchor]` (else 0.5rem from the left and 7.5rem from the
+  bottom). Footer: Got it (`primary`) and Skip all (`quiet`), each `flex-1`, as in the gallery.
 - **Gallery:** the `/dev/ui` section `coach` (`ui/coach/coach.gallery.tsx`): the Tax tutorial
   coach with Got it, the Thief follow-up coach with a `+4 points` glyph and no footer, and the
   compact Draw hint with Got it and Skip all, all from the real shared copy.
+- **Tutorial host (L75-04):** `screens/arena/tutorial-coach-host.tsx` portals the default panel to
+  `document.body` in a `pointer-events: none` box on the visible viewport, on `Z_INDEX.coach`, outside
+  every sheet. The slot is the arena region's top-left, 8px in, `min(22rem, 100% - 1rem)` wide, in every
+  mode, flipping to the arena region's bottom edge, 8px in, while a live tutorial mark (with its 20px ring
+  and arrow reach) or, while the player is targeting, a valid target seat overlaps that corner and the
+  bottom box covers them strictly less (`coach-placement.ts`, designer 2026-11-06). When the top-left and
+  the bottom slots both overlap the marks, a third slot sits under the opponent row (20px below the
+  lowest seat, inside the arena, 8px from its left edge) if it covers them strictly less (designer
+  2026-11-06, Q2-5). During the board tour and the Look gate (the table is locked), those three slots are the visible
+  viewport's top edge, its bottom edge (8px in) and the one under the opponent row, over the self strip and
+  the hand: `placeCoach` takes the one that covers the marks and arrows least, a tie going to top, then
+  bottom, then under (designer 2026-11-06, Gate B S-B1). On desktop the tour's top slot starts 8px under the top
+  bar, so the coach never hides the turn strip (designer 2026-11-06, Gate C S-C2); script steps keep the arena-only slots. Its mousedown is
+  prevented, so a press never moves focus out of an open sheet; from the keyboard,
+  × moves focus to the top bar's Menu (Show coach) and Got it to the next step's Got it. Got it is a
+  full-width primary Button (`data-tutorial-ack="got-it"`). The panel reopens from Menu → Show coach
+  (`icon="coach"`, distinct from How to play's `help`, Q45); there is no floating reopen control.
+- **Tutorial callouts (L75-04):** `ui/coach/tutorial-callout.tsx` `<TutorialCalloutLayer active />` rings
+  every live `[data-tutorial-highlight]` element. `tutorial-callout-geometry.ts` places a 3px
+  `--threat-other` ring 4px outside the element, painted as an outer 3px box-shadow
+  (`CALLOUT_RING_STROKE_PX`), with each edge of its box clamped 3px inside the visible box so a target flush with a
+  screen edge (the `your-zone` mark) never has its painted ring off-screen (designer 2026-11-06, Q2-6), and a 20×12 arrow outside the ring: above it when the
+  element's centre is in the lower half of the visible box, else below, clamped into the box. The layer
+  portals on `Z_INDEX.hint` (a tutorial room never shows a first-game hint), `pointer-events: none` and
+  `aria-hidden`, and re-measures every animation frame while active. It draws the live sheet's own
+  targets while a sheet is live, else the table's, and skips a zero-size or `inert` target, so no
+  scroller, `overflow-hidden` region or sheet body clips it. Full motion pulses the ring's opacity;
+  reduced motion keeps it static (`data-motion`). `live-tutorial-marks.ts` `liveTutorialMarks()` is the one
+  reader of the live marks (live sheet layer, not `inert`, not empty), shared with the coach's placement
+  so the coach never dodges a mark the layer does not draw. A mark inside a scrollport (the landscape
+  hand, a sheet body) is ringed where its clipping ancestors show it, and a new step or a sheet going live
+  scrolls its marks into view once (`revealTutorialMarks`), so the Specials ring at 844×390 sits on the
+  specials, not on Draw beside the hand (L75-12 Gate C). Real incoming threats keep the plate badges'
+  `data-tone` rings and get no callout.
 
 ## Table banners (ui/banner/, L72-18)
 
@@ -1294,11 +1363,11 @@ stay until L75, which hosts the new panel.
 `banner.gallery.tsx` (spec v7 §6.12, §8.1, §8.3; Appendix A `table-banners`,
 `end-finished-board-shell`, `global-motion-reduced-motion`). `<TableBannerHost isMyTurn
 isEliminated youWon pendingEffects sentenceAnnouncements actionLog nicknameOf you seatColor? deadCue? />`
-takes the props of `TableBannerFlash` (`screens/table/your-turn-flash.tsx`), which the classic
-table keeps until L75; L74-17 mounts the host in the arena. Which cue fires stays in
+takes the props of the V2 `TableBannerFlash` (`screens/table/your-turn-flash.tsx`, deleted in L75-10);
+L74-17 mounts the host in the arena. Which cue fires stays in
 `view-model/table-banner.ts`. `deadCue={false}` drops the You are dead cue, while the watch still
 advances so it never fires later. The arena passes it because its POV elimination overlay
-(L74-23) replaces that cue; the classic table keeps it.
+(L74-23) replaces that cue.
 
 - **Lanes and timing:** three lanes, cue (Your turn, You are being attacked, You are dead, You
   won!), Sentence (L63-03) and own Gambler wipe (L67-01). Each lane queues `BannerItem`s
@@ -1348,8 +1417,9 @@ advances so it never fires later. The arena passes it because its POV eliminatio
 pure `connection-badge-label.ts`) and `seat.gallery.tsx` (spec v7 §4.2, §5.1, §5.2, §6.2;
 Appendix A `global-connection-badge`). Props and copy are V2's, unchanged: `<PlayerName
 nickname playerId? view? seatIndex? className? possessive? />`, `<BotSeatLabel difficulty
-className? />`, `<ConnectionBadge player className? />`. The V2 files in `design/components/`
-stay until L75 (and L77 for Game over) switch their imports; new code imports only `ui/seat/`.
+className? />`, `<ConnectionBadge player className? />`. The V2 `design/components/player-name.tsx`
+stays only for Game over (L77); the V2 `bot-seat-label.tsx` and `connection-badge.tsx` were deleted in
+L75-11. New code imports only `ui/seat/`.
 
 - **PlayerName:** Lilita One (`font-v7-display`, one weight; V2's `font-semibold` is gone). The
   hue is inline hex from `v7SeatColor`, never `var()` or `color-mix()`, on the nickname span
@@ -1498,5 +1568,7 @@ values.
   one.
 - **Don't** recolor an old screen: V2 `@theme` and `:root` values stay unchanged until that
   screen's lot lands.
-- **Don't** add a detector ignore. The only one allowed is the pre-approved
-  `radial-spotlight-glow` / `dark-glow` ignore scoped to `ui/tokens.css` (spec v7 §12.4).
+- **Don't** add a detector ignore. The only ones allowed are scoped to `ui/tokens.css`: the
+  pre-approved `radial-spotlight-glow` / `dark-glow` ignore (spec v7 §12.4) and the
+  `repeating-stripes-gradient` ignore the designer approved for the ground scanlines on
+  2026-11-03 (L75-02).

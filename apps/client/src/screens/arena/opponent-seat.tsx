@@ -15,6 +15,13 @@
  * - **Rows** (14 + 53 + 16 px inside the 3 px outline): the name in its seat hue with the
  *   connection and bot icons; the kit thumb or the initial disc beside the lives pill and the
  *   points / upgrade points / shield column; at most two status badges and "+n".
+ * - **Per mode (L75-02, spec v7 §6.4, §14.3; plan A.4.3).** The root is `seatRect(center, mode)`
+ *   (`SEAT_BOX[mode]`) and carries `data-seat-size={mode}`. Portrait and landscape-compact keep the
+ *   anatomy above. Desktop draws 18 + 96 + 16 px inside the 120×136 box: a body-size name, a tile kit
+ *   portrait (72×96) or a `md` disc, and a 40 px resource column. `SEAT_ANATOMY` holds each mode's
+ *   size classes whole, so Tailwind sees them. A short desktop arena shrinks the box toward the portrait
+ *   box (`SeatLayout.box`, `desktopSeatBox`; designer 2026-11-06); a box under 136 px tall draws the
+ *   portrait anatomy, which fits the smallest box.
  * - **No hidden information (§6.3).** Every value comes from the `SeatModel`: a hidden value
  *   prints `?` and speaks "unknown", a hidden kit shows the initial disc, and the seat never
  *   re-derives a tier.
@@ -30,6 +37,8 @@
  * - **Drop highlight (L74-12, §6.6.3).** During a hand drag, a seat that takes the card carries
  *   `data-drop="valid"` and a `--mine` ring, thicker and `data-drop="over"` under the pointer.
  *   `measureDropZones` reads this root's rect by `data-zone` and `data-player-id`.
+ * - **Tutorial (L75-04, plan A.8.6, K7).** `tutorialHighlight` puts `data-tutorial-highlight` on the
+ *   root (`opponent`, the board tour) or on the `opponent-portrait` div (`opponent-portrait`, Look).
  */
 
 import { useId, type CSSProperties, type ReactElement } from 'react';
@@ -46,7 +55,7 @@ import { RESOURCE_CAPTIONS } from '../../ui/resource-captions';
 import { BotSeatLabel } from '../../ui/seat/bot-seat-label';
 import { botSeatLabelText } from '../../ui/seat/bot-seat-label-text';
 import { PlayerName } from '../../ui/seat/player-name';
-import type { SeatPlacement } from '../../view-model/seat-layout';
+import { SEAT_BOX, type LayoutMode, type SeatPlacement, type Size } from '../../view-model/seat-layout';
 import { SEAT_VISIBLE_BADGE_COUNT, type SeatModel, type SeatResource } from '../../view-model/seats';
 import { ResourceFlashCue } from './resource-flash';
 import { SEAT_MORE_STATUSES_LABEL, seatBadgeView } from './seat-badges';
@@ -64,12 +73,69 @@ export interface OpponentSeatProps {
   target?: SeatTarget;
   /** L74-12: set during a hand drag when this seat takes the card; `over` under the pointer. */
   drop?: 'valid' | 'over';
+  /** L75-02: the layout mode, which sizes the box and the anatomy. Default 'portrait'. */
+  mode?: LayoutMode;
+  /**
+   * The seat box when the layout shrank it (`SeatLayout.box`, designer 2026-11-06); absent = `SEAT_BOX[mode]`.
+   * A box smaller than the mode's own draws the phone anatomy, which fits the smallest (portrait) box.
+   */
+  box?: Size;
+  /** L75-04: the tutorial mark, fed by `ArenaSeatsProps.tutorial` (private to the arena, K7). */
+  tutorialHighlight?: 'opponent' | 'opponent-portrait';
 }
 
 const ROOT_CLASS = `pointer-events-auto absolute flex flex-col bg-v7-panel text-v7-text select-none [-webkit-touch-callout:none] ${CHROME_SHAPE_SM_CLASS}`;
-const LIVES_PILL_CLASS =
-  'flex h-4 items-center gap-0.5 rounded-v7-chrome-sm bg-v7-panel-2 px-0.5 ring-2 ring-v7-life ring-inset';
-const RESOURCE_ROW_CLASS = 'flex h-3 items-center gap-0.5 px-0.5';
+
+/** The size literals of one mode's seat anatomy (L75-02). */
+interface SeatAnatomy {
+  readonly nameClass: string;
+  readonly portraitClass: string;
+  readonly kitSize: 'thumb' | 'tile';
+  readonly avatarSize: 'sm' | 'md';
+  readonly resourcesClass: string;
+  readonly livesPillClass: string;
+  readonly livesIconSize: number;
+  readonly livesTextClass: string;
+  readonly rowClass: string;
+  readonly rowIconSize: number;
+  readonly rowTextClass: string;
+}
+
+/** decisions.md 2026-10-28 "V7 opponent seat anatomy in the 76×92 box": unchanged since L74-04. */
+const PHONE_ANATOMY: SeatAnatomy = {
+  nameClass: 'text-v7-caption leading-[14px]',
+  portraitClass: 'h-[53px] w-10',
+  kitSize: 'thumb',
+  avatarSize: 'sm',
+  resourcesClass: 'w-7',
+  livesPillClass: 'flex h-4 items-center gap-0.5 rounded-v7-chrome-sm bg-v7-panel-2 px-0.5 ring-2 ring-v7-life ring-inset',
+  livesIconSize: 12,
+  livesTextClass: 'text-v7-caption',
+  rowClass: 'flex h-3 items-center gap-0.5 px-0.5',
+  rowIconSize: 10,
+  rowTextClass: 'text-v7-micro',
+};
+
+/** Spec v7 §14.3 starting values (L75-02): 114×130 inside the 3 px outline of the 120×136 box. */
+const DESKTOP_ANATOMY: SeatAnatomy = {
+  nameClass: 'text-v7-body leading-[18px]',
+  portraitClass: 'h-24 w-18',
+  kitSize: 'tile',
+  avatarSize: 'md',
+  resourcesClass: 'w-10',
+  livesPillClass: 'flex h-5 items-center gap-0.5 rounded-v7-chrome-sm bg-v7-panel-2 px-0.5 ring-2 ring-v7-life ring-inset',
+  livesIconSize: 14,
+  livesTextClass: 'text-v7-body',
+  rowClass: 'flex h-4 items-center gap-0.5 px-0.5',
+  rowIconSize: 12,
+  rowTextClass: 'text-v7-caption',
+};
+
+const SEAT_ANATOMY: Readonly<Record<LayoutMode, SeatAnatomy>> = {
+  portrait: PHONE_ANATOMY,
+  'landscape-compact': PHONE_ANATOMY,
+  desktop: DESKTOP_ANATOMY,
+};
 const BADGE_CHIP_CLASS = 'flex items-center gap-px rounded-v7-chrome-sm bg-v7-panel-2 p-px';
 /** Between the nickname, the connection label and the bot words in the seat's `title`. */
 const SEAT_TITLE_SEPARATOR = ' · ';
@@ -77,7 +143,15 @@ const SEAT_TITLE_SEPARATOR = ' · ';
 const DROP_RING_CLASS = { valid: 'ring-2 ring-v7-mine', over: 'ring-4 ring-v7-mine' } as const;
 
 /** L74-17 (§6.12): a seat value flashes its public chip amount, also on a hidden `?`, and never flies. */
-function ResourceValue({ resource, playerId }: { resource: SeatResource; playerId: string }): ReactElement {
+function ResourceValue({
+  resource,
+  playerId,
+  anatomy,
+}: {
+  resource: SeatResource;
+  playerId: string;
+  anatomy: SeatAnatomy;
+}): ReactElement {
   const { kind, value } = resource;
   const caption = RESOURCE_CAPTIONS[kind];
   const hidden = value === '?';
@@ -88,10 +162,10 @@ function ResourceValue({ resource, playerId }: { resource: SeatResource; playerI
       data-resource-kind={kind}
       {...(flash.tone !== null ? { 'data-resource-flash': flash.tone } : {})}
       title={hidden ? `${caption} unknown` : caption}
-      className={`relative ${isLife ? LIVES_PILL_CLASS : RESOURCE_ROW_CLASS}`}
+      className={`relative ${isLife ? anatomy.livesPillClass : anatomy.rowClass}`}
     >
-      <Icon name={RESOURCE_ICON[kind]} size={isLife ? 12 : 10} className="shrink-0" />
-      <span aria-hidden="true" className={`font-v7-display ${isLife ? 'text-v7-caption' : 'text-v7-micro'}`}>
+      <Icon name={RESOURCE_ICON[kind]} size={isLife ? anatomy.livesIconSize : anatomy.rowIconSize} className="shrink-0" />
+      <span aria-hidden="true" className={`font-v7-display ${isLife ? anatomy.livesTextClass : anatomy.rowTextClass}`}>
         {hidden ? '?' : String(value)}
       </span>
       <span className="sr-only">{`${caption} ${hidden ? 'unknown' : String(value)}`}</span>
@@ -117,7 +191,17 @@ function seatControl(
   }
 }
 
-export function OpponentSeat({ model, center, tapped, onOpen, target, drop }: OpponentSeatProps): ReactElement {
+export function OpponentSeat({
+  model,
+  center,
+  tapped,
+  onOpen,
+  target,
+  drop,
+  mode = 'portrait',
+  box,
+  tutorialHighlight,
+}: OpponentSeatProps): ReactElement {
   const detailsId = useId();
   const reduced = usePrefersReducedMotion();
   const control = seatControl(target, model.nickname, () => {
@@ -126,7 +210,8 @@ export function OpponentSeat({ model, center, tapped, onOpen, target, drop }: Op
   const validTarget = target?.kind === 'valid';
   // The ring sits on the stretched button; the dim on the root, because the button is transparent.
   const targetClass = validTarget ? ['ring-4 ring-v7-mine', reduced ? '' : 'animate-pulse'] : [];
-  const rect = seatRect(center);
+  const rect = seatRect(center, mode, box);
+  const anatomy = box !== undefined && box.height < SEAT_BOX[mode].height ? PHONE_ANATOMY : SEAT_ANATOMY[mode];
   const botWords = model.botDifficulty !== null ? botSeatLabelText(model.botDifficulty) : null;
   const seatTitle = [model.nickname, model.connectionLabel, botWords]
     .filter((words): words is string => words !== null)
@@ -157,11 +242,13 @@ export function OpponentSeat({ model, center, tapped, onOpen, target, drop }: Op
       data-seat={model.playerId}
       data-seat-index={String(model.seatColorIndex)}
       data-tier={model.tier}
+      data-seat-size={mode}
       data-eliminated={model.isEliminated ? 'true' : 'false'}
       {...(model.isActive ? { 'data-active-seat': 'true' } : {})}
       {...(tapped ? { 'data-tapped-seat': 'true' } : {})}
       {...(model.kitHidden ? { 'data-hint-anchor': 'hidden-kit' } : {})}
       {...(drop !== undefined ? { 'data-drop': drop } : {})}
+      {...(tutorialHighlight === 'opponent' ? { 'data-tutorial-highlight': 'opponent' } : {})}
       style={style}
       className={className}
     >
@@ -185,7 +272,7 @@ export function OpponentSeat({ model, center, tapped, onOpen, target, drop }: Op
             <PlayerName
               nickname={model.nickname}
               seatIndex={model.seatColorIndex}
-              className="min-w-0 truncate text-v7-caption leading-[14px]"
+              className={`min-w-0 truncate ${anatomy.nameClass}`}
             />
           </span>
           {model.connectionLabel !== null ? (
@@ -204,20 +291,23 @@ export function OpponentSeat({ model, center, tapped, onOpen, target, drop }: Op
           ) : null}
         </div>
         <div className="flex min-w-0 items-center gap-0.5">
-          <div data-zone="opponent-portrait" className="flex h-[53px] w-10 shrink-0 items-center justify-center">
+          <div
+            data-zone="opponent-portrait"
+            {...(tutorialHighlight === 'opponent-portrait' ? { 'data-tutorial-highlight': 'opponent-portrait' } : {})}
+            className={`flex shrink-0 items-center justify-center ${anatomy.portraitClass}`}>
             {model.avatar.kind === 'kit' ? (
-              <KitPortrait kitId={model.avatar.kitId} size="thumb" isEliminated={model.isEliminated} />
+              <KitPortrait kitId={model.avatar.kitId} size={anatomy.kitSize} isEliminated={model.isEliminated} />
             ) : (
               // Hidden: the seat button already carries the nickname, and the disc only repeats its
               // initial (L74-26 gate G3, ledger 62).
               <span aria-hidden="true" className="inline-flex">
-                <Avatar name={model.nickname} seatIndex={model.seatColorIndex} eliminated={model.isEliminated} size="sm" />
+                <Avatar name={model.nickname} seatIndex={model.seatColorIndex} eliminated={model.isEliminated} size={anatomy.avatarSize} />
               </span>
             )}
           </div>
-          <ul data-zone="opponent-resources" className="flex w-7 flex-col gap-px leading-none">
+          <ul data-zone="opponent-resources" className={`flex flex-col gap-px leading-none ${anatomy.resourcesClass}`}>
             {model.resources.map((resource) => (
-              <ResourceValue key={resource.kind} resource={resource} playerId={model.playerId} />
+              <ResourceValue key={resource.kind} resource={resource} playerId={model.playerId} anatomy={anatomy} />
             ))}
           </ul>
         </div>

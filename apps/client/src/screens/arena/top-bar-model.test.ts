@@ -24,13 +24,19 @@ describe('top bar model (spec v7 §6.1)', () => {
   });
 
   it('names the turn owner: you, another seat, or nobody', () => {
-    expect(turnBannerOf(makeArenaView())).toEqual({ kind: 'you' });
-    expect(turnBannerOf(makeArenaView({ overrides: { currentTurnPlayerId: 'p2' } })))
+    expect(turnBannerOf(makeArenaView(), false)).toEqual({ kind: 'you' });
+    expect(turnBannerOf(makeArenaView({ overrides: { currentTurnPlayerId: 'p2' } }), false))
       .toEqual({ kind: 'seat', playerId: 'p2', nickname: 'p2' });
-    expect(turnBannerOf(makeArenaView({ overrides: { currentTurnPlayerId: null } }))).toEqual({ kind: 'none' });
-    expect(turnBannerOf(makeArenaView({ pov: 'walk-in' }))).toEqual({ kind: 'seat', playerId: 'me', nickname: 'me' });
+    expect(turnBannerOf(makeArenaView({ overrides: { currentTurnPlayerId: null } }), false)).toEqual({ kind: 'none' });
+    expect(turnBannerOf(makeArenaView({ pov: 'walk-in' }), false)).toEqual({ kind: 'seat', playerId: 'me', nickname: 'me' });
     const banners: readonly TurnBanner[] = [{ kind: 'you' }, { kind: 'seat', playerId: 'p2', nickname: 'p2' }, { kind: 'none' }];
     expect(banners.map(turnBannerText)).toEqual(['Your turn', "p2's turn", '—']);
+  });
+
+  it('names nobody on the finished board, whoever held the turn last (Gate C, S-C3)', () => {
+    expect(turnBannerOf(makeArenaView(), true)).toEqual({ kind: 'none' });
+    expect(turnBannerOf(makeArenaView({ overrides: { currentTurnPlayerId: 'p2' } }), true)).toEqual({ kind: 'none' });
+    expect(turnBannerOf(makeArenaView({ pov: 'walk-in' }), true)).toEqual({ kind: 'none' });
   });
 
   it.each([

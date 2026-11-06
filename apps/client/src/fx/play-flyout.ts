@@ -1,19 +1,18 @@
 /**
  * Helpers to stage play / token / buy-sell flyouts without delaying intents.
+ * Anchors are arena elements in every layout mode (L75-08).
  */
 
 import type { CardId } from '@card-battle/shared';
 
 import { getCardArtUrl, getCardBackUrl, getResourceIconUrl, type ResourceKind } from '../ui/asset-lookup';
+import { readVisualViewportBox } from '../ui/visual-viewport';
 import {
   ACTION_LOG_PANEL_ZONE,
   DECK_CARD_FLYOUT_HEIGHT,
   DECK_CARD_FLYOUT_WIDTH,
   escapeSelector,
-  INCOMING_COLLAPSED_ZONE,
-  INCOMING_PENDING_ZONE,
   LOG_COLLAPSED_ZONE,
-  OPPONENTS_COLLAPSED_ZONE,
   tokenFlyoutPovSelector,
   tokenFlyoutResourceSelector,
   tokenFlyoutSeatSelector,
@@ -36,22 +35,52 @@ function rectOf(el: Element | null): DomRectLite | null {
   return visibleClientRect(el);
 }
 
+/**
+ * The part of `rect` inside the visible viewport. A rect with nothing visible is returned as it is,
+ * so an anchor that is off-screen keeps the endpoint it had.
+ */
+function clipToViewport(rect: DomRectLite | null): DomRectLite | null {
+  if (rect === null) {
+    return null;
+  }
+  const box = readVisualViewportBox();
+  const left = Math.max(rect.left, box.offsetLeft);
+  const top = Math.max(rect.top, box.offsetTop);
+  const right = Math.min(rect.left + rect.width, box.offsetLeft + box.width);
+  const bottom = Math.min(rect.top + rect.height, box.offsetTop + box.height);
+  return right > left && bottom > top ? { left, top, width: right - left, height: bottom - top } : rect;
+}
+
+/**
+ * For each selector in order, every match in document order: the first element whose client rect
+ * is non-zero; else null. A mounted but zero-size element (a collapsed panel, a depth-hidden log
+ * sheet) never wins over a visible fallback (L75-08, R6).
+ */
+export function queryFirstVisible(selectors: readonly string[]): Element | null {
+  for (const selector of selectors) {
+    for (const candidate of document.querySelectorAll(selector)) {
+      if (visibleClientRect(candidate) !== null) {
+        return candidate;
+      }
+    }
+  }
+  return null;
+}
+
+/**
+ * The log endpoint: the first visible of the panel and the always-rendered ticker or toggle
+ * (`log-collapsed`) — a collapsed panel's toggle, never a zero-size list (L53-07, L75-08, R6).
+ */
 export function queryActionLogAnchor(): Element | null {
-  return (
-    document.querySelector(`[data-zone="${ACTION_LOG_PANEL_ZONE}"]`) ??
-    document.querySelector(`[data-zone="${LOG_COLLAPSED_ZONE}"]`)
-  );
+  return queryFirstVisible([
+    `[data-zone="${ACTION_LOG_PANEL_ZONE}"]`,
+    `[data-zone="${LOG_COLLAPSED_ZONE}"]`,
+  ]);
 }
 
-export function queryOpponentsCollapsedAnchor(): Element | null {
-  return document.querySelector(`[data-zone="${OPPONENTS_COLLAPSED_ZONE}"]`);
-}
-
+/** The plate: V7 has no collapsed Incoming (R6). */
 export function queryIncomingAnchor(): Element | null {
-  return (
-    document.querySelector(`[data-zone="${INCOMING_PENDING_ZONE}"]`) ??
-    document.querySelector(`[data-zone="${INCOMING_COLLAPSED_ZONE}"]`)
-  );
+  return document.querySelector('[data-zone="pending"]');
 }
 
 function tokenRect(center: DomRectLite, size = 28): DomRectLite {
@@ -63,30 +92,27 @@ function tokenRect(center: DomRectLite, size = 28): DomRectLite {
   };
 }
 
-/** Seat, POV dock, or the Opponents collapsed button. */
+/** Seat, else the POV's self strip. */
 export function queryPlayerFxAnchor(playerId: string): Element | null {
   return (
     document.querySelector(tokenFlyoutSeatSelector(playerId)) ??
     document.querySelector(tokenFlyoutPovSelector(playerId)) ??
     document.querySelector(`[data-player-id="${escapeSelector(playerId)}"]`) ??
-    document.querySelector(`[data-seat="${escapeSelector(playerId)}"]`) ??
-    queryOpponentsCollapsedAnchor()
+    document.querySelector(`[data-seat="${escapeSelector(playerId)}"]`)
   );
 }
 
-/** Resolution flash: live chip, visible Waiting strip, else Incoming button. */
+/**
+ * Resolution flash: the first visible element carrying the effect id (the arrow label or the plate
+ * badge), else the visible plate, else the plate element (V7 has no Incoming button, R6; A.7.1).
+ */
 export function queryPendingFlashAnchor(effectId: string): Element | null {
-  const chip = document.querySelector(
-    `[data-pending-id="${escapeSelector(effectId)}"]`,
+  return (
+    queryFirstVisible([
+      `[data-pending-id="${escapeSelector(effectId)}"]`,
+      '[data-zone="pending"]',
+    ]) ?? queryIncomingAnchor()
   );
-  if (rectOf(chip) !== null) {
-    return chip;
-  }
-  const pending = document.querySelector('[data-zone="pending"]');
-  if (rectOf(pending) !== null) {
-    return pending;
-  }
-  return queryIncomingAnchor();
 }
 
 function rectForPlayerResource(kind: ResourceKind, playerId: string): DomRectLite | null {
@@ -107,7 +133,7 @@ function rectForPlayerResource(kind: ResourceKind, playerId: string): DomRectLit
       rectOf(selfRoot)
     );
   }
-  return rectOf(queryOpponentsCollapsedAnchor());
+  return null;
 }
 
 function rectForPlayerSeatOrPortrait(playerId: string): DomRectLite | null {
@@ -120,13 +146,10 @@ function rectForPlayerSeatOrPortrait(playerId: string): DomRectLite | null {
     return opponent;
   }
   const dock = document.querySelector(tokenFlyoutPovSelector(playerId));
-  const self =
+  return (
     rectOf(dock?.querySelector('[data-zone="kit-portrait"]') ?? null) ??
-    rectOf(dock);
-  if (self !== null) {
-    return self;
-  }
-  return rectOf(queryOpponentsCollapsedAnchor());
+    rectOf(dock)
+  );
 }
 
 function rectForEndpoint(
@@ -135,7 +158,9 @@ function rectForEndpoint(
   preferSeat: boolean,
 ): DomRectLite | null {
   if (endpoint === 'log') {
-    return rectOf(queryActionLogAnchor());
+    // The log sheet's `action-log-panel` is its content div, which can be far taller than the sheet
+    // body that scrolls it (K12): aim at the part of it the player can see.
+    return clipToViewport(rectOf(queryActionLogAnchor()));
   }
   if (preferSeat) {
     return (
@@ -201,35 +226,21 @@ function sizedRect(center: DomRectLite, width: number, height: number): DomRectL
 }
 
 /**
- * Visual table center — midpoint of the pending strip and the card band so the
- * ghost sits on the felt, not on the action-log column (L51-13).
+ * The plate (§6.1 item 2) replaces the V2 felt centre: card ghosts land on its landing frame
+ * (`[data-plate-landing]`, else the plate), else on the felt, else nowhere (L75-08, R6).
  */
 export function measureFeltCenterRect(): DomRectLite | null {
-  const pending = rectOf(document.querySelector('[data-zone="pending"]'));
-  const hand =
-    rectOf(document.querySelector('[data-zone="card-band"]')) ??
-    rectOf(document.querySelector('[data-zone="hand"]')) ??
-    rectOf(document.querySelector('[data-zone="dock"]'));
-  if (pending !== null && hand !== null) {
-    const cx =
-      (pending.left + pending.width / 2 + hand.left + hand.width / 2) / 2;
-    const cy =
-      (pending.top + pending.height / 2 + hand.top + hand.height / 2) / 2;
-    return {
-      left: cx - DECK_CARD_FLYOUT_WIDTH / 2,
-      top: cy - DECK_CARD_FLYOUT_HEIGHT / 2,
-      width: DECK_CARD_FLYOUT_WIDTH,
-      height: DECK_CARD_FLYOUT_HEIGHT,
-    };
+  const plate = rectOf(
+    queryFirstVisible(['[data-plate-landing]', '[data-zone="pending"]']),
+  );
+  if (plate !== null) {
+    return sizedRect(plate, DECK_CARD_FLYOUT_WIDTH, DECK_CARD_FLYOUT_HEIGHT);
   }
   const felt = rectOf(document.querySelector('[data-zone="felt"]'));
   if (felt !== null) {
     return sizedRect(felt, DECK_CARD_FLYOUT_WIDTH, DECK_CARD_FLYOUT_HEIGHT);
   }
-  if (pending === null) {
-    return null;
-  }
-  return sizedRect(pending, DECK_CARD_FLYOUT_WIDTH, DECK_CARD_FLYOUT_HEIGHT);
+  return null;
 }
 
 function rectForPlayerSeat(playerId: string): DomRectLite | null {
@@ -251,11 +262,7 @@ function rectForPlayerSeat(playerId: string): DomRectLite | null {
       return sizedRect(self, DECK_CARD_FLYOUT_WIDTH, DECK_CARD_FLYOUT_HEIGHT);
     }
   }
-  const collapsed = rectOf(queryOpponentsCollapsedAnchor());
-  if (collapsed === null) {
-    return null;
-  }
-  return sizedRect(collapsed, DECK_CARD_FLYOUT_WIDTH, DECK_CARD_FLYOUT_HEIGHT);
+  return null;
 }
 
 /**
@@ -424,11 +431,7 @@ export function measureSellCardFlyout(
   };
 }
 
-/** Targeting cue: pulse the source seat, or the Opponents button when collapsed (L39-05 / L53-07). */
-export function measureIncomingCollapsedCue(): DomRectLite | null {
-  return rectOf(document.querySelector(`[data-zone="${INCOMING_COLLAPSED_ZONE}"]`));
-}
-
+/** Targeting cue: pulse the source seat (L39-05; the V2 collapsed-button cue retired, L75-08). */
 export function measureTargetingCue(
   fromPlayerId: string,
   toPlayerId: string,
@@ -438,6 +441,6 @@ export function measureTargetingCue(
   if (from === null) {
     return null;
   }
-  // `to` kept for the event shape; pulse only uses `from` (seat or collapsed button).
+  // `to` kept for the event shape; pulse only uses `from` (the seat).
   return { from, to: from };
 }

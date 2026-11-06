@@ -15,12 +15,21 @@
  *
  * Stats is the finished board's last button (§6.12, L74-24): EndScreen's reopen of Game over, called
  * directly because it is no `ArenaIntent`; EndScreen ignores it while Feedback is open.
+ *
+ * `iconOnly` (designer 2026-11-06, Check 1 stop item S2; `dockIconOnly`): landscape-compact under 700 px
+ * draws Shop and Activate duplication as icons, in two columns, with no visible reason line. Every
+ * control keeps its accessible name, and a disabled one keeps its reason in `title` and in an
+ * `aria-describedby` text, so the dock fits the 10 rem column floor and the hand keeps its width.
+ *
+ * L75-04 (§6.6.3, §6.12; plan A.8.6, A.8.7): `tutorialHighlight` marks Draw or Shop for the tutorial.
+ * While `locked` (the tour or the Look gate), Shop and Unspy open nothing; Draw and Activate
+ * duplication still reach `commit`, whose `allow` vetoes them, so their latch stays live.
  */
 
 import type { PlayingStateView } from '@card-battle/shared';
 import type { ActionRejectPayload } from '../../net/use-room-connection';
 import { useAnimate } from 'motion/react';
-import { useEffect, useState, type ReactElement } from 'react';
+import { useEffect, useId, useState, type ReactElement } from 'react';
 
 import { CostAmount } from '../../ui/card/cost-amount';
 import { durationS, EASE_ENTRANCE } from '../../ui/motion/motion-tokens';
@@ -60,11 +69,40 @@ export interface DockProps {
   onOpenShop?: () => void;
   /** Finished board: EndScreen's Stats reopen (§6.12). It is no ArenaIntent, so it is called directly. */
   onShowStats?: () => void;
+  /** L75-04: the tutorial's mark on Draw or Shop; absent or null, none. */
+  tutorialHighlight?: 'draw' | 'shop' | null;
+  /** L75-04: the tutorial tour or Look gate is up: Shop and Unspy open nothing. Default false. */
+  locked?: boolean;
+  /** S2: icons only, in two columns, reasons in `title` and a description (`dockIconOnly`). Default false. */
+  iconOnly?: boolean;
 }
 
 /** `disabledReason` only while the model gives one (`exactOptionalPropertyTypes`). */
 function reasonProps(reason: DisabledReason | null): { readonly disabledReason?: string } {
   return reason === null ? {} : { disabledReason: DISABLED_REASON_COPY[reason] };
+}
+
+/**
+ * What an icon-only control carries instead of a visible reason line (S2): a `title` of the name then
+ * the reason, and the description id its sr-only reason text answers (`IconReason`).
+ */
+function iconReasonProps(
+  name: string,
+  reason: DisabledReason | null,
+  reasonId: string,
+): { readonly title: string; readonly 'aria-describedby'?: string } {
+  return reason === null
+    ? { title: name }
+    : { title: `${name}. ${DISABLED_REASON_COPY[reason]}`, 'aria-describedby': reasonId };
+}
+
+/** The spoken reason an icon-only control points to; nothing renders for a control that is not disabled. */
+function IconReason({ id, reason }: { id: string; reason: DisabledReason | null }): ReactElement | null {
+  return reason === null ? null : (
+    <span id={id} className="sr-only">
+      {DISABLED_REASON_COPY[reason]}
+    </span>
+  );
 }
 
 export function Dock({
@@ -76,7 +114,11 @@ export function Dock({
   actionReject,
   onOpenShop,
   onShowStats,
+  tutorialHighlight = null,
+  locked = false,
+  iconOnly = false,
 }: DockProps): ReactElement {
+  const reasonBase = useId();
   const reduced = usePrefersReducedMotion();
   const [scope, animate] = useAnimate<HTMLSpanElement>();
   const [unspyOpen, setUnspyOpen] = useState(false);
@@ -101,26 +143,35 @@ export function Dock({
   }
 
   return (
-    <div data-zone="dock-controls" className="flex flex-wrap items-start justify-center gap-2 px-2 py-1">
+    <div
+      data-zone="dock-controls"
+      data-dock={iconOnly ? 'icons' : 'labelled'}
+      className={
+        iconOnly
+          ? 'grid grid-cols-2 items-start justify-items-center gap-2 px-2 py-1'
+          : 'flex flex-wrap items-start justify-center gap-2 px-2 py-1'
+      }
+    >
       {draw !== null ? (
         <span ref={scope} className="inline-flex" data-motion={motionAttribute(reduced)}>
           <Button
             variant={draw.hot ? 'danger' : 'primary'}
             icon="point"
             aria-label={drawAriaLabel(draw.gain)}
-            title={drawAriaLabel(draw.gain)}
             data-hint-anchor="draw"
+            {...(tutorialHighlight === 'draw' ? { 'data-tutorial-highlight': 'draw' } : {})}
             disabled={!draw.enabled}
             focusableWhenDisabled
-            reserveReasonSlot
-            reasonLines={1}
-            {...reasonProps(draw.reason)}
+            {...(iconOnly
+              ? iconReasonProps(drawAriaLabel(draw.gain), draw.reason, `${reasonBase}-draw`)
+              : { title: drawAriaLabel(draw.gain), reserveReasonSlot: true, reasonLines: 1 as const, ...reasonProps(draw.reason) })}
             onClick={() => {
               once('draw', () => commit({ kind: 'drawCard' }));
             }}
           >
             {`+${String(draw.gain)}`}
           </Button>
+          {iconOnly ? <IconReason id={`${reasonBase}-draw`} reason={draw.reason} /> : null}
         </span>
       ) : null}
       {shop !== null ? (
@@ -128,51 +179,74 @@ export function Dock({
           variant="secondary"
           icon="shop"
           data-hint-anchor="shop"
-          reserveReasonSlot
-          reasonLines={1}
+          {...(tutorialHighlight === 'shop' ? { 'data-tutorial-highlight': 'shop' } : {})}
+          {...(iconOnly
+            ? { 'aria-label': SHOP_ACTION_LABEL, title: SHOP_ACTION_LABEL }
+            : { reserveReasonSlot: true, reasonLines: 1 as const })}
           disabled={onOpenShop === undefined}
           focusableWhenDisabled
-          {...(onOpenShop !== undefined ? { onClick: onOpenShop } : {})}
+          {...(onOpenShop !== undefined
+            ? {
+                onClick: () => {
+                  if (locked) return;
+                  onOpenShop();
+                },
+              }
+            : {})}
         >
-          {SHOP_ACTION_LABEL}
+          {iconOnly ? <span className="sr-only">{SHOP_ACTION_LABEL}</span> : SHOP_ACTION_LABEL}
         </Button>
       ) : null}
       {unspy !== null ? (
-        <Button
-          variant="quiet"
-          icon="unspy"
-          data-unspy=""
-          // "Nobody is spying on you" takes two lines under the button; every other dock reason
-          // fits on one (L74-26 gate G5).
-          reasonLines={2}
-          aria-label={unspyAriaLabel(unspy.cost)}
-          title={unspyAriaLabel(unspy.cost)}
-          disabled={!unspy.enabled}
-          focusableWhenDisabled
-          reserveReasonSlot
-          {...reasonProps(unspy.reason)}
-          onClick={() => {
-            setUnspyOpen(true);
-          }}
-        >
-          <CostAmount amount={unspy.cost} signed="cost" title={null} />
-        </Button>
+        <>
+          <Button
+            variant="quiet"
+            icon="unspy"
+            data-unspy=""
+            aria-label={unspyAriaLabel(unspy.cost)}
+            disabled={!unspy.enabled}
+            focusableWhenDisabled
+            {...(iconOnly
+              ? iconReasonProps(unspyAriaLabel(unspy.cost), unspy.reason, `${reasonBase}-unspy`)
+              : {
+                  title: unspyAriaLabel(unspy.cost),
+                  reserveReasonSlot: true,
+                  // "Nobody is spying on you" takes two lines under the button; every other dock reason
+                  // fits on one (L74-26 gate G5).
+                  reasonLines: 2 as const,
+                  ...reasonProps(unspy.reason),
+                })}
+            onClick={() => {
+              if (locked) return;
+              setUnspyOpen(true);
+            }}
+          >
+            <CostAmount amount={unspy.cost} signed="cost" title={null} />
+          </Button>
+          {iconOnly ? <IconReason id={`${reasonBase}-unspy`} reason={unspy.reason} /> : null}
+        </>
       ) : null}
       {duplication !== null ? (
-        <Button
-          variant="quiet"
-          icon="duplication-active"
-          disabled={!duplication.enabled}
-          focusableWhenDisabled
-          reserveReasonSlot
-          reasonLines={1}
-          {...reasonProps(duplication.reason)}
-          onClick={() => {
-            once('activate-duplication', () => commit({ kind: 'activateDuplication' }));
-          }}
-        >
-          {ACTIVATE_DUPLICATION_LABEL}
-        </Button>
+        <>
+          <Button
+            variant="quiet"
+            icon="duplication-active"
+            disabled={!duplication.enabled}
+            focusableWhenDisabled
+            {...(iconOnly
+              ? {
+                  'aria-label': ACTIVATE_DUPLICATION_LABEL,
+                  ...iconReasonProps(ACTIVATE_DUPLICATION_LABEL, duplication.reason, `${reasonBase}-duplication`),
+                }
+              : { reserveReasonSlot: true, reasonLines: 1 as const, ...reasonProps(duplication.reason) })}
+            onClick={() => {
+              once('activate-duplication', () => commit({ kind: 'activateDuplication' }));
+            }}
+          >
+            {iconOnly ? <span className="sr-only">{ACTIVATE_DUPLICATION_LABEL}</span> : ACTIVATE_DUPLICATION_LABEL}
+          </Button>
+          {iconOnly ? <IconReason id={`${reasonBase}-duplication`} reason={duplication.reason} /> : null}
+        </>
       ) : null}
       {model.stats && onShowStats !== undefined ? (
         <Button variant="primary" reserveReasonSlot reasonLines={1} onClick={onShowStats}>

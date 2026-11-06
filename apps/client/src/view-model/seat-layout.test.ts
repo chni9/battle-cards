@@ -154,6 +154,7 @@ describe('arc placement (§6.4)', () => {
   });
 
   it('landscape-compact 740×360: one top band of equal columns, no ellipse', () => {
+    expect(SEAT_BOX['landscape-compact']).toEqual(SEAT_BOX.portrait); // the band draws the portrait anatomy (L75-03)
     const layout = layoutSeats(seated(4), LANDSCAPE);
     const y = SEAT_BOX['landscape-compact'].height / 2;
     expect(layout).toEqual({

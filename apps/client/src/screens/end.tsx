@@ -4,8 +4,7 @@
  * PROTOCOL_VERSION 24 · `FinishedStateView.finalTable`.
  * One FeedbackDialog owned here so stats / ask / turn-strip `!` never stack (L47-03).
  * Finished hub leave goes through ask-once (L57-03).
- * The finished board follows the temporary table switch via `tableUi` (technical spec v7
- * §4.4 / L72-20, removed in L75).
+ * The finished board is the V7 arena on `finalTable` (technical spec v7 §4.4, §6.12; L75-09).
  */
 
 import type { FinishedStateView } from '@card-battle/shared';
@@ -27,10 +26,8 @@ import {
   shouldPlayAgainAfterAskDismiss,
   type EndFeedbackMode,
 } from './end-feedback';
-import { ArenaScreen } from './arena/arena-screen';
+import { ArenaScreen, type ArenaScreenProps } from './arena/arena-screen';
 import { GameOverDialog } from './game-over-dialog';
-import { TableScreen, type TableScreenProps } from './table';
-import type { TableUi } from '../ui-switch';
 import { TABLE_BANNER_MS } from '../view-model/table-banner';
 
 export interface EndScreenProps {
@@ -41,8 +38,6 @@ export interface EndScreenProps {
   nowMs: number;
   onLeave: () => void;
   onPlayAgain?: () => void;
-  /** Table switch decision from App (technical spec v7 §4.4); classic when omitted. L75 removes it. */
-  tableUi?: TableUi;
   /** L74-25: the raw connection status for the arena board; 'connected' when omitted. */
   connectionStatus?: RoomConnectionStatus;
 }
@@ -59,7 +54,6 @@ export function EndScreen({
   nowMs,
   onLeave,
   onPlayAgain,
-  tableUi = 'classic',
   connectionStatus = 'connected',
 }: EndScreenProps): ReactElement {
   const [bannerElapsed, setBannerElapsed] = useState(false);
@@ -142,9 +136,9 @@ export function EndScreen({
     };
   }, []);
 
-  // Each board mounts in its own branch, so `ArenaScreenProps` may widen while `TableScreen` keeps its
-  // props (L74-21). The two attributes stay JSX on both: `end.feedback-surfaces.test.ts` reads them.
-  const finishedBoard: Omit<TableScreenProps, 'onOpenFeedback' | 'onLeave'> = {
+  // The finished board is the arena on `finalTable` (§6.12, L74-24, L75-09). The two attributes stay JSX:
+  // `end.feedback-surfaces.test.ts` reads them.
+  const finishedBoard: Omit<ArenaScreenProps, 'onOpenFeedback' | 'onLeave'> = {
     view: view.finalTable,
     actionReject,
     onDismissActionReject,
@@ -175,22 +169,14 @@ export function EndScreen({
     onSellUpgradePoint: noop,
     onForfeit: noop,
     onSendChat: noop,
+    lastTurnStarted: null,
+    cachedLobbyRules: view.lobbyRules ?? null,
+    connectionStatus,
   };
 
   return (
     <>
-      {tableUi === 'next' ? (
-        <ArenaScreen
-          {...finishedBoard}
-          lastTurnStarted={null}
-          cachedLobbyRules={view.lobbyRules ?? null}
-          connectionStatus={connectionStatus}
-          onOpenFeedback={onOpenManualFeedback}
-          onLeave={requestLeave}
-        />
-      ) : (
-        <TableScreen {...finishedBoard} onOpenFeedback={onOpenManualFeedback} onLeave={requestLeave} />
-      )}
+      <ArenaScreen {...finishedBoard} onOpenFeedback={onOpenManualFeedback} onLeave={requestLeave} />
       <GameOverDialog
         open={statsOpen}
         view={view}

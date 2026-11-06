@@ -220,6 +220,15 @@
         "reason": "Designer-approved V7 ground halos (technical spec v7 §5.1, §12.4; Q3b 2026-10-20). Scoped to ui/tokens.css only."
       },
       {
+        "rule": "repeating-stripes-gradient",
+        "value": "*",
+        "files": [
+          "apps/client/src/ui/tokens.css"
+        ],
+        "createdAt": "2026-11-04T13:47:33.000Z",
+        "reason": "Designer-approved V7 ground scanlines (technical spec v7 §5.1; Q87-5, designer 2026-11-03). Scoped to ui/tokens.css only."
+      },
+      {
         "rule": "design-system-font",
         "value": "*",
         "files": [

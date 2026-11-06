@@ -4,7 +4,7 @@
  * the caller's), §7.3 (kit picker) and §11 (portrait `alt` = kit name). Appendix A:
  * `global-art-catalog`, `global-dialog-button-primitives`; L10-05 (eliminated is greyscale plus
  * a badge, no per-kit dead art). L72-15. It replaces `design/components/kit-portrait.tsx` on V7
- * surfaces; the classic file stays until L75 and L76.
+ * surfaces; the V2 file stays only for Game over (L77).
  *
  * - **Faces:** a kit shows its base drawing from `artFor` on the card-face gradient, in a fixed
  *   box with `object-contain` so the 16 trimmed drawings share one visual weight. An unrevealed
@@ -25,7 +25,9 @@
  *   face, so neither filter reaches the red cross. At thumb size the badge is about a third of
  *   the face width.
  * - **Anchors:** `data-zone="kit-portrait"` and `data-eliminated` stay (`fx/play-flyout.ts` and
- *   the L74 self strip query them); `data-kit-face` and `data-kit-size` are new.
+ *   the L74 self strip query them); `data-kit-face` and `data-kit-size` are new. `dataAttributes`
+ *   (L75-04, the tutorial's `kit` highlight) adds `data-*` anchors to the root, spread before these,
+ *   so the portrait's own anchors win.
  */
 
 import type { LobbyKitSelection } from '@card-battle/shared';
@@ -46,6 +48,8 @@ export interface KitPortraitProps {
   onClick?: () => void;
   /** The button's accessible name; defaults to the kit name (", eliminated" added). Ignored without `onClick`. */
   ariaLabel?: string;
+  /** L75-04: extra `data-*` anchors on the root (button or span); `data-zone` and `data-kit-*` win. */
+  dataAttributes?: Readonly<Record<`data-${string}`, string>>;
 }
 
 type PortraitSize = NonNullable<KitPortraitProps['size']>;
@@ -140,6 +144,7 @@ export function KitPortrait({
   className = '',
   onClick,
   ariaLabel,
+  dataAttributes,
 }: KitPortraitProps): ReactElement {
   const alt = kitPortraitAlt(kitId);
   const face = faceFor(kitId);
@@ -168,6 +173,7 @@ export function KitPortrait({
   if (clickable) {
     return (
       <button
+        {...dataAttributes}
         {...anchors}
         type="button"
         aria-label={ariaLabel ?? (isEliminated ? eliminatedPortraitLabel(alt) : alt)}
@@ -181,7 +187,7 @@ export function KitPortrait({
     );
   }
   return (
-    <span {...anchors} className={rootClassName}>
+    <span {...dataAttributes} {...anchors} className={rootClassName}>
       {content}
     </span>
   );

@@ -1,5 +1,5 @@
 /**
- * FX trigger decisions shared by both boards — technical spec v7 §6.6.2, §6.12, §8.1, Q63; moved
+ * FX trigger decisions used by the arena — technical spec v7 §6.6.2, §6.12, §8.1, Q63; moved
  * from `screens/table.tsx` (L74-17).
  *
  * Pure: every choice the table's FX effects made (which resolution flashes, which eliminations

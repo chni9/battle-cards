@@ -11,6 +11,7 @@
 import { costAriaLabel, type StructuredCost } from '../../ui/structured-cost';
 import { DRAW_ACTION_LABEL, UNSPY_ACTION_LABEL } from '../../view-model/chrome-labels';
 import type { DockModel, UnspyControl } from '../../view-model/self-strip';
+import { layoutModeFor, type Size } from '../../view-model/seat-layout';
 
 /** V2's word label, verbatim (`private-zone.tsx`); the button moved to the dock in V7 (§6.1 item 5). */
 export const ACTIVATE_DUPLICATION_LABEL = 'Activate duplication';
@@ -18,6 +19,19 @@ export const ACTIVATE_DUPLICATION_LABEL = 'Activate duplication';
 export const UNSPY_CONFIRM_LABEL = 'Confirm';
 /** V2's word, verbatim (`screens/table/economy-bar.tsx`). */
 export const STATS_ACTION_LABEL = 'Stats';
+
+/**
+ * Landscape-compact viewports narrower than this draw the dock icon-only (designer 2026-11-06, Check 1
+ * stop item S2; the Lot 59 label-free dock). At 667×375 the labelled dock is 348 px wide beside a 287 px
+ * strip, which leaves the hand 32 px; icon-only it fits the 10 rem ticker-column floor, so the hand gets
+ * 667 − 287 − 160 = 220 px, over two 64 px cards. 844×390 stays labelled.
+ */
+export const DOCK_ICON_ONLY_MAX_WIDTH_PX = 700;
+
+/** True in landscape-compact under `DOCK_ICON_ONLY_MAX_WIDTH_PX` of visible width (`viewport` is the layout box's). */
+export function dockIconOnly(viewport: Size): boolean {
+  return layoutModeFor(viewport) === 'landscape-compact' && viewport.width < DOCK_ICON_ONLY_MAX_WIDTH_PX;
+}
 
 /** `Draw, plus 1 pt` / `Draw, plus 37 pts`: ruling 4 keeps V2's `costAriaLabel` words. */
 export function drawAriaLabel(gain: number): string {

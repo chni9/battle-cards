@@ -12,6 +12,13 @@
  * the drop read the card's model on the latest view each time. Ghost moves set motion values
  * and never re-render the arena: only a change of the hovered zone does. A keyboard click is never
  * swallowed, and a release while a sheet is live springs back and sends nothing.
+ *
+ * L75-03, L75-13 (plan A.5.3, A.6): the drop rects belong to one layout: a mode or band change cancels
+ * the gesture. A change of `mode`, or a flip of the portrait bottom `band` (which resizes the arena, the
+ * strip and the hand cards under a lifted card), ends a pressed or lifted drag like `pointercancel`: a
+ * press ends with no ghost, a lifted card springs back, nothing is sent.
+ *
+ * L75-04 (plan A.8.7, §6.6.3): while `locked` (the tutorial tour or Look gate), no drag starts.
  */
 
 import type { PlayingStateView } from '@card-battle/shared';
@@ -26,7 +33,9 @@ import { readVisualViewportBox } from '../../ui/visual-viewport';
 import type { ActionContext } from '../../view-model/action-lock';
 import { cardActions, type DropZones } from '../../view-model/card-actions';
 import type { DropZoneRects, Point, Rect } from '../../view-model/drop-target';
+import type { LayoutMode } from '../../view-model/seat-layout';
 import type { ArenaCommit } from './arena-commit';
+import type { BottomBand } from './bottom-band';
 import { liveCardRefFor } from './card-sheet-source';
 import {
   canStartHandDrag,
@@ -51,6 +60,12 @@ export interface HandDragInput {
   commit: ArenaCommit;
   /** Opens this card's sheet: its pre-send choice step (§6.6.3). */
   openChoice: (source: HandCardSource) => void;
+  /** L75-03 (A.5.3): the drop rects belong to one layout; a change cancels the gesture. Absent: nothing changes. */
+  mode?: LayoutMode;
+  /** L75-13 (A.6): the portrait bottom band; a flip cancels the gesture as a mode change does. Absent: nothing changes. */
+  band?: BottomBand;
+  /** L75-04 (A.8.7): the tutorial tour or Look gate locks the table; no drag starts. Default false. */
+  locked?: boolean;
 }
 
 export interface HandDragView {
@@ -202,6 +217,16 @@ export function useHandDrag(input: HandDragInput): {
     }
   });
 
+  // A new layout mode (L75-03) or bottom band (L75-13) ends the gesture like `pointercancel`: the zones
+  // were measured for the old layout.
+  const layoutKey = `${input.mode ?? ''}:${input.band ?? ''}`;
+  const previousLayout = useRef(layoutKey);
+  useEffect(() => {
+    if (layoutKey === previousLayout.current) return;
+    previousLayout.current = layoutKey;
+    onPointerCancel();
+  }, [layoutKey]);
+
   const trackedPointerId = phase?.kind === 'pressed' || phase?.kind === 'dragging' ? phase.pointerId : null;
   useEffect(() => {
     if (trackedPointerId === null) return;
@@ -241,7 +266,7 @@ export function useHandDrag(input: HandDragInput): {
       suppressClick.current = false;
       if (!event.isPrimary || event.button !== 0) return;
       const actions = cardActions(input.view, liveCardRefFor(source, input.view), input.ctx);
-      if (!canStartHandDrag(actions, input.targetingActive)) return;
+      if (!canStartHandDrag(actions, input.targetingActive, input.locked ?? false)) return;
       // Never `preventDefault`: a press that does not lift is a tap, and the tap still clicks.
       setPhase({
         kind: 'pressed',

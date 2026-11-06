@@ -17,6 +17,19 @@
  * L74-25 (§6.6.2, §8.3): the card a rejected send spent (`rejected`) springs back with a shake in
  * its slot, or a `--danger` ring flash under reduced motion, on the same in-place wrapper as the
  * flip, so focus stays on it.
+ *
+ * L75-03 (§5.4, §6.4): `cardWidthPx` sizes the hand from outside (landscape-compact: a card a quarter
+ * of the visible height tall). It sets `--hand-card-w` inline, over the Card clamp, and `--card-w`
+ * stays each card's only resize path.
+ *
+ * L75-13 (§6.1 item 4; Q87-4, designer 2026-11-03): a hand that overflows its scroller fades on its
+ * right edge, and on its left edge once scrolled away from the start (`useHiddenEdges`, the admin
+ * tables' cue on both edges). The fades are static and decorative: hidden from assistive technology,
+ * they take no clicks, so a tap, a long press or a drag reaches the card under them, and a selected
+ * or focused card (`z-10`) rises above them. They are the same under reduced motion.
+ *
+ * L75-04 (§6.12; plan A.8.6): `tutorial` marks a group (`hand` / `specials`, empty or not, Q60) for
+ * the board tour, and each spotlit card with its card id (V2), through `Card dataAttributes`.
  */
 
 import type { PlayingStateView } from '@card-battle/shared';
@@ -38,6 +51,7 @@ import {
   type HandCardSource,
   type HandFanCard,
 } from './hand-fan-model';
+import { useHiddenEdges } from './hand-scroll-cue';
 import type { RejectCue } from './reject-model';
 
 export interface HandFanProps {
@@ -51,12 +65,25 @@ export interface HandFanProps {
   readonly drag?: HandFanDragProps;
   /** L74-25: the card a rejected send spent; it shakes in its slot (a colour flash under reduced motion). */
   readonly rejected?: RejectCue | null;
+  /** L75-03 / L75-13: a sized hand, `--hand-card-w` inline; absent, the Card clamp stands. */
+  readonly cardWidthPx?: number;
+  /** L75-04: the tutorial's group mark and spotlit card instance ids; absent, nothing is marked. */
+  readonly tutorial?: HandFanTutorial;
 }
+
+/** L75-04 (plan A.8.6): the tour's group, and the hand or special cards the script spotlights. */
+export interface HandFanTutorial {
+  readonly group: 'hand' | 'specials' | null;
+  readonly instanceIds: readonly string[];
+}
+
+const NO_SPOTLIGHT: readonly string[] = [];
 
 type HandFanStyle = CSSProperties & {
   readonly '--hand-strips': string;
   readonly '--hand-fulls': string;
   readonly '--hand-empties': string;
+  readonly '--hand-card-w'?: string;
 };
 
 /**
@@ -91,22 +118,45 @@ const REJECT_SHAKE_KEYFRAMES = { x: [0, -8, 8, -6, 6, -3, 0] };
 const REJECT_FLASH_KEYFRAMES = { boxShadow: [`0 0 0 3px ${V7_COLORS.danger}`, `0 0 0 3px ${V7_COLORS.danger}00`] };
 const REJECT_TRANSITION = { duration: durationS('slow') };
 
-export function HandFan({ view, ctx, selectedInstanceId, onOpenCard, drag, rejected = null }: HandFanProps): ReactElement {
+/**
+ * The scroll-edge fade (Q87-4, L75-13): 40 px of the ground colour (`--bg-0`, the hand sits on the
+ * ground) into nothing, over the edge, as the admin tables' cue fades from their panel. It takes no
+ * clicks. The edge side and the gradient direction are added per fade.
+ */
+const HAND_CUE_CLASS = 'pointer-events-none absolute inset-y-0 w-10 from-v7-bg-0 to-transparent';
+
+export function HandFan({
+  view,
+  ctx,
+  selectedInstanceId,
+  onOpenCard,
+  drag,
+  rejected = null,
+  cardWidthPx,
+  tutorial,
+}: HandFanProps): ReactElement {
   const model = handFanModel(view, ctx);
   const groups = [model.hand, model.specials];
   const style: HandFanStyle = {
     '--hand-strips': String(groups.reduce((sum, cards) => sum + Math.max(0, cards.length - 1), 0)),
     '--hand-fulls': String(groups.filter((cards) => cards.length > 0).length),
     '--hand-empties': String(groups.filter((cards) => cards.length === 0).length),
+    ...(cardWidthPx !== undefined ? { '--hand-card-w': `${String(cardWidthPx)}px` } : {}),
   };
+  // The scroller is state, not a ref: the fades read its layout once it mounts (as `AdminDataTable`).
+  const [region, setRegion] = useState<HTMLDivElement | null>(null);
+  const hidden = useHiddenEdges(region);
   return (
-    // The container for `cqi`. `--hand-card-w` restates the Card `hand` width (spec v7 §5.4); each
-    // card takes it through `[--card-w:var(--hand-card-w)]`, the Card's only resize path.
-    <div data-hand-fan="" className="@container h-full w-full [--hand-card-w:clamp(64px,19vw,120px)]" style={style}>
-      <ScrollArea axis="x" className="h-full px-4 pt-4 pb-3">
+    // The container for `cqi`. `--hand-card-w` restates the Card `hand` width (spec v7 §5.4), and an
+    // inline `cardWidthPx` (L75-03) wins over it. Each card takes it through
+    // `[--card-w:var(--hand-card-w)]`, the Card's only resize path. `relative` places the fades on it.
+    <div data-hand-fan="" className="@container relative h-full w-full [--hand-card-w:clamp(64px,19vw,120px)]" style={style}>
+      <ScrollArea ref={setRegion} axis="x" className="h-full px-4 pt-4 pb-3">
         <div className="mx-auto flex w-max items-end gap-3">
           <HandGroup
             zone="hand"
+            highlighted={tutorial?.group === 'hand'}
+            spotlit={tutorial?.instanceIds ?? NO_SPOTLIGHT}
             cards={model.hand}
             selectedInstanceId={selectedInstanceId}
             onOpenCard={onOpenCard}
@@ -115,6 +165,8 @@ export function HandFan({ view, ctx, selectedInstanceId, onOpenCard, drag, rejec
           />
           <HandGroup
             zone="specials"
+            highlighted={tutorial?.group === 'specials'}
+            spotlit={tutorial?.instanceIds ?? NO_SPOTLIGHT}
             cards={model.specials}
             selectedInstanceId={selectedInstanceId}
             onOpenCard={onOpenCard}
@@ -123,12 +175,22 @@ export function HandFan({ view, ctx, selectedInstanceId, onOpenCard, drag, rejec
           />
         </div>
       </ScrollArea>
+      {hidden === 'left' || hidden === 'both' ? (
+        <span aria-hidden="true" data-scroll-cue="start" className={`${HAND_CUE_CLASS} left-0 bg-linear-to-r`} />
+      ) : null}
+      {hidden === 'right' || hidden === 'both' ? (
+        <span aria-hidden="true" data-scroll-cue="end" className={`${HAND_CUE_CLASS} right-0 bg-linear-to-l`} />
+      ) : null}
     </div>
   );
 }
 
 interface HandGroupProps {
   readonly zone: keyof typeof HAND_GROUP_COPY;
+  /** L75-04: the tour marks this group. */
+  readonly highlighted: boolean;
+  /** L75-04: the instance ids the script spotlights. */
+  readonly spotlit: readonly string[];
   readonly cards: readonly HandFanCard[];
   readonly selectedInstanceId: string | null;
   readonly onOpenCard: (source: HandCardSource) => void;
@@ -137,10 +199,15 @@ interface HandGroupProps {
 }
 
 /** An empty group keeps V2's caption and text (Q60); a filled one is named by its `aria-label`. */
-function HandGroup({ zone, cards, selectedInstanceId, onOpenCard, rejected, drag }: HandGroupProps): ReactElement {
+function HandGroup({ zone, highlighted, spotlit, cards, selectedInstanceId, onOpenCard, rejected, drag }: HandGroupProps): ReactElement {
   const copy = HAND_GROUP_COPY[zone];
   return (
-    <div data-zone={zone} data-hint-anchor={zone} className="flex items-end">
+    <div
+      data-zone={zone}
+      data-hint-anchor={zone}
+      {...(highlighted ? { 'data-tutorial-highlight': zone } : {})}
+      className="flex items-end"
+    >
       {cards.length === 0 ? (
         <p className={`flex min-h-11 ${EMPTY_GROUP_WIDTH_CLASS} flex-col justify-center px-1 font-v7-body text-v7-caption font-bold text-v7-text-2`}>
           <span>{copy.label}</span>
@@ -154,6 +221,7 @@ function HandGroup({ zone, cards, selectedInstanceId, onOpenCard, rejected, drag
               card={card}
               last={index === cards.length - 1}
               selected={card.source.instance.instanceId === selectedInstanceId}
+              spotlit={spotlit.includes(card.source.instance.instanceId)}
               onOpen={onOpenCard}
               rejected={rejected}
               {...(drag !== undefined ? { drag } : {})}
@@ -169,6 +237,7 @@ interface HandSlotProps {
   readonly card: HandFanCard;
   readonly last: boolean;
   readonly selected: boolean;
+  readonly spotlit: boolean;
   readonly onOpen: (source: HandCardSource) => void;
   readonly rejected: RejectCue | null;
   readonly drag?: HandFanDragProps;
@@ -178,7 +247,7 @@ interface HandSlotProps {
  * Not clipped: the card overflows its slot to the right, and a selected or focused card rises above
  * its neighbour. `touch-pan-x` leaves a horizontal pan to the browser's scroll (L74-12).
  */
-function HandSlot({ card, last, selected, onOpen, rejected, drag }: HandSlotProps): ReactElement {
+function HandSlot({ card, last, selected, spotlit, onOpen, rejected, drag }: HandSlotProps): ReactElement {
   const { instanceId } = card.source.instance;
   const lifted = drag?.liftedInstanceId === instanceId;
   return (
@@ -194,6 +263,7 @@ function HandSlot({ card, last, selected, onOpen, rejected, drag }: HandSlotProp
       <HandCard
         card={card}
         selected={selected}
+        spotlit={spotlit}
         onOpen={onOpen}
         rejectToken={rejected?.instanceId === instanceId ? rejected.reject : null}
       />
@@ -204,6 +274,8 @@ function HandSlot({ card, last, selected, onOpen, rejected, drag }: HandSlotProp
 interface HandCardProps {
   readonly card: HandFanCard;
   readonly selected: boolean;
+  /** L75-04: the script spotlights this card: `data-tutorial-highlight` carries its card id (V2). */
+  readonly spotlit: boolean;
   readonly onOpen: (source: HandCardSource) => void;
   /** L74-25: the reject this card's send drew, else null. A new one replays the spring-back. */
   readonly rejectToken: ActionRejectPayload | null;
@@ -217,7 +289,7 @@ interface HandCardProps {
  * (Lot 74 Part 1 final review, Minor 6). The reject spring-back (L74-25) counts and animates the
  * same way, and never on mount.
  */
-function HandCard({ card, selected, onOpen, rejectToken }: HandCardProps): ReactElement {
+function HandCard({ card, selected, spotlit, onOpen, rejectToken }: HandCardProps): ReactElement {
   const { instance } = card.source;
   const reduced = usePrefersReducedMotion();
   const [scope, animate] = useAnimate<HTMLDivElement>();
@@ -263,6 +335,7 @@ function HandCard({ card, selected, onOpen, rejectToken }: HandCardProps): React
         unplayable={card.unplayable}
         {...(card.description !== null ? { description: card.description } : {})}
         className="[--card-w:var(--hand-card-w)]"
+        {...(spotlit ? { dataAttributes: { 'data-tutorial-highlight': instance.cardId } } : {})}
         onActivate={() => {
           onOpen(card.source);
         }}

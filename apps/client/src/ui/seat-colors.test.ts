@@ -2,9 +2,6 @@ import { describe, expect, it } from 'vitest';
 
 import {
   clampSeatIndex,
-  seatColorHex,
-  seatColorVar,
-  seatColorWash,
   seatIndexOf,
   seatNameStyle,
   seatZoneStyle,
@@ -58,7 +55,7 @@ describe('seatIndexOf (L39-03)', () => {
   });
 });
 
-describe('seatColorHex / styles (L39-03)', () => {
+describe('seat palette and styles (L39-03)', () => {
   it('exposes an 8-seat hex palette (blue/red/green/yellow/violet/orange/teal/pink)', () => {
     expect(SEAT_COLORS).toEqual([
       '#1d6fd8',
@@ -70,21 +67,11 @@ describe('seatColorHex / styles (L39-03)', () => {
       '#0d9488',
       '#db2777',
     ]);
-    expect(seatColorHex(3)).toBe('#ffd400');
-    expect(seatColorHex(5)).toBe('#ea580c');
-    expect(seatColorHex(6)).toBe('#0d9488');
-    expect(seatColorHex(7)).toBe('#db2777');
-    expect(seatColorVar(2)).toBe(SEAT_COLORS[2]);
   });
 
   it('clamps out-of-range indices into the palette', () => {
     expect(clampSeatIndex(-1)).toBe(0);
     expect(clampSeatIndex(99)).toBe(7);
-  });
-
-  it('washes hex over white without color-mix', () => {
-    expect(seatColorWash('#ff0000', 0)).toBe('rgb(255, 255, 255)');
-    expect(seatColorWash('#ff0000', 1)).toBe('rgb(255, 0, 0)');
   });
 
   it('builds tint and name styles from hex', () => {

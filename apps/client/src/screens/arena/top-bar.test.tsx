@@ -73,6 +73,14 @@ describe('TopBar banner (spec v7 §6.1 item 1)', () => {
     expect(within(topBar(container)).getByRole('heading', { level: 2 }).textContent).toBe('—');
   });
 
+  it('shows — on the finished board, for the POV turn and for another seat (Gate C, S-C3)', () => {
+    for (const currentTurnPlayerId of ['me', 'p2']) {
+      const { container, unmount } = renderArena({ readOnly: true, view: makeArenaView({ overrides: { currentTurnPlayerId } }) });
+      expect(within(topBar(container)).getByRole('heading', { level: 2 }).textContent).toBe('—');
+      unmount();
+    }
+  });
+
   it.each([
     { label: 'a Block chain', patch: { blockTurnsRemaining: 2, blockAttacksForbidden: false }, text: 'Block chain · 2 turns left' },
     { label: 'an attack ban', patch: { blockTurnsRemaining: 0, blockAttacksForbidden: true }, text: 'Block · attacks banned this turn' },

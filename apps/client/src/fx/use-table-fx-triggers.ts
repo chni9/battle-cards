@@ -1,9 +1,9 @@
 /**
- * The table FX triggers both boards share — technical spec v7 §4.1, §6.12, §8.1, §8.3, Q63; Lot 14.
+ * The arena's FX triggers — technical spec v7 §4.1, §6.12, §8.1, §8.3, Q63; Lot 14.
  *
- * Moved out of `screens/table.tsx` (L74-17): `screens/table.tsx` and the V7 arena call this one
- * hook until L75 deletes the old caller. It needs `TableFxProvider` (`useTableFx` throws without
- * it). Every decision is pure in `view-model/fx-triggers.ts`; this module measures and enqueues.
+ * Moved out of the V2 `screens/table.tsx` (L74-17, deleted in L75-10): the V7 arena calls this
+ * hook. It needs `TableFxProvider` (`useTableFx` throws without it). Every decision is pure in
+ * `view-model/fx-triggers.ts`; this module measures and enqueues.
  *
  * - The resolution flash, once per effect and outcome (V2; not seeded).
  * - The elimination beat, seeded on mount from the log, so a reconnect or the finished board
@@ -39,7 +39,6 @@ import {
   measureBuySpecialFlyout,
   measureDeckCardFlyout,
   measureDirectedTokenFlyout,
-  measureIncomingCollapsedCue,
   measurePlayCardGhost,
   measureSellCardFlyout,
   measureTargetingCue,
@@ -345,18 +344,6 @@ export function useTableFxTriggers({ view, lastActionResolved, subChoice }: Tabl
           tone,
           from: measured.from,
           to: measured.to,
-          expiresAt,
-        });
-      }
-      const incomingCollapsed = measureIncomingCollapsedCue();
-      if (incomingCollapsed !== null) {
-        enqueue({
-          kind: 'targetingCue',
-          fromPlayerId: effect.sourcePlayerId,
-          toPlayerId: view.you,
-          tone,
-          from: incomingCollapsed,
-          to: incomingCollapsed,
           expiresAt,
         });
       }

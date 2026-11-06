@@ -5,8 +5,6 @@
 
 export const HIDDEN_KIT_LABEL = 'Hidden kit';
 
-export const FELT_QUEUE_TITLE = 'Waiting on others';
-
 export const SHOP_PRICE_BLURB =
   'Choose a shared card from the shop. Prices are double the play cost.';
 
@@ -41,9 +39,5 @@ export const OPEN_COACH_ARIA_LABEL = 'Show coach';
 export const GOT_IT_ACTION_LABEL = 'Got it';
 /** Compact dock button when Incoming is collapsed (L53-05). */
 export const INCOMING_OPEN_LABEL = 'Incoming';
-/** Compact dock button when Incoming is empty and Waiting is collapsed with it. */
-export const WAITING_OPEN_LABEL = 'Waiting';
 /** Compact felt button when the action log is collapsed. */
 export const ACTION_LOG_OPEN_LABEL = 'Action log';
-/** Compact felt button when the opponent row is collapsed. */
-export const OPPONENTS_OPEN_LABEL = 'Opponents';

@@ -53,4 +53,16 @@ describe('TUTORIAL_STEPS (technical spec v6 §5.4 / designer 2026-08-25)', () =>
     expect(tutorialStepAt(19)?.coach?.body).toMatch(/Super Regeneration/);
     expect(tutorialStepAt(19)?.coach?.body).toMatch(/points/);
   });
+
+  it('no coach title or body has a space before an exclamation mark (technical spec v7 §10.2)', () => {
+    for (const step of TUTORIAL_STEPS) {
+      expect(step.coach?.title ?? '').not.toContain(' !');
+      expect(step.coach?.body ?? '').not.toContain(' !');
+    }
+  });
+
+  it('index 11 Counter Spy: the upgraded Spy cancels their basic Spy and still resolves (§10.1, Lot 69)', () => {
+    expect(tutorialStepAt(11)?.coach?.body).toContain('Your upgraded Spy cancels their basic Spy and still resolves on them.');
+    expect(tutorialStepAt(11)?.coach?.body).not.toContain('cancels both');
+  });
 });

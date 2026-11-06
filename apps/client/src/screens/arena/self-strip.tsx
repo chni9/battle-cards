@@ -18,6 +18,15 @@
  *
  * L74-17 (§6.12, §8.3): each resource pill flashes and floats its Δ (`useResourceFlash`,
  * `ResourceFlashCue`), and the POV's own Δ flies its chips from the log.
+ *
+ * L75-03 (§6.1 item 3, §6.4; plan A.5.2): `compact` draws one row, the thumb kit portrait and four
+ * small pills whose captions are spoken (and in `title`), not shown, because four captioned pills do
+ * not fit one row at 360 px. It is the full strip's one JSX tree with other class strings, sizes and
+ * captions, never a second branch, so L75-13's band flip re-renders the same elements: the kit
+ * portrait keeps its focus and every pill keeps its flash. Every anchor is the full strip's.
+ *
+ * L75-04 (§6.12; plan A.8.6): `tutorialHighlight` marks the resources row (`resources`) or the kit
+ * portrait root (`kit`, through `KitPortrait dataAttributes`) for the board tour, in both strips.
  */
 
 import type { KitId } from '@card-battle/shared';
@@ -47,6 +56,10 @@ export interface SelfStripProps {
   readonly onOpenCard: (source: CardSheetSource) => void;
   /** L74-23: the Watching header's Leave table; without it no header renders. */
   readonly onLeave?: () => void;
+  /** L75-03: one row with a thumb portrait and small pills, captions spoken only. Default false: the full strip. */
+  readonly compact?: boolean;
+  /** L75-04: the board tour's mark on the resources row or the kit portrait; absent or null, none. */
+  readonly tutorialHighlight?: 'resources' | 'kit' | null;
 }
 
 const OWN_KIT_LABEL = 'Inspect your kit';
@@ -107,39 +120,65 @@ function FlashingPill(props: PillProps & { readonly resourceKind: ResourceKind; 
   );
 }
 
-export function SelfStrip({ model, onOpenKit, onOpenCard, onLeave }: SelfStripProps): ReactElement | null {
+export function SelfStrip({
+  model,
+  onOpenKit,
+  onOpenCard,
+  onLeave,
+  compact = false,
+  tutorialHighlight = null,
+}: SelfStripProps): ReactElement | null {
   const { kitId, resources } = model;
   if (kitId === null || resources === null) {
     return null;
   }
+  // One tree for both strips (L75-03): `compact` only switches these strings, sizes and captions.
+  const pillSize = compact ? 'sm' : 'md';
+  const hasFlowBadges = model.flowBadges.length > 0 || model.connectionLabel !== null || model.duplicationActive;
+  // Compact: the badges take their own line below the row; `mt-2` only with a badge, so an empty one adds no height.
+  const flowBadgesClass = !compact
+    ? 'flex flex-wrap items-center gap-1.5'
+    : hasFlowBadges
+      ? 'flex basis-full flex-wrap items-center gap-1.5 mt-2'
+      : 'flex basis-full flex-wrap items-center gap-1.5';
   return (
-    <div data-self-strip="" className="flex w-full flex-col gap-2 px-4 py-2">
-      {model.pov === 'watching' && model.leave && onLeave !== undefined ? <WatchingHeader model={model} onLeave={onLeave} /> : null}
-      <div className="flex items-start gap-3">
+    <div
+      data-self-strip={compact ? 'compact' : 'full'}
+      className={`flex w-full flex-col gap-2 ${compact ? 'px-2 py-1' : 'px-4 py-2'}`}
+    >
+      {model.pov === 'watching' && model.leave && onLeave !== undefined ? <WatchingHeader model={model} onLeave={onLeave} compact={compact} /> : null}
+      <div className={compact ? 'flex min-w-0 flex-wrap items-center gap-x-2' : 'flex items-start gap-3'}>
         <KitPortrait
           kitId={kitId}
-          size="tile"
+          size={compact ? 'thumb' : 'tile'}
           onClick={() => {
             onOpenKit(kitId);
           }}
           ariaLabel={OWN_KIT_LABEL}
+          {...(tutorialHighlight === 'kit' ? { dataAttributes: { 'data-tutorial-highlight': 'kit' } } : {})}
         />
-        <div className="flex min-w-0 flex-1 flex-col gap-2">
-          <div data-zone="resources" data-hint-anchor="resources" className="flex flex-wrap items-center gap-2">
+        <div className={compact ? 'contents' : 'flex min-w-0 flex-1 flex-col gap-2'}>
+          <div
+            data-zone="resources"
+            data-hint-anchor="resources"
+            {...(tutorialHighlight === 'resources' ? { 'data-tutorial-highlight': 'resources' } : {})}
+            className={compact ? 'flex min-w-0 items-center gap-1.5' : 'flex flex-wrap items-center gap-2'}
+          >
             <FlashingPill
               icon={RESOURCE_ICON.life}
               label={RESOURCE_CAPTIONS.life}
               value={resources.lives}
               resourceKind="life"
-              size="lg"
-              captionVisible
+              size={compact ? 'sm' : 'lg'}
+              captionVisible={!compact}
             />
             <FlashingPill
               icon={RESOURCE_ICON.shield}
               label={RESOURCE_CAPTIONS.shield}
               value={resources.shield}
               resourceKind="shield"
-              captionVisible
+              size={pillSize}
+              captionVisible={!compact}
             />
             {resources.shieldIsUpgraded ? <Badge label={UPGRADED_SHIELD_LABEL} tone="shield" /> : null}
             <FlashingPill
@@ -147,17 +186,19 @@ export function SelfStrip({ model, onOpenKit, onOpenCard, onLeave }: SelfStripPr
               label={RESOURCE_CAPTIONS.point}
               value={resources.points}
               resourceKind="point"
-              captionVisible
+              size={pillSize}
+              captionVisible={!compact}
             />
             <FlashingPill
               icon={RESOURCE_ICON.upgradePoint}
               label={RESOURCE_CAPTIONS.upgradePoint}
               value={resources.upgradePoints}
               resourceKind="upgradePoint"
-              captionVisible
+              size={pillSize}
+              captionVisible={!compact}
             />
           </div>
-          <div className="flex flex-wrap items-center gap-1.5">
+          <div className={flowBadgesClass}>
             {model.flowBadges.map((badge) => (
               <FlowBadge key={badge.kind} badge={badge} />
             ))}

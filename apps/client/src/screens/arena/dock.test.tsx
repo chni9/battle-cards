@@ -9,13 +9,15 @@ import { act, screen, within } from '@testing-library/react';
 import type { UserEvent } from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 
-import { visibleText } from '../../test/glyph-queries';
+import { visibleLeafTexts, visibleText } from '../../test/glyph-queries';
 import { renderUi, type RenderUiOptions } from '../../test/render';
 import { DUR_BASE_MS } from '../../ui/motion/motion-tokens';
 import { DISABLED_REASON_COPY, type DisabledReason } from '../../view-model/action-reasons';
+import { selfStrip } from '../../view-model/self-strip';
 import { UNSPY_PICKER_HINT } from '../../view-model/table-copy';
 import { makeCard, makeSelf } from '../../view-model/test-fixtures';
 import { ArenaScreen, type ArenaScreenProps } from './arena-screen';
+import { Dock, type DockCommit } from './dock';
 import { expectNoArenaIntent, makeArenaProps, makeArenaView } from './test-view';
 
 const MIRROR: SubChoiceRequiredPayload = { kind: 'mirror', eligibleEffectIds: [], deadlineMs: 1 };
@@ -132,6 +134,23 @@ describe('Unspy (L58-07, L58-09)', () => {
     await user.click(within(unspySheet()).getByRole('button', { name: 'p2' }));
     await user.click(within(unspySheet()).getByRole('button', { name: 'Confirm' }));
     expect(onClearSpy.mock.calls).toEqual([['p2']]);
+  });
+});
+
+describe('no UP on the dock (L43-02, L75-10)', () => {
+  it('never shows the UP abbreviation on the dock, and keeps the Draw, Shop and Unspy names (L43-02, L75-10)', () => {
+    setup(withSeat(viewWith({ points: 20, upgradePoints: 2 }), 'p1', SPYING));
+    expect(visibleText(dock())).not.toMatch(/\bUP\b/);
+    expect(visibleLeafTexts(dock()).filter((text) => /\bUP\b/.test(text))).toEqual([]);
+    expect([draw(), within(dock()).getByRole('button', { name: 'Shop' }), unspy()].every((button) => button.isConnected)).toBe(true);
+  });
+});
+
+describe('Stats only on the finished board (§6.12, L74-24, L75-10)', () => {
+  it('shows no Stats while the game is playing, even when the screen is handed a Stats reopen', () => {
+    setup(makeArenaView(), { onShowStats: vi.fn() });
+    expect(within(dock()).queryByRole('button', { name: 'Stats' })).toBeNull();
+    expect(within(dock()).getByRole('button', { name: 'Shop' })).toBeTruthy();
   });
 });
 
@@ -260,5 +279,24 @@ describe('one send per control per view (final review I3, ruling R2)', () => {
     await user.click(within(unspySheet()).getByRole('button', { name: 'Confirm' }));
     expect(onClearSpy.mock.calls).toEqual([['p1']]);
     expect(screen.queryByRole('dialog', { name: 'Unspy' })).toBeNull();
+  });
+
+  it('marks Draw or Shop for the tutorial, and while locked Shop and Unspy open nothing (L75-04, A.8.6, A.8.7)', async () => {
+    const view = withSeat(viewWith({ points: 20 }), 'p1', SPYING);
+    const onOpenShop = vi.fn<() => void>();
+    const dockFor = (extra: { tutorialHighlight: 'draw' | 'shop'; locked: boolean }) => (
+      <Dock model={selfStrip(view, { subChoice: null, readOnly: false }).dock} isMyTurn turnSequence={1} view={view}
+        commit={vi.fn<DockCommit>(() => true)} actionReject={null} onOpenShop={onOpenShop} {...extra} />
+    );
+    const marks = () => Array.from(document.querySelectorAll('[data-tutorial-highlight]')).map((e) => [e.getAttribute('data-tutorial-highlight'), e.getAttribute('data-hint-anchor')]);
+    const { user, rerender } = renderUi(dockFor({ tutorialHighlight: 'draw', locked: true }));
+    expect(marks()).toEqual([['draw', 'draw']]);
+    await user.click(screen.getByRole('button', { name: 'Shop' }));
+    await user.click(screen.getByRole('button', { name: 'Unspy, minus 10 pts' }));
+    expect([onOpenShop.mock.calls.length, screen.queryByRole('dialog', { name: 'Unspy' })]).toEqual([0, null]);
+    rerender(dockFor({ tutorialHighlight: 'shop', locked: false }));
+    expect(marks()).toEqual([['shop', 'shop']]);
+    await user.click(screen.getByRole('button', { name: 'Shop' }));
+    expect(onOpenShop).toHaveBeenCalledTimes(1);
   });
 });

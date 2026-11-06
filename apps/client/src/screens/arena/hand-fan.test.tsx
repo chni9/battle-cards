@@ -14,7 +14,7 @@ import { DISABLED_REASON_COPY } from '../../view-model/action-reasons';
 import { makeCard, makePersistent, makeSelf } from '../../view-model/test-fixtures';
 import { ArenaScreen } from './arena-screen';
 import { HandFan, type HandFanProps } from './hand-fan';
-import { expectNoArenaIntent, makeArenaProps, makeArenaView } from './test-view';
+import { ARENA_TEST_BOXES, expectNoArenaIntent, makeArenaProps, makeArenaView, stubArenaLayout } from './test-view';
 
 const LIVE: ActionContext = { subChoice: null, readOnly: false };
 const MIRROR_OPEN: SubChoiceRequiredPayload = { kind: 'mirror', eligibleEffectIds: [], deadlineMs: 1 };
@@ -198,6 +198,23 @@ describe('HandFan (L74-07)', () => {
     renderUi(fan(viewWith({ hand: [makeCard('spy')] })));
     expect(fireEvent.contextMenu(within(group('Hand')).getByRole('button', { name: 'Spy' }))).toBe(false);
   });
+
+  it('a sized hand sets --hand-card-w inline; an unsized one keeps the Card clamp (§5.4, L75-03)', () => {
+    const view = viewWith({ hand: [makeCard('spy')] });
+    const { unmount, container } = renderUi(fan(view, { cardWidthPx: 65 }));
+    expect(container.querySelector<HTMLElement>('[data-hand-fan]')?.style.getPropertyValue('--hand-card-w')).toBe('65px');
+    unmount();
+    const plain = renderUi(fan(view));
+    expect(plain.container.querySelector<HTMLElement>('[data-hand-fan]')?.style.getPropertyValue('--hand-card-w')).toBe('');
+  });
+
+  it('marks the tour group and each spotlit card with its card id, and nothing else (L75-04, A.8.6)', () => {
+    renderUi(fan(viewWith({ hand: [makeCard('tax'), makeCard('spy')], specialCards: [makeCard('super-regeneration')] }),
+      { tutorial: { group: 'specials', instanceIds: ['tax-1'] } }));
+    expect(Array.from(document.querySelectorAll('[data-tutorial-highlight]')).map((element) =>
+      [element.getAttribute('data-tutorial-highlight'), element.getAttribute('data-instance-id') ?? element.getAttribute('data-zone')]))
+      .toEqual([['tax', 'tax-1'], ['specials', 'specials']]);
+  });
 });
 
 describe('hand fan in the arena (L74-07)', () => {
@@ -223,5 +240,81 @@ describe('hand fan in the arena (L74-07)', () => {
     await user.click(strong);
     expect(screen.getByRole('dialog', { name: 'Strong attack' })).not.toBeNull();
     expectNoArenaIntent(props);
+  });
+});
+
+describe('hand row layout (L53-07, L75-10)', () => {
+  it('keeps the hand and specials in one scrolling row, packed to its width and centered, never wrapped', () => {
+    renderUi(fan(viewWith({ hand: [makeCard('basic-attack'), makeCard('spy')], specialCards: [makeCard('poison')] })));
+    const scroller = document.querySelector<HTMLElement>('[data-hand-fan] [data-scroll-axis="x"]');
+    const row = group('Hand').closest('[data-zone="hand"]')?.parentElement;
+    expect(scroller).not.toBeNull();
+    expect(row?.parentElement).toBe(scroller);
+    expect(row?.classList.contains('w-max') && row.classList.contains('mx-auto')).toBe(true);
+    expect(row?.className).not.toMatch(/flex-wrap|justify-/);
+    expect(row?.contains(group('Specials'))).toBe(true);
+  });
+});
+
+describe('hand scroll fades (Q87-4, designer 2026-11-03; L75-13)', () => {
+  const SEVEN = ['basic-attack', 'strong-attack', 'super-attack', 'spy', 'shield', 'tax', 'thief'] as const;
+  /** The hand's scroller; happy-dom has no layout, so a test gives it the box a browser would report. */
+  function stubScroller(box: { scrollWidth: number; clientWidth: number; scrollLeft: number }): HTMLElement {
+    const region = document.querySelector<HTMLElement>('[data-hand-fan] [data-scroll-axis="x"]');
+    if (region === null) throw new Error('no hand scroller');
+    Object.defineProperties(region, {
+      scrollWidth: { configurable: true, get: () => box.scrollWidth },
+      clientWidth: { configurable: true, get: () => box.clientWidth },
+      scrollLeft: { configurable: true, get: () => box.scrollLeft },
+    });
+    return region;
+  }
+  const fades = (): [boolean, boolean] => [
+    document.querySelector('[data-hand-fan] [data-scroll-cue="start"]') !== null,
+    document.querySelector('[data-hand-fan] [data-scroll-cue="end"]') !== null,
+  ];
+
+  it('with 7 cards that overflow: the right fade shows and the left does not; scrolled away from the start both show; at the end only the left stays', () => {
+    renderUi(fan(viewWith({ hand: SEVEN.map((id) => makeCard(id)) })));
+    expect(fades()).toEqual([false, false]);
+    const box = { scrollWidth: 900, clientWidth: 360, scrollLeft: 0 };
+    const region = stubScroller(box);
+    fireEvent.scroll(region);
+    expect(fades()).toEqual([false, true]);
+    box.scrollLeft = 200;
+    fireEvent.scroll(region);
+    expect(fades()).toEqual([true, true]);
+    box.scrollLeft = 540; // scrollWidth − clientWidth: the end
+    fireEvent.scroll(region);
+    expect(fades()).toEqual([true, false]);
+    // Decorative: not announced, and a tap or drag reaches the card under it.
+    const left = document.querySelector('[data-scroll-cue="start"]');
+    expect([left?.getAttribute('aria-hidden'), left?.className.includes('pointer-events-none')]).toEqual(['true', true]);
+  });
+
+  it('re-reads the edges when the scroller or its content resizes, with no scroll event (L75-13 m3)', () => {
+    const stub = stubArenaLayout(ARENA_TEST_BOXES.phone390.viewport, ARENA_TEST_BOXES.phone390.arena);
+    try {
+      renderUi(fan(viewWith({ hand: SEVEN.map((id) => makeCard(id)) })));
+      const box = { scrollWidth: 360, clientWidth: 360, scrollLeft: 0 };
+      const region = stubScroller(box);
+      stub.resizeElement(region);
+      expect(fades()).toEqual([false, false]);
+      box.scrollWidth = 900; // the window narrowed: the same cards now overflow
+      stub.resizeElement(region);
+      expect(fades()).toEqual([false, true]);
+      box.scrollWidth = 360; // content shrank: the first child resizes
+      stub.resizeElement(region.firstElementChild ?? region);
+      expect(fades()).toEqual([false, false]);
+    } finally {
+      stub.restore();
+    }
+  });
+
+  it('with no overflow: neither fade shows', () => {
+    renderUi(fan(viewWith({ hand: SEVEN.slice(0, 3).map((id) => makeCard(id)) })));
+    const region = stubScroller({ scrollWidth: 360, clientWidth: 360, scrollLeft: 0 });
+    fireEvent.scroll(region);
+    expect(fades()).toEqual([false, false]);
   });
 });

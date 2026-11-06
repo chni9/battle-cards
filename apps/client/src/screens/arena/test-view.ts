@@ -7,10 +7,36 @@
  * death freeze.
  */
 
-import type { KitId, PlayingStateView, PublicPlayerView } from '@card-battle/shared';
+import {
+  TUTORIAL_BOT_HAND_CARD_IDS,
+  TUTORIAL_BOT_KIT_ID,
+  TUTORIAL_BOT_LIVES,
+  TUTORIAL_HUMAN_KIT_ID,
+  TUTORIAL_HUMAN_LIVES,
+  TUTORIAL_HUMAN_POINTS,
+  TUTORIAL_HUMAN_UPGRADE_POINTS,
+  TUTORIAL_LOOK_INDEX,
+  TUTORIAL_STEPS,
+  tutorialStepAt,
+  type CardId,
+  type CardInstance,
+  type KitId,
+  type PendingEffectView,
+  type PlayingStateView,
+  type PublicPlayerView,
+} from '@card-battle/shared';
+import { act } from 'react';
 import { expect, vi, type MockInstance } from 'vitest';
 
-import { makeCard, makeEliminationReveal, makePlayer, makeTableView } from '../../view-model/test-fixtures';
+import type { LayoutBox, Size } from '../../view-model/seat-layout';
+import {
+  makeCard,
+  makeEliminationReveal,
+  makePending,
+  makePlayer,
+  makeSelf,
+  makeTableView,
+} from '../../view-model/test-fixtures';
 import { STATUS_LABELS } from '../status-labels';
 import type { ArenaScreenProps } from './arena-screen';
 
@@ -170,4 +196,230 @@ export function expectNoArenaIntent(props: ArenaScreenProps): void {
   for (const spy of arenaSpies(props)) {
     expect(spy).not.toHaveBeenCalled();
   }
+}
+
+export interface ArenaLayoutStubOptions {
+  /** A per-element box (FX anchors, hint anchors); `undefined` falls back to the arena box. */
+  readonly rectFor?: (element: Element) => DOMRect | undefined;
+}
+
+export interface ArenaLayoutStub {
+  /** Sets the fake `visualViewport` and dispatches its `resize`: the mode follows (useVisualViewportBox). */
+  setViewport(width: number, height: number): void;
+  /** Sets the box every unmatched element reports and fires every fake ResizeObserver callback. */
+  setArena(width: number, height: number): void;
+  /** Fires only the fake ResizeObserver callbacks that observe `element` (an anchor that moved, or a region that resized). */
+  resizeElement(element: Element): void;
+  /** Restores visualViewport, ResizeObserver and getBoundingClientRect. Callers also run it in afterEach. */
+  restore(): void;
+}
+
+/**
+ * Call before rendering (Lot 75 plan Appendix A.10, L75-02): a fake `visualViewport` at `viewport`,
+ * `vi.stubGlobal('ResizeObserver', …)` with a fake whose callbacks `setArena` fires (happy-dom's
+ * never fires), and a `getBoundingClientRect` spy that reports `rectFor(element)` or the arena box.
+ * The `use-arena-layout-box.test.tsx` pattern, shared. `restore` is idempotent.
+ */
+export function stubArenaLayout(viewport: Size, arena: Size, options: ArenaLayoutStubOptions = {}): ArenaLayoutStub {
+  const { rectFor } = options;
+  const original = Object.getOwnPropertyDescriptor(window, 'visualViewport');
+  const fake = Object.assign(new EventTarget(), {
+    width: viewport.width,
+    height: viewport.height,
+    offsetTop: 0,
+    offsetLeft: 0,
+  });
+  Object.defineProperty(window, 'visualViewport', { configurable: true, value: fake });
+
+  const box: Size = { width: arena.width, height: arena.height };
+  const observers = new Set<FakeResizeObserver>();
+  class FakeResizeObserver {
+    readonly targets = new Set<Element>();
+    constructor(private readonly callback: ResizeObserverCallback) {}
+    observe(target?: Element): void {
+      if (target !== undefined) this.targets.add(target);
+      observers.add(this);
+    }
+    unobserve(): void {
+      // The arena hooks observe one element each, so unobserving it ends the callbacks.
+      observers.delete(this);
+    }
+    disconnect(): void {
+      observers.delete(this);
+    }
+    fire(): void {
+      this.callback([], this);
+    }
+  }
+  // Not `vi.stubGlobal`: its `unstubAllGlobals` would also clear globals a test stubbed itself.
+  const originalObserver = Object.getOwnPropertyDescriptor(globalThis, 'ResizeObserver');
+  Object.defineProperty(globalThis, 'ResizeObserver', { configurable: true, writable: true, value: FakeResizeObserver });
+  const rect = vi
+    .spyOn(Element.prototype, 'getBoundingClientRect')
+    .mockImplementation(function (this: Element) {
+      return rectFor?.(this) ?? new DOMRect(0, 0, box.width, box.height);
+    });
+
+  let restored = false;
+  return {
+    setViewport(width, height) {
+      act(() => {
+        fake.width = width;
+        fake.height = height;
+        fake.dispatchEvent(new Event('resize'));
+      });
+    },
+    setArena(width, height) {
+      act(() => {
+        box.width = width;
+        box.height = height;
+        for (const observer of [...observers]) observer.fire();
+      });
+    },
+    resizeElement(element) {
+      act(() => {
+        for (const observer of [...observers]) if (observer.targets.has(element)) observer.fire();
+      });
+    },
+    restore() {
+      if (restored) return;
+      restored = true;
+      if (original === undefined) Reflect.deleteProperty(window, 'visualViewport');
+      else Object.defineProperty(window, 'visualViewport', original);
+      rect.mockRestore();
+      observers.clear();
+      if (originalObserver === undefined) Reflect.deleteProperty(globalThis, 'ResizeObserver');
+      else Object.defineProperty(globalThis, 'ResizeObserver', originalObserver);
+    },
+  };
+}
+
+/**
+ * Named layout boxes (A.10). The arena heights are the Lot 74 gate's measured or back-solved values
+ * (L74-26 G1–G2; open-question ruling 3); the controller's browser check re-measures them. Pass one
+ * of these, never ad hoc numbers.
+ */
+export const ARENA_TEST_BOXES: {
+  readonly phone360: LayoutBox;
+  readonly phone375: LayoutBox;
+  readonly phone390: LayoutBox;
+  readonly duplicator360: LayoutBox;
+  readonly tablet: LayoutBox;
+  readonly landscape: LayoutBox;
+  readonly landscapeSmall: LayoutBox;
+  readonly desktop: LayoutBox;
+  readonly desktopShort: LayoutBox;
+} = {
+  /** L74-26 G1, back-solved from the 82 px overlap. */
+  phone360: { viewport: { width: 360, height: 740 }, arena: { width: 360, height: 214 } },
+  /** Back-solved from the 14 px overlap. */
+  phone375: { viewport: { width: 375, height: 812 }, arena: { width: 375, height: 282 } },
+  /** Check 1 (2026-11-06), measured with 3 seats: the full strip is 116 px at 390 (two pill rows), not 160. */
+  phone390: { viewport: { width: 390, height: 844 }, arena: { width: 390, height: 354 } },
+  /** 214 − (174 − 100): the 2-seat Duplicator's two-row dock. */
+  duplicator360: { viewport: { width: 360, height: 740 }, arena: { width: 360, height: 140 } },
+  /** Check 1 (2026-11-06), measured at 768×1024 (portrait, full band). */
+  tablet: { viewport: { width: 768, height: 1024 }, arena: { width: 768, height: 469 } },
+  /** Check 1 (2026-11-06), measured with 8 seats: 390 − 91 top row − 141 bottom row. */
+  landscape: { viewport: { width: 844, height: 390 }, arena: { width: 844, height: 159 } },
+  /** Check 1 (2026-11-06), measured with 8 seats: 375 − 91 − 124. */
+  landscapeSmall: { viewport: { width: 667, height: 375 }, arena: { width: 667, height: 160 } },
+  /** Check 1 (2026-11-06), measured at 1440×900: the 336 px log column leaves a 1104 px arena. */
+  desktop: { viewport: { width: 1440, height: 900 }, arena: { width: 1104, height: 489 } },
+  /**
+   * Back-solved from `desktop`: the log column leaves 1024 − 336 = 688 px, and the rows around the
+   * arena take 900 − 489 = 411 px at 1440×900 (a 223 px hand row among them), so 600 − 411 = 189 px (S1,
+   * Check 1, 2026-11-06). The controller's browser check re-measures it.
+   */
+  desktopShort: { viewport: { width: 1024, height: 600 }, arena: { width: 688, height: 189 } },
+};
+
+/** The 16 human tutorial indices: 0, then odd 1–29 (`TUTORIAL_STEPS` actor 'human'; plan A.10, L75-04). */
+export const TUTORIAL_HUMAN_INDICES: readonly number[] = TUTORIAL_STEPS.filter((step) => step.actor === 'human').map(
+  (step) => step.index,
+);
+
+/** The incoming effect on 'me' from 'p1' that the script expects at these indices (bot plays at index − 1). */
+const TUTORIAL_INCOMING: Readonly<Record<number, CardId>> = {
+  3: 'basic-attack',
+  11: 'spy',
+  17: 'strong-attack',
+  19: 'thief',
+  29: 'strong-attack',
+};
+
+/** The POV's hand at `index`: the setup hand, then each scripted upgrade, sale and buy. */
+function tutorialHand(index: number): CardInstance[] {
+  const hand = [
+    makeCard('tax'),
+    makeCard('spy', { isUpgraded: index >= 6 }),
+    makeCard('basic-attack', { isUpgraded: index >= 24 }),
+    ...(index >= 10 ? [] : [makeCard('shield')]),
+    makeCard('shield', { instanceId: 'shield-2' }),
+  ];
+  return index >= 16 ? [...hand, makeCard('absorber')] : hand;
+}
+
+function tutorialLives(index: number): number {
+  if (index < 2) return TUTORIAL_HUMAN_LIVES;
+  return index >= 20 ? 4 : 1;
+}
+
+function tutorialUpgradePoints(index: number): number {
+  if (index < 6 || (index >= 14 && index < 24)) return TUTORIAL_HUMAN_UPGRADE_POINTS;
+  return 0;
+}
+
+/**
+ * A 2-seat tutorial view at `index` (plan A.10, L75-04): 'me' (Indestructible) vs bot 'p1' (Ghost),
+ * playKind 'tutorial', tutorialIndex = index, the POV's turn on human indices, and the hand, specials,
+ * resources and pending effects the script expects there (`packages/shared/src/tutorial/setup.ts` and
+ * the script). It keeps the setup's points at every index and replays no server state. 'p1' is
+ * Spy+-revealed from `TUTORIAL_LOOK_INDEX`. `overrides` spread last.
+ */
+export function makeTutorialArenaView(index: number, overrides: Partial<PlayingStateView> = {}): PlayingStateView {
+  const step = tutorialStepAt(index);
+  if (step === undefined) {
+    throw new RangeError(`no tutorial step at index ${String(index)}`);
+  }
+  const human = step.actor === 'human';
+  const self = makeSelf({
+    kitId: TUTORIAL_HUMAN_KIT_ID,
+    points: TUTORIAL_HUMAN_POINTS,
+    lives: tutorialLives(index),
+    upgradePoints: tutorialUpgradePoints(index),
+    hand: tutorialHand(index),
+    specialCards: index >= 20 ? [] : [makeCard('super-regeneration')],
+  });
+  const spied = {
+    lives: index >= 26 ? 1 : TUTORIAL_BOT_LIVES,
+    points: 10,
+    upgradePoints: 0,
+    shield: 0,
+    kitId: TUTORIAL_BOT_KIT_ID,
+    hand: TUTORIAL_BOT_HAND_CARD_IDS.map((id) => makeCard(id, { instanceId: `p1-${id}` })),
+    specialCards: [],
+  };
+  const players = [
+    makePlayer('me', { isYou: true }),
+    makePlayer('p1', { isBot: true, botDifficulty: 'normal', ...(index >= TUTORIAL_LOOK_INDEX ? { spied } : {}) }),
+  ];
+  const incoming = TUTORIAL_INCOMING[index];
+  const pendingEffects: PendingEffectView[] =
+    incoming === undefined
+      ? []
+      : [makePending({ id: `tut-${String(index)}`, sourcePlayerId: 'p1', targetPlayerId: 'me', cardId: incoming, queuedAt: index - 1 })];
+  return makeArenaView({
+    seatCount: 2,
+    overrides: {
+      playKind: 'tutorial',
+      tutorialIndex: index,
+      currentTurnPlayerId: human ? 'me' : 'p1',
+      turnSequence: index + 1,
+      players,
+      self,
+      pendingEffects,
+      ...overrides,
+    },
+  });
 }
