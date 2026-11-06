@@ -10,7 +10,7 @@
  * (L75); the panel has no `className`. It has no Skip control either: Skip lives on the table
  * flag (Lot 45), and the first-game hint host puts its own "Skip all" in `footer`.
  *
- * The props are those of the V6 `design/components/coach-panel.tsx`, which this replaces for L75.
+ * The props are those of the V6 coach panel, which this replaced (`design/components/coach-panel.tsx`, deleted in L75-11).
  * The caller passes `hideAriaLabel`, and every string comes from the shared tutorial and hint
  * copy (`parseCoachBody` splits it; this file invents no words). The root's `data-zone` and the
  * caller's `extraAttrs` (`data-tutorial-index`, `data-hint-id`, ...) are anchors that tests and

@@ -247,7 +247,7 @@ export interface ArenaScreenProps {
   connectionStatus: RoomConnectionStatus;
 }
 
-/** The FX provider shell (plan A.9.2) (§6.12): the overlay draws over the arena. */
+/** The FX provider shell (plan A.9.2, §6.12): the overlay draws over the arena. */
 export function ArenaScreen(props: ArenaScreenProps): ReactElement {
   return (
     <TableFxProvider>
@@ -273,7 +273,7 @@ function ArenaScreenInner(props: ArenaScreenProps): ReactElement {
   const reconnecting = props.connectionStatus === 'reconnecting';
   const ctx: ActionContext = { subChoice: props.subChoice, readOnly, reconnecting };
   const lock = actionLock(view, ctx);
-  // The FX triggers both boards share (L74-17): seeded elimination beats (Q63), log chips and ghosts, threat cues.
+  // The arena's FX triggers (L74-17): seeded elimination beats (Q63), log chips and ghosts, threat cues.
   const fx = useTableFxTriggers({ view, lastActionResolved: props.lastActionResolved, subChoice: props.subChoice });
   // The last send and the view it left from, for the reject spring-back (§6.6.2, L74-25).
   const [lastSent, setLastSent] = useState<LastSent | null>(null);
@@ -639,7 +639,11 @@ function ArenaScreenInner(props: ArenaScreenProps): ReactElement {
           />
         )}
       </div>
-      {/* Outside portrait the region clips its overflow: the retired V2 `index.css` landscape rule clipped this zone (it shares the V2 `card-band` name); kept so the arena looks as it did before L75-10, except in degenerate boxes (plan A.18). */}
+      {/*
+        Outside portrait the region clips its overflow: the retired V2 `index.css` landscape rule
+        clipped this zone (it shares the V2 `card-band` name). Kept so the arena looks as it did
+        before L75-10, except in degenerate boxes (plan A.18).
+      */}
       <div {...regionLayout('hand')} data-zone="card-band" {...yourZone} className={mode === 'portrait' ? 'min-w-0' : 'min-w-0 overflow-hidden'}>
         <HandFan
           view={view}
@@ -717,7 +721,11 @@ function ArenaScreenInner(props: ArenaScreenProps): ReactElement {
       ) : null}
       {/* Portaled to `document.body` on `Z_INDEX.toast`, mounted once (§6.12, L74-25): the V2 modal's copy in a toast. */}
       <RejectToast reject={props.actionReject} onDismiss={props.onDismissActionReject} />
-      {/* The sheets are the last children of the arena root and never inside a clickable element: a React portal bubbles clicks to its ancestors. No `default`, so a new `ArenaSheet` variant fails `noImplicitReturns` until it gets a case. */}
+      {/*
+        The sheets are the last children of the arena root and never inside a clickable element: a
+        React portal bubbles clicks to its ancestors. No `default`, so a new `ArenaSheet` variant
+        fails `noImplicitReturns` until it gets a case.
+      */}
       {arenaSheetEntries(sheets).map(({ sheet, key, open }) => {
         switch (sheet.kind) {
           case 'card': {

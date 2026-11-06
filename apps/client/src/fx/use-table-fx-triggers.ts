@@ -1,5 +1,5 @@
 /**
- * The table FX triggers both boards share — technical spec v7 §4.1, §6.12, §8.1, §8.3, Q63; Lot 14.
+ * The arena's FX triggers — technical spec v7 §4.1, §6.12, §8.1, §8.3, Q63; Lot 14.
  *
  * Moved out of the V2 `screens/table.tsx` (L74-17, deleted in L75-10): the V7 arena calls this
  * hook. It needs `TableFxProvider` (`useTableFx` throws without it). Every decision is pure in

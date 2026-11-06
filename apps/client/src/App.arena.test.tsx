@@ -10,9 +10,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { App } from './App';
 import type { UseRoomConnectionResult } from './net/use-room-connection';
+import { RETIRED_TABLE_SWITCH_KEY } from './retired-table-switch';
 import { chatSeenCount, markChatSeen } from './screens/arena/chat-unread-store';
 import { makeArenaView, makeTutorialArenaView } from './screens/arena/test-view';
-import { RETIRED_TABLE_SWITCH_KEY } from './retired-table-switch';
 import { renderUi } from './test/render';
 import { makeFinishedView, makeLobbyView } from './view-model/test-fixtures';
 

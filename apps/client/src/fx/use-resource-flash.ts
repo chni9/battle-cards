@@ -6,8 +6,8 @@
  * ported because the arena may not import `design/`; both copies live until Lot 77 or 81 retires
  * `design/components/resource-icon.tsx` (Game over). A printed value's Δ flashes and floats; the POV
  * (no `playerId`) listens as `self` and flies one chip per unit between the log and the value; an
- * opponent seat listens by player id and never flies. A Δ the overlay already choreographed (`shouldSkipResourceIconFlyout`)
- * neither flies nor floats here: the overlay's `emitResourceFlowFlash` floats it instead, which is
+ * opponent seat listens by player id and never flies. A Δ the overlay already choreographed
+ * (`shouldSkipResourceIconFlyout`) neither flies nor floats here: the overlay's `emitResourceFlowFlash` floats it instead, which is
  * also how a hidden `?` value flashes its public chip amount. Reduced motion keeps the flash and
  * drops the flight (§8.3). Works without a provider: it then only flashes.
  */
