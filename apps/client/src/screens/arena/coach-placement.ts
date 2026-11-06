@@ -107,27 +107,23 @@ export function placeCoach(input: CoachPlacementInput): CoachPlacement {
     const box: Rect = { left, top, width: coach.width, height: coach.height };
     return marks.reduce((sum, mark) => sum + overlapArea(box, withCallout(mark)), 0);
   };
-  const atTop = coveredAt(topEdge);
+  const underEdge =
+    opponents === undefined
+      ? undefined
+      : Math.min(bottomEdge, Math.max(topEdge, opponents.top + opponents.height + COACH_MARK_CLEARANCE_PX));
   if (input.bounds === 'viewport') {
     const belowBar =
       input.topBar === undefined ? topEdge : Math.min(bottomEdge, Math.max(topEdge, input.topBar.top + input.topBar.height + COACH_INSET_PX));
     const slots: CoachPlacement[] = [{ edge: 'top', top: belowBar, left }, { edge: 'bottom', top: bottomEdge, left }];
-    if (opponents !== undefined) {
-      const underEdge = Math.min(bottomEdge, Math.max(topEdge, opponents.top + opponents.height + COACH_MARK_CLEARANCE_PX));
-      slots.push({ edge: 'under-opponents', top: underEdge, left });
-    }
-    // `reduce` keeps the earlier slot on a tie: top, then bottom, then under.
-    return slots.reduce((best, slot) => (coveredAt(slot.top) < coveredAt(best.top) ? slot : best));
+    if (underEdge !== undefined) slots.push({ edge: 'under-opponents', top: underEdge, left });
+    // Each slot's cover is measured once. `reduce` keeps the earlier slot on a tie: top, then bottom, then under.
+    return slots
+      .map((slot) => ({ slot, covered: coveredAt(slot.top) }))
+      .reduce((best, candidate) => (candidate.covered < best.covered ? candidate : best)).slot;
   }
+  const atTop = coveredAt(topEdge);
   if (atTop === 0) return { edge: 'top', top: topEdge, left };
-  const atBottom = coveredAt(bottomEdge);
-  if (atBottom < atTop) return { edge: 'bottom', top: bottomEdge, left };
-  if (opponents !== undefined) {
-    const underEdge = Math.min(
-      bottomEdge,
-      Math.max(topEdge, opponents.top + opponents.height + COACH_MARK_CLEARANCE_PX),
-    );
-    if (coveredAt(underEdge) < atTop) return { edge: 'under-opponents', top: underEdge, left };
-  }
+  if (coveredAt(bottomEdge) < atTop) return { edge: 'bottom', top: bottomEdge, left };
+  if (underEdge !== undefined && coveredAt(underEdge) < atTop) return { edge: 'under-opponents', top: underEdge, left };
   return { edge: 'top', top: topEdge, left };
 }

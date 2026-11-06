@@ -197,8 +197,8 @@ describe('placeCoach during the tour (S-B1)', () => {
     for (const marks of [[PHONE.plate], [PHONE.seat], [PHONE.seat, PHONE.plate]]) {
       const placed = placeCoach(script(PHONE, marks, PHONE.seat));
       expect(placed.top).toBeGreaterThanOrEqual(PHONE.arena.top + COACH_INSET_PX);
-      expect(placed.top + PHONE.coach.height).toBeLessThanOrEqual(Math.max(PHONE.arena.top + COACH_INSET_PX + PHONE.coach.height, PHONE.arena.top + PHONE.arena.height - COACH_INSET_PX));
-      expect(placed.top).toBeLessThan(PHONE.arena.top + PHONE.arena.height);
+      // The coach (237 px) fits the arena (282 px), so no script slot lets it past the arena's bottom inset.
+      expect(placed.top + PHONE.coach.height).toBeLessThanOrEqual(PHONE.arena.top + PHONE.arena.height - COACH_INSET_PX);
     }
     // The measured case: the arena-only coach stays at the top-left of the arena, covering the Incoming mark.
     expect(placeCoach(script(PHONE, [PHONE.plate], PHONE.seat))).toEqual({ edge: 'top', top: PHONE.arena.top + COACH_INSET_PX, left: COACH_INSET_PX });

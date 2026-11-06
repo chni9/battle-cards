@@ -17,7 +17,7 @@
  *   S4): at 375×812 the corner covered the opponent seat and the Incoming plate. When the bottom edge
  *   overlaps the marks too, it takes a third slot under the opponent row (the box around the measured
  *   `[data-zone="opponent-seat"]` elements; designer 2026-11-06, Q2-5). During the board tour and the Look gate only
- *   (`coach.tour`: the table is locked), the slots are the visible viewport's top and bottom edges and
+ *   (`coach.locksTable`), the slots are the visible viewport's top and bottom edges and
  *   the one under the opponents, the least-covering winning (designer 2026-11-06, Gate B stop item
  *   S-B1), the top one starting under the top bar on desktop (Gate C, S-C2); script steps keep the arena-only
  *   slots so the hand and dock stay usable. The marks are read
@@ -122,7 +122,7 @@ export function TutorialCoachHost({ coach, onHide, onAck }: TutorialCoachHostPro
       const topBar = onDesktop ? document.querySelector('[data-arena-region="top-bar"]')?.getBoundingClientRect() : undefined;
       // The tour and the Look gate lock the table, so their coach may sit over the self strip and the hand (S-B1); a script step keeps the arena.
       const placed = placeCoach(
-        coach.tour
+        coach.locksTable
           ? {
               ...shared,
               bounds: 'viewport',
@@ -147,7 +147,7 @@ export function TutorialCoachHost({ coach, onHide, onAck }: TutorialCoachHostPro
       observer.disconnect();
       window.cancelAnimationFrame(frame);
     };
-  }, [box.offsetTop, box.offsetLeft, box.width, box.height, store, coach.messageKey, coach.tour, onDesktop]);
+  }, [box.offsetTop, box.offsetLeft, box.width, box.height, store, coach.messageKey, coach.locksTable, onDesktop]);
 
   useLayoutEffect(() => {
     if (!refocus.current) return;
