@@ -57,8 +57,12 @@ export interface RulesEditorProps {
   editor: RulesEditorBinding;
 }
 
-/** The read-only sheet's kit grid: auto-fill columns of at least 5.5rem (`rules-sheet.tsx`). */
-const KIT_GRID_CLASS = 'grid grid-cols-[repeat(auto-fill,minmax(5.5rem,1fr))] gap-x-2 gap-y-4';
+/**
+ * The read-only sheet's kit grid (`rules-sheet.tsx`) with 6rem columns instead of 5.5rem: each cell
+ * here is a button, and its border and padding take 18px, so 'Indestructible' (about 77px at 12px)
+ * needs 95px and would split mid-word at 320 px in 5.5rem.
+ */
+const KIT_GRID_CLASS = 'grid grid-cols-[repeat(auto-fill,minmax(6rem,1fr))] gap-x-2 gap-y-4';
 
 export function RulesEditor({ rules, editor }: RulesEditorProps): ReactElement {
   const reasonId = useId();
@@ -173,7 +177,7 @@ function KitToggle({ face, rules, editor, disabled, reasonId }: KitToggleProps):
       <span aria-hidden="true" className={face.excluded ? 'opacity-40 grayscale' : ''}>
         <KitPortrait kitId={face.kitId} size="thumb" />
       </span>
-      <span className="max-w-full font-v7-body text-v7-caption font-bold leading-tight break-words text-v7-text-2">
+      <span className="max-w-full font-v7-body text-v7-caption font-bold leading-tight break-words hyphens-auto text-v7-text-2">
         {face.name}
       </span>
       {face.excluded ? (

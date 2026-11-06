@@ -90,7 +90,7 @@ export function RulesSheet({ open, rules, onClose, dataAttributes, editor }: Rul
                 <span aria-hidden="true" className={face.excluded ? 'opacity-40 grayscale' : ''}>
                   <KitPortrait kitId={face.kitId} size="thumb" />
                 </span>
-                <span className="max-w-full font-v7-body text-v7-caption font-bold leading-tight break-words text-v7-text-2">
+                <span className="max-w-full font-v7-body text-v7-caption font-bold leading-tight break-words hyphens-auto text-v7-text-2">
                   {face.name}
                 </span>
                 {face.excluded ? (
