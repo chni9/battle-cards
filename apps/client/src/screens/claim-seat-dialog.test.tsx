@@ -132,4 +132,24 @@ describe('ClaimSeatDialog (§7.7, L57-13, L57-15)', () => {
     await user.click(sitHere());
     expect(vi.mocked(p.onClaim).mock.calls).toEqual([['p-ana-2'], ['p-ana-2']]);
   });
+
+  it('forgets a pick that left the set, so it is not selected again if the seat returns (#137)', async () => {
+    const { p, user, rerender } = renderOnce();
+    await user.click(row('p-ana-3'));
+    rerender(<ClaimSeatDialog {...p} seats={[ANA, ANA_TWIN]} />);
+    rerender(<ClaimSeatDialog {...p} seats={[ANA, ANA_TWIN, ANA_LOWER]} />);
+    expect(pressed('p-ana-3')).toBe('false');
+    expect(isDisabled(sitHere())).toBe(true);
+  });
+
+  it('locks Sit here while reconnecting, keeps it focusable, and leaves Stay live (P1 m1)', async () => {
+    const { p, user } = renderOnce({ seats: [ANA_TWIN], locked: true });
+    expect(isDisabled(sitHere())).toBe(true);
+    sitHere().focus();
+    expect(document.activeElement).toBe(sitHere());
+    await user.click(sitHere());
+    expect(p.onClaim).not.toHaveBeenCalled();
+    await user.click(within(sheet()).getByRole('button', { name: 'Stay spectating' }));
+    expect(p.onStay).toHaveBeenCalledTimes(1);
+  });
 });

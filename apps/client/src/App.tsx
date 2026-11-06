@@ -200,6 +200,7 @@ function GameApp() {
           phase: view.phase,
         })}
         {...(view.phase === 'lobby' ? { hostPlayerId: view.hostPlayerId } : {})}
+        locked={status === 'reconnecting'}
         onClaim={(playerId) => {
           claimSeat(playerId);
         }}

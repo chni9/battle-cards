@@ -137,6 +137,22 @@ describe('App claim picker wiring (§7.7, §7.2, Q24, L57-15, L76-16)', () => {
     expect(screen.queryByRole('button', { name: 'Claim a seat' })).toBeNull();
   });
 
+  it('locks Sit here while the connection is reconnecting and unlocks it on rejoin (P1 m1)', async () => {
+    const claimSeat = vi.fn<(playerId: string) => void>();
+    const walkIn = (status: UseRoomConnectionResult['status']) =>
+      fakeRoomConnection(walkInLobbyView({ players: seats, claimableSeats: DEE_FREE }), { status, claimSeat });
+    const result = renderApp(walkIn('reconnecting'));
+    const open = picker();
+    if (open === null) throw new Error('the claim picker did not open');
+    const sitHere = (): HTMLElement => within(open).getByRole('button', { name: 'Sit here' });
+    expect(sitHere().getAttribute('aria-disabled') ?? sitHere().getAttribute('disabled')).not.toBeNull();
+    await result.user.click(sitHere());
+    expect(claimSeat).not.toHaveBeenCalled();
+    show(result, walkIn('connected'));
+    await result.user.click(sitHere());
+    expect(claimSeat).toHaveBeenCalledWith('dee');
+  });
+
   it('never shows the picker to the lobby host (L57-15)', () => {
     renderApp(fakeRoomConnection(hostLobbyView({ players: seats, claimableSeats: DEE_FREE })));
     expect(picker()).toBeNull();
