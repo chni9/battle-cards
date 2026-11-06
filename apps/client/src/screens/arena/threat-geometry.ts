@@ -31,8 +31,8 @@ export const ARROW_SEAT_GAP_PX = 2;
  * 76 px wide (40 px, as tuned at the Lot 74 gate); the desktop seat is 120 px wide (62 px), where a
  * 40 px trim drew the head over the resource chips (Lot 75 Check 1).
  */
-export function arrowSeatTrimPx(mode: LayoutMode): number {
-  return seatRenderBox(mode).width / 2 + ARROW_SEAT_GAP_PX;
+export function arrowSeatTrimPx(mode: LayoutMode, box?: Size): number {
+  return seatRenderBox(mode, box).width / 2 + ARROW_SEAT_GAP_PX;
 }
 /** Where an arrow leaves or reaches the plate. */
 export const ARROW_PLATE_TRIM_PX = 44;
@@ -168,7 +168,7 @@ export function threatArrows(input: ThreatGeometryInput): readonly ThreatArrow[]
           return new Set([...incoming, ...outgoing]);
         })();
 
-  const seatTrim = arrowSeatTrimPx(layout.mode);
+  const seatTrim = arrowSeatTrimPx(layout.mode, layout.box);
   return visible.flatMap(({ entry, from, to }) => {
     const ids = pairs.get(pairKey(entry)) ?? [entry.effectId];
     const canonical = (ids.indexOf(entry.effectId) - (ids.length - 1) / 2) * ARROW_FAN_SPACING_PX;
@@ -200,7 +200,7 @@ export function fanOutMarks(input: Omit<ThreatGeometryInput, 'tappedSeatId'>): r
   const { model, layout, arena, povId } = input;
   const anchors = anchorsOf(layout, arena, povId);
   // The badge corner of the seat as drawn in this mode (L75-02).
-  const { width, height } = seatRenderBox(layout.mode);
+  const { width, height } = seatRenderBox(layout.mode, layout.box);
   return model.fanOuts.flatMap((group) => {
     const burst = anchors.get(group.sourcePlayerId);
     if (burst === undefined) {

@@ -6608,3 +6608,35 @@ Spy Thief after Lot 71, Upgrade Point Thief, Attack Thief); the Lot 75 plan A.9.
   designer review.
 
 ---
+
+## 2026-11-06 · [P] Lot 75 Part 1 stop items: shrink the desktop seats, an icon dock, a compact Watching header, a coach that flips (L75-02, L75-03, L75-13, L75-04)
+
+Source: Lot 75 Check 1 and Check 2 stop items S1–S4 (`.superpowers/sdd/2026-10-21-v7-lot-75-arena-2/check-1-report.md`,
+`check-2-report.md`); technical spec v7 §6.1, §6.4, §6.12, §14.3; designer rulings of 2026-11-06. No rule, value or protocol
+field changes.
+
+- **S1: a short desktop arena shrinks the seats; the hand keeps its size** (designer). `desktopSeatBox(arena, seatCount,
+  isWalkIn)` (`view-model/seat-layout.ts`) returns `SEAT_BOX.desktop` (120×136) while the layout it gives clears the plate's
+  visible footprint and stays inside the arena, else the largest box down to `SEAT_BOX.portrait` (76×92) that does, else the
+  portrait box. The footprint is the 74 px landing frame (`DESKTOP_PLATE_FOOTPRINT_PX`); incoming badges grow upward and rely on
+  the press-through, as in portrait, or no box could clear the plate at 1024×600. An unmeasured arena keeps 120×136. The layout
+  carries the box (`SeatLayout.box`, desktop only) so the seats, the grid, the arrows and the band helper read one number. A box
+  under the desktop height draws the portrait anatomy (it fits 76×92). The 1024×600 arena (688×189) is back-solved from the
+  1440×900 measurement; with 7 opponents no box fits there (the ellipse stacks seats at its flanks), so the seats fall to the
+  portrait floor and the plate still covers some: shrinking alone does not clear 8 seats at that size, and the browser check
+  re-measures it.
+- **S2: an icon-only dock on narrow landscape** (designer; follows the Lot 59 label-free dock). Under 700 px of viewport width in
+  landscape-compact (`dockIconOnly`), Shop and Activate duplication show their icon only, in a two-column dock with no reason
+  line; every control keeps its accessible name and its reason in `title` and `aria-describedby`. At 667×375 the dock then
+  fits the 10 rem (160 px) column floor, so the hand gets 667 − 287 (strip) − 160 = 220 px, about three 64 px cards (two
+  needed). 844×390 is unchanged.
+- **S3: the Watching header compacts with the portrait band** (designer). `WatchingHeader` and `SpectatorStrip` take
+  `compact`, as the self strip does: one row, the locked line spoken only. The band helper reads the Watching strip's own full and
+  compact heights, not the self strip's, so it decides correctly. Hysteresis stays as it is.
+- **S4: the tutorial coach flips below its mark** (designer). The coach stays at the arena's top-left (K8) unless the element
+  currently marked overlaps that default box; then it sits on the arena region's bottom edge, clear of the bottom band and the
+  dock. `placeCoach` is pure over the coach rect, the arena rect and the mark rects. The host still measures
+  `[data-arena-region="arena"]` itself; the coach stays non-modal and above sheets.
+
+---
+

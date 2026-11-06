@@ -13,7 +13,7 @@ import { SEAT_BOX, type LayoutBox } from '../../view-model/seat-layout';
 import { seats, type SeatModel, type SeatsModel } from '../../view-model/seats';
 import { makePersistent, makePlayer } from '../../view-model/test-fixtures';
 import { ArenaSeats } from './arena-seats';
-import { makeArenaView } from './test-view';
+import { ARENA_TEST_BOXES, makeArenaView } from './test-view';
 
 /** 3 opponents sit on the arc here; 7 opponents at 360 px fall back to the grid (L73 seat-layout tests). */
 const ARC_BOX: LayoutBox = { viewport: { width: 390, height: 844 }, arena: { width: 390, height: 360 } };
@@ -167,6 +167,30 @@ describe('opponent seat layout (§6.4)', () => {
     const phone = seatEl('p1');
     expect([phone.getAttribute('data-seat-size'), phone.style.width, phone.style.height]).toEqual(['portrait', ...px('portrait')]);
     expect(phone.querySelector('[data-zone="kit-portrait"]')?.getAttribute('data-kit-size')).toBe('thumb');
+  });
+});
+
+describe('a desktop seat shrunk by a short arena (designer 2026-11-06, S1)', () => {
+  it('is drawn at the layout box with the phone anatomy, and keeps every resource, the name and the kit', () => {
+    const view = makeArenaView({ seatCount: 4, tiers: { p1: 'spy-plus' } });
+    const { model } = renderSeats(view, ARENA_TEST_BOXES.desktopShort);
+    const box = model.layout.box;
+    if (box === undefined) throw new Error('a desktop layout carries its seat box');
+    expect(box.height).toBeLessThan(SEAT_BOX.desktop.height);
+    const seat = seatEl('p1');
+    expect([seat.getAttribute('data-seat-size'), seat.style.width, seat.style.height]).toEqual([
+      'desktop',
+      `${String(box.width)}px`,
+      `${String(box.height)}px`,
+    ]);
+    expect(seat.querySelector('[data-zone="kit-portrait"]')?.getAttribute('data-kit-size')).toBe('thumb');
+    expect(resourceTexts(seat)).toHaveLength(LOG_RESOURCE_KINDS.length);
+    expect(seat.querySelector('[data-seat-name]')?.textContent).toContain('p1');
+  });
+
+  it('keeps the tile anatomy at the full desktop box', () => {
+    renderSeats(makeArenaView({ seatCount: 4, tiers: { p1: 'spy-plus' } }), ARENA_TEST_BOXES.desktop);
+    expect(seatEl('p1').querySelector('[data-zone="kit-portrait"]')?.getAttribute('data-kit-size')).toBe('tile');
   });
 });
 

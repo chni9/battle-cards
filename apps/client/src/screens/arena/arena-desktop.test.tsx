@@ -43,9 +43,10 @@ const logToggle = (): HTMLElement => within(region('ticker')).getByRole('button'
 
 describe('desktop layout (§6.4, R3)', () => {
   it.each([
-    { label: 'the ellipse', box: ARENA_TEST_BOXES.desktop, kind: 'arc' },
-    { label: 'the grid seats() falls back to', box: { viewport: ARENA_TEST_BOXES.desktop.viewport, arena: { width: 1000, height: 120 } }, kind: 'grid' },
-  ])('1440×900 renders desktop: 7 seats on $label at the desktop box, the log column, the dock in the hand row', ({ box, kind }) => {
+    { label: 'the ellipse', box: ARENA_TEST_BOXES.desktop, kind: 'arc', seatBox: SEAT_BOX.desktop },
+    // A 120 px arena is too short for any desktop box: the seats shrink to the portrait floor (designer 2026-11-06, S1).
+    { label: 'the grid seats() falls back to', box: { viewport: ARENA_TEST_BOXES.desktop.viewport, arena: { width: 1000, height: 120 } }, kind: 'grid', seatBox: SEAT_BOX.portrait },
+  ])('1440×900 renders desktop: 7 seats on $label at the desktop box, the log column, the dock in the hand row', ({ box, kind, seatBox }) => {
     const view = deskView(8);
     const { props } = setupAt(box, view);
     expect(main().getAttribute('data-layout-mode')).toBe('desktop');
@@ -53,12 +54,25 @@ describe('desktop layout (§6.4, R3)', () => {
     expect([opponents.getAttribute('data-seat-layout'), seats(view, box).layout.kind]).toEqual([kind, kind]);
     const drawn = [...opponents.querySelectorAll<HTMLElement>('[data-zone="opponent-seat"]')];
     expect(drawn.map((seat) => [seat.getAttribute('data-seat-size'), seat.style.width, seat.style.height]))
-      .toEqual(Array.from({ length: 7 }, () => ['desktop', `${String(SEAT_BOX.desktop.width)}px`, `${String(SEAT_BOX.desktop.height)}px`]));
+      .toEqual(Array.from({ length: 7 }, () => ['desktop', `${String(seatBox.width)}px`, `${String(seatBox.height)}px`]));
     expect(Array.from(main().querySelectorAll('[data-arena-region]'), (node) => node.getAttribute('data-arena-region'))).toEqual([...ARENA_REGIONS]);
     expect(rows()).toEqual(['top', 'side', 'arena', 'strip', 'hand', 'hand']);
     expect([logToggle().getAttribute('data-zone'), logToggle().getAttribute('aria-expanded')]).toEqual(['log-collapsed', 'true']);
     expect(one('[data-zone="action-log-panel"] [data-log-line="0"]').textContent).toBe('p1 draws');
     expectNoArenaIntent(props);
+  });
+
+  it('1024×600: the seats are drawn at the shrunk layout box, not at 120×136, and none is cropped by the arena (S1)', () => {
+    const view = deskView(4);
+    setupAt(ARENA_TEST_BOXES.desktopShort, view);
+    const box = seats(view, ARENA_TEST_BOXES.desktopShort).layout.box;
+    if (box === undefined) throw new Error('a desktop layout carries its seat box');
+    expect(box.width).toBeLessThan(SEAT_BOX.desktop.width);
+    const drawn = [...one('[data-zone="opponents"]').querySelectorAll<HTMLElement>('[data-zone="opponent-seat"]')];
+    expect(drawn.map((seat) => [seat.style.width, seat.style.height])).toEqual(
+      Array.from({ length: 3 }, () => [`${String(box.width)}px`, `${String(box.height)}px`]),
+    );
+    expect(drawn.every((seat) => Number.parseFloat(seat.style.top) + box.height <= ARENA_TEST_BOXES.desktopShort.arena.height + 1e-6)).toBe(true);
   });
 
   it('the log panel toggles closed and open, and its toggle stays rendered; nothing is sent', async () => {

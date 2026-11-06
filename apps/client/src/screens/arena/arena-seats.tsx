@@ -97,6 +97,7 @@ export function ArenaSeats({
             center={center}
             tapped={center.playerId === tappedSeatId}
             mode={model.layout.mode}
+            {...(model.layout.box !== undefined ? { box: model.layout.box } : {})}
             {...(target !== null ? { target } : {})}
             {...(drop !== null ? { drop } : {})}
             {...(highlight !== undefined ? { tutorialHighlight: highlight } : {})}

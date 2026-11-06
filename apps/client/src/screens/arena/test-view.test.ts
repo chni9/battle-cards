@@ -88,7 +88,7 @@ describe('arena test views (Appendix A.4)', () => {
     const modes = Object.fromEntries(Object.entries(ARENA_TEST_BOXES).map(([name, box]) => [name, viewportModeFor(box.viewport)]));
     expect(modes).toEqual({
       phone360: 'portrait', phone375: 'portrait', phone390: 'portrait', duplicator360: 'portrait', tablet: 'portrait',
-      landscape: 'landscape-compact', landscapeSmall: 'landscape-compact', desktop: 'desktop',
+      landscape: 'landscape-compact', landscapeSmall: 'landscape-compact', desktop: 'desktop', desktopShort: 'desktop',
     });
   });
 

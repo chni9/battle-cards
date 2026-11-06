@@ -19,7 +19,9 @@
  *   (`SEAT_BOX[mode]`) and carries `data-seat-size={mode}`. Portrait and landscape-compact keep the
  *   anatomy above. Desktop draws 18 + 96 + 16 px inside the 120×136 box: a body-size name, a tile kit
  *   portrait (72×96) or a `md` disc, and a 40 px resource column. `SEAT_ANATOMY` holds each mode's
- *   size classes whole, so Tailwind sees them.
+ *   size classes whole, so Tailwind sees them. A short desktop arena shrinks the box toward the portrait
+ *   box (`SeatLayout.box`, `desktopSeatBox`; designer 2026-11-06); a box under 136 px tall draws the
+ *   portrait anatomy, which fits the smallest box.
  * - **No hidden information (§6.3).** Every value comes from the `SeatModel`: a hidden value
  *   prints `?` and speaks "unknown", a hidden kit shows the initial disc, and the seat never
  *   re-derives a tier.
@@ -53,7 +55,7 @@ import { RESOURCE_CAPTIONS } from '../../ui/resource-captions';
 import { BotSeatLabel } from '../../ui/seat/bot-seat-label';
 import { botSeatLabelText } from '../../ui/seat/bot-seat-label-text';
 import { PlayerName } from '../../ui/seat/player-name';
-import type { LayoutMode, SeatPlacement } from '../../view-model/seat-layout';
+import { SEAT_BOX, type LayoutMode, type SeatPlacement, type Size } from '../../view-model/seat-layout';
 import { SEAT_VISIBLE_BADGE_COUNT, type SeatModel, type SeatResource } from '../../view-model/seats';
 import { ResourceFlashCue } from './resource-flash';
 import { SEAT_MORE_STATUSES_LABEL, seatBadgeView } from './seat-badges';
@@ -73,6 +75,11 @@ export interface OpponentSeatProps {
   drop?: 'valid' | 'over';
   /** L75-02: the layout mode, which sizes the box and the anatomy. Default 'portrait'. */
   mode?: LayoutMode;
+  /**
+   * The seat box when the layout shrank it (`SeatLayout.box`, designer 2026-11-06); absent = `SEAT_BOX[mode]`.
+   * A box smaller than the mode's own draws the phone anatomy, which fits the smallest (portrait) box.
+   */
+  box?: Size;
   /** L75-04: the tutorial mark, fed by `ArenaSeatsProps.tutorial` (private to the arena, K7). */
   tutorialHighlight?: 'opponent' | 'opponent-portrait';
 }
@@ -192,6 +199,7 @@ export function OpponentSeat({
   target,
   drop,
   mode = 'portrait',
+  box,
   tutorialHighlight,
 }: OpponentSeatProps): ReactElement {
   const detailsId = useId();
@@ -202,8 +210,8 @@ export function OpponentSeat({
   const validTarget = target?.kind === 'valid';
   // The ring sits on the stretched button; the dim on the root, because the button is transparent.
   const targetClass = validTarget ? ['ring-4 ring-v7-mine', reduced ? '' : 'animate-pulse'] : [];
-  const rect = seatRect(center, mode);
-  const anatomy = SEAT_ANATOMY[mode];
+  const rect = seatRect(center, mode, box);
+  const anatomy = box !== undefined && box.height < SEAT_BOX[mode].height ? PHONE_ANATOMY : SEAT_ANATOMY[mode];
   const botWords = model.botDifficulty !== null ? botSeatLabelText(model.botDifficulty) : null;
   const seatTitle = [model.nickname, model.connectionLabel, botWords]
     .filter((words): words is string => words !== null)

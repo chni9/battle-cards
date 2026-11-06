@@ -1605,8 +1605,10 @@ Appendix A). Each Lot 74 task appends its bullet here, in task order.
     dock sits right of the hand in the `hand` row.
   - The card, Shop and seat sheets pass `placement="auto"`: centred dialogs on desktop, bottom sheets
     elsewhere. Every other arena sheet stays `bottom`.
-  - Seats are drawn at `seatRenderBox(mode)` (`SEAT_BOX[mode]`, `data-seat-size`; desktop 120×136
-    with a tile kit portrait); the grid spacing and the fan-out badge corner follow it.
+  - Seats are drawn at `seatRenderBox(mode, layout.box)` (`SEAT_BOX[mode]`, `data-seat-size`; desktop 120×136
+    with a tile kit portrait); the grid spacing and the fan-out badge corner follow it. A short desktop
+    arena shrinks the box toward the portrait box (`desktopSeatBox`, `SeatLayout.box`; designer
+    2026-11-06): under 136 px tall the seat draws the portrait anatomy.
   - The layout box holds its viewport while a text field has focus (ruling 7): a phone keyboard
     never re-lays the table out under a sheet; the mode follows on blur. The one definition of
     "a text field has focus" is `isTextEntryElement` / `useTextEntryFocused()` in

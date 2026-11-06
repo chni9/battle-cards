@@ -268,7 +268,8 @@ its six regions on a CSS grid per mode (L75-02). Portrait is one column. Desktop
 full-width top bar over the arena, the self strip and a hand-and-dock row on the left, and a
 collapsible log column on the right (320 px, a 44 px rail when collapsed). The card, Shop and
 seat sheets are centred dialogs on desktop (`placement="auto"`), and desktop seats are drawn
-at 120×136 with a tile kit portrait. Landscape-compact (L75-03) puts the top bar and the ticker
+at 120×136 with a tile kit portrait, shrinking toward the 76×92 portrait box (and its anatomy)
+when the arena is too short for them (`desktopSeatBox`). Landscape-compact (L75-03) puts the top bar and the ticker
 in one top row, the seats in one band, and the compact self strip, the hand and the dock in one
 bottom row. In portrait the bottom band compacts when the plate would cover a seat (L75-13, 'Bas
 plus court'): the compact self strip and 52 px hand cards; the dock keeps its controls. A hand that

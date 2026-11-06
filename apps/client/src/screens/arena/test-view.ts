@@ -296,6 +296,7 @@ export const ARENA_TEST_BOXES: {
   readonly landscape: LayoutBox;
   readonly landscapeSmall: LayoutBox;
   readonly desktop: LayoutBox;
+  readonly desktopShort: LayoutBox;
 } = {
   /** L74-26 G1, back-solved from the 82 px overlap. */
   phone360: { viewport: { width: 360, height: 740 }, arena: { width: 360, height: 214 } },
@@ -313,6 +314,12 @@ export const ARENA_TEST_BOXES: {
   landscapeSmall: { viewport: { width: 667, height: 375 }, arena: { width: 667, height: 160 } },
   /** Check 1 (2026-11-06), measured at 1440×900: the 336 px log column leaves a 1104 px arena. */
   desktop: { viewport: { width: 1440, height: 900 }, arena: { width: 1104, height: 489 } },
+  /**
+   * Back-solved from `desktop`: the log column leaves 1024 − 336 = 688 px, and the rows around the
+   * arena take 900 − 489 = 411 px at 1440×900 (a 223 px hand row among them), so 600 − 411 = 189 px (S1,
+   * Check 1, 2026-11-06). The controller's browser check re-measures it.
+   */
+  desktopShort: { viewport: { width: 1024, height: 600 }, arena: { width: 688, height: 189 } },
 };
 
 /** The 16 human tutorial indices: 0, then odd 1–29 (`TUTORIAL_STEPS` actor 'human'; plan A.10, L75-04). */

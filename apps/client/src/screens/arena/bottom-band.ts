@@ -93,7 +93,7 @@ export function plateOverlapPx(layout: SeatLayout, arena: Size, plateHeight: num
   const plate = plateRect(layout.mode, arena, plateHeight);
   let overlap = 0;
   for (const center of seatCenters(layout, arena)) {
-    const seat = seatRect(center, layout.mode);
+    const seat = seatRect(center, layout.mode, layout.box);
     const meetsHorizontally = seat.left < plate.left + plate.width && plate.left < seat.left + seat.width;
     if (meetsHorizontally) {
       overlap = Math.max(overlap, seat.top + seat.height - plate.top);

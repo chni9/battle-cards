@@ -32,7 +32,8 @@ export const SEAT_MIN_GAP_PX = 8;
 /**
  * Seat bounding box, badge row included (§6.4). L73 starting values; L74 tunes them (§14.3).
  * L75-03: the landscape band draws the portrait anatomy, so its box is the portrait box (it was 76×84,
- * which clipped the anatomy 4 px at the region top).
+ * which clipped the anatomy 4 px at the region top). The desktop box is the full size: a short arena
+ * shrinks it toward the portrait box (`desktopSeatBox`, designer 2026-11-06).
  */
 export const SEAT_BOX: Readonly<Record<LayoutMode, Size>> = {
   portrait: { width: 76, height: 92 },
@@ -55,11 +56,18 @@ export interface SeatPlacement {
 
 /**
  * `arc` covers the ellipse and the landscape-compact top band (the contract has no third kind).
- * `grid` rows follow seat order.
+ * `grid` rows follow seat order. `box` is the seat box a desktop layout was placed with, which
+ * `desktopSeatBox` may shrink below `SEAT_BOX.desktop`; the other modes omit it and draw
+ * `SEAT_BOX[mode]` (`seatBoxOf`).
  */
 export type SeatLayout =
-  | { kind: 'arc'; mode: LayoutMode; placements: readonly SeatPlacement[] }
-  | { kind: 'grid'; mode: LayoutMode; rows: readonly (readonly string[])[] };
+  | { kind: 'arc'; mode: LayoutMode; placements: readonly SeatPlacement[]; box?: Size }
+  | { kind: 'grid'; mode: LayoutMode; rows: readonly (readonly string[])[]; box?: Size };
+
+/** The seat box `layout` was placed with: its own `box` (desktop), else `SEAT_BOX[mode]`. */
+export function seatBoxOf(layout: SeatLayout): Size {
+  return layout.box ?? SEAT_BOX[layout.mode];
+}
 
 export function layoutModeFor(viewport: Size): LayoutMode {
   return viewportModeFor(viewport);
@@ -98,9 +106,22 @@ export function plateCenterFor(mode: LayoutMode, arena: Size): { centerX: number
 export function layoutSeats(view: PlayingStateView, box: LayoutBox): SeatLayout {
   const order = seatOrder(view);
   const mode = layoutModeFor(box.viewport);
-  const seat = SEAT_BOX[mode];
-  const { arena } = box;
+  const isWalkIn = view.isSpectator === true;
+  if (mode !== 'desktop') {
+    return placeSeats(order, mode, SEAT_BOX[mode], box.arena, isWalkIn);
+  }
+  const seat = desktopSeatBox(box.arena, order.length, isWalkIn);
+  return { ...placeSeats(order, mode, seat, box.arena, isWalkIn), box: seat };
+}
 
+/** The seats of `order` placed at the seat box `seat` (§6.4): the ellipse, the band, or the grid fallback. */
+function placeSeats(
+  order: readonly string[],
+  mode: LayoutMode,
+  seat: Size,
+  arena: Size,
+  isWalkIn: boolean,
+): SeatLayout {
   // A 0×0 arena on the first paint, before the caller measures, would give negative radii.
   if (arena.width < seat.width || arena.height < seat.height) {
     return gridOf(mode, order);
@@ -123,7 +144,6 @@ export function layoutSeats(view: PlayingStateView, box: LayoutBox): SeatLayout 
     if (radiusX < 0 || radiusY < 0) {
       return gridOf(mode, order);
     }
-    const isWalkIn = view.isSpectator === true;
     placements = order.map((playerId, index) => {
       const radians = (angleDegrees(mode, isWalkIn, index, order.length) * Math.PI) / 180;
       return {
@@ -139,6 +159,84 @@ export function layoutSeats(view: PlayingStateView, box: LayoutBox): SeatLayout 
     return gridOf(mode, order);
   }
   return { kind: 'arc', mode, placements };
+}
+
+/**
+ * The plate's visible height the desktop fit clears: the 74 px landing frame (`CentralPlate`'s
+ * `min-h-[74px]`). Incoming badges grow upward from it and rely on the plate's press-through, as in
+ * portrait (`PLATE_FOOTPRINT_PX`); the fit does not reserve them, or no seat box could clear the
+ * plate at 1024×600.
+ */
+export const DESKTOP_PLATE_FOOTPRINT_PX = 74;
+
+/**
+ * The desktop seat box for this arena (designer 2026-11-06): `SEAT_BOX.desktop` when the layout it
+ * gives clears the plate and stays inside the arena, else the largest box between it and
+ * `SEAT_BOX.portrait` (1 px steps, both axes) that does, else the portrait box. An unmeasured arena
+ * keeps the desktop box (nothing is drawn yet). The seat count and whether the POV is a walk-in
+ * decide the angles, hence the fit (`angleDegrees`).
+ */
+export function desktopSeatBox(arena: Size, seatCount: number, isWalkIn = false): Size {
+  const full = SEAT_BOX.desktop;
+  const smallest = SEAT_BOX.portrait;
+  if (arena.width <= 0 || arena.height <= 0) {
+    return full;
+  }
+  const order = Array.from({ length: seatCount }, (_, index) => String(index));
+  const steps = full.width - smallest.width;
+  for (let grow = steps; grow > 0; grow -= 1) {
+    const candidate: Size = {
+      width: smallest.width + grow,
+      height: smallest.height + Math.round(((full.height - smallest.height) * grow) / steps),
+    };
+    if (clearsPlate(placeSeats(order, 'desktop', candidate, arena, isWalkIn), candidate, arena)) {
+      return candidate;
+    }
+  }
+  return smallest;
+}
+
+/** Float slack for the ellipse's exact contact with the arena edges (a seat at 0° or 180° touches the side). */
+const FIT_EPSILON_PX = 1e-6;
+
+/** No seat box meets the plate's visible footprint (`DESKTOP_PLATE_FOOTPRINT_PX`, bottom-anchored), and none leaves the arena. */
+function clearsPlate(layout: SeatLayout, seat: Size, arena: Size): boolean {
+  const plate = plateCenterFor('desktop', arena);
+  const plateBox = PLATE_BOX.desktop;
+  const plateBottom = plate.centerY + plateBox.height / 2;
+  const plateTop = plateBottom - DESKTOP_PLATE_FOOTPRINT_PX;
+  return seatCentersOf(layout, seat, arena).every(({ centerX, centerY }) => {
+    const left = centerX - seat.width / 2;
+    const right = centerX + seat.width / 2;
+    const top = centerY - seat.height / 2;
+    const bottom = centerY + seat.height / 2;
+    const inside =
+      left >= -FIT_EPSILON_PX &&
+      right <= arena.width + FIT_EPSILON_PX &&
+      top >= -FIT_EPSILON_PX &&
+      bottom <= arena.height + FIT_EPSILON_PX;
+    const meetsPlate = left < plate.centerX + plateBox.width / 2 && plate.centerX - plateBox.width / 2 < right;
+    // A seat wholly below the footprint (the lower flanks of a tall ellipse) is clear of it.
+    const meetsFootprint = meetsPlate && bottom > plateTop + FIT_EPSILON_PX && top < plateBottom - FIT_EPSILON_PX;
+    return inside && !meetsFootprint;
+  });
+}
+
+/**
+ * Seat centres in arena pixels, in drawing order: the arc placements as given, or the grid rows laid
+ * out at seat box `seat` (`ceil(n/2)` over `floor(n/2)`, `SEAT_MIN_GAP_PX` gutters, from the arena top).
+ */
+export function seatCentersOf(layout: SeatLayout, seat: Size, arena: Size): readonly SeatPlacement[] {
+  if (layout.kind === 'arc') {
+    return layout.placements;
+  }
+  return layout.rows.flatMap((row, rowIndex) =>
+    row.map((playerId, column) => ({
+      playerId,
+      centerX: arena.width / 2 + (column - (row.length - 1) / 2) * (seat.width + SEAT_MIN_GAP_PX),
+      centerY: SEAT_MIN_GAP_PX + rowIndex * (seat.height + SEAT_MIN_GAP_PX) + seat.height / 2,
+    })),
+  );
 }
 
 /**
