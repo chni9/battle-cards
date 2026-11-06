@@ -51,6 +51,16 @@ function seatDrop(highlight: SeatDropHighlight | undefined, playerId: string): '
   return highlight.seatIds.includes(playerId) ? 'valid' : null;
 }
 
+/** The tutorial mark for one seat: the tour's on the seat, the Look gate's on its portrait, else none. */
+function tutorialHighlightFor(
+  tutorial: ArenaSeatsProps['tutorial'],
+  playerId: string,
+): 'opponent' | 'opponent-portrait' | undefined {
+  if (tutorial === undefined) return undefined;
+  if (tutorial.seats) return 'opponent';
+  return tutorial.portraitIds.includes(playerId) ? 'opponent-portrait' : undefined;
+}
+
 export function ArenaSeats({
   model,
   arena,
@@ -82,14 +92,7 @@ export function ArenaSeats({
         }
         const target = seatTargetFor(targeting, center.playerId);
         const drop = seatDrop(dropHighlight, center.playerId);
-        const highlight =
-          tutorial === undefined
-            ? undefined
-            : tutorial.seats
-              ? ('opponent' as const)
-              : tutorial.portraitIds.includes(center.playerId)
-                ? ('opponent-portrait' as const)
-                : undefined;
+        const highlight = tutorialHighlightFor(tutorial, center.playerId);
         return (
           <OpponentSeat
             key={center.playerId}
