@@ -6940,3 +6940,37 @@ the 2026-11-06 L75-04 routing line "The default stays the classic table until L7
   L75-11 delete them in the same PR.
 
 ---
+
+## 2026-11-06 · [P] The old table shell retires: its tests are classified, its V2 layout rules go (L75-10)
+
+Source: technical spec v7 §12.1, §4.2, §6.1, §6.4, §6.5, §6.9, §6.12, §11; the Lot 75 plan, Part 2
+(A.14, A.17, A.18); `docs/backlog_v7_test_classification.md` rows 52, 82, 86–87, 92–94, 96, 98–101,
+114–149, 170–187.
+
+- **Deleted:** `screens/table.tsx`, the shell under `screens/table/` (table-shell, felt-collapse,
+  card-band, card-band-fit, opponent-zone, private-zone, economy-bar, pending-queue, timers,
+  flow-status-badges, active-persistent-thumb, sentence-chip, spy-eye-icon, forfeit-flag-icon,
+  your-turn-flash, table-chat) and `view-model/pending-chip-tone.ts`, with 20 test files.
+- **Retired old-layout assertions** (§12.1), each superseded as its row says: the collapse order and
+  the collapsed-chrome buttons (§6.4 layout modes, §6.1 every region renders, §6.9 the log), the
+  nowrap opponent row and the two landscape columns (§6.4 arc, grid and landscape-compact), the
+  compact Incoming strip and Incoming on the identity row (§6.1 item 2, §6.5 plate badges), the
+  `w-max` band and its fit maths (§5.4, §6.1 item 4), the V2 callout and coach chrome (§6.12, §5.1,
+  §5.7, §8.3), the economy-bar CTA chrome and the Draw pulse (§6.1 item 5, §5.3, §8).
+- **Kept behaviors** have arena behavior tests, named in each row. New in this commit: the three-mode
+  fill test, the hand-region clip test and two "no UP on chrome" tests (L43-02).
+- **Row 132** (Gambler Draw red above 10): the code kept the red state (parity `economy-bar` Keep,
+  `selfStrip().dock.draw.hot`), so its red half is product behavior tested by the dock; only the
+  change pulse retires. The code wins over the row's prospective text (AGENTS.md §2); listed in the PR.
+- **`index.css`:** the V2 table rules go. The landscape `[data-zone="card-band"] { overflow: hidden }`
+  also matched the arena hand region (same zone name), so the arena keeps it as a class on that region
+  in desktop and landscape-compact (A.18; a portrait-orientation box under 500 px tall, the keyboard case, now
+  clips too); the `:has([data-tutorial-highlight])` twin goes, because the L75-04 callout layer is a portal.
+  `[role="dialog"]` and the dialog overlay rules stay for Game over.
+- **Props:** `ArenaScreenProps` owns the 29 board fields verbatim (A.14), so the arena imports nothing
+  from `screens/table/`. `deadlineMs` stays although the arena ignores it (L73-13): dropping it is
+  dead-code work (L81-01), not part of the flip.
+- **Dead exports** removed with their last importer: `shieldActiveInstance`, `cardPlayNeedsConsume`
+  (A.17). Copy citations that name a V2 file as their source stay.
+
+---

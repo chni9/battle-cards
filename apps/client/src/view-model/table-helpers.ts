@@ -145,7 +145,7 @@ export function activeUpgradeInstanceId(
 }
 
 /** Card Transformer needs a hand card to consume (`consumeInstanceId`). */
-export function cardPlayNeedsConsume(cardId: string): boolean {
+function cardPlayNeedsConsume(cardId: string): boolean {
   return cardId === 'card-transformer';
 }
 

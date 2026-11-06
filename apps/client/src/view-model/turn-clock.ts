@@ -27,8 +27,7 @@ export const TURN_CLOCK_DANGER_SECONDS = 10;
 /** Spec v7 §6.10: the last 5 s tick (L79). */
 export const TURN_CLOCK_TICK_SECONDS = 5;
 
-// The three idle labels are the V2 `screens/table.tsx` strings, reused verbatim (U+2014 em dash).
-// `table.tsx` keeps its inline copies until L75 replaces it: L73 changes nothing player-visible.
+// The three idle labels are the V2 table's strings, reused verbatim (U+2014 em dash).
 export const TURN_CLOCK_NONE_LABEL = '—';
 export const TURN_CLOCK_PAUSED_LABEL = 'Paused — reconnecting';
 export const TURN_CLOCK_ABSENT_LABEL = 'Absent — auto-draw';

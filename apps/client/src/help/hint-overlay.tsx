@@ -5,8 +5,7 @@
  *
  * Portaled on `Z_INDEX.hint` (L75-06): a `position: fixed` layer sized to the visual viewport, so a
  * pinch-zoomed card cannot leave the screen. The layer is pointer-transparent and only the card takes
- * presses. The old table mounts this overlay too until L75-09. It re-places on a resize of its anchor, of
- * the arena region (the V7 arena only) or of the viewport.
+ * presses. It re-places on a resize of its anchor, of the arena region or of the viewport.
  */
 
 import { useLayoutEffect, useRef, type ReactElement } from 'react';
@@ -79,7 +78,7 @@ export function HintOverlay({ hintId, dialogOpen, onGotIt, onSkipAll, body }: Hi
     const observer = new ResizeObserver(place);
     if (node !== null) observer.observe(node);
     // An anchor can move without resizing (a band flip, a strip re-wrap): the arena region, which holds
-    // the seats and the plate, reports it (Lot 75 final review M4). Absent on the old table.
+    // the seats and the plate, reports it (Lot 75 final review M4).
     const arena = document.querySelector('[data-arena-region="arena"]');
     if (arena !== null) observer.observe(arena);
     window.addEventListener('resize', place);

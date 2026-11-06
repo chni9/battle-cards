@@ -134,3 +134,16 @@ describe('the dock under 700 px of landscape width (designer 2026-11-06, S2)', (
     expect(dock.querySelector('[data-reason-slot]')).not.toBeNull();
   });
 });
+
+describe('hand region clip (A.18, L75-10)', () => {
+  it('clips the hand region in landscape-compact and desktop, as the retired index.css card-band rule did, and not in portrait (L75-10)', () => {
+    setupAt(ARENA_TEST_BOXES.landscape, makeArenaView());
+    const clips = (): boolean => region('hand').classList.contains('overflow-hidden');
+    const readings = [clips()];
+    layout?.setViewport(ARENA_TEST_BOXES.desktop.viewport.width, ARENA_TEST_BOXES.desktop.viewport.height);
+    readings.push(clips());
+    layout?.setViewport(ARENA_TEST_BOXES.phone390.viewport.width, ARENA_TEST_BOXES.phone390.viewport.height);
+    readings.push(clips());
+    expect(readings).toEqual([true, true, false]);
+  });
+});

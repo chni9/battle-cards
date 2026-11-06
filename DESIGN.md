@@ -446,7 +446,7 @@ Not ready is the existing `close` cross, so the two states differ by shape and n
   `Icon name="eliminated"` or `"close"`.
 - The `/dev/ui` gallery section `icons` (`ui/icons/icons.gallery.tsx`, L72-08) shows every
   glyph at 32px with its name, and `help` and `coach` labelled side by side (Q45).
-- The classic table's `SpyEyeIcon` and `ForfeitFlagIcon` (`screens/table/`) stay until L75.
+- The classic table's `SpyEyeIcon` and `ForfeitFlagIcon` were deleted with the old table shell (L75-10).
 
 ## Illustrations
 
@@ -1351,11 +1351,11 @@ the new panel (`help/hint-overlay.tsx` renders it since L75-06).
 `banner.gallery.tsx` (spec v7 §6.12, §8.1, §8.3; Appendix A `table-banners`,
 `end-finished-board-shell`, `global-motion-reduced-motion`). `<TableBannerHost isMyTurn
 isEliminated youWon pendingEffects sentenceAnnouncements actionLog nicknameOf you seatColor? deadCue? />`
-takes the props of `TableBannerFlash` (`screens/table/your-turn-flash.tsx`), which the classic
-table keeps until L75; L74-17 mounts the host in the arena. Which cue fires stays in
+takes the props of the V2 `TableBannerFlash` (`screens/table/your-turn-flash.tsx`, deleted in L75-10);
+L74-17 mounts the host in the arena. Which cue fires stays in
 `view-model/table-banner.ts`. `deadCue={false}` drops the You are dead cue, while the watch still
 advances so it never fires later. The arena passes it because its POV elimination overlay
-(L74-23) replaces that cue; the classic table keeps it.
+(L74-23) replaces that cue.
 
 - **Lanes and timing:** three lanes, cue (Your turn, You are being attacked, You are dead, You
   won!), Sentence (L63-03) and own Gambler wipe (L67-01). Each lane queues `BannerItem`s

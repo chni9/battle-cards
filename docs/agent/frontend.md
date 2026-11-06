@@ -26,7 +26,7 @@ action-log fog, Lot 64 Gambler start specials / weighted Draw / gambling death).
 **V7 (visual redesign "Arcade Holo") is in progress** (`docs/technical_spec_v7.md` +
 Appendix A `docs/technical_spec_v7_parity.md`, `docs/backlog_v7.md`, Lots 72–81). Since L75-09
 the table, the finished board and tutorial rooms are the V7 arena; `?ui=` is ignored. The old
-`screens/table*` is deleted in L75-10 and L75-11. It is
+`screens/table.tsx` shell is deleted (L75-10); its dialogs go in L75-11. It is
 client-only and lands side by side: the V2 design system below still governs every screen
 until that screen's V7 lot lands (spec v7 §4.4). Product context: `/PRODUCT.md`. V7
 design-system record: `/DESIGN.md`. On conflict, **code > spec v7 §5
@@ -261,7 +261,7 @@ and are mirrored in `ui/palette.ts` and `ui/motion/motion-tokens.ts`.
   (for example `point`, `shop`, `coach`, `feedback`, `action` or `check` on `--cta`, `help` on `--cta-2`, or `attack` on `--danger`):
   put it in a `--bg-0` or `--panel` well. No emoji and no U+2715 cross in `ui/`
   (`ui/icons/no-emoji.test.ts`); use `Icon name="eliminated"` or `"close"`. The classic
-  `SpyEyeIcon` and `ForfeitFlagIcon` (`screens/table/`) stay until L75. Details:
+  `SpyEyeIcon` and `ForfeitFlagIcon` were deleted with the old table shell (L75-10). Details:
   `/DESIGN.md` › Icons.
 - **Art (L72-10, spec v7 §5.5):** `src/assets/art/{cards,kits}/<id>.png`, 31 base cards
   (Roulette included) and 16 kits (Gambler included), transparent, trimmed, native
@@ -590,11 +590,6 @@ and are mirrored in `ui/palette.ts` and `ui/motion/motion-tokens.ts`.
   never writes its own `alt`. With `onClick` the portrait is one button named by `ariaLabel`
   or that name; the face inside is decorative, so a screen reader hears the button only, and a
   caller that needs a state heard ("eliminated") puts it in `ariaLabel`.
-- **Classic width rules:** in landscape `index.css` still sizes a V2 portrait inside
-  `[data-zone="opponent-seat"]` (2.35rem; scoped to `.table-shell` and the classic
-  `[data-zone="opponents-dialog-row"]`, L74-04) and `[data-zone="private-zone"]` (3rem; scoped to
-  `.table-shell`, L74-09). The rules are unlayered, but the arena's seats and self strip sit
-  outside both scopes and keep their `KitPortrait` `size`; L75 deletes the rules with the old table.
 - **Layering:** `ui/kit/` never imports `design/` or `screens/`; it takes `ui/`, `view-model/` and
   `@card-battle/shared` only. The hidden-verso classes the code faces share with the Card live
   in `ui/card/card-classes.ts`.
@@ -731,7 +726,7 @@ and are mirrored in `ui/palette.ts` and `ui/motion/motion-tokens.ts`.
   wipe line; the cue logic stays in `view-model/table-banner.ts` (`nextTableBannerCues`,
   `nextSentenceBannerLines`, `nextWipeBannerLines`), and `ui/banner/banner-items.ts` only keys
   the items (`bannerItemsForCues`) and sorts them into lanes (`bannerLaneOf`,
-  `BANNER_LANE_LIVE_MODE`). The classic table keeps `screens/table/your-turn-flash.tsx` until L75.
+  `BANNER_LANE_LIVE_MODE`).
   The host portals to `document.body` at `Z_INDEX.banner`, like Sheet and Toast, so a
   transformed arena or the L78 board shake cannot re-anchor it or trap it under the sheets.
   L74-17 mounts it once per arena so its regions exist before the first cue, and sizes its root
@@ -1038,8 +1033,8 @@ Appendix A). Each Lot 74 task appends its bullet here, in task order.
 - `screens/arena/arena-screen.tsx` (L74-01, L75-09, spec v7 §4.4): the only table. `App.tsx` (playing)
   and `EndScreen` (finished board) always mount `ArenaScreen`, tutorial rooms included. `?ui=next` and
   `?ui=classic` are ignored, and `GameApp` clears the retired `card-battle.v7.ui` once at boot
-  (`retired-table-switch.ts`; a blocked store is a no-op). Until L75-10, `ArenaScreenProps` still extends
-  `TableScreenProps`.
+  (`retired-table-switch.ts`; a blocked store is a no-op). `ArenaScreenProps` owns the board props (L75-10;
+  there is no `TableScreenProps`).
 - Regions (L74-01, §6.1, Q60): `ARENA_REGIONS` (`arena-regions.ts`) in DOM order: `top-bar`,
   `ticker`, `arena`, `self-strip`, `hand`, `dock`. Each is a `data-arena-region` element that
   always renders. Each shows its content or an empty state, except a live walk-in's dock, which
@@ -1057,15 +1052,13 @@ Appendix A). Each Lot 74 task appends its bullet here, in task order.
     `resources` with `resources` (a walk-in's Watching strip has none, L74-23).
   - `hand`: `card-band`, holding `hand` with `hand` and `specials` with `specials`.
   - `dock`: `dock`.
-  Never use `data-card-row`: `index.css` forces nowrap on it.
 - Action lock (L74-01, §4.3, Appendix A.2): `ArenaScreen` computes `ctx = { subChoice,
   readOnly }` and `actionLock(view, ctx)` once per render and passes models down as props.
   There is no React context for game data. The root exposes the lock as `data-action-lock`
   (`none` | `not-your-turn` | `actions-locked`).
 - Import rule (L74-01): `screens/arena/` imports only `ui/`, `view-model/`, `fx/`, `net/`
   (types), `help/`, `feedback/` and `screens/status-labels`, `screens/illegal-action-copy` and
-  `screens/how-to-play-dialog`. It never imports `screens/table/` or `design/`; the one exception
-  is the `TableScreenProps` type that `ArenaScreenProps` extends. A pure helper still living there moves, with its
+  `screens/how-to-play-dialog`. It never imports `screens/table/` or `design/`. A pure helper still living there moves, with its
   tests, in the task that first needs it.
 - `screens/arena/arena-sheets.ts` (L74-02, spec v7 §6.7, Q49): one pure reducer holds the
   read-only sheets.
@@ -1274,7 +1267,7 @@ Appendix A). Each Lot 74 task appends its bullet here, in task order.
   Lot 69 confirm (`Dialog`, "Are you sure?") over the sheet: Esc or Cancel close only the confirm,
   and only its Deactivate sends `deactivatePersistent {effectId}`. The confirm shows only over
   the open sheet and resets when the sheet opens again, so a confirm left up when its persistent
-  expired never pops up by itself. A walk-in gets the Watching strip instead (L74-23). `index.css` scopes the landscape private-zone portrait width rule to `.table-shell`.
+  expired never pops up by itself. A walk-in gets the Watching strip instead (L74-23).
 - `screens/arena/targeting.tsx`, `targeting-model.ts`, `pre-send-choice.tsx`, `pre-send-model.ts`,
   `use-tap-guard.ts` (L74-10, spec v7 §6.6.2, §6.6.5): Use on a card routed `target` calls
   `startTargeting` (`arena-sheets.ts`), which collapses its card sheet into `TargetingBar`
@@ -1439,9 +1432,9 @@ Appendix A). Each Lot 74 task appends its bullet here, in task order.
 - `screens/arena/arena-screen.tsx` shell, `fx/use-table-fx-triggers.ts`,
   `view-model/fx-triggers.ts`, `fx/use-resource-flash.ts`, `own-intent-fx.ts`, `resource-flash.tsx`
   (L74-17, spec v7 §6.12, §8.1, §8.3, Q63): `ArenaScreen` is a shell,
-  `<TableFxProvider><ArenaScreenInner/></TableFxProvider>` like `TableScreen`, so the `fx/` overlay
+  `<TableFxProvider><ArenaScreenInner/></TableFxProvider>` like the shell it replaced, so the `fx/` overlay
   draws over the arena. `ArenaScreenInner` mounts `TableBannerHost` once, on the visual-viewport
-  box. One hook, `useTableFxTriggers`, holds the FX triggers both boards use (moved out of
+  box. One hook, `useTableFxTriggers`, holds the FX triggers (moved out of the deleted V2
   `screens/table.tsx`; its decisions are pure in `view-model/fx-triggers.ts`): the resolution flash,
   the elimination beat, public-log chips and card ghosts, the reward pulse on the dock, the threat
   outline and the source-seat cue. Elimination beats are seeded on mount, so a reconnect or the
@@ -1740,6 +1733,10 @@ Appendix A). Each Lot 74 task appends its bullet here, in task order.
   that resolves first, golden rule 3). One body per thief card (`INCOMING_THIEF_CARD_IDS`); only
   Thief names the 10-point cap. `useArenaHints` returns it as `body`, and `HintOverlay body?`
   replaces the `HINT_COPY` body.
+- `screens/table.tsx` and the shell under `screens/table/` (L75-10, spec v7 §12.1, §4.2): deleted with their
+  tests; each assertion is classified in `docs/backlog_v7_test_classification.md`. `ArenaScreenProps` owns the
+  board fields (no `TableScreenProps`). The hand region clips its overflow outside portrait (the retired
+  `index.css` card-band rule).
 
 ## Home and lobby (V7 · Lot 76)
 

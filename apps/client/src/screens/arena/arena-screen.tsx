@@ -33,7 +33,7 @@
  *   and empties the drag zones by itself.
  * - §4.1, §6.10 (L74-21): the arena records the `TURN_STARTED` sighting (`useTurnStartedRecord`),
  *   computes `turnClock(...)` once per render and hands it to the top bar. `ArenaScreenProps`
- *   extends `TableScreenProps` with the raw payload and the room's cached lobby rules.
+ *   adds the raw payload and the room's cached lobby rules to the board props.
  * - §6.11 (L74-22): Menu → Table rules opens the rules sheet from `tableRulesRecall` over
  *   `props.cachedLobbyRules`; the entry is hidden while it is null. The arena never derives the
  *   rules: App (live) and EndScreen (finished) choose the source.
@@ -77,16 +77,29 @@
  *
  * Import rule (L74-01 brief): `screens/arena/` imports only from `ui/`, `view-model/`, `fx/`,
  * `net/` (types), `help/`, `feedback/` and the shared screen modules. It never imports
- * `screens/table/` or `design/`; `TableScreenProps` is the one type `ArenaScreenProps` extends.
+ * `screens/table/` or `design/`.
  */
 
-import type { LobbyRules, SentenceAnnouncementLogEntry, TurnStartedPayload } from '@card-battle/shared';
+import type {
+  ActionResolvedPayload,
+  LobbyRules,
+  PlayingStateView,
+  ResolveSubChoicePayload,
+  SentenceAnnouncementLogEntry,
+  SHARED_CARD_IDS,
+  SubChoiceRequiredPayload,
+  TurnStartedPayload,
+} from '@card-battle/shared';
 import { useCallback, useEffect, useEffectEvent, useRef, useState, type ReactElement } from 'react';
 
 import { TableFxProvider } from '../../fx/table-fx-context';
 import { useTableFxTriggers } from '../../fx/use-table-fx-triggers';
 import { HintOverlay } from '../../help/hint-overlay';
-import type { RoomConnectionStatus } from '../../net/use-room-connection';
+import type {
+  ActionRejectPayload,
+  PlayCardOptions,
+  RoomConnectionStatus,
+} from '../../net/use-room-connection';
 import { TableBannerHost } from '../../ui/banner/table-banner-host';
 import { heightBoundHandCardWidthPx } from '../../ui/card/hand-card-size';
 import { TutorialCalloutLayer } from '../../ui/coach/tutorial-callout';
@@ -110,7 +123,6 @@ import {
   tutorialEconomySpotlight,
   tutorialSpotlightInstanceIds,
 } from '../../view-model/tutorial-coach-copy';
-import type { TableScreenProps } from '../table';
 import { createArenaCommit } from './arena-commit';
 import { hintCauseForCardSheet, hintCauseForIntent } from './arena-hint-causes';
 import {
@@ -176,8 +188,55 @@ import { usePovElimination } from './use-pov-elimination';
 import { useTapGuard } from './use-tap-guard';
 import { useTurnStartedRecord } from './use-turn-started-record';
 
-/** Plan A.9.1: the first widening. L74-23 adds `onReopenClaim?`, L74-25 `connectionStatus`. */
-export interface ArenaScreenProps extends TableScreenProps {
+/**
+ * The board props (`TableScreenProps` until L75-10, moved verbatim), then the L74 widenings
+ * (plan A.9.1, A.14): L74-21 `lastTurnStarted` and `cachedLobbyRules`, L74-23 `onReopenClaim?`,
+ * L74-25 `connectionStatus`.
+ */
+export interface ArenaScreenProps {
+  view: PlayingStateView;
+  /** Illegal-action reject for modal (L39-02); null when none. */
+  actionReject: ActionRejectPayload | null;
+  onDismissActionReject: () => void;
+  statusLabel: string;
+  nowMs: number;
+  deadlineMs: number | null;
+  lastActionResolved: ActionResolvedPayload | null;
+  subChoice: SubChoiceRequiredPayload | null;
+  onDraw: () => void;
+  onPlayCard: (instanceId: string, options?: PlayCardOptions) => void;
+  onPlayMultipleAttacks: (
+    attacks: readonly { instanceId: string; targetPlayerId: string }[],
+  ) => void;
+  onResolveSubChoice: (payload: ResolveSubChoicePayload) => void;
+  onBuyCard: (cardId: (typeof SHARED_CARD_IDS)[number]) => void;
+  onSellCard: (instanceId: string) => void;
+  onUpgradeCard: (instanceId: string) => void;
+  onBuyUpgradePoint: () => void;
+  onBuySpecialCard: () => void;
+  onBuyPoolCard: () => void;
+  onClearSpy: (targetPlayerId: string) => void;
+  onSellUpgradePoint: () => void;
+  onLeave: () => void;
+  /** Alive flag Forfeit — send FORFEIT, keep the socket (L43-06). */
+  onForfeit: () => void;
+  /** In-game chat. The table ignores it while the finished board is read-only. */
+  onSendChat: (body: string) => void;
+  onDeactivatePersistent?: (effectId: string) => void;
+  onActivateDuplication?: () => void;
+  /**
+   * Finished board (PROTOCOL 24): lock all intents; keep inspect / log / Shop browse.
+   */
+  readOnly?: boolean;
+  /** Reopen game-over stats when `readOnly`. */
+  onShowStats?: () => void;
+  /**
+   * Finished board: parent owns Feedback so Game over stats / ask / `!` never stack
+   * (L47-03). Live table omits this and keeps its own Dialog.
+   */
+  onOpenFeedback?: () => void;
+  /** Finished-board winner for the POV (L51-06). */
+  youWon?: boolean;
   /** L74-21: the raw TURN_STARTED payload; the arena records its receive time and turnSequence (§4.1). */
   lastTurnStarted: TurnStartedPayload | null;
   /** L74-21: this room's last lobby rules (App: `cachedLobbyRules(cache, view)`, this room, Classic only; EndScreen: `view.lobbyRules ?? null`); null when unknown. */
@@ -580,7 +639,8 @@ function ArenaScreenInner(props: ArenaScreenProps): ReactElement {
           />
         )}
       </div>
-      <div {...regionLayout('hand')} data-zone="card-band" {...yourZone} className="min-w-0">
+      {/* Outside portrait the region clips its overflow: the retired V2 `index.css` landscape rule clipped this zone (it shares the V2 `card-band` name); kept so the arena looks as it did before L75-10, except in degenerate boxes (plan A.18). */}
+      <div {...regionLayout('hand')} data-zone="card-band" {...yourZone} className={mode === 'portrait' ? 'min-w-0' : 'min-w-0 overflow-hidden'}>
         <HandFan
           view={view}
           ctx={ctx}

@@ -9,6 +9,7 @@ import { fireEvent, screen, within } from '@testing-library/react';
 import type { UserEvent } from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 
+import { visibleText } from '../../test/glyph-queries';
 import { renderUi } from '../../test/render';
 import type { ActionContext } from '../../view-model/action-lock';
 import { DISABLED_REASON_COPY } from '../../view-model/action-reasons';
@@ -67,6 +68,15 @@ describe('card sheet actions (L74-08)', () => {
     await user.click(within(sheet).getByRole('button', { name: 'Sell plus 2 pts' }));
     expect(vi.mocked(props.onSellCard).mock.calls).toStrictEqual([['spy-1']]);
     expect(props.onPlayCard).not.toHaveBeenCalled();
+  });
+
+  it("never shows the UP abbreviation in an upgradeable card's sheet (L43-02, L75-10)", async () => {
+    const { user } = renderArena(viewWith({ upgradePoints: 2, hand: [makeCard('spy')] }));
+    const sheet = await openCard(user, 'Hand', 'Spy', 'Spy');
+    expect(visibleText(sheet)).not.toMatch(/\bUP\b/);
+    // Each visible leaf on its own: a stray 'UP' glued to a neighbour ('UPSpy') has no word boundary in the joined text.
+    expect(Array.from(sheet.querySelectorAll('*')).filter((node) => node.children.length === 0 && node.closest('.sr-only') === null && /\bUP\b/.test(node.textContent)).length).toBe(0);
+    expect(within(sheet).getByRole('button', { name: 'Upgrade minus 1 upgrade point' }).getAttribute('aria-disabled')).toBeNull();
   });
 
   it('disables a hostile Use under own Invisibility and keeps Upgrade and Sell (L58-06)', async () => {

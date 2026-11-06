@@ -137,6 +137,15 @@ describe('Unspy (L58-07, L58-09)', () => {
   });
 });
 
+describe('no UP on the dock (L43-02, L75-10)', () => {
+  it('never shows the UP abbreviation on the dock, and keeps the Draw, Shop and Unspy names (L43-02, L75-10)', () => {
+    setup(withSeat(viewWith({ points: 20, upgradePoints: 2 }), 'p1', SPYING));
+    expect(visibleText(dock())).not.toMatch(/\bUP\b/);
+    expect(Array.from(dock().querySelectorAll('*')).filter((node) => node.children.length === 0 && node.closest('.sr-only') === null && /\bUP\b/.test(node.textContent)).length).toBe(0);
+    expect([draw(), within(dock()).getByRole('button', { name: 'Shop' }), unspy()]).toHaveLength(3);
+  });
+});
+
 describe('Activate duplication and the other POVs', () => {
   it('shows Activate duplication only for a Duplicator, and it sends once', async () => {
     const { user, onActivateDuplication, unmount } = setup(viewWith({ kitId: 'duplicator' }));
