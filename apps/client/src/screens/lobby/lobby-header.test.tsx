@@ -8,7 +8,7 @@ import { STATUS_LABELS } from '../status-labels';
 import { inviteLink } from './invite-link';
 import {
   COPY_FAILED_TITLE, COPY_LABEL, COPY_OK_TITLE, COPY_RESULT_DISMISS_LABEL, copyResultBody, HOST_LINE, LINK_COPIED_TITLE, linkCopiedBody,
-  LOBBY_EYEBROW, LOBBY_TITLE, SHARE_LABEL,
+  LOBBY_DISMISS_LABEL, LOBBY_EYEBROW, LOBBY_TITLE, SHARE_LABEL,
 } from './lobby-copy';
 import { LobbyScreen, type LobbyScreenProps } from './lobby-screen';
 import { expectNoLobbyIntent, guestLobbyView, makeLobbyProps } from './test-lobby';
@@ -63,6 +63,15 @@ describe('LobbyHeader (spec v7 §7.2; parity lobby-header-status, lobby-game-cod
     const dialog = await screen.findByRole('dialog', { name: COPY_FAILED_TITLE });
     expect(within(dialog).getByText('Could not copy automatically. Game code: ABCDEF')).toBeTruthy();
     expectNoLobbyIntent(props);
+  });
+});
+
+describe('Alert dismiss focus (L76-14; browser gate D4)', () => {
+  it('moves focus to the lobby title when OK dismisses the alert, so it does not fall to the page', async () => {
+    const { user, props } = renderLobby({ error: 'That seat was not found.' });
+    await user.click(screen.getByRole('button', { name: LOBBY_DISMISS_LABEL }));
+    expect(props.onDismissError).toHaveBeenCalledTimes(1);
+    expect(document.activeElement).toBe(screen.getByRole('heading', { level: 1, name: LOBBY_TITLE }));
   });
 });
 

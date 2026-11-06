@@ -10,7 +10,7 @@
  * `locked`: nothing in it locks, Share included (A.9 ruling 6). L76-12, L76-14, L76-17.
  */
 
-import { useId, useState, type ReactElement } from 'react';
+import { useId, useRef, useState, type ReactElement } from 'react';
 
 import type { RoomConnectionStatus } from '../../net/use-room-connection';
 import { Button } from '../../ui/primitives/button';
@@ -50,6 +50,8 @@ export interface LobbyHeaderProps {
 
 export function LobbyHeader({ gameCode, status, error, isHost, onDismissError }: LobbyHeaderProps): ReactElement {
   const codeId = useId();
+  // OK unmounts with the alert, so focus would fall to the page: it moves here first (browser gate D4).
+  const titleRef = useRef<HTMLHeadingElement>(null);
   const [resultOpen, setResultOpen] = useState(false);
   // Kept while the dialog exits, so its title does not flash to another result.
   const [result, setResult] = useState<CopyResult>({ kind: 'code' });
@@ -111,7 +113,7 @@ export function LobbyHeader({ gameCode, status, error, isHost, onDismissError }:
     <>
       <header className="flex flex-col gap-1">
         <p className="font-v7-body text-v7-caption font-extrabold uppercase tracking-[0.14em] text-v7-text-2">{LOBBY_EYEBROW}</p>
-        <h1 className="font-v7-display text-v7-display leading-none text-v7-text">{LOBBY_TITLE}</h1>
+        <h1 ref={titleRef} tabIndex={-1} className="font-v7-display text-v7-display leading-none text-v7-text outline-none">{LOBBY_TITLE}</h1>
         <p role="status" className="font-v7-body text-v7-body font-bold text-v7-text-2">
           {STATUS_LABELS[status]}
         </p>
@@ -123,7 +125,15 @@ export function LobbyHeader({ gameCode, status, error, isHost, onDismissError }:
             <p role="alert" className="min-w-0 flex-1 py-2.5 font-v7-body text-v7-body font-bold text-v7-text">
               {error}
             </p>
-            <IconButton aria-label={LOBBY_DISMISS_LABEL} icon="close" variant="quiet" onClick={onDismissError} />
+            <IconButton
+              aria-label={LOBBY_DISMISS_LABEL}
+              icon="close"
+              variant="quiet"
+              onClick={() => {
+                titleRef.current?.focus();
+                onDismissError();
+              }}
+            />
           </div>
         ) : null}
       </header>
