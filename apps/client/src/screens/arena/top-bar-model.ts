@@ -51,9 +51,13 @@ export type TurnBanner =
   | { readonly kind: 'seat'; readonly playerId: string; readonly nickname: string }
   | { readonly kind: 'none' };
 
-export function turnBannerOf(view: PlayingStateView): TurnBanner {
+/**
+ * The finished board (`readOnly`) names nobody: its view keeps the last `currentTurnPlayerId`, so the
+ * loser would read "Your turn" over a game that is over (designer 2026-11-06, Gate C stop item S-C3).
+ */
+export function turnBannerOf(view: PlayingStateView, readOnly: boolean): TurnBanner {
   const activeId = view.currentTurnPlayerId;
-  if (activeId === null) {
+  if (readOnly || activeId === null) {
     return { kind: 'none' };
   }
   if (activeId === view.you) {

@@ -109,7 +109,7 @@ export function TopBar({
     setConfirm((current) => ({ open: true, epoch: current.epoch + 1 }));
   };
 
-  const banner = turnBannerOf(view);
+  const banner = turnBannerOf(view, readOnly);
   const bannerText = turnBannerText(banner);
   const block = activeBlockLabel(view);
   const flag = arenaFlag(view, readOnly);

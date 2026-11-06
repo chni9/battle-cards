@@ -7048,3 +7048,16 @@ Source: technical spec v7 §6.12; Gate C report S-C2 (`gate-report-p2-C.md`); de
   top bar is too thin to spare the height, and its top-slot steps stay as S-B1 set them. The least-covering
   choice among top, bottom and under-opponents is unchanged. Client-only: no rule, value or protocol change
   (`PROTOCOL_VERSION` stays 45).
+
+---
+
+## 2026-11-06 · [P] Gate C stop item S-C3: the finished board's turn strip names nobody (L74-03)
+
+Source: technical spec v7 §6.1 item 1; Gate C report S-C3 (`gate-report-p2-C.md`); designer 2026-11-06, option (a).
+
+- After a game ends the finished board keeps the last `currentTurnPlayerId`, so the turn strip read
+  `Round N / Your turn` for the player who lost. `turnBannerOf(view, readOnly)` now returns `none` on the
+  finished board, which shows the existing `NO_TURN_OWNER_LABEL` (`—`), the clock's `none` mode already
+  being there. No new string. The Block line under the strip keeps reading the last active seat: not
+  part of this ruling, and listed in the PR notes. Client-only: no rule, value or protocol change
+  (`PROTOCOL_VERSION` stays 45).
