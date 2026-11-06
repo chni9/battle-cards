@@ -189,6 +189,28 @@ describe('a vetoed send leaves its control live (Review Focus 2)', () => {
     expect(coachTitle()).toBe(tutorialStepAt(21)?.coach?.title);
   });
 
+  it('Unspy: a vetoed confirm keeps the picker open with Unspy enabled (L75-05 m1)', async () => {
+    const { user, props } = setup(1, { view: spiedOn });
+    await user.click(one('[data-arena-region="dock"] [data-unspy]'));
+    const confirm = (): HTMLElement => within(screen.getByRole('dialog', { name: UNSPY_ACTION_LABEL })).getByRole('button', { name: UNSPY_CONFIRM_LABEL });
+    const picker = screen.getByRole('dialog', { name: UNSPY_ACTION_LABEL });
+    await user.click(confirm());
+    expectNoArenaIntent(props);
+    expectFollowCoach();
+    expect([screen.getByRole('dialog', { name: UNSPY_ACTION_LABEL }) === picker, picker.closest('[inert]'), isDisabled(confirm())]).toEqual([true, null, false]);
+  });
+
+  it('new coach copy that Got it did not cause never moves focus out of an open sheet (L75-04 m2)', async () => {
+    const { user } = setup(21);
+    await user.click(handCard('shield-2'));
+    const sheet = cardSheet('shield-2');
+    const use = action(sheet, 'use');
+    use.focus();
+    await user.click(use);
+    expectFollowCoach();
+    expect([sheet.isConnected, sheet.contains(document.activeElement)]).toEqual([true, true]);
+  });
+
   it('reconnecting: a send the step does not ask for is held by the lock, with no follow-coach copy, then shows it once connected (final review M3)', async () => {
     const poison = makePersistent({ id: 'eff-poison', cardId: 'poison', counter: 3 });
     const { user, props, rerender } = setup(1, { view: (view) => ({ ...view, self: { ...view.self, activePersistentEffects: [poison] } }) });
