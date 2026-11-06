@@ -34,11 +34,11 @@ design-system record: `/DESIGN.md`. On conflict, **code > spec v7 §5
 
 | Screen | When | File |
 |---|---|---|
-| Home | No room — hub → online (create/join) or solo; How to play + What’s new + Feedback | `screens/home.tsx` + `how-to-play-dialog.tsx` + `whats-new-dialog.tsx` + `feedback/feedback-dialog.tsx` |
-| Lobby | `phase: 'lobby'` — seats, Ready, host Start / Kick / bots, hidden kit pick, Feedback | `screens/lobby.tsx` + `lobby-kit-picker-dialog.tsx` |
+| Home | No room — hub → online (create/join) or solo; How to play + What’s new + Feedback; `?code=` opens Online with Join pre-filled | `screens/home/home-screen.tsx` (+ `screens/home/*`) + `how-to-play-dialog.tsx` + `whats-new-dialog.tsx` + `feedback/feedback-dialog.tsx` |
+| Lobby | `phase: 'lobby'` — V7 mini arena: seats in seat colors, Ready, host Start / Kick / bots, table rules strip, hidden kit pick, chat, code Copy / Share, Feedback | `screens/lobby/lobby-screen.tsx` + `screens/lobby/*` |
 | Table | `phase: 'playing'` — felt shell, opponents arc, center-stage log, queue, timers, hand, economy | `screens/table.tsx` (+ `screens/table/*`) · `?ui=next` → `screens/arena/arena-screen.tsx` (the V7 arena; see `## Arena (V7, ?ui=next)`) |
 | End | `phase: 'finished'` — closable awards gallery; Classic **Play again**; hub leave hits ask-once; the finished board follows the same switch (`tableUi`) | `screens/end.tsx` + `game-over-dialog.tsx` + `view-model/game-over-awards.ts` |
-| Claim | Overlay when `claimableSeats` is non-empty — sit or stay spectating | `screens/claim-seat-dialog.tsx` |
+| Claim | V7 `Dialog` over Lobby, Table and End when `claimableSeats` is non-empty — sit or stay; a walk-in reopens it with **Claim a seat** (arena strip, lobby banner) | `screens/claim-seat-dialog.tsx` + `claim-seat.ts` |
 | Admin | `pathname === '/admin'` — password-gated designer analytics; not a game phase; no hub link (Lot 61) | `screens/admin/admin-app.tsx` |
 | Inbox (legacy URL) | `/inbox` redirects to `/admin/feedback`; `GET /api/inbox` unchanged | `App.tsx` (redirect only) |
 
@@ -250,12 +250,13 @@ and are mirrored in `ui/palette.ts` and `ui/motion/motion-tokens.ts`.
   instead of the spring. Apply CSS animation and press classes only when full.
 - **Icons (L72-07):** `<Icon name size? label? />` from `ui/icons/icon.tsx`. Names only from
   `ICON_NAMES` (`ui/icons/icon-names.ts`: the spec v7 §5.6 set including `unspy`, plus the L72
-  additions `clock`, `close`, `chevron-left`, `chevron-right`, `random`); resources via
+  additions `clock`, `close`, `chevron-left`, `chevron-right`, `random`, the L76-10 `action` and
+  `attack`, and the L76-12 `check`); resources via
   `RESOURCE_ICON[kind]`. Decorative (`aria-hidden`) unless given a non-empty `label`.
   Icon-only controls use `IconButton` (L72-08) for the aria-label and title (L59-01), never a
   bare `Icon`. Glyph paints are `V7_COLORS` hex only, with a 2-unit ink outline and a non-ink
   body. Never put an icon directly on a fill within CIEDE2000 20 of its body or motif token
-  (for example `point`, `shop`, `coach` or `feedback` on `--cta`, or `help` on `--cta-2`):
+  (for example `point`, `shop`, `coach`, `feedback`, `action` or `check` on `--cta`, `help` on `--cta-2`, or `attack` on `--danger`):
   put it in a `--bg-0` or `--panel` well. No emoji and no U+2715 cross in `ui/`
   (`ui/icons/no-emoji.test.ts`); use `Icon name="eliminated"` or `"close"`. The classic
   `SpyEyeIcon` and `ForfeitFlagIcon` (`screens/table/`) stay until L75. Details:
@@ -440,8 +441,8 @@ and are mirrored in `ui/palette.ts` and `ui/motion/motion-tokens.ts`.
   (`<EffectTextWithIcons text iconSize? />`), `ui/text/card-effect-copy.tsx`
   (`<CardEffectCopy card isUpgraded />`: Cost row, effect, Upgrade block). They carry spec v7
   §6.6.1 and replace the V2 `design/components/{cost-display,effect-text-icons,card-effect-copy}.tsx`
-  on V7 screens; the V2 files and their source-text tests stay untouched until L75 and L76
-  retire their consumers. L72-12 (card chips), L72-15 (kit details), L72-17 (coach) and L74 and
+  on V7 screens; the V2 files and their source-text tests stay untouched until L75
+  retires their consumers. L72-12 (card chips), L72-15 (kit details), L72-17 (coach) and L74 and
   L76 import these.
 - **Use:** one `CostAmount` for every number-plus-icon amount: a cost chip, a Draw or shop price,
   a reward, an amount inside prose. `signed="cost" | "gain"` prefixes `−` or `+` and speaks "minus"
@@ -471,7 +472,7 @@ and are mirrored in `ui/palette.ts` and `ui/motion/motion-tokens.ts`.
   `cardFamilyOf`, `cardCostChip`, `cardDamageChip`, `cardCounterLabel`, `cardFaceLabel`,
   `cardNameWordEm`, `cardNameFontSize`, `CARD_NAME_FIT`, `HIDDEN_CARD_LABEL`).
   `design/components/card.tsx` and its source-text tests stay for the
-  classic screens until L75/L76 retire them.
+  classic screens until L75 retires them.
 - **Art only from `artFor`:** the base drawing, so the Sentence/Shield activated-art guard
   holds by construction and Roulette uses its base drawing. Never call `getCardArtUrl` from a
   V7 surface; upgraded and active looks are Card states.
@@ -519,8 +520,9 @@ and are mirrored in `ui/palette.ts` and `ui/motion/motion-tokens.ts`.
 
 - **Component:** `ui/chat/ChatLog` (L72-14): transcript plus composer; `onSend` receives the
   trimmed body (the V6 log sent it untrimmed); `inputLabel`/`placeholder` override for the
-  walk-in label (L76). It replaces `screens/table/chat-log.tsx` for L74-16, L76-13 and L77-05.
-  The old file stays until L75-11. Props: `messages`, `players`, `canWrite`, `onSend`.
+  walk-in label (the lobby panel passes 'Spectators only see this', L76-13). It replaces
+  `screens/table/chat-log.tsx` for L74-16, the lobby (L76-02; its panel L76-13) and L77-05.
+  The old file stays until L75-11. Props: `messages`, `players`, `canWrite`, `onSend`, `inputLabel?`, `placeholder?`, `sendLocked?` (L76-14).
   `ui/chat/chat-line.ts` holds `chatLineView` (round label, seat, side stream, role label) and the
   three V6 copy constants; spec v7 §10.6 adds no chat string. No unread logic (`chat-unread.ts`
   is L73/L74).
@@ -529,9 +531,11 @@ and are mirrored in `ui/palette.ts` and `ui/motion/motion-tokens.ts`.
   is dropped with no reset; the form resets after a send; no composer when `canWrite` is false.
   The transcript opens on the newest line and then sticks to the bottom only while the reader is
   within 24 px of it (designer 2026-10-26, `decisions.md`); the reader's own send always scrolls
-  down. Send is never disabled
-  (nothing tracks an empty field, and a native `disabled` would leave the Tab order). Shift+Enter
-  sends too, because the field is a single-line `<input>`.
+  down. Send is never disabled for an empty field
+  (nothing tracks one, and a native `disabled` would leave the Tab order). Shift+Enter
+  sends too, because the field is a single-line `<input>`. `sendLocked` (L76-14, the
+  reconnecting lobby) is the one lock: Send turns `aria-disabled` (`focusableWhenDisabled`),
+  neither Send nor Enter sends, and the draft stays. The arena passes nothing.
 - **Announcements** (`chat-new-message-announcement`): the transcript is a polite `role="log"`,
   mounted before the first line, and lines are keyed by `ChatMessageView.order`, so each new line
   is announced once and a re-render never reads the log back. Do not move the role onto the `<ul>`
@@ -574,9 +578,9 @@ and are mirrored in `ui/palette.ts` and `ui/motion/motion-tokens.ts`.
   `upgradePointSellYield`), never from the PNG: the printed stats are cropped out of the art
   (`artFor`), and the old Gambler PNG prints "?" where the catalog has Draw 10. The ability
   prose is
-  `KIT_ABILITY_COPY`, verbatim (the Prophet copy fix is L76's, spec v7 §10.1).
+  `KIT_ABILITY_COPY`, verbatim (Prophet's line follows spec v7 §10.1 since L76-03).
 - **Anchors:** `data-kit-section` (one per group, with `data-kit-stat`, `data-hand-family`,
-  `data-special-key` and `data-card-caption` inside) and `data-zone="kit-portrait"` with
+  `data-special-key`, `data-random-special` and `data-card-caption` inside) and `data-zone="kit-portrait"` with
   `data-eliminated`, `data-kit-face`, `data-kit-size`. `fx/play-flyout.ts` and the L74 self strip
   query the portrait anchors.
 - **The name has one source:** `kitPortraitAlt(kitId)` (`ui/kit/kit-portrait-label.ts`): the
@@ -608,7 +612,7 @@ and are mirrored in `ui/palette.ts` and `ui/motion/motion-tokens.ts`.
   headed by its `<h3>` with no accessible name, so it is not a region landmark (L74-02).
 - **Cards inside the details:** thumb `Card`s with synthetic instance ids
   (`kitSpecialCardKey(cardId, index)`, `always-upgraded:<id>`, `immune-to:<id>`); the starting
-  hand is two hidden thumbs. A thumb prints no name and no cost chip, so the details add a
+  hand is two hidden thumbs. Random starting specials are hidden special thumbs captioned "Random special" (L76-03). A thumb prints no name and no cost chip, so the details add a
   visible caption and a signed `CostAmount`. Never resize them with `w-*` classes (Card contract).
 - **Tests:** `kit-details.test.tsx` is the component test that the L30-05 and L51-04 rows of
   `kit-inspect-dialog.test.ts` expected (`docs/backlog_v7_test_classification.md`); the classic
@@ -653,15 +657,18 @@ and are mirrored in `ui/palette.ts` and `ui/motion/motion-tokens.ts`.
   Never clamp it and never read `DEFAULT_TURN_TIME_SECONDS` here.
 - **Excluded is a word:** an excluded kit carries `EXCLUDED_LABEL` at full opacity. Dim or grey
   the portrait only (`opacity-40 grayscale` on the portrait wrapper), never the name or the label.
-- **L76 adds the host editor here:** the slider sends on release, All / None / Random and the
-  16 kit toggles, in this folder, reusing `rulesKitFaces`. `screens/lobby-rules-panel.tsx` stays
-  until L76.
+- **Host editor (L76-09):** `RulesStrip` and `RulesSheet` take an optional `editor`
+  (`RulesEditorBinding`); with it the sheet's body is `RulesEditor`, whose payloads come from the
+  pure `rules-editor-model.ts` (details under `## Home and lobby (V7 · Lot 76)`).
+  `screens/lobby-rules-panel.tsx` is deleted.
 - **Nesting:** the strip's portraits are the non-clickable `KitPortrait` inside one `<button>`;
   they are `aria-hidden` in the sheet, where the visible name names the kit.
 - **Tests:** `rules-strip.test.tsx` and `rules-sheet.test.tsx` repeat the small `rules()` and
   `kitFace()` helpers instead of sharing a file. They assert the literal strings.
 - **Gallery:** section `rules` (`ui/rules/rules.gallery.tsx`, DEV only): default, Random only
-  with three kits excluded, a 300 s server default and one allowed kit.
+  with three kits excluded, a 300 s server default and one allowed kit; since L76-09 also the host
+  editor (live apply), the solo Server default demo and a disabled editor
+  (`rules.gallery-demos.tsx` holds the stateful demo).
 
 ### Coach panel (`ui/coach/`, L72-17)
 
@@ -1168,12 +1175,10 @@ Appendix A). Each Lot 74 task appends its bullet here, in task order.
     join the reducer as `ArenaSheet` variants, each with its `arenaSheetKey` case (the `never`
     default makes a missing case a type error).
   - **Owner-local** (the owner's own `open` state, a `Sheet` / `Dialog` rendered by the owner):
-    the TopBar menu and leave confirm, and the Dock's Unspy picker. Opening one does not end
+    the TopBar menu, leave confirm and How to play sheet (V7 since L76-06), the TopBar's Feedback
+    sheet (V7 since L76-07), and the Dock's Unspy picker. Opening one does not end
     targeting. While it is the live sheet it takes Esc first through the sheet stack, and the
     arena's targeting Esc stands down (`liveSheetId` is not null).
-  - **Outside the stack until L75 / L76:** the V2 `HowToPlayDialog` and `FeedbackDialog` the
-    TopBar opens (V2 `Dialog`, no portal). The sheet stack does not see them, so during
-    targeting one Esc both ends targeting and closes the dialog (ledger 50, the L74-26 gate).
 - `screens/arena/threat-layer.tsx`, `central-plate.tsx`, `threat-geometry.ts`,
   `plate-model.ts` (L74-06, spec v7 §6.1 item 2, §6.5, §11): `ThreatLayer` renders
   `threats(view, subChoice)`, statically (motion is L78), as an `aria-hidden`, press-through
@@ -1734,6 +1739,283 @@ Appendix A). Each Lot 74 task appends its bullet here, in task order.
   Thief names the 10-point cap. `useArenaHints` returns it as `body`, and `HintOverlay body?`
   replaces the `HINT_COPY` body.
 
+## Home and lobby (V7 · Lot 76)
+
+Spec v7 §7.1–§7.5 and §7.7; plan `docs/superpowers/plans/2026-10-21-v7-lot-76-home-lobby.md`. Each bullet starts with its file and task id.
+
+- `screens/home/` (L76-01, spec v7 §4.2, §7.1): `home.tsx` split by component, with no visual or behavior change. `home-screen.tsx` (`HomeScreen`, `HomeScreenProps`; App imports it directly, no `index.ts`) holds every Home state, the New control and the four root dialogs. `home-hub.tsx`, `online-path.tsx`, `solo-path.tsx`, `tutorial-path.tsx`, `path-header.tsx`, `home-status.tsx`, `nickname-field.tsx` and `home-art.tsx` (`HomeArt`, `BetaCard`) hold no state, so Back keeps the solo picks. (`home-classes.ts` was deleted by L76-08: the fields are `TextField`s.)
+- `screens/home/home-gate.ts`, `home-whats-new.ts`, `solo-rules-state.ts` (L76-01): the pure rules `HomeScreen` follows; they read no storage (`ui/help-storage.ts` and `ui/release-storage.ts` do). `howToPlayCloseOutcome`: a gated close marks seen and enters the path with no What's new check; a manual Skip / Got it marks seen, a manual dismiss does not, and both re-check What's new. `whatsNewAutoScope`: 'current' while the latest entry is unseen, for the mount, Back-to-hub and manual How to play triggers (New opens 'history' itself). `initialSoloRulesState` / `applySoloRulesChange` / `soloLaunchKitSelection`: the Play again seed is read once at mount, only an in-range slider change sends the clock (Q3/Q31), an excluded pick falls back to Random, and Random only launches Random but keeps the pick.
+- `screens/home/home-screen.test.tsx`, `test-home.ts` (L76-01, spec v7 §12.1): the rendered Home suite. `test-home.ts` has `makeHomeProps`, `expectNoHomeIntent` (the commit rule: a test that opens or closes a dialog asserts no intent), `seedHomeStorage`, `enterHomePath` and `closeHomeDialog` (it finds the V7 sheet backdrop). They replace the four `screens/home.*.test.ts` source-text splits and the `home.tsx` reads of `whats-new-dialog.test.ts`, whose style-only New lines read `screens/home/home-screen.tsx` until L76-04. A test that sends feedback mocks `feedback/submit-feedback`.
+- `screens/lobby/lobby-screen.tsx` (L76-02, spec v7 §4.2, §7.2, §12.1): the V2 lobby moved as it is.
+  App imports `./screens/lobby/lobby-screen` (no `index.ts`). `lobby-ready.ts`,
+  `lobby-ready-mark.tsx` and `lobby-kit-picker.ts` moved beside it with their tests; the pure
+  `lobby-ready` and `lobby-kit-picker` suites are unchanged. Two imports switched to their L72
+  rebuilds, so nothing in the lobby imports `screens/table/` (L75-11 may delete the old copies):
+  `ChatLog` from `ui/chat/chat-log`, and in `screens/lobby-kit-picker-dialog.tsx` (deleted by
+  L76-10), `KitDetails` from `ui/kit/kit-details`. The V7 `ChatLog` trims the body before `onSend`, which the V6 log
+  did not, so a lobby `SEND_CHAT` now carries the trimmed text (decisions.md 2026-11-03). Two
+  more edits: the root `main` gained `overscroll-contain`, and each seat `<li>` carries
+  `data-lobby-seat={player.id}` (a test hook). L76-10 then replaced the V2 picker dialog with the
+  V7 kit picker sheet.
+- `screens/lobby/test-lobby.ts` (L76-02, plan A.3): `LOBBY_HOST` / `LOBBY_GUEST` / `LOBBY_BOT`
+  (Ada, Bea, Bot Cy), `hostLobbyView` / `guestLobbyView` / `walkInLobbyView` (code `ABCDEF`),
+  `makeLobbyProps` (a `vi.fn()` per callback), `expectNoLobbyIntent` (every intent callback but
+  `onLeave`), `lobbySeat(id)`, `lobbyBackdrop(dialog)` (V7 or V2 scrim) and
+  `isLobbyControlDisabled(control)` (native `disabled` or `aria-disabled`).
+- `screens/lobby/lobby-screen.test.tsx` (L76-02, spec v7 §12.1): the rendered replacements of
+  `lobby-kick`, `lobby-kit-privacy`, `lobby-ready-mark`, `lobby-ready` (wiring),
+  `lobby.feedback-surfaces` and `lobby.visual-viewport`. They cover:
+  - seats, (you), Host, the bot label, and the ready mark before the nickname;
+  - no kit on any seat;
+  - Choose kit, then Select this kit as the only commit;
+  - Random only and the walk-in banner;
+  - Kick on every other seat, its confirm (Cancel, Esc and the backdrop send nothing), and no
+    remove-bot prop;
+  - Ready / Cancel ready, and the grey Start;
+  - Feedback (`submitFeedback` mocked: screen `lobby`, game code and nickname);
+  - the trimmed chat body;
+  - `main` as the scroll container.
+  They query only by role, name and the A.4 hooks, so they outlive the L76-12 restyle. The
+  style-only halves, `lobby-ready-mark.test.ts` (moved) and `lobby-screen.ready-chrome.test.ts`
+  (split from `lobby-ready.test.ts`), were retired by L76-12 with `lobby-ready-mark.tsx`
+  (decisions.md 2026-11-03).
+- `screens/how-to-play-content.ts`, `screens/kit-pick-copy.ts`, `screens/home/home-copy.ts`, `screens/lobby/lobby-screen.tsx`, `screens/lobby-kit-picker-dialog.tsx` (moved to `screens/lobby/random-kit-details.tsx` by L76-10) (L76-03, spec v7 §10.1, Q11 = B): the Lot 76 stale copy rows. How to play Kits, the lobby Your kit line, the solo kit line and the picker lead read the Lot 69 rule (`KIT_PRIVACY_COPY`: a kit shows only to an upgraded Spy or Spy Thief, or once its player is eliminated; How to play adds that a basic Spy shows only resources). Kits also names host exclusions and dealt-at-random kits (Lot 70) and the Gambler bust that no longer eliminates (Lot 66). The Random kit preview says "one of the allowed kits", and the Online Create helper waits for every guest's Ready (`ONLINE_CREATE_HELPER`, L57). Strings used by several screens live in `screens/kit-pick-copy.ts`; Home strings that tests import live in `screens/home/home-copy.ts`. The v6 §5.1 `kits` row points at v7 §10.1.
+- `ui/kit/kit-details.tsx`, `view-model/kit-inspect-traits.ts` (L76-03, spec v7 §10.1): a kit with `randomStartingSpecialCount` (Prophet 2, Gambler 2) shows that many hidden special versos (`data-random-special`) after its fixed specials, captioned `RANDOM_SPECIAL_CAPTION` "Random special", with no cost; the arena kit sheet and the picker inherit them. Prophet's ability drops "Invisibility excluded". `view-model/kit-inspect-traits.test.ts` holds that assertion beside the one line edited in `screens/table/kit-inspect-dialog.test.ts` (plan Appendix A.9 ruling 2).
+- `ui/rules/rules-editor.tsx`, `rules-editor-model.ts` (L76-09, spec v7 §7.4, §13 Q3/Q4/Q8/Q15/Q18/Q31):
+  the host editor. `RulesStrip` and `RulesSheet` take an optional `editor: RulesEditorBinding`
+  (`onChange`, `disabled?`, `serverDefaultTime?`). Without it they stay the read-only strip and
+  sheet that guests, walk-ins, the arena menu and Game over use (Q15). With it, the same "Table
+  rules" sheet holds `RulesEditor`: the "Human turn" `Slider` (5–180, step 1, at `sliderSeconds`,
+  so a 300 s server default sits at 180 while the strip shows 300s), then All / None and the
+  Random `Toggle`, then the 16 kit toggles (`aria-pressed` = allowed, named by the kit, Excluded in
+  words). Every change is one `SET_LOBBY_RULES` payload from the pure model, applied live; Close,
+  Esc, backdrop and swipe only close. The slider sends once per release (`Slider.onCommit`), the
+  only payload with `turnTimeSeconds`. Kit, Random, All and None never carry it, because it would
+  override the server clock for the life of the room. The last allowed kit is `aria-disabled` and
+  described by the visible `LAST_ALLOWED_KIT_REASON`. `disabled` locks every editor control (solo
+  launch Q8; L76-14 reconnecting) while the strip still opens. `serverDefaultTime` makes the strip,
+  its spoken summary and the slider readout at the untouched value read `SERVER_DEFAULT_LABEL`.
+- `screens/lobby/lobby-screen.tsx`, `screens/home/solo-path.tsx`, `home-screen.tsx`,
+  `solo-rules-state.ts` (L76-09): the lobby mounts `RulesStrip` for everyone and gives only the
+  host `editor={{ onChange: onSetLobbyRules }}`. The solo path gets
+  `{ onChange: (p) => setSolo((s) => applySoloRulesPayload(s, p)), disabled: busy,
+  serverDefaultTime: !solo.includeTurnTime }`. `applySoloRulesPayload` merges a payload into the
+  local rules (the clock only when the payload carries it) through `applySoloRulesChange`: only a
+  slider release sets `includeTurnTime`, and an excluded local pick falls back to Random.
+  `screens/lobby-rules-panel.tsx` is deleted.
+- `screens/lobby/kit-picker-sheet.tsx`, `kit-tile-stats.ts`, `random-kit-details.tsx`,
+  `../kit-pick-copy.ts` (L76-10, spec v7 §7.3, §6.7, Q23; decisions 2026-11-03): the kit picker the
+  lobby and the solo menu share, as two stacked read-only sheets (`data-lobby-sheet="kit-picker"`,
+  then `"kit"`). The grid, "Choose kit", lists Random then all 16 kits in
+  `LOBBY_KIT_PICKER_SELECTIONS` order as `KitTile`s (`data-kit-picker-tile` on each `<li>`; stats
+  from `kitTileStats`, read from `KIT_CATALOG`; the current pick is `aria-pressed`). An excluded kit
+  stays in place, greyed with "Excluded"; its head is natively disabled (ruling 3), so it cannot
+  open or be picked. A tile opens the kit sheet (`KitDetails`, or `RandomKitDetails` for Random)
+  with Back and Select this kit. Esc steps back one level. Back, Esc and Close never change the
+  pick. Select is the only commit (`onChooseKit` in the lobby, the local pick on Home), latched
+  once per kit-sheet open. It turns `aria-disabled`, with the "The host has excluded that kit…"
+  reason, the moment that kit is excluded, and while `disabled` (solo busy; L76-14 reconnecting).
+  Under Random only the picker shows no sheet. `LobbyKitCard` (not the lobby screen) owns the
+  picker's open flag and clears it, so the picker never reopens by itself, and the Your kit card
+  gives way to a Random-only line: the host reads `RANDOM_ONLY_SOLO_LINE`, a guest
+  `RANDOM_ONLY_LOBBY_LINE` (L76-12 ruling); the solo menu reads `RANDOM_ONLY_SOLO_LINE`.
+  `screens/lobby-kit-picker-dialog.tsx` is deleted. The Gambler tile's
+  Draw reads `WEIGHTED_DRAW_LABEL` "5–100" (the weighted range, not the catalog 10); every other
+  stat is the raw catalog value. The Action and Attack stats use the new `action` and `attack`
+  icons (`ui/icons`, DESIGN.md › Icons). A test that waits for a sheet to close waits for
+  `queryByRole('dialog', { name, hidden: true })` to return null: an exiting sheet is already
+  `aria-hidden`, so a plain `queryByRole('dialog')` is null while its text is still there. It
+  never waits on the Sheet's internal `[data-zone="sheet-overlay"]` anchor.
+- `screens/lobby/lobby-screen.tsx` and its parts (L76-12, spec v7 §7.2, §5.1–§5.3, §11 Q25, Q39):
+  `LobbyScreen` composes, in DOM order:
+  - the setup column: `LobbyHeader`, the L76-09 `RulesStrip`, `LobbyKitCard`;
+  - the table column: `LobbySeats`, then `LobbyChatPanel` (L76-13);
+  - `LobbyActions`.
+  Root: `main.v7-ground relative h-full overflow-y-auto overscroll-contain`. At 360 px it is
+  one column with one seat card per row; the host's difficulty and Kick wrap rather than
+  scroll sideways. The seat grid goes to two columns from a 34rem panel (container query): the
+  3-option difficulty `Segmented` is about 200 px and never shrinks. From `lg` it is two page
+  columns (setup 26rem). The action bar is sticky at the bottom of `main`, so Start and Ready
+  stay on screen with 8 seats. No inner list scroll (it replaces the V2 `max-h` list).
+- Seats (`lobby-seats.tsx`, `lobby-seat-model.ts`): one `--panel-2` card per `view.players`
+  entry, in that order (`data-lobby-seat`). Each card holds:
+  - a `check` / `close` icon named Ready / Not ready (`lobbyReadyLabel`);
+  - the avatar (`aria-hidden`) and the `PlayerName` in the seat hue of that index;
+  - ' (you)', the Host tag, and `BotSeatLabel` for every recipient.
+  No seat renders a kit. The host gets, on every other seat:
+  - a bot difficulty `Segmented` named '{nickname} difficulty', which sends `setBotDifficulty`
+    on a new tier;
+  - Kick, which opens `KickConfirmDialog`.
+  The host also gets an Add bot row: a local 'New bot difficulty' `Segmented` (default Normal),
+  then Add bot, which sends `addBot(difficulty)`. At 8 seats both are disabled, with the shared
+  reject words 'Room is full (8 seats).' (`lobbyCanAddBot`).
+- `kick-confirm-dialog.tsx` (L76-12, plan A.9 ruling 5): a V7 Dialog 'Kick this player?' with
+  Cancel (quiet, the initial focus) and Kick (danger). Esc, backdrop and swipe mean Cancel. A
+  per-open epoch latch sends one `kickPlayer` on a double click. The owner closes the confirm for
+  good when its seat leaves `view.players` or the lobby locks (Review Focus 4).
+- `lobby-header.tsx`: the eyebrow, title and `STATUS_LABELS` line, the inline `role="alert"`
+  error (with its OK dismiss, L76-14), and the Game code card. The card has Copy
+  (`navigator.clipboard.writeText`), Share (L76-17) and the V7 copy-result Dialog ('Code copied' /
+  'Link copied' / 'Copy failed'; every body keeps the code) with `data-lobby-sheet="copy-result"`,
+  and 'You are the host'.
+- `lobby-kit-card.tsx`: one of three cards:
+  - Your kit: the L76-03 line, `KitPortrait`, the label, and Choose kit;
+  - the Random-only line, without the Your kit heading: the host reads `RANDOM_ONLY_SOLO_LINE`
+    ('Kits will be dealt at random.'), a guest `RANDOM_ONLY_LOBBY_LINE` ('The host is dealing kits
+    at random.'), both from `../kit-pick-copy` (controller ruling, L76-12; the card takes
+    `isHost`);
+  - the walk-in "Watching the lobby" banner.
+  It owns the `KitPickerSheet` open state and resets it under Random only or for a walk-in.
+- `lobby-actions.tsx`: Start (primary; grey with `lobbyStartReason`, which gives the server's
+  reject words), Ready (primary with the `check` icon) / Cancel ready (secondary) as one button,
+  the hints, Leave (danger, immediate) and Feedback (quiet, `feedback` icon). Feedback opens the
+  manual Feedback sheet (screen 'lobby', code, nickname; L76-07).
+- `locked` (plan A.4, ruling 6; `LobbyScreen` sets it to `lobbyIntentsLocked(status)` from L76-14):
+  - `LobbySeats`, `LobbyKitCard` and `LobbyActions` take it, and so does the editor binding
+    (`disabled`).
+  - It disables Start, Ready / Cancel ready, Add bot and every difficulty (focusable where a
+    button), Kick, and Select this kit (`KitPickerSheet disabled`).
+  - It closes an open Kick confirm.
+  - Leave, Copy, Feedback, Choose kit and the sheets stay live. `LobbyHeader` takes no `locked`:
+    it has no intent control.
+- `lobby-copy.ts`: every lobby string the components and tests share, moved verbatim, plus two
+  new accessible names: 'New bot difficulty' and '{nickname} difficulty'. Tests:
+  `lobby-seat-model.test.ts`, `lobby-header.test.tsx`, `lobby-seats.test.tsx`,
+  `lobby-actions.test.tsx`, `lobby-kit-card.test.tsx`. The L76-02 `lobby-screen.test.tsx` stays
+  unchanged. A new lobby test waits for a closing V7 sheet with
+  `queryByRole('dialog', { name, hidden: true })` returning null (an exiting sheet is already
+  `aria-hidden`), never the Sheet's internal `data-zone` anchors (controller ruling, L76-12).
+- `screens/lobby/lobby-chat-panel.tsx` (L76-13, spec v7 §7.5, §10.6 Q21): the lobby chat under
+  the seats.
+  - **Header:** a `--panel` card whose `<h2>` holds a disclosure button named "Chat"
+    (`CHAT_LOG_LABEL`; `aria-expanded`, `aria-controls`; the chevron turns down when open).
+  - **Body:** the `ui/chat` `ChatLog` (`messages={view.chatMessages ?? []}`,
+    `players={view.players}`, `canWrite`, `onSend={onSendChat}`). A walk-in's input is labelled
+    and placeholdered `WALK_IN_CHAT_LABEL` ('Spectators only see this', `lobby-copy.ts`); seated
+    players keep 'Message'.
+  - **Open state:** it starts open on every viewport and reads no viewport mode (decisions.md
+    2026-11-03). Collapsing sets `hidden` on the body and keeps `ChatLog` mounted, so the
+    transcript and an unsent draft survive. Toggling sends nothing.
+  - The client filters nothing: the server builds each reader's stream.
+  - Tests: `lobby-chat-panel.test.tsx`, which renders `LobbyScreen`.
+- `screens/lobby/lobby-lock.ts`, `lobby-screen.tsx` (L76-14, spec v7 §7.2, Q29; A.9 rulings 6 and 8):
+  `lobbyIntentsLocked(status)` is true only for `'reconnecting'`. While it is, the lobby disables
+  every control that sends an intent: Start, Ready / Cancel ready, Add bot and its difficulty, a
+  bot's difficulty, Kick (an open Kick confirm closes, nothing sent), Select this kit, every rules
+  editor control (`RulesEditorBinding.disabled`) and chat Send and Enter (`ChatLog sendLocked`).
+  Leave, Copy, Feedback, the alert's OK, opening the rules sheet and Choose kit (the picker opens
+  to browse) stay live. The status line is a polite `role="status"` region, so 'Reconnecting…' is
+  announced. Unlike the arena (L74-25), lobby chat locks too: §7.2 locks every lobby intent.
+- `screens/lobby/lobby-header.tsx` (L76-14, spec v7 §7.2, §7.7, Q26; A.9 ruling 4): the reject
+  stays an inline `role="alert"` line (lobby errors are never a toast). A quiet `close`
+  `IconButton` named "OK" (`LOBBY_DISMISS_LABEL`, the arena reject toast's control) sits beside it
+  in `[data-lobby-alert]`, outside the live region, so only the message is announced. OK calls
+  `onDismissError` (App: `clearActionReject`), sends no intent and stays live while reconnecting.
+  The wrapper keeps the L76-12 `--danger` inset ring: a `border-l-4` stripe is the Impeccable
+  `side-tab` finding (spec v7 §12.4; decisions.md 2026-10-28).
+- `screens/reject-phase.ts`, `App.tsx` (L76-14, A.9 ruling 7; decisions.md supersedes the L39
+  carry-over across phases): `GameApp` clears the shared reject (`error` + `actionReject`) when
+  the view phase changes between two phases (lobby, playing, finished), with React's "adjust state
+  while rendering" pattern, so the next screen never mounts with the old reject. A change to or
+  from Home (`view === null`) never clears ("You were kicked.", a solo-launch failure). Within a
+  phase nothing changed: a state update never clears it (L39-06).
+- `test/fake-room-connection.ts`, `App.lobby.test.tsx` (L76-14): `fakeRoomConnection(view, extra?)`
+  is a full `UseRoomConnectionResult` with a `vi.fn()` per member; App-level lobby tests
+  `vi.mock('./net/use-room-connection')` with it (`docs/agent/testing.md`).
+- `screens/lobby/rules-change-notice.ts`, `lobby-rules-toast.tsx`, `lobby-screen.tsx` (L76-15, spec
+  v7 §7.4, Q16/Q17; A.9 rulings 4 and 10): a seated non-host guest gets the lobby's one `Toast`
+  (`tone="info"`, polite) when the host changes the rules: "Rules changed", plus the body "Your
+  pick was reset to Random." when the host newly excluded the guest's kit pick (the server resets
+  it, Lot 70). `lobbyRulesNotice(previous, next)` diffs two consecutive views of one room and one
+  seat (excluded kits as a set, Random only, seconds). There is none on the first view, on the
+  guest's own Random pick, or for the host and walk-ins. A Random-only toggle is a rule change and
+  never a reset (the server keeps the pick). `LobbyScreen` keeps the last view in state ("adjust
+  state while rendering", no effect, no ref). A notice that arrives while the toast is open swaps
+  its copy in place and keeps the reset line (`mergeRulesNotice`) and the running timer. The toast
+  closes on OK or after `LOBBY_RULES_TOAST_MS` (6 s); Esc and state updates never close it. The
+  server and ready state are unchanged. Lobby tests scope role queries to `main`: the Toast keeps
+  two empty live regions in `document.body`.
+- `screens/claim-seat-dialog.tsx`, `claim-seat.ts` (L76-16, spec v7 §7.7, §6.7; Appendix A
+  `claim-seat-dialog`, `claim-seat-dismiss-stay`): the claim picker is a V7 `Dialog` (a bottom sheet
+  on phones, centered on desktop; Esc closes only the top sheet), with unchanged props. It shows
+  "Sit as a disconnected player?", the "Nicknames are not unique…" line, and one `aria-pressed` row
+  per claimable seat: a `v7SeatColor` dot (the seat's index in `view.players`), the nickname, and
+  "Host" on the lobby host's seat. There is no nickname auto-match: `claimSelection` pre-selects
+  only a sole seat and drops a pick that leaves the set. The actions are Stay (`secondary`,
+  `stayLabel`) and Sit here (`primary`, `focusableWhenDisabled` while nothing is picked). Esc,
+  backdrop, swipe and Stay all call `onStay`. Sit here sends once per claimable set: a ref latch
+  keyed by the seat ids, read only in its handler; a new set re-arms it. App still mounts it only
+  while the picker shows. It imports nothing from `design/`.
+- `screens/lobby/lobby-kit-card.tsx`, `lobby-screen.tsx`, `App.tsx` (L76-16, spec v7 §7.2, Q24; A.9
+  rulings 6 and 9): a lobby walk-in's "Watching the lobby" banner shows a primary **Claim a seat**
+  (`CLAIM_SEAT_LABEL`, the arena's words) while App passes `onReopenClaim`. App does so in the lobby
+  branch under the arena's condition (`walkInSpectator && claimableSeats.length > 0`); it clears the
+  dismissed key, so the picker shows again for the same set. It sends nothing and stays live while
+  reconnecting. A seated guest who kept their seat gets no control (Appendix B question).
+- `screens/home/home-screen.tsx`, `home-hub.tsx`, `home-art.tsx`, `whats-new-control.tsx`, `path-header.tsx`,
+  `home-status.tsx` (L76-04, spec v7 §5.1–§5.3, §7.1, §11 Q7/Q8; decisions.md 2026-11-04): the V7 hub and
+  path chrome. `main` is `.v7-ground` and stays the scroll container (`relative h-full overflow-y-auto
+  overscroll-contain`, no `100dvh`). A top-right row (`data-home-corner`, every mode) holds `BetaCard`
+  (the word Beta) and `WhatsNewControl` (a quiet "New" named "What's new" or "What's new (unread)", with a
+  decorative `--cta` dot); New is disabled only while a solo game launches (Q8) and keeps its name. The
+  mode root (`data-home-mode`, `data-motion`) fades and rises through `motionPropsFor`, a fade only under
+  reduced motion. The hub, in DOM order: `HomeArt`, a fan of five base holo `Card`s (`data-home-card-fan`,
+  `aria-hidden`; each floats through `motionPropsFor` and holds still under reduced motion); the "Card
+  Battle" `<h1>` shown uppercase with an ink outline and hard shadow; the 'Turn-based card battle'
+  tagline; `HomeStatus`; the tiles in §7.1 order (Play solo, Play online, Tutorial; `data-home-tile`,
+  extracted art from `artFor`, chrome from `chrome-classes`); How to play (secondary, `help`) and Feedback
+  (quiet, `feedback`); the helper line. Every hub control is disabled while busy. `PathHeader`: quiet
+  Back (`chevron-left`) and Feedback, the 'Card Battle' eyebrow, the path `<h1>`, the subtitle,
+  `HomeStatus`. `HomeStatus`: the `homeStatusCopy` line (none when idle) and the error as an inline
+  `role="alert"` line on `--panel-2` with a `--danger` inset ring, under the title, not dismissible
+  (§7.7). These files import nothing from `design/` or `bots/`; the Online, Tutorial and Solo bodies did
+  until L76-08 and L76-11. What's new item 9 is the Home item. A mode switch (a tile, Back, the gated Skip or Got it) focuses the new `<h1>` (`tabIndex={-1}`), never on the first mount (L76-18, P2-m5).
+- `screens/whats-new-dialog.tsx`, `screens/use-once-per-open.ts` (L76-05, spec v7 §7.1, §7.7, §10.4;
+  L63-07, L65-05): What's new is a V7 `Dialog` (a bottom sheet on phones, centered on desktop; width
+  `2xl`; `data-home-sheet="whats-new"`) with unchanged props. The `current` scope (the auto popup)
+  shows the latest entry alone; `history` (New) shows every entry in catalog order with 'Latest' under
+  the first title. Each entry keeps its date eyebrow and title, its Before / After items
+  (`data-whats-new-item`) with a `ui/card` `Card` thumb of the base art for a `cardId` or a `ui/kit`
+  `KitPortrait` thumb for a `kitId`, and after them the New additions (`data-whats-new-section="new"`,
+  `data-whats-new-addition`). Got it, Esc, the backdrop and a swipe-down each call `onClose` once:
+  `useOncePerOpen(open)` latches every dismissal path per open (A.9 ruling 5), so Home's `closeWhatsNew`
+  marks the latest id seen once. It imports nothing from `design/`. Tests: `whats-new-dialog.sheet.test.tsx`
+  renders the real catalog (shipped entries never change, and lot-63 has items and additions);
+  `whats-new-dialog.test.ts` keeps the catalog pins that every What's new append updates.
+- `test/sheet-gestures.ts`, `screens/home/test-home.ts` (L76-05): `stubPhoneViewport()` and
+  `swipeSheetDown(dialog)` for sheet tests; `closeHomeDialog` gains `'swipe'` and waits with
+  `queryByRole('dialog', { name, hidden: true })` (an exiting sheet is already `aria-hidden`).
+- `screens/how-to-play-dialog.tsx` (L76-06, spec v7 §7.1, §5.6, §8.3; Appendix A `home-how-to-play-dialog`,
+  `home-how-to-play-dismiss`): How to play is a V7 `Dialog` (a bottom sheet on phones, centered on
+  desktop, width `xl`) holding a `Carousel` labelled "How to play" on every viewport. There is one card
+  per `HOW_TO_PLAY_SECTIONS` entry, in order (`data-how-to-play-section`, named by the section title),
+  each with the title, the body verbatim and, on Lives, Points and Upgrade, the resource icons
+  (`ui/icons` `life` Lives and `shield` Shield, `point` Points, `upgrade` Upgrade points;
+  `data-how-to-play-icons`). The body stays plain text: `EffectTextWithIcons` would turn "0 lives",
+  "1 upgrade point" and "1 life" into glyph amounts, so the copy would no longer read verbatim. Four
+  cards also carry card renders (designer 2026-11-03: icons and card renders): a
+  `data-how-to-play-renders` row under the body, `aria-hidden` (the body names the cards), of static
+  base-art `ui/card` `Card`s (`size="hand"`, `[--card-w:96px]`, never `getCardArtUrl`, at most two so a
+  card never scrolls sideways at 360 px): Basic Attack and Shield on Cards, Basic Attack base beside the
+  same card `isUpgraded` on Upgrade, one Random `KitPortrait` (`size="tile"`, no real kit is suggested)
+  on Kits, Block on Special cards. Instance ids are synthetic: `how-to-play:<cardId>[:upgraded]`. A
+  screenshot `<img>` renders only when `howToPlayScreenshotUrl` finds the designer PNG (a test of it
+  excludes the render row's own art `<img>`s). The chevrons (Previous / Next, keyboard-operable) and a
+  swipe on the track page it, the status line announces "How to play, n of 9", and paging never closes
+  it. Reduced motion pages instantly and the sheet fades only. Skip → 'skip', Got it → 'got-it', Esc,
+  backdrop and swipe-down → 'dismiss', each once per open (`useOncePerOpen`), so a gated close enters
+  its path once and never reads as a manual close. Props and `HowToPlayCloseReason` are unchanged, so
+  Home, the arena menu and the classic table '?' need no edit; on the table it is now a V7 sheet, so
+  Esc closes only it (Q49). It never sends an intent and imports nothing from `design/`.
+- `feedback/feedback-dialog.tsx`, `feedback-timing.ts`, `ui/primitives/text-area.tsx` (L76-07, spec v7 §7.7, the Lot 76 backlog review for the 1.5 s Sent close, §5.2, §11 Q71; decisions.md 2026-11-04): Feedback is a V7 `Dialog` (a bottom sheet on phones, centered on desktop, in the sheet stack) with unchanged props, so Home, the lobby, the arena, the classic table and End mount it as before. Kind is a `Segmented` radio group "Kind" (Bug first); the About chips keep `aria-pressed` and catalog order; Message is the new `TextArea` and Contact (optional) a `TextField`, both 16 px. There is still no `<form>`, so Enter never sends. Send keeps the synchronous in-flight gate and the request id. While sending, `dismissLocked` ignores Esc, backdrop and swipe and Skip / Cancel are disabled; with no answer after `FEEDBACK_SEND_TIMEOUT_MS` (15 s) the sheet unlocks with 'Could not save — try again' and the late answer is ignored. A success retitles the sheet "Sent" ("Thanks for your feedback.", OK focused); it closes after `FEEDBACK_SENT_CLOSE_MS` (1.5 s) or on OK, Esc, backdrop or swipe and reports `onDismiss('sent')` once, latched per open by `screens/use-once-per-open.ts` (A.9 ruling 5), so OK pressed as the timer fires still reports once. The payload is unchanged and never carries the seed. Tests: `feedback/feedback-dialog.test.tsx` (it replaces the source-text `feedback-dialog.test.ts`), `ui/primitives/text-area.test.tsx`.
+- `screens/home/online-path.tsx`, `tutorial-path.tsx`, `nickname-field.tsx` (L76-08, spec v7 §7.1, §5.2, §7.7): the V7 Online and Tutorial paths. Online: Nickname (`TextField`, 16 px) outside both forms, so Enter in it does nothing; then the Create card (`ONLINE_CREATE_HELPER`, primary Create) and the Join card with the large code field (`TextField size="lg"`: uppercased as typed, maxLength 6, autocomplete and spellcheck off, placeholder ABCDEF) and primary Join. Enter in the code submits Join only while Join is enabled. Tutorial: Nickname, then Start tutorial, in one form (Enter starts it). Busy disables the fields and the submits. A connection error stays in the path header's inline status block and the fields keep their values, so the player retries in place. `home-classes.ts` is deleted. Tests: `online-path.test.tsx`, `tutorial-path.test.tsx`.
+- `screens/home/use-launch-once.ts`, `home-screen.tsx` (L76-08, Part 2 Review Focus 3; decisions.md 2026-11-04): Create, Join, Start tutorial and (from L76-11) Start solo game each launch once per connection state: a second submit of the same intent before `status`, `error` or `soloLaunchPending` changes is ignored, so a double click or an Enter after a click sends one intent. A change re-arms every intent.
+- `net/use-room-connection.tutorial.behavior.test.ts` (L76-08, spec v7 §12.1): `renderHook` over a mocked `@colyseus/sdk` proves `startTutorialGame` creates `{ protocolVersion, nickname (trimmed), tutorial: true }`, then sends `START_GAME` alone (no rules, kit or bot) and writes no hint storage. The source-text `use-room-connection.tutorial.test.ts` stays: the hook does not change.
+- `screens/home/solo-path.tsx`, `solo-opponent-picker.tsx`, `solo-table.ts`, `solo-kit-card.tsx` (L76-11, spec v7 §7.1, §11 Q7/Q8; decisions.md 2026-11-04): the V7 Solo path, one form in the §7.1 order: Nickname, Opponents, Difficulty, Your kit, the Table rules strip (L76-09), Start solo game (the only submit; every other button is `type="button"`). Opponents is a radio group (`aria-labelledby` its caption) whose seven radios are bot seats around an oval mini table in a 320×216 stage (`solo-table.ts`, so it fits a 360 px phone): seat n is checked at n opponents, seats 1…n fill in their seat hue (`v7SeatColor(n)`), the rest are dashed, the player's avatar sits at the bottom (decorative). The checked seat is the one Tab stop; arrows move and select, wrapping. Difficulty is `Segmented<BotDifficulty>` "Difficulty" with the lobby's `BOT_DIFFICULTY_OPTIONS`. `SoloKitCard` shows Your kit (the L76-03 lead, portrait, label, Choose kit) or, under Random only, `RANDOM_ONLY_SOLO_LINE`; Random only still launches 'random'. While a launch is pending every control is disabled and the strip still opens (Q8). `screens/home` imports nothing from `design/` or `bots/`. Tests: `solo-path.test.tsx`, `solo-table.test.ts`.
+  While disabled, a filled seat drops its hue for the `CHROME_DISABLED_CLASS` "off" look, so `--text-2` never sits on a seat hue. `HomeScreen` clears its kit picker flag under Random only, as `LobbyKitCard` does (the `KitPickerSheet` contract), so turning Random only off never reopens the picker (`solo-path.kit-picker.test.tsx`). `CHOOSE_KIT_LABEL` moved from `screens/lobby/lobby-copy.ts` to `screens/kit-pick-copy.ts`: one 'Choose kit' for the lobby card, the solo card and the picker sheet's title.
+- `screens/lobby/invite-link.ts`, `lobby-header.tsx` (L76-17, spec v7 §7.2, §10.6, Q28; decisions.md 2026-11-04): the code card has Copy and **Share**. Share passes `inviteLink(origin, code)` (`{origin}/?code=XXXXXX`) to `navigator.share({ url })` when the browser has it; a cancel (`AbortError`) is silent. Without Web Share, or when it fails otherwise, Share copies the link and the copy-result Dialog says "Link copied" ("Share this link with friends: {link}"); a refused clipboard shows "Copy failed" with the code. Share sends nothing and stays live while reconnecting. Tests: `invite-link.test.ts`, `lobby-header.test.tsx`.
+- `App.tsx`, `screens/home/home-screen.tsx`, `home-gate.ts` (L76-17, spec v7 §7.1, Part 2 Review Focus 4): `GameApp` reads `?code=` once, in a `useState` initialiser (`parseInviteCode`: uppercased, capped at 6, no character filter; missing or empty is ignored), seeds `joinCode`, and strips it with `history.replaceState` (other parameters stay). It passes `openOnline` to Home until the first room view, so Home enters Online through the How to play soft gate (`homeMountEntry`; a solo Play again seed still wins) and a Leave or a kick lands on the hub. Nothing joins by itself: Join waits for a nickname. `/admin` and `/dev/ui` never read it. Tests: `App.lobby.test.tsx` › 'App invite link…', `home-gate.test.ts`, `online-path.test.tsx`.
+
 ## Design system (V2 · Lots 10+)
 
 Tokens and shared components live under `apps/client/src/`. Intents, payloads, and visibility
@@ -1782,11 +2064,11 @@ rules above are unchanged — this section only covers how the client looks.
   pulse on turn start / payout change (`MOTION_PULSE_S`); compact, no word label.
   Opponent Draw chips (L65-01) fly **one** point unless that seat is already Spyed
   (or it is your own Draw), so the count cannot identify a kit.
-- **Home (L11-01 / L17-01 + hub rework / L51-03):** branded hub first — title,
-  decorative V1 kit/card art. Two mode paths (not stacked forms): **Play online**
+- **Home (L11-01 / L17-01 + hub rework / L51-03):** branded hub first — the V7 wordmark
+  over a fan of holo cards since L76-04 (Home and lobby, V7 · Lot 76). Two mode paths (not stacked forms): **Play online**
   (nickname + create / join) and **Play solo** (nickname + opponent count 1–7 + difficulty,
   defaults 1 + Normal). Nickname is collected **inside** each path, not on the hub.
-  **Feedback** (L47-03 / L47-06 / L57-05): hub control next to How to play; same Dialog on Online / Solo /
+  **Feedback** (L47-03 / L47-06 / L57-05): hub control next to How to play; same Feedback sheet (V7, L76-07) on Online / Solo /
   Tutorial path headers. POST `{server}/api/feedback` via `resolve-server-url()`; Home
   omits `gameCode` / `logTail`. **Manual** (Home, Lobby, table `!`, Game over **Feedback**):
   Kind plus multi-select **About** chips (`UI`, `Gameplay`,
@@ -1797,7 +2079,7 @@ rules above are unchanged — this section only covers how the client looks.
   kind/topics plus contact when filled. Send uses a sync in-flight gate so two
   clicks before paint cannot insert two rows. No Inbox link on the hub.
   **Admin:** see Admin tool mode (Lot 80).
-  **How to play** (L42 / L51-02): spec §5.1 sections in order (goal, turns, lives,
+  **How to play** (L42 / L51-02; a V7 card carousel since L76-06): spec §5.1 sections in order (goal, turns, lives,
   points, cards, upgrade, kits, specials, shop — no delayed-resolution section);
   Skip + Got it both close; screenshot `<img>` only when the PNG exists under
   `src/assets/how-to-play/` (`import.meta.glob`, missing files omit the image).
@@ -1807,8 +2089,8 @@ rules above are unchanged — this section only covers how the client looks.
   all set the key and continue into that path. Manual open: Skip / Got it set the key;
   Esc / overlay only close.   **What’s new (L63-07, L65-05):** shared `RELEASE_NOTES`
   (`packages/shared/src/release-notes.ts`, newest first, each entry dated).
-  Compact **New** is the shared `Button` `variant="green"` (`bg-cta-green-deep`,
-  same as Play online) with a **red** unread tick when
+  Compact **New** is a quiet V7 `Button` beside **Beta** (L76-04), disabled while a
+  solo game launches (Q8), with a `--cta` unread dot when
   `localStorage['card-battle.v6.lastSeenReleaseId']` is not the latest id.
   The popup that opens by itself shows **only the latest entry**. The **New**
   button lists **every** entry, date by date, newest first. How to play is not
@@ -1831,7 +2113,7 @@ rules above are unchanged — this section only covers how the client looks.
   `main`: private Draw, invisible players are not targets, Sentence chip
   inspect, hand layout stays put, point chips cap at 50, your kit portrait
   is one step larger, and the action log shows icon-only resource nets
-  (unspied card sales hide the payout; unspied shop buys hide the price; resolve lines show each seat’s gain or loss). `lot-68` (2026-09-29) shipped Ghost Tax+, Shield+ vs Imposition, and fixed some bugs. `lot-69` stays as written. `lot-71` (2026-10-06) shipped on `main`: Spy Thief chooses one opponent (the upgrade hits every living opponent), and forfeiting or leaving the table pays kill rewards at the same time to queued attackers unless one player is left. Active Poison does not. The host can hide kits, deal kits at random, and set human turns from 5 to 180 seconds; players chat in the lobby and at the table until the room closes, and eliminated players and spectators share a separate chat. A Ghost's points from lost lives show as +? until that Ghost is spied. `lot-72` (2026-10-07: active-slot drop cancel; no Poison tick during Block; the lobby host never passes to a bot) shipped on `main` (promote #79) before V7 Lot 72 merged. **V7 (technical spec v7 §10.4):** `lot-72-v7` (2026-10-26, "New look") is the open V7 entry; each V7 player-facing PR appends one Before / After item per screen area during the promotion freeze. New ids never reuse an existing id: seen-state (`ui/release-storage.ts`) is keyed by id. First item: the §10.5 catalog-text fix (After `Fixed some bugs.`). Second item: the classic tutorial's resources tip no longer shows a stray life icon (After `Fixed some bugs.`). Third item: the turn timer after a fifth-active picker cancel (server fix L82-01, After `Fixed some bugs.`). Fourth item: the played card no longer also lands in the pool after a fifth-active picker (server fix L82-02, After `Fixed some bugs.`). Fifth item: Cancel on the fifth-active picker refunds the play's points (designer rule change L82-03). Sixth item: past elimination flashes no longer replay after a reconnect or on the finished board (Q63, L74-17, After `Fixed some bugs.`). Sentence chips sit
+  (unspied card sales hide the payout; unspied shop buys hide the price; resolve lines show each seat’s gain or loss). `lot-68` (2026-09-29) shipped Ghost Tax+, Shield+ vs Imposition, and fixed some bugs. `lot-69` stays as written. `lot-71` (2026-10-06) shipped on `main`: Spy Thief chooses one opponent (the upgrade hits every living opponent), and forfeiting or leaving the table pays kill rewards at the same time to queued attackers unless one player is left. Active Poison does not. The host can hide kits, deal kits at random, and set human turns from 5 to 180 seconds; players chat in the lobby and at the table until the room closes, and eliminated players and spectators share a separate chat. A Ghost's points from lost lives show as +? until that Ghost is spied. `lot-72` (2026-10-07: active-slot drop cancel; no Poison tick during Block; the lobby host never passes to a bot) shipped on `main` (promote #79) before V7 Lot 72 merged. **V7 (technical spec v7 §10.4):** `lot-72-v7` (2026-10-26, "New look") is the open V7 entry; each V7 player-facing PR appends one Before / After item per screen area during the promotion freeze. New ids never reuse an existing id: seen-state (`ui/release-storage.ts`) is keyed by id. First item: the §10.5 catalog-text fix (After `Fixed some bugs.`). Second item: the classic tutorial's resources tip no longer shows a stray life icon (After `Fixed some bugs.`). Third item: the turn timer after a fifth-active picker cancel (server fix L82-01, After `Fixed some bugs.`). Fourth item: the played card no longer also lands in the pool after a fifth-active picker (server fix L82-02, After `Fixed some bugs.`). Fifth item: Cancel on the fifth-active picker refunds the play's points (designer rule change L82-03). Sixth item: past elimination flashes no longer replay after a reconnect or on the finished board (Q63, L74-17, After `Fixed some bugs.`). Seventh item: the Lot 76 copy fixes (How to play Kits, Your kit, the kit picker and its Random kit, the Online Create helper, Prophet's ability and the random-special versos; L76-03, After `Fixed some bugs.`). Eighth item: Lobby item (L76-09, rewritten by L76-12 and L76-17): the lobby shows each seat in its player color, everyone can open the table rules, and Share sends a link that fills in the code. Ninth item: Home item (L76-04, rewritten by L76-06 and L76-07): Home has the new look, How to play is a deck of cards you swipe through, and Feedback shows Sent once your note is saved. Tenth item: the tip and tutorial copy fixes (typos and outdated Spy and reward text; L75-01, After `Fixed some bugs.`). Sentence chips sit
   on the caster (remaining turns in red) and open catalog inspect (L65-03). Play / later caster ticks / fire flash
   the table-wide red banner. Player-visible work updates the open What’s new
   entry in the same commit. No accounts, no protocol fields. Idle hub is unlabeled (not “Not connected”). Top-right **Beta**
@@ -1875,33 +2157,29 @@ rules above are unchanged — this section only covers how the client looks.
   `localStorage['card-battle.v6.hints']`. Solo composes `create` + N× `addBot` + `startGame`;
   `soloLaunchPending` skips Lobby flash. Difficulty copy via `formatBotDifficulty`
   (Easy / Normal / Hard).
-- **Lobby (L11-02 / L17-02 / L17-03 / L49-02 / L57-11 / L57-09):** game code + Copy (clipboard); copy result via `Dialog`;
-  **Your kit** (self portrait or Random) + Choose kit Dialog (allowed kit portraits + Random;
-  click a tile for description then Select). `chooseKit` payload `{ kitId }` or `'random'`.
-  **Table rules (Lot 70):** everyone sees a clock with the seconds and small kit
-  faces (excluded kits gray). Random only adds the random-kit face and hides the
-  kit picker. Only the host gets a settings icon. The popup puts a 5–180 second
-  slider on top, then All / None / Random, then kit portraits. None keeps the
-  first Classic kit. Play again keeps the rules. The tutorial path does not show
-  them. Solo uses the same panel. An untouched slider does not send a time, so
-  `TURN_DURATION_MS` still applies until the host moves it. Chat sits under the
-  player list and stays when Play again opens the next gathering. The lines
-  last until the room is gone.
-  Other seats never show a kit. Walk-in spectators skip the kit picker (**Watching the lobby**).
-  Each seat shows a colored check (ready) or cross (not ready) in a fixed column left of the
-  nickname (`font-sans`). Host and bots are ready on the wire; human **guests** toggle with
-  **Ready** (green + check) / **Cancel ready** (orange, `setReady`). Host has no Ready
-  control. **Start** is grey until `>= 2` seats **and** every connected human guest is
-  ready (`lobbyStartEnabled` — grey is not validation). Host **Kick** on every other
-  seat (bots and humans) opens **Kick this player?** then `kickPlayer`. Kicked humans
-  see **You were kicked** and may Join with the same code. Start / Leave; host-only Add
-  bot / set difficulty while `players.length < MAX_PLAYERS` (2–8); **Feedback** next to
-  Leave (L47-03); `BotSeatLabel` on every bot seat for all recipients. Tutorial and Home
-  solo skip the lobby flash (`soloLaunchPending`), so Ready / Kick never appear there.
-  Guest Ready is Classic online lobby only. **Join with code** (Home) sits a guest when
-  the table is still lobby, or opens the claim picker for a reserved disconnected seat.
-  Solo path on Home uses the same kit picker and sends `chooseKit` before `startGame`
-  when the pick is not random.
+- **Lobby:** V7 since Lot 76; the screen, its files and tests are under `## Home and lobby
+  (V7 · Lot 76)`. Kept from V2:
+  - the game code with Copy and its result dialog;
+  - Your kit shows only `yourKitSelection`, never a seat's kit; `chooseKit` sends `{ kitId }` or
+    `'random'`;
+  - the Lot 70 table rules for everyone: an untouched slider sends no time, Play again keeps
+    them, the tutorial never shows them;
+  - chat for the life of the room, under the seats;
+  - walk-ins skip the kit picker (**Watching the lobby**);
+  - host and bots are ready on the wire, and human guests toggle **Ready** / **Cancel ready**
+    (`setReady`);
+  - **Start** is grey until `lobbyStartEnabled` (grey is not validation);
+  - host **Kick** on every other seat (bots and humans) opens **Kick this player?**, then
+    `kickPlayer`; kicked humans see **You were kicked** and may Join with the same code;
+  - host-only Add bot and bot difficulty while below `MAX_PLAYERS`; `BotSeatLabel` for every
+    recipient;
+  - **Feedback** next to Leave (L47-03);
+  - tutorial and Home solo skip the lobby flash (`soloLaunchPending`);
+  - **Join with code** sits a guest while the table is in the lobby, or opens the claim picker
+    for a reserved disconnected seat;
+  - the solo path sends `chooseKit` before `startGame` when the pick is not random.
+  The V2 chrome (a fixed check column, green / orange Ready) is retired (decisions.md
+  2026-11-03, L76-12).
 - **Table bot seats (L17-03 / L17-05):** `BotSeatLabel` on opponent zones. `botReason` may
   still arrive on the wire; the action-log **Why** control is **hidden in every mode** (L45-05).
 - **Walk-in spectator (L57-13):** `isSpectator` on playing/finished views. Zero legal
@@ -1964,8 +2242,9 @@ rules above are unchanged — this section only covers how the client looks.
   page-scroll. No `max-w` gutters. Opponents stay **one
   horizontally scrollable row** (`flex-nowrap`, overflow-x; unlayered CSS locks nowrap so
   six seats never wrap to a second line — Lot 53). 4+ opponents use compact seat chrome.
-  Eight-player tables stay on that same nowrap row (overflow-x). Lobby player list
-  scrolls (`max-h` + overflow) so eight seats do not cover Start / Add bot. **Dock is primary**
+  Eight-player tables stay on that same nowrap row (overflow-x). The V7 lobby (L76-12) has no
+  inner list scroll: `main` scrolls and its action bar sticks to the bottom, so eight seats never
+  cover Start. **Dock is primary**
   (hand fills remaining height); action log is capped (~15vh portrait) until the felt is
   too short. **Landscape:** two-column felt — left opponents + pending + log, right
   dock (hand/economy). Short phone landscape keeps the left column at **~10.5rem**
@@ -2102,7 +2381,8 @@ rules above are unchanged — this section only covers how the client looks.
     parses into `actionReject` and opens `IllegalActionDialog` (title/body from
     `illegal-action-copy.ts`, Esc / overlay / OK dismiss via `clearActionReject`). Timers
     strip no longer shows a red reject line. Lobby/home keep the inline alert string.
-    `stateUpdate` must **not** clear `actionReject` (bot sync would dismiss mid-read).
+    `stateUpdate` must **not** clear `actionReject` (bot sync would dismiss mid-read); a view
+    **phase** change does, from L76-14 (App, `screens/reject-phase.ts`; decisions.md).
     When cleared, unmount the dialog (do not leave `Dialog` at `open={false}`) so
     AnimatePresence cannot leave a stuck blocking overlay.
   - **Seat colors (L39-03 / L55-01):** client-only palette `--color-seat-0…7` (blue / red /
@@ -2169,14 +2449,20 @@ rules above are unchanged — this section only covers how the client looks.
   messages / leave / auto-reconnect (`room.reconnection` + `sessionStorage` token fallback).
   Same-tab reclaim during the **30s** grace does **not** need the picker. A later
   Join-with-code is a new socket: if the table is **playing**, enter as spectator first;
-  `ClaimSeatDialog` lists living disconnected seats (nickname + seat color, no auto-match)
-  with **Sit here** / **Stay spectating**. A single listed seat is pre-selected. The
+  `ClaimSeatDialog` (a V7 `Dialog` from L76-16) lists living disconnected seats (nickname +
+  seat hue, no auto-match) with **Sit here** / **Stay spectating** (a seated lobby guest:
+  **Keep this seat**). A single listed seat is pre-selected. The
   picker is **not** shown to a living seated player (host Draw stays reachable).
   Walk-in Stay sends `staySpectating` so the server unfogs kits; until then the
   table behind the picker has no Spy overlay (L57-16). Watching copy only says
   hands are visible when a `spied` overlay is on the view. `claimSeat` remaps onto
   that `player.id`.
   Lobby accidental drop **reserves** the seat until Kick, Leave, or claim/rejoin.
+  The shared reject (`error` + `actionReject`) clears on a dismiss (the lobby alert's OK, the
+  table's OK or toast), a drop, a reconnect, `GAME_OVER`, a leave, and from L76-14 when App sees
+  the view phase change between two phases (never to or from Home). While `status` is
+  `reconnecting` the lobby locks its intent controls (`lobbyIntentsLocked`, L76-14) and the arena
+  its game input (L74-25); the hook never checks `status`.
 - Mid-game **flag Forfeit** confirms then sends `FORFEIT` (socket stays). Spectator **Leave**
   (`leaveTable`, including walk-in `isSpectator`) calls `leaveGame()`. Finished-board
   **Return home** (flag or Game over) and tutorial
@@ -3339,6 +3625,67 @@ and 1440×900).
   in; `fd6dbea0` step exit skips aria-disabled actions; `356a4153` Play and the confirm keep focus
   as the turn passes; `b23dc48c` the empty caption in px; `541f19af` the visibility spy restored;
   `b1ded6e5` the dead rules cache step removed. `pnpm verify` **3770** tests.
+
+### Lot 76 verified 2026-11-06 (browser, built-in pane, PROTOCOL 45)
+
+- **Setup:** server `:2767` with `TURN_DURATION_MS=300000 RECONNECT_GRACE_MS=5000`, client `:5373`.
+  Rooms: **WYMASR** (lobby, 1 → 8 seats; Part 1, 2026-11-03), **DAHOHC** (lobby to game),
+  **EYIDKH** (lobby, inline alert), **SCAZLP** (tutorial); Part 2 on 2026-11-04. Gate servers
+  stopped afterwards, so every room is gone.
+- **Viewports:** 320, 360×740, 375×812, 390×844, 844×390 and 1440×900.
+- **Home:** no horizontal scroll at 360, 375, 390 and 1440. What's new opens by itself and Got it
+  marks the entry seen. How to play gates Play online (9 slides, chevrons, Skip marks seen and
+  enters Online). Online: Nickname 16 px, Game code 32 px type in a 56 px field, `?code=abcdefgh`
+  opens Online with `ABCDEF` and strips the URL. Solo: seven seat radios at 360, one centred
+  column at 1440, Start reachable by scroll, slider readout 'Server default' fits at 320.
+  Tutorial: a double click on Start tutorial opens one table. Classic table `?` opens the V7
+  How to play sheet; Feedback shows Kind radios and a 16 px textarea.
+- **Lobby, host:** 360 with a 23-character nickname, 1 → 4 → 8 seats: Start in the sticky bar,
+  Add bot disabled at 8 with 'Room is full (8 seats).', 'Players (8/8)', no horizontal scroll;
+  1440 two page columns. Chat input 16 px, 44 px tall; a reader scrolled up keeps `scrollTop`;
+  collapse and reopen keeps the draft. Kit picker at 360: two columns, 17 tiles. Kick confirm
+  opens on Cancel and the kicked guest lands Home with 'You were kicked.'. Share falls back to
+  'Copy failed … Game code' when the clipboard is blocked.
+- **Lobby, guest:** the 'Rules changed' toast on an exclusion, the strip shows Excluded, the
+  picker tile is Excluded and disabled, and Select this kit is disabled with 'The host has
+  excluded that kit. Pick one that is still allowed.'. A host slider above the server maximum
+  shows 'Server default' by design.
+- **Lobby, walk-in:** after the 5 s grace a third tab via `?code=` gets 'Sit as a disconnected
+  player?' with the sole seat preselected; Stay spectating closes it. The classic table has no
+  Claim a seat reopen (the arena's, L74-23).
+- **Inline alert (EYIDKH):** two synchronous Add bot at 7/8 give 'Room is full (8 seats).' with
+  the inset `--danger` ring and a 44×44 OK, the same look at 1440.
+- **Design gate (§12.4):** static `detect` on 122 Lot 76 files: 0 anti-patterns and 1 documented
+  advisory (the 48 px hub wordmark, in `DESIGN.md`). URL scans of the hub at 390 and 1440 show
+  only the Q3b `.v7-ground` halo and the V2 `tutorial-pulse` `dark-glow` (known false positive).
+  Critique: 28/40 Good, dual-agent (A opus-run design review, B detector and browser pass).
+- **Defects found and fixed** (one fix wave, `5c081184..92262dd4`; `pnpm verify` 527 files / 4094
+  tests):
+  - D1 hub tiles below the fold at 844×390: `3a301dce` (fan hidden and wordmark overlap dropped at
+    short heights; focus moves to the new title on a mode switch).
+  - D2 kit labels split mid-word at 320: `808f5aec`.
+  - D3 Share wrapped alone under the code: `b9c4bdd8`.
+  - D4 focus fell to `body` after the alert OK: `a44b70ad`.
+  - D5 hub hint straggler: `fa785a68`, `dde60190` (`text-pretty` on the solo kit lead and the
+    lobby note).
+  - Review and critique items: `492af59f` Sit here locked while reconnecting; `1765a395` Kick
+    returns focus; `ed95ecef` Table rules strip returns focus; `068fe0b3` Feedback Sent latch
+    per Sent; `59003468` `INVITE_CODE_LENGTH` and the Online Create re-arm; `4759ceb1` solo seat
+    hue test; `317eb22f` How to play opens on Next; `0da4c09f` What's new item 9 shortened;
+    `92262dd4` stale `design/` mentions dropped.
+- **Not exercised:** the reconnect lock (no socket drop in the built-in browser), Feedback Sent
+  (no DB), Link copied and Web Share (clipboard blocked), reduced-motion emulation (covered by
+  the L76-04 controlled test).
+- **Classic table known issues handed to Lot 75:** the tutorial coach (`z-[110]`) and the hint
+  overlay (`z-[105]`) paint over V7 sheets (z-50); the your-turn flash (`z-[90]`) paints over
+  sheets; Esc closes a hidden V7 sheet under a V2 dialog (`decisions.md`, P2-m4).
+- **Designer items for the PR:** critique P1 lobby order (by build, not task) and P1 invite mode
+  (a shared-link guest lands on the host's Create form); P2 How to play art and sizing, Leave and
+  Kick danger styling, hub hierarchy, tagline and Tutorial lead; the wordmark over the fan
+  captions; the kicker eyebrow above headings; What's new bug-fix grouping; the toast covering the
+  kit-preview title (Toast primitive, Lot 72); #89 action, attack and check glyphs; Q39
+  reason-less locks (#90, #116, #139, including a disabled Sit here); the toast timer #122; the
+  inset alert ring.
 
 ### Lot 75 Part 1 verified 2026-11-06 (browser Check 1, `TURN_DURATION_MS=300000 RECONNECT_GRACE_MS=5000`, PROTOCOL 45)
 

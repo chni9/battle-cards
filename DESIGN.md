@@ -229,7 +229,9 @@ the friendlier print on a card face. Nunito keeps long text calm and legible. Al
 self-hosted through `@fontsource` (`ui/fonts.ts`); Outfit stays in `main.tsx` until L81.
 
 ### Hierarchy
-- **Display** (Lilita One 400, 32px, `--type-display`): wordmark and the biggest numerals.
+- **Display** (Lilita One 400, 32px, `--type-display`): wordmark and the biggest numerals. The Home
+  wordmark (L76-04) is Display uppercase, 48px from `sm`, with a 3px `--ink` outline (a 6px
+  `-webkit-text-stroke` painted under the fill) and the `0 4px 0` ink hard shadow.
 - **Title** (Lilita One 400, 20px, `--type-title`): titles, buttons, seat names. Own lives are
   at least 20px.
 - **Vital** (Lilita One 400, 22px, `--type-vital`): the incoming damage badge and other vital
@@ -398,13 +400,24 @@ and no icon library: every glyph is inline SVG.
 | UI | `copy` | two overlapping squares | `--text` front, `--text-2` back |
 | UI | `minimize` | wide bottom bar | `--text` |
 | L72 addition | `clock` | face with ink hands; the table rules seconds (L72-16) | `--text` |
-| L72 addition | `close` | slim cross; Sheet, Dialog, Toast (L72-09) and coach hide (L72-17) | `--text` |
+| L72 addition | `close` | slim cross; Sheet, Dialog, Toast (L72-09), coach hide (L72-17) and the lobby Not ready mark (L76-12) | `--text` |
 | L72 addition | `chevron-left` | chunky chevron; Carousel (L72-08) | `--text` |
 | L72 addition | `chevron-right` | its mirror; Carousel (L72-08) | `--text` |
 | L72 addition | `random` | die with ink pips; the Random-only mark (L72-16) | `--text` |
+| L76 addition | `action` | card verso marked with a chunky star: the starting action cards of a kit tile (L76-10) | `--text-2` card, star `--cta` |
+| L76 addition | `attack` | card verso marked with a sword on the diagonal (blade, guard, grip): the starting attack cards of a kit tile (L76-10) | `--text-2` card, blade `--threat-attack`, guard and grip `--text` |
+| L76 addition | `check` | chunky check mark; the lobby Ready mark and the Ready button (L76-12) | `--cta` |
 
 The five L72 additions are not in the spec §5.6 list; they exist because the named Lot 72
-components render them.
+components render them. The two L76 additions (`action`, `attack`) are not in it either: the kit
+tile (spec v7 §7.3) shows a kit's starting action and attack card counts, and the existing
+`duplication-active` fan would read as a live Duplication. Each is one 17 by 22 card verso (its
+outline reaches the top and bottom of the grid, like `disconnected`) with a large mark: a pointed
+or thin shape would lose most of its fill to the 2-unit outline, so the star is chunky and the
+sword is wide. The mark carries the difference, a star or a blade, never the color alone. The
+designer reviews the drawings at the L76-18 gate. `check` (L76-12) joins them for the lobby's
+Ready mark and Ready button; it stays inside the grid with its outline (1.5..22.5 × 4.5..21.5).
+Not ready is the existing `close` cross, so the two states differ by shape and name.
 
 ### Accessibility and use
 - **Decorative by default:** `aria-hidden="true"`, `focusable="false"`, no `<title>`. A
@@ -419,10 +432,10 @@ components render them.
 - **No icon on its own color.** An icon never sits directly on a fill equal or close to one of
   its body or motif tokens, because only the ink outline would remain. Close means CIEDE2000
   under 20 (`SEAT_HUE_MIN_DELTA_E`, the bound the seat hues use), which also covers a contrast
-  near 1.2:1 in the same hue. On `--cta` that rules out `point`, `shop`, `coach`, `feedback`,
+  near 1.2:1 in the same hue. On `--cta` that rules out `point`, `shop`, `coach`, `feedback`, `action`, `check`,
   `spying-on-you` and the `shield-active` and `reanimation-armed` motifs. On `--cta-2` it rules
   out `help`, `absorb-window`, `spied-by-you`, `shield` and `shield-active`. On `--danger` or a
-  `--life` chip it rules out `life`, `eliminated`, `flag` and `sentence-ticking`. The caller
+  `--life` chip it rules out `life`, `attack`, `eliminated`, `flag` and `sentence-ticking`. The caller
   puts such an icon in a `--bg-0` or `--panel` well on that fill, as with the `+N` point icon
   on the Draw button (spec v7 §6.1 item 5). The L72-08 primitives apply this rule. A body that
   only shares the luminance of the fill but not its hue (`--text-2` on `--cta`: 1.12:1, but
@@ -650,7 +663,11 @@ their lot restyles them.
   prints its words in `--text` (`--danger` text is 4.38:1 on `--panel-2`), inside a polite
   live region that is always present, so an error that appears later is announced. The
   placeholder is `--text-2` at 70% opacity: 5.20:1 on `--panel-2` (`ui/contrast.ts`; 60%
-  would fall to 4.20:1), dimmer than a typed `--text` value (12.61:1).
+  would fall to 4.20:1), dimmer than a typed `--text` value (12.61:1). `size="lg"` (the Home Join
+  code, L76-08): Lilita at `--type-display` (32px) with wide tracking, 56px tall.
+- **TextArea:** the multi-line twin of TextField (the Feedback message, L76-07): the same 16px
+  (`--type-input`) Nunito on `--panel-2`, chrome, hint, error live region and `aria-invalid`,
+  with a 112px minimum height and a vertical resize handle. TextField renders an `<input>` only.
 - **Carousel:** a scroll-snap track of full-width slides with chevron IconButtons, aria-hidden
   dots and a screen-reader status line, "{label}, {n} of {m}" (`role="status"`).
   - Paging scrolls smoothly, or instantly under reduced motion (§8.3). A swipe reports its
@@ -685,9 +702,9 @@ and the L73 seat layout reuse it.
 `ui/ui-copy.ts` holds only the new strings a `ui/` component needs, each listed in the PR for
 designer review (spec v7 §10.6): `EXCLUDED_LABEL` "Excluded" and `carouselPositionLabel`
 ("{label}, {n} of {m}", the Carousel status line), both L72-08, and `MINIMIZE_LABEL`
-"Minimize" (L72-09), and `TABLE_RULES_LABEL` "Table rules" (L72-16). Every other label (IconButton names, Carousel previous and
+"Minimize" (L72-09), and `TABLE_RULES_LABEL` "Table rules" (L72-16), and `RANDOM_SPECIAL_CAPTION` "Random special" (L76-03), and `SERVER_DEFAULT_LABEL` "Server default" and `LAST_ALLOWED_KIT_REASON` (L76-09). Every other label (IconButton names, Carousel previous and
 next, the KitTile info control, the BadgeGroup `overflowLabel`) comes from the caller's
-existing copy.
+existing copy. The rules editor's control labels are the Lot 70 words, fixed in `ui/rules/`.
 
 ### /dev/ui gallery
 DEV only: `isDevUiRoute` (`dev/dev-ui-route.ts`) matches `/dev/ui` and below, and `App.tsx`
@@ -744,7 +761,9 @@ The V2 rule "one Esc closes every open Dialog" does not apply to V7 surfaces.
   swipe-down of at least 80px on the handle, all through `onClose`. A press inside the panel, or
   a drag that starts in the panel and ends on the backdrop, never closes it.
   `closeOnBackdrop={false}` removes only the backdrop path; `dismissLocked` (the Feedback send
-  lock, §7.7) removes all three. A backdrop press never moves focus out of the sheet.
+  lock, §7.7) removes all three. A backdrop press never moves focus out of the sheet. The
+  Feedback sheet (L76-07) holds that lock for at most 15 s: with no answer it unlocks and shows
+  the error. A success retitles the same sheet 'Sent', which closes by itself after 1.5 s.
 - **Press shield** (spec v7 §1 "an accidental tap never spends the turn", §6.6.4): a press
   during a sheet's exit does nothing, whether or not another sheet remains beneath. The exiting
   overlay keeps covering the whole box, hit-testable and `aria-hidden`, with handlers that check
@@ -829,7 +848,7 @@ The V2 rule "one Esc closes every open Dialog" does not apply to V7 surfaces.
 `ui/card/glyph-amount.ts`, `ui/card/cost-amount.tsx`, `ui/text/effect-text-with-icons.tsx` and
 `ui/text/card-effect-copy.tsx` (spec v7 §6.6.1; Appendix A `global-card-effect-copy-inline-icons`).
 They are the V7 successors of the V2 `CostDisplay`, `EffectTextWithIcons` and `CardEffectCopy`
-in `design/components/`, which stay until L75 and L76 retire their consumers. Catalog text is
+in `design/components/`, which stay until L75 (and L77 for Game over) retire their consumers. Catalog text is
 rendered as it is; the copy fixes of §10.5 are L72-13's.
 
 - **Icon map** (`glyphAmountIcon`, one `GlyphAmount` shape for the structured costs and for the
@@ -1010,8 +1029,10 @@ only V7 card renderer; the V2 `design/components/card.tsx` stays for the classic
 `chat-new-message-announcement`, `table-chat-side-stream-disclosure`,
 `lobby-chat-walk-in-spectator-stream`, `end-finished-chat-readonly`,
 `global-text-input-no-ios-zoom`). One `<ChatLog messages players canWrite onSend inputLabel?
-placeholder? />` is shared by the lobby (L76), the arena chat sheet (L74) and the read-only Game
-over chat (L77). The V6 `screens/table/chat-log.tsx` stays until those lots migrate.
+placeholder? sendLocked? />` is shared by the lobby (L76), the arena chat sheet (L74) and the read-only Game
+over chat (L77). The lobby already uses it, inside `LobbyChatPanel` (L76-13: a collapsible
+`--panel` card under the seats, open from the start); the V6 `screens/table/chat-log.tsx` stays
+until L75 deletes the classic table.
 
 - **Box:** `h-52`, `--panel-2` fill, `rounded-v7-chrome-sm`, `px-3 py-2`, no hard shadow, like
   the text input. It is a `ScrollArea` (`axis="y"`) named "Chat" (`CHAT_LOG_LABEL`, the V6 copy
@@ -1048,8 +1069,11 @@ over chat (L77). The V6 `screens/table/chat-log.tsx` stays until those lots migr
   placeholder, both "Message" unless `inputLabel` or `placeholder` overrides them (the walk-in
   label, L76), and a primary "Send" `Button` (`type="submit"`). Enter or Send sends the trimmed
   body and resets the form; empty or whitespace-only text is dropped without a reset. Send is
-  never disabled: the form is uncontrolled, so no empty state exists to follow, and the V6
-  behavior is kept. Shift+Enter sends too (a single-line input has no newline).
+  never disabled for an empty field: the form is uncontrolled, so no empty state exists to
+  follow, and the V6 behavior is kept. `sendLocked` (the reconnecting lobby, L76-14) is the one
+  lock: Send shows the disabled look as `aria-disabled` (`focusableWhenDisabled`, still in the
+  Tab order), neither Send nor Enter sends, and the draft stays. The arena passes nothing.
+  Shift+Enter sends too (a single-line input has no newline).
 - **Copy:** `CHAT_EMPTY_COPY`, `CHAT_INPUT_LABEL` and `CHAT_SEND_LABEL` keep the V6 wording;
   §10.6 adds no chat string.
 - **Gallery:** the `/dev/ui` section `chat` (`ui/chat/chat.gallery.tsx`): the transcript with
@@ -1061,7 +1085,7 @@ over chat (L77). The V6 `screens/table/chat-log.tsx` stays until those lots migr
 `kit.gallery.tsx` (spec v7 §4.2, §5.5, §6.6.5, §7.3, §11; Appendix A `kit-inspect-dialog`,
 `lobby-kit-picker-dialog`, `home-solo-kit-picker`, `global-art-catalog`). They replace the V2
 `design/components/kit-portrait.tsx` and `screens/table/kit-inspect-details.tsx` on V7 surfaces;
-the classic files and their duplicated copy stay until L75 and L76.
+the classic files and their duplicated copy stay until L75.
 
 - **KitPortrait:** `<KitPortrait kitId size? isEliminated? className? onClick? ariaLabel? dataAttributes? />`,
   `kitId` a `KitId`, `'random'` or `null` (not revealed). Widths are `thumb` 40, `tile` 72,
@@ -1102,7 +1126,7 @@ the classic files and their duplicated copy stay until L75 and L76.
   starting hand, special cards, always upgraded, immune to, attacks per turn, upgrade points,
   draw risk, and ability (only for a kit with `KIT_ABILITY_COPY`). Every value is read from
   `KIT_CATALOG`, never from the art (the old Gambler PNG prints "?" for a Draw the catalog sets
-  to 10). Copy is the V6 copy, verbatim, in Nunito `--text-2`.
+  to 10). Copy is the V6 copy, verbatim (plus the L76-03 random-special caption), in Nunito `--text-2`.
 - **Starting resources and hand:** three `Pill`s (life, point, upgrade point; tone ring, value
   `--text`, caption spoken only) and a `Draw +N` chip with a signed `CostAmount`. The hand is
   one hidden thumb `Card` per family (an action and an attack verso) with its label and
@@ -1112,9 +1136,10 @@ the classic files and their duplicated copy stay until L75 and L76.
   left edge), so every thumb in the sheet, the hand's included, shares one left edge. Instance ids are `kitSpecialCardKey(cardId, index)` (index keeps
   Specialist's two Card Transformers apart), `always-upgraded:<cardId>` and
   `immune-to:<cardId>`, so they appear as `data-instance-id`; the Card's gold "+" badge
-  replaces the V2 "↑". An empty trait group says "None"; Prophet's empty special list stays
-  empty (he starts with two random specials, told in Ability). No face is a button: the sheet
-  around the details owns Select.
+  replaces the V2 "↑". An empty trait group says "None". A kit with `randomStartingSpecialCount` (Prophet 2,
+  Gambler 2) adds that many hidden special versos (`Card face="hidden" family="special"`, gold
+  rim) after its fixed specials, each captioned `RANDOM_SPECIAL_CAPTION` "Random special", with no
+  cost (L76-03, spec v7 §10.1). No face is a button: the sheet around the details owns Select.
 - **Costs:** a thumb prints no cost chip (L72-12), so a special's play cost is a signed
   `CostAmount` under its caption, lined up across a row; Draw and the upgrade-point Buy and Sell
   prices are `CostAmount` too, so every amount is an icon, a number and a spoken text. L72-21
@@ -1126,18 +1151,18 @@ the classic files and their duplicated copy stay until L75 and L76.
   on a `--bg-0` face (not shipped): pale lilac lenses, hub and tile, none a hole.
 - **Anchors:** `data-kit-id`, `data-kit-name`, `data-kit-section="<id>"`, `data-kit-stat="draw" |
   "upgrade-point-buy" | "upgrade-point-sell"`, `data-hand-family="action" | "attack"`,
-  `data-special-key`, `data-card-caption`.
+  `data-special-key`, `data-random-special`, `data-card-caption`.
 - **Gallery:** the `/dev/ui` section `kit` (`ui/kit/kit.gallery.tsx`): the four faces, the four
   sizes, every kit at `tile`, and the details of Scientific, Specialist, Gambler and Prophet.
 
 ## Rules (ui/rules/, L72-16)
 
 `ui/rules/rules-summary.ts`, `rules-strip.tsx`, `rules-sheet.tsx` and `rules.gallery.tsx` (spec v7
-§6.11, §7.4, §7.6, §11, Q15; Appendix A `lobby-rules-summary`, `rules-recall-table-end`). They
-are the read-only half of `screens/lobby-rules-panel.tsx` on V7 surfaces; that file and its host
-editor stay until L76.
+§6.11, §7.4, §7.6, §11, Q15; Appendix A `lobby-rules-summary`, `rules-recall-table-end`).
+`rules-editor.tsx` and `rules-editor-model.ts` (L76-09) add the host editor;
+`screens/lobby-rules-panel.tsx` is gone.
 
-- **Strip:** `<RulesStrip rules className? />` is one chrome button named "Table rules"
+- **Strip:** `<RulesStrip rules className? editor? />` is one chrome button named "Table rules"
   (`TABLE_RULES_LABEL`, `aria-haspopup="dialog"`) on `--panel`, at least 44px tall, full width and
   left-aligned, with the shape, focus ring and press from `primitives/chrome-classes.ts`. The
   press drops `--chrome-press-y` and the shadow at full motion and only dims under reduced motion;
@@ -1148,7 +1173,8 @@ editor stay until L76.
   (`formatTurnTimeSeconds`, never clamped: a server default can be 300), then, only when
   `randomOnly` is set, the `random` icon and the word "Random" in Nunito. Row three is the 16
   `thumb` portraits in `KIT_IDS` order. The content is phrasing only, so the portraits are the
-  non-clickable `KitPortrait` (`<img alt>` = kit name).
+  non-clickable `KitPortrait` (`<img alt>` = kit name). With `editor.serverDefaultTime` the clock
+  and the spoken summary read 'Server default' (`SERVER_DEFAULT_LABEL`) instead of the seconds.
 - **Face grid:** every face cell is the same fixed width, `w-12` (48px), the width of the 11px
   "Excluded" caption, so the columns line up for any mix of excluded kits. The cells sit in a
   4 column grid (4 gap) that becomes 8 columns when the strip's own content is 26rem wide (a
@@ -1165,17 +1191,35 @@ editor stay until L76.
 - **Excluded kit (Q15):** `opacity-40 grayscale` on the portrait only, plus a visible "Excluded"
   caption (`EXCLUDED_LABEL`) in `--text-2`, Nunito 800 at 11px (`text-v7-micro`), at full
   opacity, so the state is never carried by dimming alone.
-- **Sheet:** `<RulesSheet open rules onClose dataAttributes? />` is a read-only `Sheet` titled
+- **Sheet:** `<RulesSheet open rules onClose dataAttributes? editor? />` is a read-only `Sheet` titled
   "Table rules" (placement `auto`: a bottom sheet on phones, centered on desktop; Esc, backdrop and
   swipe-down close it, only the top sheet takes Esc). `dataAttributes` lands on the panel, as on
   `Sheet`; the arena passes `data-arena-sheet="rules"` (L74-22). Its only button is Close
-  (`secondary`), which also takes the initial focus; it has no editable control and no
-  `aria-pressed`. The body is the clock, "Human turn" and the seconds; the Random mark when set;
+  (`secondary`), which also takes the initial focus. With `editor` (the host, the solo menu) the body
+  holds `RulesEditor` and Close stays the only action; without it the sheet is the read-only view, which
+  has no editable control and no `aria-pressed`. The body is the clock, "Human turn" and the seconds; the Random mark when set;
   then a list of all 16 kits in auto-fill columns of at least 5.5rem (3 columns on a 320px phone, 4
   on the 28rem desktop panel, so "Indestructible" fits without a breakpoint). Each item is an
   `aria-hidden` thumb portrait (dimmed when excluded), the kit name in `--text-2` at 12px and, when
   excluded, "Excluded". When the 16 kits do not fit the height, the sheet body scrolls as the
-  labelled keyboard region of the Sheet contract, and focus still starts on Close.
+  labelled keyboard region of the Sheet contract, and focus still starts on Close. With `editor`
+  the body is `RulesEditor` instead of the read-only list, and Close stays the only action (the
+  initial focus is then the slider, the first control).
+- **Editor (L76-09):** `<RulesEditor rules editor />` (`data-rules-editor` on the root), in this
+  order: the slider, the All / None / Random row, the reason line, the kit grid.
+  - The slider: the `Slider` labelled "Human turn" beside a decorative `clock`, 5–180 step 1,
+    `aria-valuetext` from `sliderReadout`, committing on release only.
+  - The row: All `secondary`, None `quiet`, and the Random `Toggle` with the `random` icon.
+  - The reason: "At least one kit must stay allowed." in Nunito 12px `--text-2`, shown only while
+    one kit is allowed.
+  - The kit grid: auto-fill columns of at least 6rem (the toggle's border and padding take 18px, so
+    "Indestructible" fits without splitting at 320px). Each toggle is a quiet chrome button
+    composed from `chrome-classes.ts`, at least 44px, with `aria-pressed` = allowed and
+    `aria-label` = kit name. It holds an `aria-hidden` thumb portrait, dimmed `opacity-40
+    grayscale` only when excluded, then the name and "Excluded" at full opacity.
+  - The last allowed kit is `aria-disabled` (the off look) and described by the reason.
+    `disabled` sets native `disabled` on every control.
+  - Anchors: `data-rules-editor` on the root; `data-kit-id` / `data-excluded` on each `<li>`.
 - **Anchors:** `data-kit-id` and `data-excluded="true" | "false"` on every kit face (a `<span>` in
   the strip, an `<li>` in the sheet). New hooks; no preserved anchor changes. `KitDetails` also
   carries `data-kit-id`, so a query for one kit scopes to its container (the strip, the sheet
@@ -1184,10 +1228,13 @@ editor stay until L76.
   within CIEDE2000 20 of their body.
 - **Copy:** "Table rules" and "Excluded" are the §10.6 strings. "Human turn", "Random" and
   "Close" are existing labels. The tests use the literals, so a copy change fails a test.
-- **Later:** L76 adds the host editor in this folder. L74's menu and L77's Game over recall open
-  `RulesSheet` directly.
+  'Server default' (§10.6) and 'At least one kit must stay allowed.' (the existing
+  `set-lobby-rules-no-kit` copy) live in `ui-copy.ts`.
+- **Later:** L74's menu and L77's Game over recall open `RulesSheet` directly.
 - **Gallery:** the `/dev/ui` section `rules` (`ui/rules/rules.gallery.tsx`): the default rules,
-  Random only with three kits excluded and 45 s, a 300 s server default, and one allowed kit.
+  Random only with three kits excluded and 45 s, a 300 s server default, and one allowed kit;
+  the host editor (live apply), the solo Server default demo and a disabled editor
+  (`rules.gallery-demos.tsx` holds the stateful demo).
 
 ## Coach panel — ui/coach/ (L72-17)
 
@@ -1359,7 +1406,7 @@ pure `connection-badge-label.ts`) and `seat.gallery.tsx` (spec v7 §4.2, §5.1, 
 Appendix A `global-connection-badge`). Props and copy are V2's, unchanged: `<PlayerName
 nickname playerId? view? seatIndex? className? possessive? />`, `<BotSeatLabel difficulty
 className? />`, `<ConnectionBadge player className? />`. The V2 files in `design/components/`
-stay until L74, L76 and L77 switch their imports; new code imports only `ui/seat/`.
+stay until L75 (and L77 for Game over) switch their imports; new code imports only `ui/seat/`.
 
 - **PlayerName:** Lilita One (`font-v7-display`, one weight; V2's `font-semibold` is gone). The
   hue is inline hex from `v7SeatColor`, never `var()` or `color-mix()`, on the nickname span

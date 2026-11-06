@@ -1,4 +1,4 @@
-/** V7 icon names — technical spec v7 §5.6 plus five L72 additions, L72-07. */
+/** V7 icon names — technical spec v7 §5.6 plus five L72 additions (L72-07) and three L76 additions (L76-10, L76-12). */
 import { describe, expect, it } from 'vitest';
 import { ICON_NAMES, isIconName, RESOURCE_ICON } from './icon-names';
 
@@ -8,10 +8,12 @@ const SPEC_ICON_NAMES = ('life point upgrade shield spied-by-you spying-on-you s
   + 'help coach chat feedback flag sound vibration rules share copy minimize').split(' ');
 /** Clock (L72-16), close (L72-09, L72-17), chevrons (L72-08), random (L72-16). */
 const L72_ADDED_NAMES = ['clock', 'close', 'chevron-left', 'chevron-right', 'random'];
+/** The kit tile stat glyphs (L76-10) and the lobby Ready mark and Ready button (L76-12). */
+const L76_ADDED_NAMES = ['action', 'attack', 'check'];
 
 describe('ICON_NAMES (technical spec v7 §5.6)', () => {
-  it('lists the §5.6 set, then the L72 additions, in order', () => {
-    expect([...ICON_NAMES]).toEqual([...SPEC_ICON_NAMES, ...L72_ADDED_NAMES]);
+  it('lists the §5.6 set, then the L72 additions, then the L76 additions, in order', () => {
+    expect([...ICON_NAMES]).toEqual([...SPEC_ICON_NAMES, ...L72_ADDED_NAMES, ...L76_ADDED_NAMES]);
   });
   it('has no duplicate name', () => { expect(new Set(ICON_NAMES).size).toBe(ICON_NAMES.length); });
 });

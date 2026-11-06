@@ -291,6 +291,29 @@ const glyphs: Readonly<Record<IconName, ReactElement>> = {
       <circle cx="16" cy="16" r="0.9" fill={paint.ink} />
     </>
   ),
+  // A filled outlined check, the Ready mark (L76-12); Not ready is `close`.
+  check: <path d="M2.5 13 6 9.5l4 4L18 5.5l3.5 3.5L10 20.5z" fill={paint.cta} />,
+
+  // L76 additions (L76-10): the kit tile's starting action and attack cards, one card verso each.
+  // The mark is large and chunky because a pointed or thin shape loses most of its fill to the
+  // 2-unit outline. The card touches the top and bottom of the grid, outline included.
+  action: (
+    <>
+      <rect x="3.5" y="1" width="17" height="22" rx="3" fill={paint['text-2']} />
+      <path d="M12 5.8 14.12 9.39 18.18 10.29 15.42 13.41 15.82 17.56 12 15.9 8.18 17.56 8.58 13.41 5.82 10.29 9.88 9.39z" fill={paint.cta} />
+    </>
+  ),
+  attack: (
+    <>
+      <rect x="3.5" y="1" width="17" height="22" rx="3" fill={paint['text-2']} />
+      {/* A sword on the diagonal: blade, guard, grip, turned 45 degrees about the card's center. */}
+      <g transform="rotate(45 12 12)">
+        <path d="M12 3.8 14.6 7.2V13H9.4V7.2z" fill={paint['threat-attack']} />
+        <rect x="7.4" y="13" width="9.2" height="3" rx="1.5" fill={paint.text} />
+        <rect x="10.5" y="15.6" width="3" height="4.4" rx="1.3" fill={paint.text} />
+      </g>
+    </>
+  ),
 };
 
 export function Icon({ name, size = 20, label, className }: IconProps): ReactElement {

@@ -1,0 +1,131 @@
+/**
+ * Lobby screen — technical spec v2 §6, L11-02; bot controls L17-02 / technical spec v3 §6.
+ * Moved into `screens/lobby/` by L76-02 (technical spec v7 §4.2). L76-12 restyles it as a mini
+ * arena on the V7 ground (§7.2, §5.1–§5.3, §11 Q25, Q39). In DOM order:
+ * - the setup column: `LobbyHeader`, the table rules strip (the host edits, L76-09), `LobbyKitCard`;
+ * - the table column: `LobbySeats`, then `LobbyChatPanel` (L76-13);
+ * - `LobbyActions`, sticky at the bottom of `main`.
+ * One column on a phone; from `lg`, two page columns (setup 26rem). `main` is the only scroll
+ * container (no inner list scroll). The parts decide nothing (golden rule 8). L76-14 adds
+ * `onDismissError` and the reconnecting lock: `lobbyIntentsLocked(status)` reaches every part that
+ * sends an intent (technical spec v7 §7.2, Q29). L76-15 adds the guest's rules toast (§7.4,
+ * Q16/Q17), diffed from the previous view in state; it is the lobby's only toast.
+ */
+
+import {
+  defaultLobbyRules,
+  type BotDifficulty,
+  type LobbyKitSelection,
+  type LobbyStateView,
+  type SetLobbyRulesPayload,
+} from '@card-battle/shared';
+import { useState, type ReactElement } from 'react';
+
+import type { RoomConnectionStatus } from '../../net/use-room-connection';
+import { RulesStrip } from '../../ui/rules/rules-strip';
+import { LobbyActions } from './lobby-actions';
+import { LobbyChatPanel } from './lobby-chat-panel';
+import { LobbyHeader } from './lobby-header';
+import { LobbyKitCard } from './lobby-kit-card';
+import { lobbyIntentsLocked } from './lobby-lock';
+import { LobbyRulesToast } from './lobby-rules-toast';
+import { LobbySeats } from './lobby-seats';
+import { lobbyRulesNotice, mergeRulesNotice, type LobbyRulesNotice } from './rules-change-notice';
+
+export interface LobbyScreenProps {
+  view: LobbyStateView;
+  status: RoomConnectionStatus;
+  error: string | null;
+  /** Clears the inline alert (App passes clearActionReject). L76-14. */
+  onDismissError: () => void;
+  onStart: () => void;
+  onLeave: () => void;
+  onAddBot: (difficulty: BotDifficulty) => void;
+  onKickPlayer: (playerId: string) => void;
+  onSetReady: (ready: boolean) => void;
+  onSetBotDifficulty: (playerId: string, difficulty: BotDifficulty) => void;
+  onChooseKit: (selection: LobbyKitSelection) => void;
+  onSetLobbyRules: (payload: SetLobbyRulesPayload) => void;
+  onSendChat: (body: string) => void;
+  /** App's claim picker reopen; present only while a walk-in has claimable seats. L76-16. */
+  onReopenClaim?: () => void;
+}
+
+/** The rules toast (L76-15): the last view this screen rendered (the next diff's "previous") and the open notice. */
+interface RulesNoticeState {
+  readonly seen: LobbyStateView;
+  readonly open: LobbyRulesNotice | null;
+}
+
+export function LobbyScreen({
+  view,
+  status,
+  error,
+  onDismissError,
+  onStart,
+  onLeave,
+  onAddBot,
+  onKickPlayer,
+  onSetReady,
+  onSetBotDifficulty,
+  onChooseKit,
+  onSetLobbyRules,
+  onSendChat,
+  onReopenClaim,
+}: LobbyScreenProps): ReactElement {
+  const isHost = view.hostPlayerId === view.you;
+  const rules = view.lobbyRules ?? defaultLobbyRules();
+  // Reconnect lock (§7.2, Q29; plan A.9 ruling 6): every control that sends an intent.
+  const locked = lobbyIntentsLocked(status);
+  const [rulesNotice, setRulesNotice] = useState<RulesNoticeState>(() => ({ seen: view, open: null }));
+  if (rulesNotice.seen !== view) {
+    // React's "adjust state while rendering" pattern: each new view object is diffed exactly once, and
+    // a later view with no notice keeps the open toast (a state update never closes it).
+    setRulesNotice({ seen: view, open: mergeRulesNotice(rulesNotice.open, lobbyRulesNotice(rulesNotice.seen, view)) });
+  }
+
+  return (
+    <main className="v7-ground relative h-full overflow-y-auto overscroll-contain font-v7-body text-v7-text">
+      <div className="mx-auto flex min-h-full w-full max-w-lg flex-col gap-4 px-4 pt-6 pb-3 lg:max-w-6xl lg:px-8">
+        <div className="flex flex-col gap-4 lg:grid lg:grid-cols-[minmax(0,26rem)_minmax(0,1fr)] lg:items-start lg:gap-6">
+          <div data-lobby-column="setup" className="flex min-w-0 flex-col gap-4">
+            <LobbyHeader
+              gameCode={view.gameCode}
+              status={status}
+              error={error}
+              isHost={isHost}
+              onDismissError={onDismissError}
+            />
+            <RulesStrip rules={rules} {...(isHost ? { editor: { onChange: onSetLobbyRules, disabled: locked } } : {})} />
+            <LobbyKitCard
+              selection={view.yourKitSelection}
+              rules={rules}
+              walkIn={view.isSpectator === true}
+              isHost={isHost}
+              locked={locked}
+              onChooseKit={onChooseKit}
+              {...(onReopenClaim !== undefined ? { onReopenClaim } : {})}
+            />
+          </div>
+          <div data-lobby-column="table" className="flex min-w-0 flex-col gap-4">
+            <LobbySeats
+              view={view}
+              locked={locked}
+              onAddBot={onAddBot}
+              onKickPlayer={onKickPlayer}
+              onSetBotDifficulty={onSetBotDifficulty}
+            />
+            <LobbyChatPanel view={view} locked={locked} onSendChat={onSendChat} />
+          </div>
+        </div>
+        <LobbyActions view={view} locked={locked} onStart={onStart} onSetReady={onSetReady} onLeave={onLeave} />
+      </div>
+      <LobbyRulesToast
+        notice={rulesNotice.open}
+        onDismiss={() => {
+          setRulesNotice((current) => ({ ...current, open: null }));
+        }}
+      />
+    </main>
+  );
+}

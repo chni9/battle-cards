@@ -175,6 +175,29 @@ tests import it and shipped code never does.
   `landscape`, `landscapeSmall`, `desktop`), never ad hoc numbers, and read the mode from
   `<main data-layout-mode>` and the rows from `data-arena-row`.
 
+## Room connection fake (V7 · L76-14)
+
+`apps/client/src/test/fake-room-connection.ts` `fakeRoomConnection(view, extra?)` returns a full
+`UseRoomConnectionResult`: status `connected`, no error or reject, the last-message fields null,
+`lobbyRules` from a lobby view, and a `vi.fn()` for every command (`leaveGame` resolves). App-level
+tests hoist a holder with `vi.hoisted`, `vi.mock('./net/use-room-connection')` to return it, set
+it before `renderUi(<App />)` and again before each `rerender(<App />)` (`App.lobby.test.tsx`).
+Shipped code never imports it.
+
+## Sheet gestures (V7 · L76-05)
+
+`apps/client/src/test/sheet-gestures.ts`: `stubPhoneViewport()` stubs a 390×844 `visualViewport`
+(`vi.stubGlobal`; undo with `vi.unstubAllGlobals()` in `afterEach`), so a `Dialog` is a bottom sheet
+with a swipe handle whatever the default window size. `swipeSheetDown(dialog)` drags that handle
+120 px down (the Sheet closes from 80 px). Wait for a closed sheet with
+`queryByRole('dialog', { name, hidden: true })` returning null: an exiting sheet is already
+`aria-hidden`. Under `vi.useFakeTimers()` that wait can hang: happy-dom's `Animation` schedules its
+`finish()` on its own window's `setTimeout`, which Vitest does not fake, so a sheet's exit may need
+real time, and RTL's fake-clock `waitFor` only moves fake time. Assert what needs the fake clock
+first, then call `vi.useRealTimers()` before the wait (L76-07). `swipeCarouselTo(dialog, index)`
+(L76-06) scrolls the dialog's `Carousel` track to a slide as a swipe would: it stubs the track's
+`clientWidth` (300) and a writable `scrollLeft`, then fires `scroll`. Shipped code never imports it.
+
 ## Seeded randomness
 
 Every draw goes through the injected generator: card distribution, Sentence, special card

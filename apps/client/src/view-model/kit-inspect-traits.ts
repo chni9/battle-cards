@@ -25,7 +25,7 @@ export const KIT_ABILITY_COPY: Partial<Record<KitId, string>> = {
   duplicator:
     "Instead of a normal action, activate duplication for the following table round: copy opponents' life, point, and upgrade-point gains (not shield, not Cloning's resource copy). Renew each turn. Two Duplicators do not loop.",
   prophet:
-    'Starts with 2 special cards drawn at random from the circulating special pool (Invisibility excluded; duplicates allowed).',
+    'Starts with 2 special cards drawn at random from the circulating special pool (duplicates allowed).',
   gambler:
     'Draw 5–100 (weighted; each extra point is rarer) each turn. Each Draw has a 1-in-10 chance to drop you to 1 life, 0 points, 0 upgrade points, and no shield, and to move your hand and unplayed specials to the pool. Active cards stay. You are not eliminated. Starts with 3 specials: 2 distinct random specials (never Roulette) plus Roulette.',
 };

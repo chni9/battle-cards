@@ -5,8 +5,7 @@
 import type { FeedbackSubmitBody } from '@card-battle/shared';
 
 import { resolveServerUrl } from '../net/resolve-server-url';
-
-export const FEEDBACK_FALLBACK_ERROR = 'Could not save — try again';
+import { FEEDBACK_FALLBACK_ERROR } from './feedback-form-copy';
 
 export type FeedbackFetcher = (
   url: string,

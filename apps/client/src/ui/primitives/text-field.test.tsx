@@ -74,6 +74,13 @@ describe('TextField (technical spec v7 §5.2, commit 6372d04)', () => {
     expect(screen.getByText('Message').classList.contains('sr-only')).toBe(true);
   });
 
+  it('size lg is the large code field: Lilita at the display step, 56 px tall (spec v7 §7.1; L76-08)', () => {
+    renderUi(<TextField label="Game code" size="lg" />);
+    const input = screen.getByRole('textbox', { name: 'Game code' });
+    expect([...input.classList]).toEqual(expect.arrayContaining(['font-v7-display', 'text-v7-display', 'min-h-14']));
+    expect(input.classList.contains('text-v7-input')).toBe(false);
+  });
+
   it('keeps a caller id and passes input events through', async () => {
     const onChange = vi.fn();
     const { user } = renderUi(<TextField label="Join code" id="join-code" onChange={onChange} />);

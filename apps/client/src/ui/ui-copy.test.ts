@@ -2,7 +2,10 @@ import { describe, expect, it } from 'vitest';
 import {
   ELIMINATED_LABEL,
   EXCLUDED_LABEL,
+  LAST_ALLOWED_KIT_REASON,
   MINIMIZE_LABEL,
+  RANDOM_SPECIAL_CAPTION,
+  SERVER_DEFAULT_LABEL,
   TABLE_RULES_LABEL,
   carouselPositionLabel,
   eliminatedPortraitLabel,
@@ -22,6 +25,10 @@ describe('ui copy (technical spec v7 §10.6)', () => {
     expect(TABLE_RULES_LABEL).toBe('Table rules');
   });
 
+  it('captions a random starting special "Random special" (spec v7 §10.1, L76-03)', () => {
+    expect(RANDOM_SPECIAL_CAPTION).toBe('Random special');
+  });
+
   it('announces a carousel position as "{label}, {n} of {m}"', () => {
     expect(carouselPositionLabel('How to play', 2, 3)).toBe('How to play, 2 of 3');
   });
@@ -38,5 +45,10 @@ describe('ui copy (technical spec v7 §10.6)', () => {
 
   it('names an eliminated portrait "{kit}, eliminated" (L72-15)', () => {
     expect(eliminatedPortraitLabel('Wizard')).toBe('Wizard, eliminated');
+  });
+
+  it('names the untouched solo clock and the last-kit lock (L76-09, spec v7 §7.1, §7.4)', () => {
+    expect(SERVER_DEFAULT_LABEL).toBe('Server default');
+    expect(LAST_ALLOWED_KIT_REASON).toBe('At least one kit must stay allowed.');
   });
 });

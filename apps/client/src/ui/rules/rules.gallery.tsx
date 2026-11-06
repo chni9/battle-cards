@@ -2,22 +2,27 @@
  * `/dev/ui` section for the L72-16 table rules strip and sheet (technical spec v7 §4.2, §7.4,
  * §11): the default rules, Random only with three kits excluded and a short clock, a server
  * default above the host maximum of 180 s, and a single allowed kit (15 excluded). Tap a strip
- * to open the read-only sheet. The titles are DEV-only demo copy. DEV only.
+ * to open the read-only sheet. L76-09 adds the host editor (live apply), the solo strip that
+ * reads "Server default" until a slider release, and an editor with every control disabled (a
+ * solo launch or a reconnect). The titles are DEV-only demo copy. DEV only.
  *
  * No PascalCase local component lives here: `react-refresh/only-export-components` would report
- * the `gallery` export beside one. The frame is a plain function that returns JSX.
+ * the `gallery` export beside one. The frame is a plain function that returns JSX, and the
+ * stateful editor demo lives in `rules.gallery-demos.tsx`.
  */
 
 import { defaultLobbyRules, excludeEveryKitButFirst, type LobbyRules } from '@card-battle/shared';
 import type { ReactElement } from 'react';
 import type { GallerySection } from '../../dev/gallery-registry';
+import type { RulesEditorBinding } from './rules-editor-model';
+import { RulesEditorDemo } from './rules.gallery-demos';
 import { RulesStrip } from './rules-strip';
 
 /** The strip sits on the page ground in the lobby, so the demo shows it on `--bg-0`, a phone column wide. */
-function frame(rules: LobbyRules): ReactElement {
+function frame(rules: LobbyRules, editor?: RulesEditorBinding): ReactElement {
   return (
     <div className="max-w-md rounded-v7-chrome bg-v7-bg-0 p-3">
-      <RulesStrip rules={rules} />
+      <RulesStrip rules={rules} {...(editor !== undefined ? { editor } : {})} />
     </div>
   );
 }
@@ -41,6 +46,17 @@ export const gallery: GallerySection = {
       id: 'one-allowed',
       title: 'One kit allowed (15 excluded)',
       render: () => frame(excludeEveryKitButFirst(defaultLobbyRules())),
+    },
+    { id: 'host-editor', title: 'Host editor, live apply', render: () => <RulesEditorDemo /> },
+    {
+      id: 'solo-server-default',
+      title: 'Solo: Server default until the slider is released',
+      render: () => <RulesEditorDemo solo />,
+    },
+    {
+      id: 'editor-disabled',
+      title: 'Editor disabled (solo launch or reconnecting)',
+      render: () => frame(defaultLobbyRules(), { onChange: () => undefined, disabled: true }),
     },
   ],
 };

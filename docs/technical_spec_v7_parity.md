@@ -39,8 +39,9 @@
   - /admin is handled before any game phase and opens no Colyseus socket. /inbox redirects to /admin/feedback (Lot 61, L61-06).
   - Nickname and join code live in App state. They survive Home remounts within a tab session, for example after Leave or a kick.
   - Table and End receive their statusLabel from STATUS_LABELS[status].
-  - admin-route.test.ts checks the source text: App.tsx must contain "path.startsWith('/admin/')", "window.location.replace('/admin/feedback')" and '<AdminApp'. screens/home.admin-route.test.ts (split from it in L72-02) checks that home.tsx contains no '/admin' and no '/inbox'.
-- **Notes:** There is no router library and no deep link for a join code (for example ?code=). The document title is the static 'Card Battle'. Fonts are Outfit 400/600/700 from @fontsource. Tokens are light-only in index.css @theme; there is no dark mode. #root uses overflow hidden, so each screen must scroll inside itself (visual-viewport.test.ts).
+  - admin-route.test.ts checks the source text: App.tsx must contain "path.startsWith('/admin/')", "window.location.replace('/admin/feedback')" and '<AdminApp'. screens/home.admin-route.test.ts (now screens/home/home-screen.test.tsx) (split from it in L72-02) checks that home.tsx contains no '/admin' and no '/inbox'.
+- **Notes:** There is no router library and one deep link: the invite link ?code=XXXXXX, which Home reads once to pre-fill Join (L76-17). The document title is the static 'Card Battle'. Fonts are Outfit 400/600/700 from @fontsource. Tokens are light-only in index.css @theme; there is no dark mode. #root uses overflow hidden, so each screen must scroll inside itself (visual-viewport.test.ts, now screens/home/home-screen.test.tsx and screens/lobby/lobby-screen.test.tsx).
+- **L76-18:** Line references above are from `1de498d`; the code now lives in `screens/home/home-screen.test.tsx` and `screens/lobby/lobby-screen.test.tsx`.
 
 ### `global-room-connection-lifecycle` — Room connection lifecycle (before and while entering a room)
 
@@ -74,7 +75,7 @@
 
 ### `global-status-labels` — Connection status labels
 
-- **Files:** `apps/client/src/screens/status-labels.ts`, `apps/client/src/screens/home.tsx`, `apps/client/src/screens/lobby.tsx`, `apps/client/src/screens/table/timers.tsx`, `apps/client/src/App.tsx`
+- **Files:** `apps/client/src/screens/status-labels.ts`, `apps/client/src/screens/home/home-status.tsx`, `apps/client/src/screens/lobby/lobby-header.tsx`, `apps/client/src/screens/table/timers.tsx`, `apps/client/src/App.tsx`
 - **Purpose:** The shared copy for connection status. Home uses a softened version.
 - **Controls:**
   - None.
@@ -93,6 +94,7 @@
   - Connecting, error-path and solo-launch copy stays (status-labels.test.ts).
   - The error stays visible on the hub and the paths until the next connection attempt replaces it.
 - **Notes:** Spec v6 §5.1 allows the idle state to be unlabeled or to say 'Ready'. The code leaves it unlabeled.
+- **L76-18:** Line references above are from `1de498d`; the code now lives in `screens/home/home-status.tsx` and `screens/lobby/lobby-header.tsx`.
 
 ### `global-connection-badge` — Seat connection and elimination badge
 
@@ -253,7 +255,7 @@
 
 ### `global-feedback-entry-points` — Feedback entry points and context wiring
 
-- **Files:** `apps/client/src/screens/home.tsx`, `apps/client/src/screens/lobby.tsx`, `apps/client/src/screens/table.tsx`, `apps/client/src/screens/end.tsx`, `apps/client/src/screens/game-over-dialog.tsx`, `apps/client/src/feedback/feedback-surfaces.test.ts`
+- **Files:** `apps/client/src/screens/home/home-screen.tsx`, `apps/client/src/screens/lobby/lobby-actions.tsx`, `apps/client/src/screens/table.tsx`, `apps/client/src/screens/end.tsx`, `apps/client/src/screens/game-over-dialog.tsx`, `apps/client/src/feedback/feedback-surfaces.test.ts`
 - **Purpose:** Where the Feedback form opens and which context each place attaches.
 - **Controls:**
   - Home: the hub 'Feedback' control next to How to play, plus the Online / Solo / Tutorial path headers. Manual mode, screen 'home', nickname taken from the nickname input, no gameCode and no logTail.
@@ -266,8 +268,9 @@
   - Feedback is wired on Home, Lobby, Table and Game over (feedback-surfaces.test.ts).
   - The table control is the `!` IconButton with aria-label Feedback, not the word (L57-01).
   - The economy bar never shows Feedback (feedback-surfaces.test.ts).
-  - There is no Inbox or Admin link on the hub (screens/home.admin-route.test.ts, split from admin-route.test.ts in L72-02; L47-05 / L61-06).
+  - There is no Inbox or Admin link on the hub (screens/home.admin-route.test.ts (now screens/home/home-screen.test.tsx), split from admin-route.test.ts in L72-02; L47-05 / L61-06).
 - **Notes:** Home, Lobby and Table chrome belong to other auditors. Only the Feedback wiring is listed here.
+- **L76-18:** Line references above are from `1de498d`; the code now lives in `screens/home/home-screen.tsx`, `screens/lobby/lobby-actions.tsx` and `screens/home/home-screen.test.tsx`.
 
 ### `legacy-inbox-redirect` — Legacy /inbox redirect
 
@@ -284,7 +287,7 @@
 
 ### `rules-turn-time-default-override` — Human turn time: server default until the host moves the slider (lobby and solo) · `Lot 62+`
 
-- **Files:** `apps/client/src/screens/lobby-rules-panel.tsx`, `apps/client/src/screens/lobby.tsx`, `apps/client/src/screens/home.tsx`, `apps/client/src/net/use-room-connection.ts`, `apps/client/src/screens/solo-menu-seed.ts`, `apps/client/src/App.tsx`, `apps/server/src/rooms/game-room.ts`, `apps/server/src/rooms/lobby-rules.ts`, `packages/shared/src/protocol/lobby-rules.ts`, `docs/agent/frontend.md`, `docs/agent/protocol.md`, `docs/agent/decisions.md`
+- **Files:** `apps/client/src/ui/rules/rules-strip.tsx`, `apps/client/src/ui/rules/rules-sheet.tsx`, `apps/client/src/ui/rules/rules-editor.tsx`, `apps/client/src/screens/lobby/lobby-screen.tsx`, `apps/client/src/screens/home/home-screen.tsx`, `apps/client/src/screens/home/solo-path.tsx`, `apps/client/src/screens/home/solo-rules-state.ts`, `apps/client/src/net/use-room-connection.ts`, `apps/client/src/screens/solo-menu-seed.ts`, `apps/client/src/App.tsx`, `apps/server/src/rooms/game-room.ts`, `apps/server/src/rooms/lobby-rules.ts`, `packages/shared/src/protocol/lobby-rules.ts`, `docs/agent/frontend.md`, `docs/agent/protocol.md`, `docs/agent/decisions.md`
 - **Purpose:** Controls when a turnTimeSeconds value reaches the server. An untouched slider sends none, so TURN_DURATION_MS (env, minimum 5000, default 60000) stays in force. The view's turnTimeSeconds is always the effective rounded seconds.
 - **Controls:**
   - Turn slider in the Table rules dialog: input type=range, min 5, max 180, step 1, aria-label 'Human turn seconds', label 'Human turn' with clock icon and an 'Ns' readout. onChange -> onTurnTimeChange(next) only when isTurnTimeSeconds(next).
@@ -309,6 +312,7 @@
   - Kit / Random edits never carry turnTimeSeconds (lobby.tsx:130-137; home.tsx onSoloRulesChange(…, false)).
   - Play again keeps the rules, the turn time included (rules spec §6 Setup).
 - **Notes:** If V7 changes the slider to commit on release (fewer setLobbyRules sends), the intent and payload stay the same, but the guest strip stops updating while the host drags. Whether that counts as presentation-only is open. Any V7 slider must keep 'untouched means nothing sent' in solo: the solo state machine separates the displayed value (soloRules.turnTimeSeconds) from whether it is sent (includeTurnTime).
+- **L76-18:** Line references above are from `1de498d`; the code now lives in `ui/rules/rules-strip.tsx`, `ui/rules/rules-sheet.tsx`, `ui/rules/rules-editor.tsx`, `screens/lobby/lobby-screen.tsx`, `screens/home/home-screen.tsx`, `screens/home/solo-path.tsx` and `screens/home/solo-rules-state.ts`.
 
 ### `reject-state-carryover` — Illegal-action reject carried across phase changes (lobby -> table, End -> rematch)
 
@@ -336,6 +340,7 @@
   - A table reject modal hides table chrome and holds back first-game hints while open (table.tsx otherModalOpen / hintDialogOpen).
   - No rule or protocol change: ERROR_MESSAGE `{ code, message }` stays as is (PROTOCOL 27+).
 - **Notes:** The bug comes from two rules interacting, both from before Lot 61: (1) 'stateUpdate must not clear actionReject' (L39-06), written for the table, and (2) 'lobby keeps the inline alert' (L39-02), which never got a dismiss. The phase switch from lobby to playing is just another stateUpdate (use-room-connection.ts:222-241), so nothing clears the slot. Possible fixes are client-state only: clear on a phase change, scope the reject to the phase it arrived in, or give the lobby its own dismiss. Each needs a designer ruling because frontend.md documents the current behaviour.
+- **L76-18:** Line references above are from `1de498d`; the code now lives in `screens/lobby/lobby-actions.tsx`.
 
 ### `global-dialog-interaction-contract` — Dialog primitive: dismissal, focus and viewport contract
 
@@ -365,10 +370,11 @@
   - hintAnchor passes through as data-hint-anchor (first-game reward hint)
   - Layering: dialogs are z-[100]. HintOverlay is z-[105] and hidden while any dialog is open, except the reward hint over the reward sub-choice (table.tsx:1060-1068). TutorialCoach is z-[110] in its own pointer-events-none layer, so pressing coach buttons never counts as a backdrop click
 - **Notes:** Dialog is not portaled: it renders inline where it is used. For example, the solo-menu Table rules Dialog sits inside the solo <form> (home.tsx:603 plus lobby-rules-panel.tsx:68), so any raw <button> placed in it must keep type="button". Several callers pass closeOnOverlayClick explicitly even though it is already the default. Escape listeners are re-registered on each render because onClose is often an inline arrow; this is harmless.
+- **L76-18:** Line references above are from `1de498d`; the code now lives in `screens/home/solo-path.tsx` and `ui/rules/rules-sheet.tsx`.
 
 ### `claim-seat-dismiss-stay` — Claim-seat picker dismissal (Escape / backdrop = Stay)
 
-- **Files:** `apps/client/src/App.tsx`, `apps/client/src/screens/claim-seat-dialog.tsx`, `apps/client/src/screens/claim-seat.ts`, `apps/client/src/net/use-room-connection.ts`, `packages/shared/src/protocol/messages.ts`, `packages/shared/src/protocol-version.ts`, `apps/server/src/rooms/game-room.ts`, `apps/server/src/protocol/visibility-matrix.ts`, `apps/client/src/screens/table.tsx`, `apps/client/src/screens/lobby.tsx`, `docs/agent/decisions.md`, `docs/agent/frontend.md`
+- **Files:** `apps/client/src/App.tsx`, `apps/client/src/screens/claim-seat-dialog.tsx`, `apps/client/src/screens/claim-seat.ts`, `apps/client/src/net/use-room-connection.ts`, `packages/shared/src/protocol/messages.ts`, `packages/shared/src/protocol-version.ts`, `apps/server/src/rooms/game-room.ts`, `apps/server/src/protocol/visibility-matrix.ts`, `apps/client/src/screens/table.tsx`, `apps/client/src/screens/lobby/lobby-screen.tsx`, `apps/client/src/screens/lobby/lobby-copy.ts`, `docs/agent/decisions.md`, `docs/agent/frontend.md`
 - **Purpose:** Offers a walk-in spectator, or a seated non-host lobby guest, the chance to sit in a disconnected seat. A dismissal is not a neutral close: for a walk-in it confirms Stay spectating and unfogs private hands.
 - **Controls:**
   - Escape: calls onStay (claim-seat-dialog.tsx:43 passes onClose={onStay})
@@ -396,10 +402,11 @@
   - Sit uses seated vision, and the server clears stayConfirmed on claim (game-room.ts:1710-1712)
   - STAY_SPECTATING is walk-in only; the server rejects it from a non-spectator with 'stay-spectating-not-spectator'
 - **Notes:** Hazard: when a walk-in has chat, Opponents, Action log, kit/opponent inspect, How to play, Feedback or the Leave confirm open and the claimable list changes, the picker reappears on top. One Escape meant for the lower dialog also sends STAY_SPECTATING. There is no control to reopen the picker after dismissal, even though the spectator copy says 'Claim a disconnected seat or leave the table.' (table.tsx:1374-1375) and 'Claim a disconnected seat if one is listed' (lobby.tsx:150).
+- **L76-18:** Line references above are from `1de498d`; the code now lives in `screens/lobby/lobby-screen.tsx` and `screens/lobby/lobby-copy.ts`.
 
 ### `chat-compose-enter` — Chat composer: Enter sends (lobby inline and table dialog) · `Lot 62+`
 
-- **Files:** `apps/client/src/screens/table/chat-log.tsx`, `apps/client/src/screens/table/table-chat.tsx`, `apps/client/src/screens/lobby.tsx`, `apps/client/src/screens/table.tsx`
+- **Files:** `apps/client/src/screens/table/chat-log.tsx`, `apps/client/src/screens/table/table-chat.tsx`, `apps/client/src/screens/lobby/lobby-chat-panel.tsx`, `apps/client/src/screens/table.tsx`
 - **Purpose:** Message input shared by the lobby chat (inline) and the table chat popup.
 - **Controls:**
   - Enter in the 'Message' input: submits the form (chat-log.tsx:62). It is ignored when the trimmed body is empty or canWrite is false; otherwise SEND_CHAT is sent and the form resets
@@ -418,10 +425,11 @@
   - The input uses font-size 16px (text-base) so iOS does not zoom on focus (commit 6372d04, 'prevent mobile zoom on chat input')
   - Each line shows the round label and the seat-colored nickname (rules spec §6 Chat)
 - **Notes:** Lot 70 (L70-01) plus the zoom fix after Lot 70. The table popup is a Dialog, so Escape while typing closes it.
+- **L76-18:** Line references above are from `1de498d`; the code now lives in `screens/lobby/lobby-chat-panel.tsx`.
 
 ### `feedback-dialog-dismiss` — Feedback dialog: manual Cancel vs ask Skip, no Enter-to-send
 
-- **Files:** `apps/client/src/feedback/feedback-dialog.tsx`, `apps/client/src/feedback/submit-gate.ts`, `apps/client/src/screens/home.tsx`, `apps/client/src/screens/lobby.tsx`, `apps/client/src/screens/table.tsx`, `apps/client/src/screens/end.tsx`
+- **Files:** `apps/client/src/feedback/feedback-dialog.tsx`, `apps/client/src/feedback/submit-gate.ts`, `apps/client/src/screens/home/home-screen.tsx`, `apps/client/src/screens/lobby/lobby-actions.tsx`, `apps/client/src/screens/table.tsx`, `apps/client/src/screens/end.tsx`
 - **Purpose:** Tester ticket opened from the Home / Lobby / Table '!' / Game over Feedback (manual), and the ask-once prompt (end screen).
 - **Controls:**
   - Escape / backdrop: dismiss('skip') in ask-mode, dismiss('cancel') in manual mode. resetForm drops kind, topics, message and contact
@@ -440,6 +448,7 @@
   - On Home / Lobby / live Table every reason just closes; only the end screen acts on the reason
   - The double-submit gate (beginFeedbackSend) and requestId guard against stale results
 - **Notes:** Lots 47 / 57.
+- **L76-18:** Line references above are from `1de498d`; the code now lives in `screens/home/home-screen.tsx` and `screens/lobby/lobby-actions.tsx`.
 
 ### `global-input-modalities` — Keyboard shortcuts and gestures (complete list)
 
@@ -462,14 +471,14 @@
 
 ### `global-page-reload-recovery` — Full page reload / tab restore mid-session (no Rejoin prompt)
 
-- **Files:** `apps/client/src/net/use-room-connection.ts:70 (RECONNECT_TOKEN_KEY), 89-91 (120 retries, 5s max delay), 216-230 (persist on attach + every playing stateUpdate, clear on finished), 302-312 (clear on gameOver), 358-366 (persist on onReconnect), 369-410 (onLeave: the only readToken call → attemptManualReconnect), 745-772 (attemptManualReconnect), 784-804 (persist/read/clear)`, `apps/client/src/App.tsx (useState nickname/joinCode reset on reload; no URL code param; no mount effect)`, `apps/client/src/screens/home.tsx (OnlinePath Join form is the only re-entry point)`, `apps/client/src/screens/table/timers.tsx:86-91 ('Code {gameCode} · {statusLabel}' is where a player can read the code)`, `apps/client/src/screens/claim-seat.ts, apps/client/src/screens/claim-seat-dialog.tsx`, `apps/server/src/rooms/game-room.ts:722-760 (onDrop holds seat with allowReconnection manual), 803-870 (onLeave), 1635-1649 (holdReconnection), 1651-1736 (handleClaimSeat remaps; lobby duplicate guest seat unseated on claim)`, `apps/server/src/rooms/claim-seat-rules.ts`, `apps/server/src/rooms/tutorial-join.ts`, `apps/server/src/engine/lifecycle/constants.ts (grace 30s, 3 absent autodraws)`, `node_modules/@colyseus/core/build/Room.mjs:1042-1043 (any non-consented close, including reload, routes to onDrop)`, `docs/agent/frontend.md:487-505 (connection conventions)`, `docs/agent/decisions.md 2026-07-31 Lot 7`, `docs/technical_spec_v6.md §2.3 (join-by-code while playing) and §11 (tutorial mid-script reconnect, identity out of scope)`
+- **Files:** `apps/client/src/net/use-room-connection.ts:70 (RECONNECT_TOKEN_KEY), 89-91 (120 retries, 5s max delay), 216-230 (persist on attach + every playing stateUpdate, clear on finished), 302-312 (clear on gameOver), 358-366 (persist on onReconnect), 369-410 (onLeave: the only readToken call → attemptManualReconnect), 745-772 (attemptManualReconnect), 784-804 (persist/read/clear)`, `apps/client/src/App.tsx (useState nickname/joinCode reset on reload; no URL code param; no mount effect)`, `apps/client/src/screens/home/online-path.tsx (OnlinePath Join form is the only re-entry point; was home.tsx)`, `apps/client/src/screens/table/timers.tsx:86-91 ('Code {gameCode} · {statusLabel}' is where a player can read the code)`, `apps/client/src/screens/claim-seat.ts, apps/client/src/screens/claim-seat-dialog.tsx`, `apps/server/src/rooms/game-room.ts:722-760 (onDrop holds seat with allowReconnection manual), 803-870 (onLeave), 1635-1649 (holdReconnection), 1651-1736 (handleClaimSeat remaps; lobby duplicate guest seat unseated on claim)`, `apps/server/src/rooms/claim-seat-rules.ts`, `apps/server/src/rooms/tutorial-join.ts`, `apps/server/src/engine/lifecycle/constants.ts (grace 30s, 3 absent autodraws)`, `node_modules/@colyseus/core/build/Room.mjs:1042-1043 (any non-consented close, including reload, routes to onDrop)`, `docs/agent/frontend.md:487-505 (connection conventions)`, `docs/agent/decisions.md 2026-07-31 Lot 7`, `docs/technical_spec_v6.md §2.3 (join-by-code while playing) and §11 (tutorial mid-script reconnect, identity out of scope)`
 - **Purpose:** Describes what a player gets after a refresh, an accidental reload, or a mobile tab discard while in a lobby, a match or Game over, and the one manual path back to their seat. The redesigned Home and connection banner must account for this state, because today it looks exactly like a cold start.
 - **Controls:**
   - No dedicated Rejoin, Resume or Reload control exists. The reconnection token sits in sessionStorage['card-battle:reconnection-token'] but is never read on mount
   - Recovery path (manual): Home → Play online → retype the nickname (empty after reload) → type the 6-letter code (empty after reload) → Join
   - Lobby re-entry: if seats < 8, the server sits a NEW guest seat, then the picker 'Sit as a disconnected player?' opens with 'Keep this seat' (stay) and 'Sit here' (claimSeat; the duplicate guest seat is unseated). A full lobby enters as a walk-in spectator, then the same picker
   - Playing re-entry: walk-in spectator, then the picker with 'Stay spectating' (staySpectating) or 'Sit here' (claimSeat). A single listed seat is pre-selected; seats show nickname and seat color, with no auto-match
-  - No deep link (?code=), no persisted nickname, no 'last game' memory
+  - The only deep link is the invite link ?code=XXXXXX (L76-17), which pre-fills the Join code and does not rejoin a seat; no persisted nickname, no 'last game' memory
 - **States:**
   - Lobby reload: the server holds the seat as a reservation (allowReconnection 'manual'), sets the guest to not ready, and other players see the seat disconnected. Start readiness counts only connected guests (frontend.md). A host reload leaves hostSessionId on the reserved seat, so the host must rejoin and claim to get host controls back
   - Playing reload: the seat goes 'disconnected', timers it owns pause (turn, Mirror, rewards), and other players see 'Paused — reconnecting'. After the 30s grace the seat is 'absent' and autodraws instantly on its turns. The 3rd autodraw eliminates it (eliminateWithoutReward, absence), and eliminated seats are no longer claimable
@@ -489,10 +498,11 @@
   - Grace is 30s (RECONNECT_GRACE_MS); 3 absent autodraws eliminate with no reward (spec §5.7 as overridden by L57-13)
   - No accounts and no unique identity (spec v6 §11)
 - **Notes:** The gap the critic flagged is confirmed in the code: readToken() is called only inside room.onLeave after SDK auto-retries are exhausted (use-room-connection.ts:394), and no useEffect reads it on mount. Server-side, the reserved seat would accept client.reconnect(token) after a reload (onDrop → manual allowReconnection, until elimination, kick, claim or game over). A Rejoin prompt is therefore technically possible client-only, without a protocol change, but it would be a new interaction rather than a restyle. See openQuestions.
+- **L76-18:** Line references above are from `1de498d`; the code now lives in `screens/home/online-path.tsx` and `screens/lobby/invite-link.ts`.
 
 ### `chat-new-message-announcement` — New chat message signalling (unread, scroll, accessibility) · `Lot 62+`
 
-- **Files:** `apps/client/src/screens/table/chat-log.tsx`, `apps/client/src/screens/table/table-chat.tsx`, `apps/client/src/screens/table/chat-unread.ts`, `apps/client/src/screens/table/chat-unread.test.ts`, `apps/client/src/screens/lobby.tsx`
+- **Files:** `apps/client/src/screens/table/chat-log.tsx`, `apps/client/src/screens/table/table-chat.tsx`, `apps/client/src/screens/table/chat-unread.ts`, `apps/client/src/screens/table/chat-unread.test.ts`, `apps/client/src/screens/lobby/lobby-chat-panel.tsx`
 - **Purpose:** How a reader learns a new chat line arrived. The red unread count on the table chat icon is the only signal. The lobby has none, there is no live region, and the unread logic counts list length rather than message identity.
 - **Controls:**
   - Table: chat icon aria-label changes to 'Chat, N unread', plus the visual badge
@@ -513,6 +523,7 @@
     - V7 ruling (designer 2026-10-26, `docs/agent/decisions.md`): "when lines arrive" now applies only while the reader is at the bottom (within 24 px). A reader who scrolled up stays put, their own send always scrolls down, and there is no 'new messages' pill. Opening still lands on the newest line.
   - The Dialog keeps its focus trap, Esc and overlay dismiss, and visual-viewport pinning (design/components/dialog.tsx, L53-07)
 - **Notes:** V7 could add role='log' with aria-live polite, stick to the bottom only when the reader is already at the bottom, and add a 'new messages' jump pill. Those are presentation changes. Tracking unread by last-seen order instead of length would fix the shrink case without touching the protocol, since ChatMessageView.order is already on the wire.
+- **L76-18:** Line references above are from `1de498d`; the code now lives in `screens/lobby/lobby-chat-panel.tsx`.
 
 ### `global-card-face` — Card face component (full / face / thumb) with AnimatedCard wrapper and listed-damage badge
 
@@ -640,7 +651,7 @@
 
 ### `global-art-catalog` — Art catalog and typed asset lookup (kits, card faces, activated faces, backs, opponent placeholder, resource icons)
 
-- **Files:** `apps/client/src/design/asset-lookup.ts`, `apps/client/src/design/asset-lookup.test.ts`, `apps/client/src/assets/kits/`, `apps/client/src/assets/cards/`, `apps/client/src/assets/backs/`, `apps/client/src/assets/icons/`, `apps/client/src/assets/how-to-play/`, `apps/client/src/design/components/kit-portrait.tsx`, `apps/client/src/design/components/card-choice-tile.tsx`, `apps/client/src/screens/home.tsx`, `apps/client/src/screens/table.tsx`, `apps/client/src/screens/table/kit-inspect-details.tsx`, `apps/client/src/screens/lobby-kit-picker-dialog.tsx`, `apps/client/src/screens/lobby-rules-panel.tsx`, `apps/client/src/fx/play-flyout.ts`, `apps/client/src/fx/opponent-token-chips.ts`, `docs/technical_spec_v2.md`, `docs/agent/decisions.md`
+- **Files:** `apps/client/src/design/asset-lookup.ts`, `apps/client/src/design/asset-lookup.test.ts`, `apps/client/src/assets/kits/`, `apps/client/src/assets/cards/`, `apps/client/src/assets/backs/`, `apps/client/src/assets/icons/`, `apps/client/src/assets/how-to-play/`, `apps/client/src/design/components/kit-portrait.tsx`, `apps/client/src/design/components/card-choice-tile.tsx`, `apps/client/src/screens/home/home-art.tsx`, `apps/client/src/screens/table.tsx`, `apps/client/src/screens/table/kit-inspect-details.tsx`, `apps/client/src/screens/lobby/kit-picker-sheet.tsx`, `apps/client/src/ui/rules/rules-editor.tsx`, `apps/client/src/fx/play-flyout.ts`, `apps/client/src/fx/opponent-token-chips.ts`, `docs/technical_spec_v2.md`, `docs/agent/decisions.md`
 - **Purpose:** The only place that maps ids to PNG files. Typed maps (KIT_FILES, CARD_FILES, RESOURCE_FILES, BACK_FILES) resolve through eager import.meta.glob URLs. Every art-bearing UI depends on it: portraits, card faces, versos, the opponent and Random-kit placeholder, and the resource glyphs used in costs, badges, the dock and FX chips.
 - **Controls:**
   - No interactive controls. Lookup functions: getKitPortraitUrl, getCardArtUrl(cardId, {isUpgraded, activated?}), getCardBackUrl('attack'|'action'|'special'|'kit'), getOpponentPlaceholderUrl, getResourceIconUrl('life'|'point'|'shield'|'upgradePoint'), getAttackLogoUrl, getActionLogoUrl, plus ALL_ART_CARD_IDS, CARDS_WITH_ACTIVATED_ART and the deprecated V1_CARD_IDS
@@ -667,6 +678,7 @@
   - Home decoration uses the attack verso, Basic attack, Mirror, and the Untouchable / Assassin / Scientific / Kamikaze portraits, all aria-hidden (home.tsx HomeArt)
   - Lobby rules (L70-01: host excluded kits, Random only, human turn seconds 5–180) shows Random with the opponent placeholder face. Excluded kits are greyed portraits. A redesign must keep a distinct Random face and the excluded-kit state
 - **Notes:** Total shipped client PNGs: 16 kits, 80 card faces (62 base/upgraded + 18 activated), 7 backs/logos/placeholder, 4 resource icons. The repo images/ folder has 123 files, a superset. The lobby rules panel and kit-picker Random face came with L70-01 (after Lot 61). That surface belongs to the lobby inventory, but its art dependency is listed here.
+- **L76-18:** Line references above are from `1de498d`; the code now lives in `screens/home/home-art.tsx` and `ui/rules/rules-editor.tsx`.
 
 ### `global-art-lot63-gambler-roulette` — Gambler portrait and Roulette art (base, upgraded, activated) · `Lot 62+`
 
@@ -688,7 +700,7 @@
 
 ### `global-text-input-no-ios-zoom` — Mobile text-entry font-size rule (16 px minimum, no iOS focus zoom) · `Lot 62+`
 
-- **Files:** `apps/client/src/screens/table/chat-log.tsx`, `apps/client/src/screens/table/table-chat.tsx`, `apps/client/src/screens/lobby.tsx`, `apps/client/src/screens/home.tsx`, `apps/client/src/feedback/feedback-dialog.tsx`, `apps/client/src/screens/admin/admin-password-gate.tsx`, `apps/client/src/screens/admin/admin-filters-form.tsx`, `apps/client/src/screens/admin/admin-overview-modules.tsx`, `apps/client/src/screens/admin/admin-classes.ts`, `apps/client/src/screens/lobby-rules-panel.tsx`, `apps/client/src/design/components/dialog.tsx`, `apps/client/src/index.css`, `apps/client/index.html`, `apps/client/node_modules/tailwindcss/preflight.css`
+- **Files:** `apps/client/src/screens/table/chat-log.tsx`, `apps/client/src/screens/table/table-chat.tsx`, `apps/client/src/screens/lobby/lobby-chat-panel.tsx`, `apps/client/src/screens/home/nickname-field.tsx`, `apps/client/src/screens/home/online-path.tsx`, `apps/client/src/feedback/feedback-dialog.tsx`, `apps/client/src/screens/admin/admin-password-gate.tsx`, `apps/client/src/screens/admin/admin-filters-form.tsx`, `apps/client/src/screens/admin/admin-overview-modules.tsx`, `apps/client/src/screens/admin/admin-classes.ts`, `apps/client/src/ui/rules/rules-editor.tsx`, `apps/client/src/design/components/dialog.tsx`, `apps/client/src/index.css`, `apps/client/index.html`, `apps/client/node_modules/tailwindcss/preflight.css`
 - **Purpose:** A rule that applies everywhere. Every input, textarea and select a player can focus must have a computed font-size of at least 16 px, so iOS Safari does not zoom the page on focus. Chat, nickname, game code, feedback and the admin password already meet it. Commit 6372d04 (7 Oct 2026, PR #73, after Lot 70 chat) fixed the chat input by changing its class from text-sm to text-base. At the 1de498d audit neither docs/agent/frontend.md nor docs/agent/decisions.md recorded the rule and no test checked it, so a V7 restyle could bring the zoom bug back without anyone noticing. For /admin, Lot 80 records it (frontend.md › Admin tool mode, ADMIN_FIELD_CLASS) and pins every admin field with a test.
 - **Controls:**
   - Nickname input, NicknameField (home.tsx:800-815), shown on the online, solo and tutorial paths (home.tsx:507, 604, 734). maxLength 24, autoComplete=nickname, placeholder 'Your name', disabled while busy. Calls onNicknameChange. 16 px through inputClassName (home.tsx:70-75, 'font-sans text-base').
@@ -719,6 +731,7 @@
   - Field attributes stay: nickname maxLength 24 and autoComplete=nickname. Join code is uppercased with maxLength 6, autoComplete off and spellCheck off. Feedback message maxLength 4000; contact maxLength 200 with autoComplete=email. Passwords use autoComplete=current-password.
   - The placeholder colour (ink-muted/70) and the focus-visible outline on home and feedback inputs stay.
 - **Notes:** I marked this true because the chat input (Lot 70) and its zoom fix (6372d04) came after Lot 61. The 16 px class on home, feedback and admin password inputs is older. At the 1de498d audit five copies of inputClassName existed (home.tsx:70, feedback-dialog.tsx:44, inbox.tsx:35, admin-password-gate.tsx:11, admin-filters-form.tsx:9), plus inline classes in chat-log.tsx:69 and admin-overview-modules.tsx:61-64,272. Lot 80 removed the admin copies: inbox.tsx is deleted, the gate uses the V7 TextField, and every other admin input and select uses ADMIN_FIELD_CLASS (admin-classes.ts), each pinned by a 16 px test. Outside /admin no shared Input primitive enforces the rule in one place. home.tsx line numbers in this checkout are 70-75 for inputClassName, not the 51-56 the brief cites.
+- **L76-18:** Line references above are from `1de498d`; the code now lives in `screens/lobby/lobby-chat-panel.tsx`, `screens/home/nickname-field.tsx`, `screens/home/online-path.tsx` and `ui/rules/rules-editor.tsx`.
 
 ### `global-visual-viewport-fit` — Visible-viewport sizing for overlays and table (on-screen keyboard and device frame)
 
@@ -749,7 +762,7 @@
 
 ### `home-beta-badge` — Beta badge
 
-- **Files:** `apps/client/src/screens/home.tsx`
+- **Files:** `apps/client/src/screens/home/home-art.tsx`, `apps/client/src/screens/home/home-screen.tsx`
 - **Purpose:** Tells testers the game is a beta.
 - **Controls:**
   - None. A non-interactive aside, data-zone='beta-card'.
@@ -758,10 +771,11 @@
 - **Keep:**
   - The text is the word 'Beta' only: no Beta paragraph, no protocol version (not even a tooltip), no Reset help, no delayed-resolution pitch (L51-03, technical spec v6 §5.1 hub chrome).
 - **Notes:** The What's new 'New' button is placed just to its left (right-[5.75rem] / sm:right-28). Lot 51 retired the 'Protocol vNN' text from Home and Lobby.
+- **L76-18:** Line references above are from `1de498d`; the code now lives in `screens/home/home-art.tsx` and `screens/home/home-screen.tsx`.
 
 ### `home-whats-new` — What's new button and dialog · `Lot 62+`
 
-- **Files:** `apps/client/src/screens/home.tsx`, `apps/client/src/screens/whats-new-dialog.tsx`, `apps/client/src/help/release-storage.ts`, `packages/shared/src/release-notes.ts`
+- **Files:** `apps/client/src/screens/home/whats-new-control.tsx`, `apps/client/src/screens/home/home-screen.tsx`, `apps/client/src/screens/whats-new-dialog.tsx`, `apps/client/src/help/release-storage.ts`, `packages/shared/src/release-notes.ts`
 - **Purpose:** Shows player-facing release notes, auto-opens the latest unseen update, and keeps the full dated log one tap away.
 - **Controls:**
   - Compact green 'New' Button (data-whats-new-button). aria-label is "What's new", or "What's new (unread)" when unread. Absolutely positioned top-right. Opens the dialog with scope 'history'.
@@ -784,10 +798,11 @@
   - The control is small and top-right, not a hub action-row button (whats-new-dialog.test.ts: HubView must not contain onOpenWhatsNew; data-whats-new-button must sit near 'absolute').
   - Source-text tests check home.tsx for: "What's new", WhatsNewDialog, hasUnseenReleaseNotes, shouldAutoOpenWhatsNew, markLatestReleaseSeen, data-whats-new-unread, data-whats-new-button within 400 characters of variant="green", bg-cta-red, no 'bg-cta-green', "useState<WhatsNewScope>('current')", "setWhatsNewScope('history')", "setWhatsNewScope('current')", 'scope={whatsNewScope}'. They check the dialog for releaseNotesForScope, data-whats-new-scope, 'Latest' and 'Got it'.
 - **Notes:** Introduced in L63-07. The current/history split is L65-05. The 'New' additions section is Lot 63. The storage key holds a release id, not a flag. There are no accounts.
+- **L76-18:** Line references above are from `1de498d`; the code now lives in `screens/home/whats-new-control.tsx` and `screens/home/home-screen.tsx`.
 
 ### `home-hub` — Home hub
 
-- **Files:** `apps/client/src/screens/home.tsx`
+- **Files:** `apps/client/src/screens/home/home-hub.tsx`, `apps/client/src/screens/home/home-screen.tsx`
 - **Purpose:** The branded landing screen. Players choose Online, Solo or Tutorial, or open How to play or Feedback.
 - **Controls:**
   - 'Play online' (green) calls requestPath('online'). The soft gate may open How to play first.
@@ -805,12 +820,13 @@
 - **Keep:**
   - Copy: eyebrow 'Turn-based card battle', H1 'Card Battle', helper 'New here? Open How to play once, then pick Tutorial, Online, or Solo.'
   - The nickname is collected inside each path, not on the hub (frontend.md Home L51-03).
-  - No Inbox link, no Admin link, no protocol footer, no Reset help control, no delayed-resolution pitch (L51-03, feedback-surfaces.test.ts: home.tsx must not contain 'Inbox').
+  - No Inbox link, no Admin link, no protocol footer, no Reset help control, no delayed-resolution pitch (L51-03, feedback-surfaces.test.ts (now screens/home/home-screen.test.tsx): home.tsx must not contain 'Inbox').
   - The Tutorial button is always live, never a dead or 'coming soon' button (L42-04).
   - Decorative HomeArt is aria-hidden: attack card back, Basic attack, Mirror, and the Untouchable / Assassin / Scientific / Kamikaze portraits. The art sits above the content on phones and to the right on md and up.
-  - main keeps 'overflow-y-auto overscroll-contain', never 100dvh and never overflow-hidden, so the hub and menus scroll on short viewports (Lot 53 follow-up, visual-viewport.test.ts).
+  - main keeps 'overflow-y-auto overscroll-contain', never 100dvh and never overflow-hidden, so the hub and menus scroll on short viewports (Lot 53 follow-up, visual-viewport.test.ts, now screens/home/home-screen.test.tsx).
   - A Motion fade and slide of 0.35 s plays when the mode changes.
 - **Notes:** The mode transition does not check prefers-reduced-motion. The Dialog component does.
+- **L76-18:** Line references above are from `1de498d`; the code now lives in `screens/home/home-hub.tsx`, `screens/home/home-screen.tsx` and `screens/home/home-screen.test.tsx`.
 
 ### `home-how-to-play-dialog` — How to play primer dialog
 
@@ -837,7 +853,7 @@
 
 ### `home-how-to-play-soft-gate` — How to play soft gate
 
-- **Files:** `apps/client/src/screens/home.tsx`, `apps/client/src/help/help-storage.ts`
+- **Files:** `apps/client/src/screens/home/home-gate.ts`, `apps/client/src/screens/home/home-screen.tsx`, `apps/client/src/help/help-storage.ts`
 - **Purpose:** On the first visit, makes the player see the primer once before entering a play path.
 - **Controls:**
   - The first click on Play online, Play solo or Tutorial while localStorage['card-battle.v6.howToPlaySeen'] is not '1' opens How to play with pendingTarget set.
@@ -852,10 +868,11 @@
   - There is no hub Reset help control. resetHelpStorage is for tests only (L51-03, spec v6 §5.1). Testers clear the key by hand.
   - After a manual (non-gated) close, the What's new auto-open is checked again.
 - **Notes:** The code gates entry to a path (the hub button click), not the later form submit. Spec v6 §5.1/§9 says 'submit'; frontend.md matches the code.
+- **L76-18:** Line references above are from `1de498d`; the code now lives in `screens/home/home-gate.ts` and `screens/home/home-screen.tsx`.
 
 ### `home-path-header` — Path header (Online / Solo / Tutorial)
 
-- **Files:** `apps/client/src/screens/home.tsx`
+- **Files:** `apps/client/src/screens/home/path-header.tsx`
 - **Purpose:** The shared top of each path: navigation, Feedback, title and connection status.
 - **Controls:**
   - 'Back' (orange) calls goHub(). This does nothing while busy, and re-checks the What's new auto-open.
@@ -867,10 +884,11 @@
 - **Keep:**
   - Feedback is reachable from every path header, not only the hub (L47-03 / L57-05, frontend.md).
 - **Notes:** Titles: 'Play online', 'Play solo', 'Tutorial'. Subtitles are listed on each path surface.
+- **L76-18:** Line references above are from `1de498d`; the code now lives in `screens/home/path-header.tsx`.
 
 ### `home-nickname` — Nickname field and handling
 
-- **Files:** `apps/client/src/screens/home.tsx`, `apps/client/src/App.tsx`, `apps/client/src/net/use-room-connection.ts`, `apps/server/src/rooms/game-room.ts`
+- **Files:** `apps/client/src/screens/home/nickname-field.tsx`, `apps/client/src/App.tsx`, `apps/client/src/net/use-room-connection.ts`, `apps/server/src/rooms/game-room.ts`
 - **Purpose:** Collects the display name used to create, join, start solo or start the tutorial, and attaches it to feedback.
 - **Controls:**
   - Text input labelled 'Nickname'. maxLength 24, autoComplete 'nickname', placeholder 'Your name', disabled while busy.
@@ -886,10 +904,11 @@
   - Nicknames are not unique (decisions L57, claim picker copy).
   - The nickname is kept in memory only. It survives returning to Home in the same tab but not a page reload. There is no localStorage.
 - **Notes:** Any redesign that moves the field onto the hub contradicts frontend.md ('Nickname is collected inside each path, not on the hub').
+- **L76-18:** Line references above are from `1de498d`; the code now lives in `screens/home/nickname-field.tsx`.
 
 ### `home-online-path` — Play online: create or join
 
-- **Files:** `apps/client/src/screens/home.tsx`, `apps/client/src/net/use-room-connection.ts`, `apps/server/src/rooms/game-code.ts`
+- **Files:** `apps/client/src/screens/home/online-path.tsx`, `apps/client/src/net/use-room-connection.ts`, `apps/server/src/rooms/game-code.ts`
 - **Purpose:** Create a private room and become host, or join a room with its six-letter code.
 - **Controls:**
   - Nickname field (see home-nickname).
@@ -909,10 +928,11 @@
   - Codes are sent uppercased. Server codes are A–Z only.
   - Copy: subtitle 'Create a room for friends, or join with a six-letter code.', 'Create a game' with 'Host gets a code to share. Start from the lobby when everyone is seated.', and 'Join a game'.
 - **Notes:** The client does not check that the code is letters only; the server rejects bad codes. The Create helper text predates guest Ready (Lot 57).
+- **L76-18:** Line references above are from `1de498d`; the code now lives in `screens/home/online-path.tsx`.
 
 ### `home-solo-path` — Play solo menu
 
-- **Files:** `apps/client/src/screens/home.tsx`, `apps/client/src/bots/format-bot-difficulty.ts`, `packages/shared/src/domain/player-count.ts`, `packages/shared/src/domain/bot.ts`
+- **Files:** `apps/client/src/screens/home/solo-path.tsx`, `apps/client/src/screens/home/solo-opponent-picker.tsx`, `apps/client/src/bots/format-bot-difficulty.ts`, `packages/shared/src/domain/player-count.ts`, `packages/shared/src/domain/bot.ts`
 - **Purpose:** Start a match against bots right away, with no lobby. Sets opponent count, difficulty, table rules and your hidden kit.
 - **Controls:**
   - Nickname field.
@@ -936,10 +956,11 @@
   - The kit is hidden from opponents: 'Hidden from opponents. Random is the default.' (L49-02).
   - Total seats are 1 human plus N bots, at most 8 (MAX_PLAYERS).
 - **Notes:** Opponent and difficulty selection is shown by color alone (green or orange).
+- **L76-18:** Line references above are from `1de498d`; the code now lives in `screens/home/solo-path.tsx` and `screens/home/solo-opponent-picker.tsx`.
 
 ### `home-solo-table-rules` — Table rules panel (custom rules: excluded kits, Random only, turn time) · `Lot 62+`
 
-- **Files:** `apps/client/src/screens/lobby-rules-panel.tsx`, `apps/client/src/screens/home.tsx`, `apps/client/src/screens/lobby.tsx`, `packages/shared/src/protocol/lobby-rules.ts`, `packages/shared/src/protocol/action-reject.ts`, `docs/spec_bataille_des_cartes_en.md`
+- **Files:** `apps/client/src/ui/rules/rules-strip.tsx`, `apps/client/src/ui/rules/rules-sheet.tsx`, `apps/client/src/ui/rules/rules-editor.tsx`, `apps/client/src/screens/home/solo-path.tsx`, `apps/client/src/screens/home/solo-rules-state.ts`, `apps/client/src/screens/lobby/lobby-screen.tsx`, `packages/shared/src/protocol/lobby-rules.ts`, `packages/shared/src/protocol/action-reject.ts`, `docs/spec_bataille_des_cartes_en.md`
 - **Purpose:** Host rules for a match: exclude kits, deal every kit at random, and set the human turn time. The solo menu uses it editable. The online lobby uses the same component, editable for the host and read-only for guests.
 - **Controls:**
   - Summary card: clock icon with '{turnTimeSeconds}s'. RandomMark (opponent placeholder plus 'Random') when randomOnly is on. KitFaceRow of all 16 small portraits, with excluded ones gray at 40% opacity.
@@ -972,10 +993,11 @@
   - Only the host gets the settings icon. The popup layout is slider on top, then All / None / Random, then the kit portraits (decisions 2026-10-06 'Rules chrome and lobby chat').
   - Online lobby: every change sends setLobbyRules with the full excludedKitIds and randomOnly. turnTimeSeconds is included only when the slider moves.
 - **Notes:** Lot 70, PROTOCOL_VERSION 44 to 45. Solo keeps the rules locally and sends them once at launch. In the online lobby, each slider step sends an intent immediately (onChange).
+- **L76-18:** Line references above are from `1de498d`; the code now lives in `ui/rules/rules-strip.tsx`, `ui/rules/rules-sheet.tsx`, `ui/rules/rules-editor.tsx`, `screens/home/solo-path.tsx`, `screens/home/solo-rules-state.ts` and `screens/lobby/lobby-screen.tsx`.
 
 ### `home-solo-kit-picker` — Choose kit dialog (solo and lobby)
 
-- **Files:** `apps/client/src/screens/lobby-kit-picker-dialog.tsx`, `apps/client/src/screens/lobby-kit-picker.ts`, `apps/client/src/screens/table/kit-inspect-details.tsx`
+- **Files:** `apps/client/src/screens/lobby/kit-picker-sheet.tsx`, `apps/client/src/screens/lobby-kit-picker.ts`, `apps/client/src/screens/table/kit-inspect-details.tsx`
 - **Purpose:** Pick your own hidden kit, or keep Random, after reading the kit's details.
 - **Controls:**
   - Grid tiles: Random first, then each allowed kit. aria-pressed marks the current pick, aria-label is the kit name. Clicking a tile opens its preview.
@@ -989,15 +1011,16 @@
   - Random preview: title 'Random kit', body is the RandomKitDetails copy.
   - Only allowed kits are listed (Lot 70 filter). Random is always listed.
 - **Keep:**
-  - Opponents never see another seat's pick (L49-02, lobby-kit-privacy.test.ts).
+  - Opponents never see another seat's pick (L49-02, lobby-kit-privacy.test.ts, now screens/lobby/lobby-screen.test.tsx).
   - Random is the default label ('Random kit').
   - Solo sends chooseKit before startGame when the pick is not random.
   - The same dialog is used in the online lobby.
 - **Notes:** The dialog is L49-02; the allowedKitIds filter was added in Lot 70. The RandomKitDetails copy still says 'one of the 16 kits … the same way as before this picker existed', which ignores host exclusions.
+- **L76-18:** Line references above are from `1de498d`; the code now lives in `screens/lobby/lobby-screen.test.tsx`.
 
 ### `home-solo-play-again-seed` — Solo Play again reopens the solo menu · `Lot 62+`
 
-- **Files:** `apps/client/src/screens/solo-menu-seed.ts`, `apps/client/src/App.tsx`, `apps/client/src/screens/home.tsx`
+- **Files:** `apps/client/src/screens/solo-menu-seed.ts`, `apps/client/src/App.tsx`, `apps/client/src/screens/home/home-screen.tsx`, `apps/client/src/screens/home/solo-rules-state.ts`
 - **Purpose:** After a finished solo match, Play again goes back to a pre-filled solo menu instead of dealing a new match.
 - **Controls:**
   - Triggered by End 'Play again', which belongs to the End surface.
@@ -1015,10 +1038,11 @@
   - The nickname comes back with it, from App state.
   - The room transcript ends when the solo room closes (decisions 'Room chat outlives one match').
 - **Notes:** Lot 67 replaced Lot 66's instant restart. Rules seeding is Lot 70.
+- **L76-18:** Line references above are from `1de498d`; the code now lives in `screens/home/home-screen.tsx` and `screens/home/solo-rules-state.ts`.
 
 ### `home-tutorial-path` — Tutorial path
 
-- **Files:** `apps/client/src/screens/home.tsx`, `apps/client/src/net/use-room-connection.ts`
+- **Files:** `apps/client/src/screens/home/tutorial-path.tsx`, `apps/client/src/screens/home/home-screen.tsx`, `apps/client/src/net/use-room-connection.ts`
 - **Purpose:** Starts the scripted 1v1 tutorial on the real table.
 - **Controls:**
   - Nickname field.
@@ -1031,7 +1055,8 @@
 - **Keep:**
   - Nickname only: no kit picker, no bots, no table rules. Copy: 'A scripted 1v1 on the real table. Nickname only — kits and bots are chosen for you.' (L45-04).
   - The client sends create({tutorial: true}) then startGame and skips the lobby. The server seats the scripted bot. No turn timer. A tutorial room cannot be joined by code.
-  - Finishing or skipping the tutorial does not set the hints skipAll flag (L46-03, tutorial-hints-independence.test.ts: home.tsx must not contain 'skipAllHints').
+  - Finishing or skipping the tutorial does not set the hints skipAll flag (L46-03, tutorial-hints-independence.test.ts (now screens/home/home-screen.test.tsx): home.tsx must not contain 'skipAllHints').
+- **L76-18:** Line references above are from `1de498d`; the code now lives in `screens/home/tutorial-path.tsx`, `screens/home/home-screen.tsx` and `screens/home/home-screen.test.tsx`.
 
 ### `home-feedback-dialog` — Feedback dialog (manual, Home)
 
@@ -1058,12 +1083,13 @@
   - A synchronous in-flight gate stops a double click from inserting two rows (submit-gate.ts, feedback-dialog.test.ts).
   - A bug needs at least one topic; confusion and idea do not (L47-06).
   - Submitting works without a Colyseus room.
-  - feedback-surfaces.test.ts checks that home.tsx contains 'FeedbackDialog' and 'screen="home"' and does not contain 'Inbox'.
+  - feedback-surfaces.test.ts (now screens/home/home-screen.test.tsx) checks that home.tsx contains 'FeedbackDialog' and 'screen="home"' and does not contain 'Inbox'.
 - **Notes:** The same component is used in ask mode on Game over and in manual mode in the Lobby and from the table '!' button; those belong to other areas.
+- **L76-18:** Line references above are from `1de498d`; the code now lives in `screens/home/home-screen.test.tsx`.
 
 ### `solo-menu-rules` — Solo menu table rules, kit pick and Start solo · `Lot 62+`
 
-- **Files:** `apps/client/src/screens/home.tsx`, `apps/client/src/screens/lobby-rules-panel.tsx`, `apps/client/src/screens/lobby-kit-picker-dialog.tsx`, `apps/client/src/screens/solo-menu-seed.ts`, `apps/client/src/net/use-room-connection.ts`
+- **Files:** `apps/client/src/screens/home/solo-path.tsx`, `apps/client/src/screens/home/solo-rules-state.ts`, `apps/client/src/screens/home/home-screen.tsx`, `apps/client/src/ui/rules/rules-strip.tsx`, `apps/client/src/ui/rules/rules-sheet.tsx`, `apps/client/src/ui/rules/rules-editor.tsx`, `apps/client/src/ui/rules/rules-editor-model.ts`, `apps/client/src/screens/lobby/kit-picker-sheet.tsx`, `apps/client/src/screens/solo-menu-seed.ts`, `apps/client/src/net/use-room-connection.ts`
 - **Purpose:** The solo player is the host: the same rules panel (always editable) and kit pick before an instant bot match with no lobby.
 - **Controls:**
   - LobbyRulesPanel with editable=true: gear opens the same Table rules dialog (slider, All / None / Random, kit tiles, Close)
@@ -1081,6 +1107,7 @@
   - An untouched slider does not send a time (frontend.md Lot 70)
   - Solo Play again reopens this menu with the same kit, bot count, shared difficulty and rules, and does not start the match (L67-01; App.tsx soloMenuSeed with FinishedStateView.lobbyRules)
 - **Notes:** Mostly the Home area; listed for the rules emphasis. The panel shows 60s (defaultLobbyRules) while the server may use the TURN_DURATION_MS env default when includeTurnTime is false.
+- **L76-18:** Line references above are from `1de498d`; the code now lives in `screens/home/solo-path.tsx`, `screens/home/solo-rules-state.ts`, `screens/home/home-screen.tsx`, `ui/rules/rules-strip.tsx`, `ui/rules/rules-sheet.tsx`, `ui/rules/rules-editor.tsx` and `ui/rules/rules-editor-model.ts`.
 
 ### `home-whats-new-seen-storage` — What's new seen-state storage · `Lot 62+`
 
@@ -1096,7 +1123,7 @@
 
 ### `solo-menu-rules-side-effects` — Solo menu: local kit reset, Random only, and the rematch seed · `Lot 62+`
 
-- **Files:** `apps/client/src/screens/home.tsx`, `apps/client/src/screens/lobby-rules-panel.tsx`, `apps/client/src/screens/lobby-kit-picker-dialog.tsx`, `apps/client/src/screens/solo-menu-seed.ts`, `apps/client/src/App.tsx`, `apps/client/src/net/use-room-connection.ts`, `docs/agent/decisions.md`
+- **Files:** `apps/client/src/screens/home/solo-path.tsx`, `apps/client/src/screens/home/solo-rules-state.ts`, `apps/client/src/screens/home/home-screen.tsx`, `apps/client/src/screens/home/solo-kit-card.tsx`, `apps/client/src/ui/rules/rules-strip.tsx`, `apps/client/src/ui/rules/rules-sheet.tsx`, `apps/client/src/ui/rules/rules-editor.tsx`, `apps/client/src/ui/rules/rules-editor-model.ts`, `apps/client/src/screens/lobby/kit-picker-sheet.tsx`, `apps/client/src/screens/solo-menu-seed.ts`, `apps/client/src/App.tsx`, `apps/client/src/net/use-room-connection.ts`, `docs/agent/decisions.md`
 - **Purpose:** The Home solo path keeps rules and kit choice in local React state and sends them in one burst at launch. Its rule-change side effects happen locally and silently, mirroring the server's lobby reset.
 - **Controls:**
   - LobbyRulesPanel editable (gear, All / None / Random, kit tiles, slider) -> onSoloRulesChange(next, turnTimeChanged) (home.tsx:648-660).
@@ -1116,10 +1143,11 @@
   - Solo Play again opens the Home solo menu with that human's kit, the bot count, and the shared bot difficulty, and the rules come along (decisions 2026-09-28 Lot 67; solo-menu-seed.ts).
   - Solo launch order: setLobbyRules, then chooseKit, then addBot ×N, then startGame, with soloLaunchPending skipping the lobby flash (frontend.md L46).
 - **Notes:** The solo menu has no 'Ready' and no other seats, so the stale-Ready issue does not apply here. Only the silent kit reset and the hidden-but-kept pick do.
+- **L76-18:** Line references above are from `1de498d`; the code now lives in `screens/home/solo-path.tsx`, `screens/home/solo-rules-state.ts`, `screens/home/home-screen.tsx`, `screens/home/solo-kit-card.tsx`, `ui/rules/rules-strip.tsx`, `ui/rules/rules-sheet.tsx`, `ui/rules/rules-editor.tsx` and `ui/rules/rules-editor-model.ts`.
 
 ### `home-forms-enter-submit` — Home path forms: what Enter does
 
-- **Files:** `apps/client/src/screens/home.tsx`, `apps/client/src/design/components/button.tsx`, `apps/client/src/design/components/icon-button.tsx`
+- **Files:** `apps/client/src/screens/home/online-path.tsx`, `apps/client/src/screens/home/solo-path.tsx`, `apps/client/src/screens/home/tutorial-path.tsx`, `apps/client/src/screens/home/nickname-field.tsx`, `apps/client/src/design/components/button.tsx`, `apps/client/src/design/components/icon-button.tsx`
 - **Purpose:** Implicit Enter submission on the Online, Solo and Tutorial paths. Coverage differs from path to path.
 - **Controls:**
   - Online path: the Nickname field sits outside both forms (home.tsx:506-510), so Enter in Nickname does nothing
@@ -1137,10 +1165,11 @@
   - Button and IconButton default to type="button" (button.tsx:37, icon-button.tsx:21); only explicit type="submit" submits. Any new raw <button> inside the solo form must set type="button" or it will start the game
   - Nickname maxLength 24, autocomplete 'nickname'; join code uppercased
 - **Notes:** The critic's claim that 'Enter submits create' is inaccurate: Create has no input, so only activating the button submits it. The Feedback dialog has no <form> and no Enter-to-send; in its textarea, Enter inserts a newline.
+- **L76-18:** Line references above are from `1de498d`; the code now lives in `screens/home/online-path.tsx`, `screens/home/solo-path.tsx`, `screens/home/tutorial-path.tsx` and `screens/home/nickname-field.tsx`.
 
 ### `home-how-to-play-dismiss` — How to play: gated vs manual dismissal
 
-- **Files:** `apps/client/src/screens/how-to-play-dialog.tsx`, `apps/client/src/screens/home.tsx`, `apps/client/src/screens/table.tsx`, `docs/agent/frontend.md`, `docs/agent/decisions.md`
+- **Files:** `apps/client/src/screens/how-to-play-dialog.tsx`, `apps/client/src/screens/home/home-gate.ts`, `apps/client/src/screens/home/home-screen.tsx`, `apps/client/src/screens/table.tsx`, `docs/agent/frontend.md`, `docs/agent/decisions.md`
 - **Purpose:** The primer opens before the first hub path choice (soft gate) or from the '?' / How to play button. What a dismissal means differs between the two cases.
 - **Controls:**
   - Gated open (first Play online / Play solo / Tutorial click): Escape, backdrop, Skip and Got it all mark 'card-battle.v6.howToPlaySeen' and continue into the chosen path (home.tsx:212-219)
@@ -1154,10 +1183,11 @@
   - Manual Escape or backdrop does not set the seen key
   - Screenshots only render when the file exists
 - **Notes:** L42 / L51-02.
+- **L76-18:** Line references above are from `1de498d`; the code now lives in `screens/home/home-gate.ts` and `screens/home/home-screen.tsx`.
 
 ### `home-whats-new-dismiss` — What's new: any dismissal marks the latest entry seen · `Lot 62+`
 
-- **Files:** `apps/client/src/screens/whats-new-dialog.tsx`, `apps/client/src/screens/home.tsx`, `packages/shared/src/release-notes.ts`, `docs/agent/frontend.md`
+- **Files:** `apps/client/src/screens/whats-new-dialog.tsx`, `apps/client/src/screens/home/home-screen.tsx`, `apps/client/src/screens/home/whats-new-control.tsx`, `packages/shared/src/release-notes.ts`, `docs/agent/frontend.md`
 - **Purpose:** Release-notes popup (auto: latest entry only) and history (New button: every dated entry).
 - **Controls:**
   - Escape / backdrop / green 'Got it': closeWhatsNew calls markLatestReleaseSeen ('card-battle.v6.lastSeenReleaseId'), clears the red unread dot and closes (home.tsx:164-168)
@@ -1171,10 +1201,11 @@
   - The auto popup shows only the latest entry, and the New button shows all entries newest first (L65-05)
   - How to play does not block it; it can auto-open after How to play closes or on returning to the hub
 - **Notes:** L63-07 / L65-05.
+- **L76-18:** Line references above are from `1de498d`; the code now lives in `screens/home/home-screen.tsx` and `screens/home/whats-new-control.tsx`.
 
 ### `home-connection-status-and-errors` — Home status line + join/create failure alert (StatusBlock)
 
-- **Files:** `apps/client/src/screens/home.tsx:140-142 (busy / canSubmit / canJoin)`, `apps/client/src/screens/home.tsx:431 (HubView StatusBlock), 785 (PathHeader StatusBlock), 819-838 (StatusBlock, role=alert)`, `apps/client/src/screens/status-labels.ts`, `apps/client/src/net/use-room-connection.ts:247-282 (kicked + solo-launch ERROR_MESSAGE), 336-343 (onError), 422-469 (createGame/joinGame catch -> failed), 549-635 (solo/tutorial catch), 875-877 (describe)`, `apps/client/src/App.tsx (Home is the fallback route whenever view is null; nickname/joinCode are App useState)`, `apps/server/src/rooms/game-room.ts:444-490 (onAuth ServerErrors), 693-720 (onJoin repeats nickname/full checks), 1619-1633 (refreshJoinLock)`, `apps/server/src/rooms/claim-seat-rules.ts:75-103 (lobbyJoinKind)`, `apps/server/src/rooms/tutorial-join.ts:21-26`, `packages/shared/src/protocol/action-reject.ts:292-297`, `node_modules/@colyseus/core/build/MatchMaker.mjs:150-157 (joinById not found / locked checked before onAuth), 447 (already full)`, `node_modules/@colyseus/sdk/build/HTTP.mjs:173-184 (network error message passthrough)`
+- **Files:** `apps/client/src/screens/home/home-screen.tsx (was home.tsx:140-142: busy / canSubmit / canJoin)`, `apps/client/src/screens/home/home-hub.tsx (HubView StatusBlock; was home.tsx:431)`, `apps/client/src/screens/home/path-header.tsx (PathHeader StatusBlock; was home.tsx:785)`, `apps/client/src/screens/home/home-status.tsx (StatusBlock, role=alert; was home.tsx:819-838)`, `apps/client/src/screens/status-labels.ts`, `apps/client/src/net/use-room-connection.ts:247-282 (kicked + solo-launch ERROR_MESSAGE), 336-343 (onError), 422-469 (createGame/joinGame catch -> failed), 549-635 (solo/tutorial catch), 875-877 (describe)`, `apps/client/src/App.tsx (Home is the fallback route whenever view is null; nickname/joinCode are App useState)`, `apps/server/src/rooms/game-room.ts:444-490 (onAuth ServerErrors), 693-720 (onJoin repeats nickname/full checks), 1619-1633 (refreshJoinLock)`, `apps/server/src/rooms/claim-seat-rules.ts:75-103 (lobbyJoinKind)`, `apps/server/src/rooms/tutorial-join.ts:21-26`, `packages/shared/src/protocol/action-reject.ts:292-297`, `node_modules/@colyseus/core/build/MatchMaker.mjs:150-157 (joinById not found / locked checked before onAuth), 447 (already full)`, `node_modules/@colyseus/sdk/build/HTTP.mjs:173-184 (network error message passthrough)`
 - **Purpose:** Single place on Home where connection progress and every create / join / solo-start / tutorial-start / kick / reclaim-failure message is shown. It is the only error UI Home has: no toast, no dialog, no retry or reload control.
 - **Controls:**
   - No controls of its own. The <p role="alert"> error and the muted status line are passive. They cannot be dismissed
@@ -1210,10 +1241,11 @@
   - Solo and Tutorial never flash the Lobby: Home stays visible until phase=playing, or until failure (soloLaunchPending, L17-01 / L45-04)
   - Lobby and Home ignore actionReject.code and show only error/message (RoomConnection.actionReject doc comment)
 - **Notes:** Per the designer's relayed instruction, the Home solo path's LobbyRulesPanel (gear → Table rules: excluded/banned kits, Random only, human turn seconds 5-180 via onTurnTimeChange which also flips includeTurnTime; Lot 70 / L70-01, addedAfterLot61) must stay. It is inventoried with the lobby rules surfaces. Its only link to this gap is that the gear stays enabled while busy. The tutorial path has no rules (Lot 70: 'Tutorial does not use the rules').
+- **L76-18:** Line references above are from `1de498d`; the code now lives in `screens/home/home-screen.tsx`, `screens/home/home-hub.tsx`, `screens/home/path-header.tsx` and `screens/home/home-status.tsx`.
 
 ### `home-forced-exit-landing` — Landing on Home after being kicked or after reclaim fails
 
-- **Files:** `apps/client/src/net/use-room-connection.ts:247-262 (kicked ERROR_MESSAGE → INITIAL + disconnected + 'You were kicked.'), 369-410 (onLeave kicked branch / manual reclaim), 745-772 (reclaim failure → INITIAL disconnected + raw error)`, `apps/client/src/App.tsx (view null → HomeScreen remounts; joinCode only set by the Home input, never from gameCode)`, `apps/client/src/screens/home.tsx:97 (mode starts at 'hub'), 431 (hub StatusBlock)`, `apps/server/src/rooms/game-room.ts:1522-1535 (kick: ERROR_MESSAGE kicked, then leave CONSENTED with the kicked reason)`, `packages/shared/src/protocol/action-reject.ts:293`
+- **Files:** `apps/client/src/net/use-room-connection.ts:247-262 (kicked ERROR_MESSAGE → INITIAL + disconnected + 'You were kicked.'), 369-410 (onLeave kicked branch / manual reclaim), 745-772 (reclaim failure → INITIAL disconnected + raw error)`, `apps/client/src/App.tsx (view null → HomeScreen remounts; joinCode only set by the Home input, never from gameCode)`, `apps/client/src/screens/home/home-screen.tsx (mode starts at 'hub'; was home.tsx:97)`, `apps/client/src/screens/home/home-hub.tsx (hub StatusBlock; was home.tsx:431)`, `apps/server/src/rooms/game-room.ts:1522-1535 (kick: ERROR_MESSAGE kicked, then leave CONSENTED with the kicked reason)`, `packages/shared/src/protocol/action-reject.ts:293`
 - **Purpose:** The player was in a room and is pushed back to Home without choosing to leave: kicked by the host in the lobby, or every reconnect attempt failed (SDK retries plus the manual token reclaim). Home must say what happened and offer a next step.
 - **Controls:**
   - None specific. The hub offers Play online, Play solo, Tutorial, How to play, Feedback and What's new (New) as usual
@@ -1231,10 +1263,11 @@
 
 
 ## Lobby
+- **L76-18:** Line references above are from `1de498d`; the code now lives in `screens/home/home-screen.tsx` and `screens/home/home-hub.tsx`.
 
 ### `lobby-header-status` — Lobby header, connection status and inline error
 
-- **Files:** `apps/client/src/screens/lobby.tsx`, `apps/client/src/screens/status-labels.ts`, `apps/client/src/net/use-room-connection.ts`, `packages/shared/src/protocol/action-reject.ts`
+- **Files:** `apps/client/src/screens/lobby/lobby-header.tsx`, `apps/client/src/screens/lobby/lobby-screen.tsx`, `apps/client/src/screens/status-labels.ts`, `apps/client/src/net/use-room-connection.ts`, `packages/shared/src/protocol/action-reject.ts`
 - **Purpose:** Identify the screen ('Lobby' eyebrow, 'Card Battle' title), show the socket status and the last server reject message for the lobby.
 - **Controls:**
   - None (read-only). The error comes from ERROR_MESSAGE.message; the lobby ignores the reject code and shows the English fallback string
@@ -1246,12 +1279,13 @@
 - **Keep:**
   - Lobby shows the STATUS_LABELS copy (Home uses homeStatusCopy instead) (frontend.md, L42-04)
   - Lobby and Home keep the inline alert string; the table uses IllegalActionDialog instead (L39-02)
-  - lobby.tsx must not use 100dvh; it scrolls inside #root with overflow-y-auto (L53-07, locked by visual-viewport.test.ts)
+  - lobby.tsx must not use 100dvh; it scrolls inside #root with overflow-y-auto (L53-07, locked by visual-viewport.test.ts, now screens/lobby/lobby-screen.test.tsx)
 - **Notes:** The error never gets a dismiss control in the lobby. In use-room-connection.ts, stateUpdate keeps `error` while `actionReject` is non-null, and the lobby never calls clearActionReject.
+- **L76-18:** Line references above are from `1de498d`; the code now lives in `screens/lobby/lobby-header.tsx`, `screens/lobby/lobby-screen.tsx` and `screens/lobby/lobby-screen.test.tsx`.
 
 ### `lobby-game-code` — Game code card with Copy and the copy-result dialog
 
-- **Files:** `apps/client/src/screens/lobby.tsx`, `apps/client/src/design/components/dialog.tsx`
+- **Files:** `apps/client/src/screens/lobby/lobby-header.tsx`, `apps/client/src/design/components/dialog.tsx`
 - **Purpose:** Show the 6-letter room code so friends can join from Home, and tell the host that they are the host.
 - **Controls:**
   - Copy button (orange): navigator.clipboard.writeText(gameCode), then opens a Dialog
@@ -1263,12 +1297,13 @@
   - guest or walk-in: no host line
 - **Keep:**
   - Copy result shows in the shared Dialog, not a toast (L11-02, frontend.md)
-  - The code is the only way to share. Joining is the Home 'Join with code' field: 6 characters, uppercased, enabled only at length 6 (home.tsx)
-- **Notes:** There is no invite URL, no Web Share and no ?code= deep link (no searchParams use in the client outside admin). Host status can move after Play again (resolveReformingHost) or when the host leaves (unseatLobbySeat).
+  - The code is shared as the code itself or as the invite link ?code=XXXXXX (Copy and Share, L76-17). Joining is the Home 'Join with code' field: 6 characters, uppercased, enabled only at length 6 (home.tsx)
+- **Notes:** At 1de498d there was no invite URL, no Web Share and no ?code= deep link; L76-17 added Share and the invite link, and Home reads ?code= once to pre-fill Join. Host status can move after Play again (resolveReformingHost) or when the host leaves (unseatLobbySeat).
+- **L76-18:** Line references above are from `1de498d`; the code now lives in `screens/lobby/lobby-header.tsx` and `screens/lobby/invite-link.ts`.
 
 ### `lobby-rules-summary` — Table rules summary strip (everyone) · `Lot 62+`
 
-- **Files:** `apps/client/src/screens/lobby-rules-panel.tsx`, `apps/client/src/screens/lobby.tsx`, `packages/shared/src/protocol/lobby-rules.ts`, `packages/shared/src/protocol/state-view.ts`, `apps/server/src/rooms/game-room.ts`
+- **Files:** `apps/client/src/ui/rules/rules-strip.tsx`, `apps/client/src/screens/lobby/lobby-screen.tsx`, `packages/shared/src/protocol/lobby-rules.ts`, `packages/shared/src/protocol/state-view.ts`, `apps/server/src/rooms/game-room.ts`
 - **Purpose:** Show every lobby recipient (host, guests, walk-in spectators) the host's house rules before Ready: human turn length, Random only, and which Classic kits are excluded.
 - **Controls:**
   - Host only: gear IconButton (aria-label 'Table rules') opens the Table rules dialog (see lobby-rules-host-dialog)
@@ -1286,10 +1321,11 @@
   - The tutorial path never shows rules (setLobbyRules is rejected with set-lobby-rules-tutorial)
   - Rules data shape: LobbyRules { excludedKitIds: KitId[], randomOnly: boolean, turnTimeSeconds: number } on LobbyStateView.lobbyRules (PROTOCOL_VERSION 45)
 - **Notes:** The user explicitly asked that house rules stay in V7: custom rules, banned kits, turn-time change. Accessibility gap: the excluded state is only conveyed by grayscale, and the portrait alt is the raw id ('untouchable portrait').
+- **L76-18:** Line references above are from `1de498d`; the code now lives in `ui/rules/rules-strip.tsx` and `screens/lobby/lobby-screen.tsx`.
 
 ### `lobby-rules-host-dialog` — Table rules dialog (host editor) · `Lot 62+`
 
-- **Files:** `apps/client/src/screens/lobby-rules-panel.tsx`, `apps/client/src/screens/lobby.tsx`, `apps/client/src/net/use-room-connection.ts`, `packages/shared/src/protocol/lobby-rules.ts`, `packages/shared/src/protocol/messages.ts`, `apps/server/src/rooms/lobby-rules.ts`, `apps/server/src/rooms/game-room.ts`
+- **Files:** `apps/client/src/ui/rules/rules-sheet.tsx`, `apps/client/src/ui/rules/rules-editor.tsx`, `apps/client/src/ui/rules/rules-editor-model.ts`, `apps/client/src/screens/lobby/lobby-screen.tsx`, `apps/client/src/net/use-room-connection.ts`, `packages/shared/src/protocol/lobby-rules.ts`, `packages/shared/src/protocol/messages.ts`, `apps/server/src/rooms/lobby-rules.ts`, `apps/server/src/rooms/game-room.ts`
 - **Purpose:** Let the host set excluded kits, Random only, and the human turn length before start. The same panel is reused on the Home solo menu.
 - **Controls:**
   - 'Human turn' range slider: min 5, max 180, step 1, aria-label 'Human turn seconds', value echoed as `Ns`. Each onChange sends setLobbyRules { excludedKitIds, randomOnly, turnTimeSeconds } (one message per step, applied immediately)
@@ -1314,10 +1350,11 @@
   - Play again keeps the rules (server this.lobbyRules persists; FinishedStateView.lobbyRules)
   - Rules are written on the finished game: excluded_kit_ids, random_only, turn_time_seconds (decisions 2026-10-06)
 - **Notes:** Client validation mirrors the server through the shared helpers (isTurnTimeSeconds, toggleExcludedKit returns null on the last kit). Changing rules does not un-ready guests (handleSetLobbyRules never touches guestReady).
+- **L76-18:** Line references above are from `1de498d`; the code now lives in `ui/rules/rules-sheet.tsx`, `ui/rules/rules-editor.tsx`, `ui/rules/rules-editor-model.ts` and `screens/lobby/lobby-screen.tsx`.
 
 ### `lobby-your-kit` — Your kit card (hidden lobby kit pick)
 
-- **Files:** `apps/client/src/screens/lobby.tsx`, `apps/client/src/screens/lobby-kit-picker.ts`, `apps/client/src/design/components/kit-portrait.tsx`
+- **Files:** `apps/client/src/screens/lobby/lobby-kit-card.tsx`, `apps/client/src/screens/lobby/lobby-screen.tsx`, `apps/client/src/screens/lobby/lobby-kit-picker.ts`, `apps/client/src/design/components/kit-portrait.tsx`
 - **Purpose:** Show the recipient's own kit choice (or Random) and open the kit picker. Opponents never see it.
 - **Controls:**
   - Choose kit button (orange): opens LobbyKitPickerDialog
@@ -1329,14 +1366,15 @@
   - hidden for a walk-in spectator, replaced by 'Watching the lobby'
   - pick silently reset to Random when the host excludes that kit
 - **Keep:**
-  - Only LobbyStateView.yourKitSelection is ever rendered; no seat row shows a kit (L49-01/L49-02; locked by lobby-kit-privacy.test.ts: source contains 'yourKitSelection', 'LobbyKitPickerDialog', 'Choose kit' and no player.kit)
+  - Only LobbyStateView.yourKitSelection is ever rendered; no seat row shows a kit (L49-01/L49-02; locked by lobby-kit-privacy.test.ts (now screens/lobby/lobby-screen.test.tsx): source contains 'yourKitSelection', 'LobbyKitPickerDialog', 'Choose kit' and no player.kit)
   - Random is the default label (L49-02)
   - Kit picks survive Play again (kitSelections is cleared only on unseat)
 - **Notes:** The section dates from L49. Lot 70 added the randomOnly hiding and the allowed-kit filter in the picker.
+- **L76-18:** Line references above are from `1de498d`; the code now lives in `screens/lobby/lobby-kit-card.tsx`, `screens/lobby/lobby-screen.tsx` and `screens/lobby/lobby-screen.test.tsx`.
 
 ### `lobby-kit-picker-dialog` — Choose kit dialog (grid, then description, then Select)
 
-- **Files:** `apps/client/src/screens/lobby-kit-picker-dialog.tsx`, `apps/client/src/screens/lobby-kit-picker.ts`, `apps/client/src/screens/table/kit-inspect-details.tsx`, `apps/server/src/rooms/lobby-rules.ts`
+- **Files:** `apps/client/src/screens/lobby/kit-picker-sheet.tsx`, `apps/client/src/screens/lobby-kit-picker.ts`, `apps/client/src/screens/table/kit-inspect-details.tsx`, `apps/server/src/rooms/lobby-rules.ts`
 - **Purpose:** Pick a catalog kit or Random. Two-step: tap a tile to read the description, then Select.
 - **Controls:**
   - Grid tile buttons: Random first, then allowed catalog kits only (excluded kits are filtered out). aria-pressed marks the current pick, aria-label is the label. Click opens the preview
@@ -1356,10 +1394,11 @@
   - The same dialog serves the Home solo menu; there the pick is local state, sent before startGame only when not random and not randomOnly (use-room-connection.ts startSoloGame)
   - LOBBY_KIT_PICKER_SELECTIONS order is Random then KIT_IDS (lobby-kit-picker.test.ts)
 - **Notes:** The RandomKitDetails copy says 'one of the 16 kits at random', which is wrong when the host excluded kits.
+- **L76-18:** Line references above are from `1de498d`; the code now lives in `screens/lobby/kit-picker-sheet.tsx`.
 
 ### `lobby-walk-in-notice` — Walk-in spectator lobby state ('Watching the lobby')
 
-- **Files:** `apps/client/src/screens/lobby.tsx`, `apps/server/src/rooms/claim-seat-rules.ts`, `apps/server/src/rooms/game-room.ts`
+- **Files:** `apps/client/src/screens/lobby/lobby-kit-card.tsx`, `apps/server/src/rooms/claim-seat-rules.ts`, `apps/server/src/rooms/game-room.ts`
 - **Purpose:** Tell a socket that joined a full lobby with a reserved, disconnected seat that it is watching and can claim that seat.
 - **Controls:**
   - No local control. Claiming goes through the App-level ClaimSeatDialog. Leave and Feedback stay available in the action row
@@ -1375,10 +1414,11 @@
   - Lobby walk-in receives both chat streams (chatMessagesForReader readerIsSpectator)
   - Walk-ins become guests on Play again (L57-14)
 - **Notes:** Seated lobby readers only get living lines, so a lobby walk-in's chat lines are invisible to the seated players.
+- **L76-18:** Line references above are from `1de498d`; the code now lives in `screens/lobby/lobby-kit-card.tsx`.
 
 ### `lobby-player-list` — Players list (seats, ready marks, host and bot controls)
 
-- **Files:** `apps/client/src/screens/lobby.tsx`, `apps/client/src/screens/lobby-ready.ts`, `apps/client/src/screens/lobby-ready-mark.tsx`, `apps/client/src/design/components/bot-seat-label.tsx`, `apps/client/src/bots/format-bot-difficulty.ts`, `packages/shared/src/protocol/state-view.ts`
+- **Files:** `apps/client/src/screens/lobby/lobby-seats.tsx`, `apps/client/src/screens/lobby/lobby-ready.ts`, `apps/client/src/design/components/bot-seat-label.tsx`, `apps/client/src/bots/format-bot-difficulty.ts`, `packages/shared/src/protocol/state-view.ts`
 - **Purpose:** List every seat with public facts: nickname, you, host, bot and difficulty, ready. Give the host per-seat bot difficulty and Kick.
 - **Controls:**
   - Host only, on each other seat that is a bot: Easy / Normal / Hard buttons (current tier green, others orange). Sends setBotDifficulty { playerId, difficulty }
@@ -1394,16 +1434,17 @@
   - host's own row: no controls
   - rejects: set-bot-difficulty-* and kick-*
 - **Keep:**
-  - Ready check or cross in an aligned column left of nicknames, using font-sans (L57-16; locked by lobby-ready-mark.test.ts: 'w-6 shrink-0', 'text-cta-green-deep', 'text-cta-red', mark before nickname in source)
+  - Ready check or cross in an aligned column left of nicknames, using font-sans (L57-16; locked by lobby-ready-mark.test.ts (now screens/lobby/lobby-screen.test.tsx; the fixed-column classes were retired in L76-12): 'w-6 shrink-0', 'text-cta-green-deep', 'text-cta-red', mark before nickname in source)
   - BotSeatLabel on every bot seat for all recipients (L17-03)
-  - Host Kick on every other seat, bots and humans, through kickPlayer, never removeBot (L57-09; lobby-kick.test.ts asserts no onRemoveBot)
+  - Host Kick on every other seat, bots and humans, through kickPlayer, never removeBot (L57-09; lobby-kick.test.ts (now screens/lobby/lobby-screen.test.tsx) asserts no onRemoveBot)
   - No kit on any row (L49 privacy test)
   - List scrolls so eight seats do not cover Start / Add bot (frontend.md Lot 55)
 - **Notes:** Rows carry no seat color, while chat nicknames and the claim dialog do use seat colors (seatIndexOf on players order).
+- **L76-18:** Line references above are from `1de498d`; the code now lives in `screens/lobby/lobby-seats.tsx` and `screens/lobby/lobby-screen.test.tsx`.
 
 ### `lobby-kick-confirm` — Kick this player? confirm dialog and the kicked outcome
 
-- **Files:** `apps/client/src/screens/lobby.tsx`, `apps/client/src/net/use-room-connection.ts`, `apps/server/src/rooms/lobby-rules.ts`
+- **Files:** `apps/client/src/screens/lobby/kick-confirm-dialog.tsx`, `apps/client/src/screens/lobby/lobby-screen.tsx`, `apps/client/src/net/use-room-connection.ts`, `apps/server/src/rooms/lobby-rules.ts`
 - **Purpose:** Confirm a host kick before sending it.
 - **Controls:**
   - Cancel (orange), Esc or overlay: closes with no message
@@ -1413,13 +1454,14 @@
   - kicked client: the server sends ERROR_MESSAGE code 'kicked'. The hook disables reconnection, clears the token, returns to Home with status Disconnected and error 'You were kicked.'
   - rejects: kick-not-host, kick-self, kick-unknown, kick-not-in-lobby, invalid-kick-payload, no-host-seated
 - **Keep:**
-  - Confirm Dialog with the exact title 'Kick this player?' (L57-09; source-locked by lobby-kick.test.ts with 'setKickTarget' and 'onKickPlayer')
+  - Confirm Dialog with the exact title 'Kick this player?' (L57-09; source-locked by lobby-kick.test.ts (now screens/lobby/lobby-screen.test.tsx) with 'setKickTarget' and 'onKickPlayer')
   - A kicked human may rejoin with the same code as a new guest (L57-09)
   - A human kick clears the seat reservation
+- **L76-18:** Line references above are from `1de498d`; the code now lives in `screens/lobby/kick-confirm-dialog.tsx`, `screens/lobby/lobby-screen.tsx` and `screens/lobby/lobby-screen.test.tsx`.
 
 ### `lobby-add-bot` — Add bot control (host)
 
-- **Files:** `apps/client/src/screens/lobby.tsx`, `packages/shared/src/domain/bot.ts`
+- **Files:** `apps/client/src/screens/lobby/lobby-seats.tsx`, `packages/shared/src/domain/bot.ts`
 - **Purpose:** Host adds virtual bot seats at a chosen difficulty.
 - **Controls:**
   - Difficulty toggles Easy / Normal / Hard: local state, default 'normal', selected one green
@@ -1432,10 +1474,11 @@
   - Host-only add bot and set difficulty while below MAX_PLAYERS; occupancy 2–8 (L17-02, L55-01)
   - Difficulty copy comes from formatBotDifficulty (Easy / Normal / Hard), wire values easy / normal / hard (L17-01)
   - Bots persist through Play again (L57-10)
+- **L76-18:** Line references above are from `1de498d`; the code now lives in `screens/lobby/lobby-seats.tsx`.
 
 ### `lobby-action-row` — Lobby action row: Start, Ready, waiting copy, Leave, Feedback
 
-- **Files:** `apps/client/src/screens/lobby.tsx`, `apps/client/src/screens/lobby-ready.ts`, `apps/client/src/screens/lobby-ready-mark.tsx`, `apps/client/src/feedback/feedback-dialog.tsx`, `apps/server/src/rooms/lobby-rules.ts`
+- **Files:** `apps/client/src/screens/lobby/lobby-actions.tsx`, `apps/client/src/screens/lobby/lobby-ready.ts`, `apps/client/src/screens/lobby/lobby-seats.tsx`, `apps/client/src/feedback/feedback-dialog.tsx`, `apps/server/src/rooms/lobby-rules.ts`
 - **Purpose:** Primary lobby actions: host launches, guests signal ready, anyone leaves or sends feedback.
 - **Controls:**
   - Start game (green, host only): sends startGame. Disabled unless lobbyStartEnabled: at least 2 seats and every human guest isReady
@@ -1455,10 +1498,11 @@
   - Ready is green with a check; Cancel ready is orange (L57-16; lobby-ready.test.ts locks 'Cancel ready', the variant expression, LobbyReadyCheckIcon, lobbyStartEnabled)
   - Lobby Leave stays an immediate disconnect (frontend.md)
   - Feedback next to Leave, manual mode, screen 'lobby' (L47-03; feedback-surfaces.test.ts)
+- **L76-18:** Line references above are from `1de498d`; the code now lives in `screens/lobby/lobby-actions.tsx` and `screens/lobby/lobby-seats.tsx`.
 
 ### `lobby-chat` — Lobby chat (under the player list) · `Lot 62+`
 
-- **Files:** `apps/client/src/screens/lobby.tsx`, `apps/client/src/screens/table/chat-log.tsx`, `apps/client/src/design/seat-colors.ts`, `packages/shared/src/protocol/table-chat.ts`, `packages/shared/src/protocol/messages.ts`, `apps/server/src/rooms/lobby-rules.ts`, `apps/server/src/rooms/game-room.ts`, `apps/server/src/protocol/build-view-for.ts`
+- **Files:** `apps/client/src/screens/lobby/lobby-chat-panel.tsx`, `apps/client/src/screens/table/chat-log.tsx`, `apps/client/src/design/seat-colors.ts`, `packages/shared/src/protocol/table-chat.ts`, `packages/shared/src/protocol/messages.ts`, `apps/server/src/rooms/lobby-rules.ts`, `apps/server/src/rooms/game-room.ts`, `apps/server/src/protocol/build-view-for.ts`
 - **Purpose:** Let lobby occupants talk before the match. The transcript continues into the match and across Play again.
 - **Controls:**
   - Text input: name chat-body, type text, maxLength 200, aria-label and placeholder 'Message', text-base so iOS does not zoom
@@ -1481,10 +1525,11 @@
   - Chat input stays at least 16px to prevent mobile zoom (commit 6372d04, PR #73)
   - Each finished game stores the room transcript as of that game's end (game_chat_messages)
 - **Notes:** No unread badge in the lobby. Seat color uses the index in view.players (LobbySeatView order). The 200 maxLength is hardcoded rather than read from CHAT_BODY_MAX_LENGTH, and there is no character counter.
+- **L76-18:** Line references above are from `1de498d`; the code now lives in `screens/lobby/lobby-chat-panel.tsx`.
 
 ### `lobby-rules-change-guest-effects` — Effects of a host rule change on guests (kit reset to Random, Ready left as is, Random only hides the pick) · `Lot 62+`
 
-- **Files:** `apps/server/src/rooms/game-room.ts`, `apps/server/src/rooms/lobby-rules.ts`, `apps/client/src/screens/lobby.tsx`, `apps/client/src/screens/lobby-kit-picker-dialog.tsx`, `apps/client/src/screens/lobby-kit-picker.ts`, `apps/client/src/screens/lobby-ready.ts`, `packages/shared/src/protocol/lobby-rules.ts`, `packages/shared/src/protocol/table-chat.ts`, `packages/shared/src/protocol/state-view.ts`, `docs/spec_bataille_des_cartes_en.md`, `docs/agent/decisions.md`, `docs/agent/frontend.md`
+- **Files:** `apps/server/src/rooms/game-room.ts`, `apps/server/src/rooms/lobby-rules.ts`, `apps/client/src/screens/lobby/lobby-screen.tsx`, `apps/client/src/screens/lobby/lobby-kit-card.tsx`, `apps/client/src/screens/lobby/kit-picker-sheet.tsx`, `apps/client/src/screens/lobby/lobby-kit-picker.ts`, `apps/client/src/screens/lobby/lobby-ready.ts`, `packages/shared/src/protocol/lobby-rules.ts`, `packages/shared/src/protocol/table-chat.ts`, `packages/shared/src/protocol/state-view.ts`, `docs/spec_bataille_des_cartes_en.md`, `docs/agent/decisions.md`, `docs/agent/frontend.md`
 - **Purpose:** Covers what each guest sees, or does not see, after the host changes a table rule in the online lobby. The server works out the side effects in handleSetLobbyRules (game-room.ts:1153-1192) and broadcasts one stateUpdate. The client re-renders from yourKitSelection and lobbyRules with no diff, notice or chat line.
 - **Controls:**
   - Host rule controls (Table rules dialog: All, None, Random, kit tiles, turn slider) -> setLobbyRules { excludedKitIds, randomOnly, turnTimeSeconds? }. The lobby wires these in lobby.tsx:130-147. Kit and Random changes send the current randomOnly / excludedKitIds and leave out turnTimeSeconds, so they never override the clock.
@@ -1515,10 +1560,11 @@
   - Play again keeps the rules (rules spec §6 Setup; decisions 2026-10-06).
   - Kit-only and Random-only changes leave out turnTimeSeconds so they never override the clock (lobby.tsx:130-137; protocol.md:129-131).
 - **Notes:** No code path tells a guest their pick was reset or a rule changed after they readied. Any notice would be new presentation. A client-only notice is possible without touching the protocol. A guest's yourKitSelection changes only through their own chooseKit or a host reset. A change while no chooseKit is in flight, or a lobbyRules change between two views, can be shown locally. A table-wide line in chat would need a new chat role or message kind, which is a protocol change. Clearing Ready on a rule change would be a server behaviour change and needs a designer ruling.
+- **L76-18:** Line references above are from `1de498d`; the code now lives in `screens/lobby/lobby-screen.tsx` and `screens/lobby/lobby-kit-card.tsx`.
 
 ### `lobby-rules-dialog-kit-guardrails` — Table rules dialog: last-allowed kit lock and None keeps the first Classic kit · `Lot 62+`
 
-- **Files:** `apps/client/src/screens/lobby-rules-panel.tsx`, `packages/shared/src/protocol/lobby-rules.ts`, `packages/shared/src/domain/kit.ts`, `apps/server/src/rooms/lobby-rules.ts`, `apps/client/src/screens/illegal-action-copy.ts`, `packages/shared/src/protocol/action-reject.ts`, `apps/client/src/screens/home.tsx`, `docs/agent/decisions.md`, `docs/agent/frontend.md`
+- **Files:** `apps/client/src/ui/rules/rules-editor.tsx`, `apps/client/src/ui/rules/rules-editor-model.ts`, `packages/shared/src/protocol/lobby-rules.ts`, `packages/shared/src/domain/kit.ts`, `apps/server/src/rooms/lobby-rules.ts`, `apps/client/src/screens/illegal-action-copy.ts`, `packages/shared/src/protocol/action-reject.ts`, `apps/client/src/screens/home/solo-path.tsx`, `docs/agent/decisions.md`, `docs/agent/frontend.md`
 - **Purpose:** Host-only guardrails in the Table rules popup that keep at least one kit allowed. The same LobbyRulesPanel is used in the online lobby (editable = isHost) and on the Home solo menu (editable always).
 - **Controls:**
   - Gear IconButton (aria-label 'Table rules'), host only, opens the Dialog titled 'Table rules'. Close (green) / Escape closes it.
@@ -1546,10 +1592,11 @@
   - Only the host gets the settings control. Guests get the clock, the kit faces (excluded ones gray), and a random-kit face when Random only is on (decisions 2026-10-06).
   - excludedKitIds are stored in catalog order (toggleExcludedKit / parseExcludedKitIds).
 - **Notes:** The reason text already exists in the reject copy ('At least one kit must stay allowed.'), so V7 can reuse it as helper text on the disabled tile without new wording. Whether None should keep the first currently allowed kit instead of Untouchable is a rule-adjacent change to excludeEveryKitButFirst and needs the designer.
+- **L76-18:** Line references above are from `1de498d`; the code now lives in `ui/rules/rules-editor.tsx`, `ui/rules/rules-editor-model.ts` and `screens/home/solo-path.tsx`.
 
 ### `lobby-sticky-reject-alert` — Lobby inline reject alert (sticky, carried into the table)
 
-- **Files:** `apps/client/src/net/use-room-connection.ts`, `apps/client/src/App.tsx`, `apps/client/src/screens/lobby.tsx`, `apps/client/src/screens/table.tsx`, `apps/client/src/screens/illegal-action-dialog.tsx`, `apps/client/src/screens/illegal-action-copy.ts`, `packages/shared/src/protocol/action-reject.ts`
+- **Files:** `apps/client/src/net/use-room-connection.ts`, `apps/client/src/App.tsx`, `apps/client/src/screens/lobby/lobby-header.tsx`, `apps/client/src/screens/lobby/lobby-screen.tsx`, `apps/client/src/screens/table.tsx`, `apps/client/src/screens/illegal-action-dialog.tsx`, `apps/client/src/screens/illegal-action-copy.ts`, `packages/shared/src/protocol/action-reject.ts`
 - **Purpose:** Shows server rejects in the lobby, including the Lot 70 races caused by host rule changes (choose-kit-excluded, choose-kit-random-only, set-lobby-rules-*), as a red role=alert line under the status label.
 - **Controls:**
   - No dismiss control in the lobby. The Lobby gets only `error`, and clearActionReject is wired only to TableScreen (App.tsx:140/178).
@@ -1562,10 +1609,11 @@
   - The server is authoritative. A greyed or hidden control is not validation, and rejects must still surface (golden rule 8).
   - The table keeps IllegalActionDialog open until dismissed, so bot or peer state syncs must not close it (use-room-connection.ts:236 comment, L39-02).
 - **Notes:** The sticky-error mechanism predates Lot 61 (L39-02). Lot 70 added new ways to reach it: rule changes racing an open kit picker. Whether the carry-over into the table is intended is unclear (see openQuestions).
+- **L76-18:** Line references above are from `1de498d`; the code now lives in `screens/lobby/lobby-header.tsx` and `screens/lobby/lobby-screen.tsx`.
 
 ### `lobby-inline-reject-alert` — Lobby inline reject alert (no dismiss)
 
-- **Files:** `apps/client/src/screens/lobby.tsx`, `apps/client/src/net/use-room-connection.ts`, `apps/client/src/App.tsx`, `apps/client/src/screens/status-labels.ts`, `apps/client/src/screens/lobby-ready.ts`, `apps/client/src/screens/lobby-rules-panel.tsx`, `apps/client/src/screens/lobby-kit-picker-dialog.tsx`, `apps/client/src/screens/claim-seat-dialog.tsx`, `apps/client/src/screens/table/chat-log.tsx`, `packages/shared/src/protocol/action-reject.ts`, `packages/shared/src/protocol/messages.ts`, `apps/server/src/rooms/lobby-rules.ts`, `apps/server/src/rooms/game-room.ts`
+- **Files:** `apps/client/src/screens/lobby/lobby-header.tsx`, `apps/client/src/net/use-room-connection.ts`, `apps/client/src/App.tsx`, `apps/client/src/screens/status-labels.ts`, `apps/client/src/screens/lobby/lobby-ready.ts`, `apps/client/src/ui/rules/rules-sheet.tsx`, `apps/client/src/screens/lobby/kit-picker-sheet.tsx`, `apps/client/src/screens/claim-seat-dialog.tsx`, `apps/client/src/screens/table/chat-log.tsx`, `packages/shared/src/protocol/action-reject.ts`, `packages/shared/src/protocol/messages.ts`, `apps/server/src/rooms/lobby-rules.ts`, `apps/server/src/rooms/game-room.ts`
 - **Purpose:** Shows the server's ERROR_MESSAGE reject for any lobby intent as one red line (role="alert") under the connection status line (lobby.tsx:106-111). This is the only feedback a host or guest gets when the server refuses a lobby action. The server is authoritative, and greyed-out client buttons are not validation (lobby-ready.ts header, AGENTS golden rule 8).
 - **Controls:**
   - No dismiss control of its own: no close button, no Esc, no timeout. App.tsx passes `error` to LobbyScreen but no onDismissActionReject/clearActionReject (Table and End get both).
@@ -1602,10 +1650,11 @@
   - A reject during solo/tutorial launch still aborts to Home with the error (L17-01 soloLaunchPending path).
   - Rejects from finished-room claim/rematch actions are shown on End through the read-only TableScreen's IllegalActionDialog (end.tsx:139-140).
 - **Notes:** The inline lobby alert dates from L11-02 / Lot 39 (blame 2026-08-01). The 'keep error while actionReject' rule came with Lot 39's L39-06 fix (commit fdac68b, 2026-08-10). frontend.md:421-425 records 'Lobby/home keep the inline alert string', but with no dismiss rule. Lot 70 (after Lot 61) sends more reject codes to this same alert: lobby rules, kit exclusion/random-only, and lobby chat. No client test covers the actionReject/error lifecycle; grep found no test referencing actionReject in apps/client/src.
+- **L76-18:** Line references above are from `1de498d`; the code now lives in `screens/lobby/lobby-header.tsx` and `ui/rules/rules-sheet.tsx`.
 
 ### `lobby-dialog-dismiss-map` — Lobby dialogs: kick, copy code, kit picker dismissal
 
-- **Files:** `apps/client/src/screens/lobby.tsx`, `apps/client/src/screens/lobby-kit-picker-dialog.tsx`, `apps/client/src/feedback/feedback-dialog.tsx`
+- **Files:** `apps/client/src/screens/lobby/lobby-screen.tsx`, `apps/client/src/screens/lobby/kick-confirm-dialog.tsx`, `apps/client/src/screens/lobby/lobby-header.tsx`, `apps/client/src/screens/lobby/kit-picker-sheet.tsx`, `apps/client/src/feedback/feedback-dialog.tsx`
 - **Purpose:** Dismissal meaning for the lobby's own modals. Every dismissal is local.
 - **Controls:**
   - Kick confirm 'Kick this player?': Escape / backdrop / orange Cancel call setKickTarget(null) (no intent). Red Kick sends KICK_PLAYER (lobby.tsx:342-372)
@@ -1621,10 +1670,11 @@
   - Kit picker: one Escape steps back one level
   - Selecting a kit is the only commit in the picker. Closing or Back never changes the selection
 - **Notes:** The Table rules Dialog is listed separately (lobby-rules-dialog-live-apply).
+- **L76-18:** Line references above are from `1de498d`; the code now lives in `screens/lobby/lobby-screen.tsx`, `screens/lobby/kick-confirm-dialog.tsx` and `screens/lobby/lobby-header.tsx`.
 
 ### `lobby-rules-dialog-live-apply` — Table rules dialog: live-apply, dismissal never reverts · `Lot 62+`
 
-- **Files:** `apps/client/src/screens/lobby-rules-panel.tsx`, `apps/client/src/screens/lobby.tsx`, `apps/client/src/screens/home.tsx`, `apps/client/src/net/use-room-connection.ts`, `packages/shared/src/protocol/lobby-rules.ts`, `packages/shared/src/protocol/state-view.ts`, `docs/backlog_v6.md`
+- **Files:** `apps/client/src/ui/rules/rules-sheet.tsx`, `apps/client/src/ui/rules/rules-editor.tsx`, `apps/client/src/screens/lobby/lobby-screen.tsx`, `apps/client/src/screens/home/solo-path.tsx`, `apps/client/src/screens/home/home-screen.tsx`, `apps/client/src/net/use-room-connection.ts`, `packages/shared/src/protocol/lobby-rules.ts`, `packages/shared/src/protocol/state-view.ts`, `docs/backlog_v6.md`
 - **Purpose:** Host-only custom rules: kit bans, Random only, human turn time. They are edited in a Dialog with no Save/Cancel. Each change applies as you make it, and closing the Dialog only hides it. The same panel drives the solo menu (local state, sent at launch).
 - **Controls:**
   - Gear IconButton 'Table rules': opens the Dialog (host only; always shown in the solo menu)
@@ -1649,10 +1699,11 @@
   - Dismissing the Dialog (Escape, backdrop, Close) never reverts or discards edits, because every edit was already sent
   - Kit-only changes do not send turnTimeSeconds (the server default stays until the host sets a time)
 - **Notes:** Lot 70, PROTOCOL 44 to 45. Every slider step sends an intent, which is chatty but intended. The Dialog is not portaled and sits inside the solo form, so its controls must stay type="button".
+- **L76-18:** Line references above are from `1de498d`; the code now lives in `ui/rules/rules-sheet.tsx`, `ui/rules/rules-editor.tsx`, `screens/lobby/lobby-screen.tsx`, `screens/home/solo-path.tsx` and `screens/home/home-screen.tsx`.
 
 ### `lobby-chat-walk-in-spectator-stream` — Lobby chat: walk-in spectator writing into the side stream · `Lot 62+`
 
-- **Files:** `apps/client/src/screens/lobby.tsx`, `apps/client/src/screens/table/chat-log.tsx`, `apps/server/src/protocol/build-view-for.ts`, `apps/server/src/rooms/game-room.ts`, `apps/server/src/rooms/lobby-rules.ts`, `packages/shared/src/protocol/table-chat.ts`, `apps/server/src/protocol/build-view-for.test.ts`, `docs/spec_bataille_des_cartes_en.md`, `docs/agent/decisions.md`
+- **Files:** `apps/client/src/screens/lobby/lobby-chat-panel.tsx`, `apps/client/src/screens/table/chat-log.tsx`, `apps/server/src/protocol/build-view-for.ts`, `apps/server/src/rooms/game-room.ts`, `apps/server/src/rooms/lobby-rules.ts`, `packages/shared/src/protocol/table-chat.ts`, `apps/server/src/protocol/build-view-for.test.ts`, `docs/spec_bataille_des_cartes_en.md`, `docs/agent/decisions.md`
 - **Purpose:** The inline lobby chat at the bottom of the player list is the same component for seated players and for walk-in spectators. Seated players (every lobby seat counts as living) write to the living stream and read only that stream. A walk-in spectator watching the lobby writes with role 'spectator'. Those lines go to the side stream, which seated lobby players never receive, and nothing on screen tells the spectator.
 - **Controls:**
   - Message text input (name 'chat-body', type text, maxLength 200 hardcoded rather than CHAT_BODY_MAX_LENGTH, aria-label and placeholder 'Message', min-h-11, text-base 16px so mobile browsers do not zoom on focus, commits 6372d04 / b02362a)
@@ -1682,10 +1733,11 @@
   - The transcript lasts for the life of the room. Play again keeps it, and later lobby lines append (decisions 2026-10-06 'Room chat outlives one match')
   - Per the designer in this run: the lobby rules panel above the chat (host settings for allowed and excluded kits, Random only, the 5–180 s turn slider; read-only rules for guests and walk-ins) stays in V7
 - **Notes:** Lobby section order (lobby.tsx): Game code with Copy, then LobbyRulesPanel, then 'Watching the lobby' or 'Your kit' (hidden when Random only), then Players list, then Chat, then Add bot (host only), then Start / Ready / Leave. The asymmetry is intentional and tested, but nothing surfaces it in the UI: no notice for the spectator, and no sign for seated players. Solo: only the human can write, so the chat has no other human reader.
+- **L76-18:** Line references above are from `1de498d`; the code now lives in `screens/lobby/lobby-chat-panel.tsx`.
 
 ### `lobby-host-seat-kick` — Host seat removal (Kick on bots and humans) + confirm dialog; unwired REMOVE_BOT
 
-- **Files:** `apps/client/src/screens/lobby.tsx`, `apps/client/src/screens/lobby-kick.test.ts`, `apps/client/src/App.tsx`, `apps/client/src/net/use-room-connection.ts`, `packages/shared/src/protocol/messages.ts`, `packages/shared/src/protocol/action-reject.ts`, `apps/server/src/rooms/game-room.ts`, `apps/server/src/rooms/lobby-rules.ts`, `docs/agent/decisions.md`, `docs/agent/frontend.md`, `docs/technical_spec_v6.md`, `docs/technical_spec_v3.md`, `docs/backlog_v6.md`
+- **Files:** `apps/client/src/screens/lobby/lobby-seats.tsx`, `apps/client/src/screens/lobby/kick-confirm-dialog.tsx`, `apps/client/src/screens/lobby/lobby-screen.tsx`, `apps/client/src/screens/lobby/lobby-screen.test.tsx`, `apps/client/src/App.tsx`, `apps/client/src/net/use-room-connection.ts`, `packages/shared/src/protocol/messages.ts`, `packages/shared/src/protocol/action-reject.ts`, `apps/server/src/rooms/game-room.ts`, `apps/server/src/rooms/lobby-rules.ts`, `docs/agent/decisions.md`, `docs/agent/frontend.md`, `docs/technical_spec_v6.md`, `docs/technical_spec_v3.md`, `docs/backlog_v6.md`
 - **Purpose:** Lets the lobby host take any other seat off the table before Start. Bots and humans both use one red Kick control and one confirm dialog, which sends KICK_PLAYER. The older REMOVE_BOT intent (L17-02) is still exported by the hook and handled by the server, but since L57-09 no UI calls it. It is the only client-to-server intent with no control, and that is on purpose: L57-09 replaced the per-bot Remove button with Kick.
 - **Controls:**
   - Per-seat 'Kick' button (Button variant red) in each Players list row, shown only when isHost && player.id !== view.you, for bot and human seats alike (lobby.tsx ~L235-243). Local action only: setKickTarget({ id, nickname }) opens the confirm dialog; nothing is sent yet.
@@ -1708,8 +1760,8 @@
   - After a kick drops occupancy under MAX_PLAYERS, the host's Add bot buttons re-enable (canAddBot = players.length < MAX_PLAYERS).
 - **Keep:**
   - The host can remove ANY other lobby seat, bot or human, before Start, and only in the lobby (L57-09; decisions.md 2026-09-15 '[P] Lot 57 lobby rematch add-on': 'Kick: host, lobby, any other seat. Human: drop + clear reservation. Bot: removeBot. Confirm on the client.'; technical_spec_v6 §Lot 57).
-  - Removal needs a client-side confirm before the intent goes out (L57-09). lobby-kick.test.ts asserts that lobby.tsx contains 'Kick', 'setKickTarget', 'onKickPlayer' and 'Kick this player?'.
-  - Bots are removed through kickPlayer, not removeBot. lobby-kick.test.ts asserts that lobby.tsx does NOT contain 'onRemoveBot', so a V7 lobby that brings back a separate Remove bot wiring breaks that test unless the decision is changed first.
+  - Removal needs a client-side confirm before the intent goes out (L57-09). lobby-kick.test.ts (now screens/lobby/lobby-screen.test.tsx) asserts that lobby.tsx contains 'Kick', 'setKickTarget', 'onKickPlayer' and 'Kick this player?'.
+  - Bots are removed through kickPlayer, not removeBot. lobby-kick.test.ts (now screens/lobby/lobby-screen.test.tsx) asserts that lobby.tsx does NOT contain 'onRemoveBot', so a V7 lobby that brings back a separate Remove bot wiring breaks that test unless the decision is changed first.
   - The KICK_PLAYER payload is { playerId } (KickPlayerPayload, same shape as RemoveBotPayload). Protocol and intents stay unchanged in V7.
   - A kicked human sees 'You were kicked' on Home and may rejoin with the same code as a new guest (L57-09, frontend.md Lobby).
   - Non-host clients see bot seats (BotSeatLabel with difficulty, for every recipient) but get no seat-management controls (technical_spec_v3 §6; golden rule 8: a hidden button is not validation).
@@ -1719,6 +1771,7 @@
 
 
 ## Table
+- **L76-18:** Line references above are from `1de498d`; the code now lives in `screens/lobby/lobby-seats.tsx`, `screens/lobby/kick-confirm-dialog.tsx`, `screens/lobby/lobby-screen.tsx` and `screens/lobby/lobby-screen.test.tsx`.
 
 ### `table-chat-popup` — Table chat button, unread badge and popup (also read-only on the finished board) · `Lot 62+`
 
@@ -2824,7 +2877,7 @@
 
 ### `table-tutorial-flow` — Tutorial entry, skip and completion
 
-- **Files:** `apps/client/src/screens/home.tsx`, `apps/client/src/net/use-room-connection.ts`, `apps/client/src/screens/table/table-flag-intent.ts`, `apps/client/src/screens/table/table-leave-confirm.tsx`, `apps/client/src/screens/table/table-copy.ts`, `apps/client/src/screens/game-over-copy.ts`, `packages/shared/src/tutorial/setup.ts`
+- **Files:** `apps/client/src/screens/home/home-screen.tsx`, `apps/client/src/screens/home/tutorial-path.tsx`, `apps/client/src/net/use-room-connection.ts`, `apps/client/src/screens/table/table-flag-intent.ts`, `apps/client/src/screens/table/table-leave-confirm.tsx`, `apps/client/src/screens/table/table-copy.ts`, `apps/client/src/screens/game-over-copy.ts`, `packages/shared/src/tutorial/setup.ts`
 - **Purpose:** The path into and out of the scripted tutorial match that hosts the coach, tour, Look and spotlight.
 - **Controls:**
   - Home Tutorial path: nickname field + 'Start tutorial' (create with tutorial:true, then START_GAME; no kit picker, no bots, no lobby flash). This is the home surface
@@ -2837,6 +2890,7 @@
   - Completing or skipping does not touch hint storage (L46-03)
   - Replay is always available; no lockout
 - **Notes:** Home and End UI belong to other surfaces; listed so tutorial dependencies stay visible.
+- **L76-18:** Line references above are from `1de498d`; the code now lives in `screens/home/home-screen.tsx` and `screens/home/tutorial-path.tsx`.
 
 ### `table-action-log-panel` — Action log panel (felt)
 
@@ -2952,7 +3006,7 @@
 
 ### `table-turn-timer-scale` — Turn timer bar and countdown, scaled to the host's turn length · `Lot 62+`
 
-- **Files:** `apps/client/src/screens/table.tsx`, `apps/client/src/screens/table/timers.tsx`, `apps/client/src/App.tsx`, `apps/client/src/net/use-room-connection.ts`, `apps/client/src/screens/end.tsx`, `apps/client/src/screens/lobby-rules-panel.tsx`, `apps/client/src/screens/home.tsx`, `apps/server/src/rooms/game-room.ts`, `packages/shared/src/protocol/state-view.ts`, `packages/shared/src/protocol/messages.ts`, `packages/shared/src/protocol/lobby-rules.ts`, `docs/agent/decisions.md`, `docs/spec_bataille_des_cartes_en.md`
+- **Files:** `apps/client/src/screens/table.tsx`, `apps/client/src/screens/table/timers.tsx`, `apps/client/src/App.tsx`, `apps/client/src/net/use-room-connection.ts`, `apps/client/src/screens/end.tsx`, `apps/client/src/ui/rules/rules-strip.tsx`, `apps/client/src/ui/rules/rules-sheet.tsx`, `apps/client/src/screens/home/home-screen.tsx`, `apps/client/src/screens/home/solo-rules-state.ts`, `apps/server/src/rooms/game-room.ts`, `packages/shared/src/protocol/state-view.ts`, `packages/shared/src/protocol/messages.ts`, `packages/shared/src/protocol/lobby-rules.ts`, `docs/agent/decisions.md`, `docs/spec_bataille_des_cartes_en.md`
 - **Purpose:** Show how much of the current human turn is left. The server deadline drives it. Since Lot 70 the turn length is whatever the host set (5 to 180 s, default 60), but the bar still divides by a fixed 60 s. The seconds label is right. The bar fill and the red warning are wrong for any other length.
 - **Controls:**
   - No interactive control. Read-only progress bar: role=progressbar, aria-label 'Turn timer', aria-valuemin 0 / max 100, aria-valuenow only when the ratio is known (timers.tsx:125-150)
@@ -2989,6 +3043,7 @@
   - Accessible progressbar semantics and reduced-motion support
   - Protocol is frozen for V7: PlayingStateView (state-view.ts:298-356) has no lobbyRules or turnTimeSeconds, and TurnStartedPayload (messages.ts:80-85) carries only activePlayerId, deadlineMs and blockTurnsRemaining. Only LobbyStateView.lobbyRules (state-view.ts:96-100) and FinishedStateView.lobbyRules (state-view.ts:688-692) carry the effective turnTimeSeconds
 - **Notes:** The bar dates from L12-07 / L14-05, and the 60 s divisor from designer 2026-08-05 ('Client progress bar already assumed 60s', decisions.md:1671-1672). It broke with Lot 70 (host turn seconds, PROTOCOL_VERSION 45), hence addedAfterLot61=true. The bug is table.tsx:1001-1004 `Math.min(1, (deadlineMs - nowMs) / 60_000)`. The secondsLeft label (table.tsx:990-993) is correct. Server source of truth: humanTurnDurationMs() (game-room.ts:1290-1296) returns lobbyRules.turnTimeSeconds*1000 only when turnTimeOverridden and not tutorial, else TURN_DURATION_MS; viewLobbyRules() rounds it into the lobby and finished views (1298-1304). Client-only ways to get the turn length without a protocol change: (1) cache lobbyRules.turnTimeSeconds from the last lobby view or the solo menu. This fails for mid-match joiners, claimSeat and fresh-tab rejoins. (2) Take the denominator from the remaining time when a new deadline first appears. This refills to full on reconnect resume and for late joiners. (3) Combine both. A payload field needs a PROTOCOL_VERSION bump, which conflicts with the V7 protocol freeze. No in-game place shows the configured turn length today. There is no rules recall on the table.
+- **L76-18:** Line references above are from `1de498d`; the code now lives in `ui/rules/rules-strip.tsx`, `ui/rules/rules-sheet.tsx`, `screens/home/home-screen.tsx` and `screens/home/solo-rules-state.ts`.
 
 ### `table-sub-choice-timer-scale` — Sub-choice countdown (strip bar and dialog seconds)
 
@@ -3660,7 +3715,7 @@
 
 ### `end-solo-play-again-menu` — Solo Play again (reopen the solo menu) · `Lot 62+`
 
-- **Files:** `apps/client/src/App.tsx`, `apps/client/src/screens/solo-menu-seed.ts`, `apps/client/src/screens/solo-menu-seed.test.ts`, `apps/client/src/screens/home.tsx`
+- **Files:** `apps/client/src/App.tsx`, `apps/client/src/screens/solo-menu-seed.ts`, `apps/client/src/screens/solo-menu-seed.test.ts`, `apps/client/src/screens/home/home-screen.tsx`, `apps/client/src/screens/home/solo-rules-state.ts`
 - **Purpose:** On a solo table (exactly one human, who is you, plus 1–7 bots, classic, not a spectator), Play again leaves the room and reopens the Home solo menu prefilled for the next match.
 - **Controls:**
   - Play again (after ask-once) calls setPendingSoloMenu(seed) then leaveGame(). Home receives soloMenuSeed plus onSoloMenuSeedApplied.
@@ -3672,6 +3727,7 @@
   - Solo host rules (excluded kits, Random only, turn time) carry into the reopened menu (L70-01; user confirmed this session that rules stay).
   - Solo Play again leaves the room, so that chat transcript ends with it (decisions 2026-10-06).
 - **Notes:** L67-01 behaviour plus the L70 lobbyRules field.
+- **L76-18:** Line references above are from `1de498d`; the code now lives in `screens/home/home-screen.tsx` and `screens/home/solo-rules-state.ts`.
 
 ### `end-return-home` — Return home / Play a real game (finished hub leave)
 
@@ -3815,10 +3871,11 @@
   - Header copy: h1 'Insights' and the blurb 'Finished matches, kit balance, feedback, and raw log tables. Not linked from the player hub.' The 'Designer' eyebrow above the h1 was removed (designer 2026-10-28, L80-12).
   - Tool mode: `<main data-mode="tool">` on a flat --bg-0 ground with no .v7-ground halos; admin Dialogs carry data-mode="tool" themselves (L80-01).
 - **Keep:**
-  - /admin loads without Colyseus (L61-06, admin-route.test.ts) and is never linked from the hub (screens/home.admin-route.test.ts, L72-02).
+  - /admin loads without Colyseus (L61-06, admin-route.test.ts) and is never linked from the hub (screens/home.admin-route.test.ts (now screens/home/home-screen.test.tsx), L72-02).
   - Reuses sessionStorage 'card-battle.v6.inboxPassword' and the X-Inbox-Password header (admin-app.test.tsx, fetch-admin.test.ts).
   - Page state (filters, page numbers) resets on each navigation because of the key remount. The Database page relies on it (admin-data-page.test.tsx › 'in the real shell a tab change starts the next table at page 1, and so does coming back').
 - **Notes:** Sign out (L80-02) is the lock control; at the 1de498d audit there was none.
+- **L76-18:** Line references above are from `1de498d`; the code now lives in `screens/home/home-screen.test.tsx`.
 
 ### `admin-password-gate` — Admin password gate
 
@@ -4247,7 +4304,7 @@
 
 ### `admin-match-detail-rules-and-chat` — Matches: match detail dialog is missing the persisted house rules and the chat transcript · `Lot 62+`
 
-- **Files:** `apps/client/src/screens/admin/admin-games-page.tsx`, `apps/client/src/screens/admin/admin-game-detail-dialog.tsx`, `apps/server/src/db/admin-game-detail.ts`, `packages/shared/src/admin/api.ts`, `apps/client/src/admin/fetch-admin.ts`, `apps/client/src/export/build-action-log-xlsx.ts`, `apps/client/src/screens/lobby-rules-panel.tsx`, `packages/shared/src/protocol/table-chat.ts`, `apps/server/src/db/write-finished-game.ts`
+- **Files:** `apps/client/src/screens/admin/admin-games-page.tsx`, `apps/client/src/screens/admin/admin-game-detail-dialog.tsx`, `apps/server/src/db/admin-game-detail.ts`, `packages/shared/src/admin/api.ts`, `apps/client/src/admin/fetch-admin.ts`, `apps/client/src/export/build-action-log-xlsx.ts`, `apps/client/src/ui/rules/rules-strip.tsx`, `packages/shared/src/protocol/table-chat.ts`, `apps/server/src/db/write-finished-game.ts`
 - **Purpose:** Per-match designer view, keyed by finished_games.id. It shows Started, Ended, Mode, Length, Turns, Winner and Notes, a Seats table (Player / Kit / Lives / Points / Role), Elimination order and the Replay seed (admin-game-detail-dialog.tsx, L80-07). loadAdminGameDetail selects neither the three rule columns nor game_chat_messages (admin-game-detail.ts:35-38), and AdminGameDetail has no rules or chat fields (api.ts:336-354). So the Lot 70 data stored for each match cannot be seen in the match's own detail.
 - **Controls:**
   - The row's 'Open match {roomId}' button, or a click on the row, calls openDetail(id): it replaceStates /admin/games/:id and fetches GET /api/admin/games/:id (admin-games-page.tsx).
@@ -4270,6 +4327,7 @@
   - If chat is surfaced, the role labels must stay, because living readers never received the side stream (chatMessagesForReader; table-chat.ts:47-60; rules spec §6 Chat).
   - A read-only rules display already exists: LobbyRulesPanel with editable=false is the guest view, with a clock showing the seconds, a random-kit mark, and kit faces with excluded kits grayed (lobby-rules-panel.tsx:26-66; decisions.md 2026-10-06 'Rules chrome and lobby chat'). Round stamps reuse chatRoundLabel.
 - **Notes:** Surfacing either rules or chat here needs an admin HTTP payload change: new AdminGameDetail fields in packages/shared/src/admin/api.ts and the matching SELECTs in admin-game-detail.ts. That is admin HTTP only, not a Colyseus PROTOCOL_VERSION bump (Lots 61 and 62 were 'HTTP only, no protocol bump'). It still falls outside a presentation-only redesign, so it needs a designer go-ahead.
+- **L76-18:** Line references above are from `1de498d`; the code now lives in `ui/rules/rules-strip.tsx`.
 
 ### `admin-filters-lists-house-rules-absence` — Filters, Matches list, Kits and Overview: no awareness of the house rules · `Lot 62+`
 

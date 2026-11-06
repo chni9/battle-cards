@@ -8,6 +8,9 @@
  * the words carry the message. The error renders inside a polite live region that is always
  * present, so an error that appears after typing is announced. The placeholder is `--text-2`
  * at 70% (5.20:1 on `--panel-2`), dimmer than a typed value.
+ *
+ * `size="lg"` is the Home Join code (§7.1 'a large code field', L76-08); it stays far above the
+ * 16 px floor.
  */
 
 import { useId, type InputHTMLAttributes, type ReactElement, type Ref } from 'react';
@@ -19,8 +22,15 @@ export interface TextFieldProps extends Omit<InputHTMLAttributes<HTMLInputElemen
   hint?: string;
   error?: string | null;
   className?: string;
+  /** `lg`: the Home Join code (spec v7 §7.1 "a large code field", L76-08): Lilita at the display step, 56 px tall. Default `md`. */
+  size?: 'md' | 'lg';
   ref?: Ref<HTMLInputElement>;
 }
+
+const SIZE_CLASS = {
+  md: 'min-h-11 font-v7-body text-v7-input font-bold',
+  lg: 'min-h-14 font-v7-display text-v7-display tracking-[0.2em]',
+} as const;
 
 export function TextField({
   label,
@@ -28,6 +38,7 @@ export function TextField({
   hint,
   error = null,
   className,
+  size = 'md',
   ref,
   id,
   type = 'text',
@@ -60,7 +71,7 @@ export function TextField({
         {...(describedBy !== '' ? { 'aria-describedby': describedBy } : {})}
         {...(hasError ? { 'aria-invalid': true } : {})}
         className={[
-          'min-h-11 w-full min-w-0 px-3 font-v7-body text-v7-input font-bold text-v7-text',
+          `w-full min-w-0 px-3 text-v7-text ${SIZE_CLASS[size]}`,
           'placeholder:text-v7-text-2 placeholder:opacity-70',
           CHROME_FLAT_SM_CLASS,
           'bg-v7-panel-2',

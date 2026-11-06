@@ -1,7 +1,8 @@
 /**
  * The only strings `ui/` adds itself: the new strings (technical spec v7 §10.6) a Lot 72
  * component needs, each listed in the PR for designer review. L72-09 appends `MINIMIZE_LABEL`,
- * L72-16 appends `TABLE_RULES_LABEL`, and the L72-21 final review moves in
+ * L72-16 appends `TABLE_RULES_LABEL`, L76-03 appends `RANDOM_SPECIAL_CAPTION`, L76-09 appends
+ * `SERVER_DEFAULT_LABEL` and `LAST_ALLOWED_KIT_REASON`, and the L72-21 final review moves in
  * `shieldPointsLabel` (L72-11) and `ELIMINATED_LABEL` with `eliminatedPortraitLabel` (L72-15),
  * which first lived beside their components. Every other label (dismiss, previous and next,
  * icon-button names, info controls) is passed in by the caller from existing copy. English only.
@@ -36,3 +37,12 @@ export const ELIMINATED_LABEL = 'Eliminated';
 export function eliminatedPortraitLabel(name: string): string {
   return `${name}, ${ELIMINATED_LABEL.toLowerCase()}`;
 }
+
+/** A random starting special's caption under its hidden verso in KitDetails (spec v7 §10.1, §10.6; backlog L76-03 watch point). */
+export const RANDOM_SPECIAL_CAPTION = 'Random special';
+
+/** The solo clock before the slider is released once: the server keeps its own default (spec v7 §7.1, §10.6, Q3/Q31). */
+export const SERVER_DEFAULT_LABEL = 'Server default';
+
+/** Why the last allowed kit cannot be excluded: the `set-lobby-rules-no-kit` copy, reused (spec v7 §7.4, §11, Q39). */
+export const LAST_ALLOWED_KIT_REASON = 'At least one kit must stay allowed.';
