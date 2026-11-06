@@ -3,6 +3,13 @@
  * soft gate (L42-02); What’s new (L63-07).
  * Intents unchanged: create / join / solo = create + N× addBot + startGame (L17-01).
  * L76-01: split by component; every Home state lives here (path components are stateless).
+ * L76-04 (technical spec v7 §5.1, §7.1, §11 Q7/Q8): the V7 ground; a top-right row with Beta and
+ * New on every mode (New disabled only while a solo game launches); the mode root fades and rises
+ * through `motionPropsFor`, a fade only under reduced motion.
+ * L76-08 (Part 2 Review Focus 3): Create, Join and Start tutorial launch once per connection state
+ * through `useLaunchOnce`; Start solo game joins them in L76-11.
+ * L76-17 (spec v7 §7.1): an invite link (`openOnline`) enters Online at mount, through the How to
+ * play soft gate (`homeMountEntry`).
  */
 
 import {
@@ -13,9 +20,8 @@ import {
   type WhatsNewScope,
 } from '@card-battle/shared';
 import { motion } from 'motion/react';
-import { useEffect, useState, type ReactElement, type SyntheticEvent } from 'react';
+import { useEffect, useRef, useState, type ReactElement, type SyntheticEvent } from 'react';
 
-import { Button } from '../../design/components/button';
 import { FeedbackDialog } from '../../feedback/feedback-dialog';
 import type { RoomConnectionStatus } from '../../net/use-room-connection';
 import {
@@ -23,13 +29,18 @@ import {
   markHowToPlaySeen,
   type HowToPlayContinueTarget,
 } from '../../ui/help-storage';
+import { durationS, EASE_ENTRANCE } from '../../ui/motion/motion-tokens';
+import { motionPropsFor, type V7MotionSpec } from '../../ui/motion/reduced-motion';
+import { usePrefersReducedMotion } from '../../ui/motion/use-prefers-reduced-motion';
+import { motionAttribute } from '../../ui/primitives/chrome-classes';
 import { hasUnseenReleaseNotes, markLatestReleaseSeen } from '../../ui/release-storage';
 import { HowToPlayDialog, type HowToPlayCloseReason } from '../how-to-play-dialog';
+import { INVITE_CODE_LENGTH } from '../lobby/invite-link';
 import { KitPickerSheet } from '../lobby/kit-picker-sheet';
 import type { SoloMenuSeed } from '../solo-menu-seed';
 import { WhatsNewDialog } from '../whats-new-dialog';
-import { BetaCard, HomeArt } from './home-art';
-import { howToPlayCloseOutcome } from './home-gate';
+import { BetaCard } from './home-art';
+import { homeMountEntry, howToPlayCloseOutcome, type HomeMountMode } from './home-gate';
 import { HomeHub } from './home-hub';
 import { whatsNewAutoScope, type WhatsNewAutoTrigger } from './home-whats-new';
 import { OnlinePath } from './online-path';
@@ -41,6 +52,8 @@ import {
   type SoloRulesState,
 } from './solo-rules-state';
 import { TutorialPath } from './tutorial-path';
+import { useLaunchOnce } from './use-launch-once';
+import { WhatsNewControl } from './whats-new-control';
 
 export interface HomeScreenProps {
   nickname: string;
@@ -62,9 +75,18 @@ export interface HomeScreenProps {
   /** Finished solo match: open this menu instead of dealing immediately. */
   soloMenuSeed?: SoloMenuSeed;
   onSoloMenuSeedApplied?: () => void;
+  /** Invite link (L76-17, spec v7 §7.1): enter Online at mount, through the How to play soft gate. App passes it until the first room view. */
+  openOnline?: true;
 }
 
-type HomeMode = 'hub' | 'online' | 'solo' | 'tutorial';
+type HomeMode = HomeMountMode;
+
+/** The mode switch (§11 Q7): a fade and a short rise; `motionPropsFor` keeps the fade only when reduced. */
+const HOME_MODE_MOTION: V7MotionSpec = {
+  initial: { opacity: 0, y: 10 },
+  animate: { opacity: 1, y: 0 },
+  transition: { duration: durationS('base'), ease: EASE_ENTRANCE },
+};
 
 export function HomeScreen({
   nickname,
@@ -80,15 +102,24 @@ export function HomeScreen({
   onStartTutorial,
   soloMenuSeed,
   onSoloMenuSeedApplied,
+  openOnline,
 }: HomeScreenProps): ReactElement {
-  const [mode, setMode] = useState<HomeMode>(soloMenuSeed !== undefined ? 'solo' : 'hub');
-  const [howToPlayOpen, setHowToPlayOpen] = useState(false);
+  // The seed and the invite are read only at mount (gotcha 2): a later prop change moves nothing.
+  const [entry] = useState(() =>
+    homeMountEntry({
+      soloSeed: soloMenuSeed !== undefined,
+      openOnline: openOnline === true,
+      howToPlaySeen: hasSeenHowToPlay(),
+    }),
+  );
+  const [mode, setMode] = useState<HomeMode>(entry.mode);
+  const [howToPlayOpen, setHowToPlayOpen] = useState(entry.gatedTarget !== null);
   const [whatsNewScope, setWhatsNewScope] = useState<WhatsNewScope>('current');
   const [whatsNewOpen, setWhatsNewOpen] = useState(
     () => whatsNewAutoScope('mount', hasUnseenReleaseNotes()) !== null,
   );
   const [whatsNewUnread, setWhatsNewUnread] = useState(() => hasUnseenReleaseNotes());
-  const [pendingTarget, setPendingTarget] = useState<HowToPlayContinueTarget | null>(null);
+  const [pendingTarget, setPendingTarget] = useState<HowToPlayContinueTarget | null>(entry.gatedTarget);
   const [soloOpponents, setSoloOpponents] = useState<SoloOpponentCount>(
     soloMenuSeed?.opponentCount ?? 1,
   );
@@ -98,6 +129,21 @@ export function HomeScreen({
   const [solo, setSolo] = useState<SoloRulesState>(() => initialSoloRulesState(soloMenuSeed));
   const [kitPickerOpen, setKitPickerOpen] = useState(false);
   const [feedbackOpen, setFeedbackOpen] = useState(false);
+  const reduced = usePrefersReducedMotion();
+  // Adjust state while rendering: Random only hides the picker (`KitPickerSheet` contract: the caller
+  // clears its own flag), so turning it off never reopens it (spec v7 §7.3; as `LobbyKitCard`, L76-11).
+  if (solo.rules.randomOnly && kitPickerOpen) setKitPickerOpen(false);
+
+  // A mode switch remounts the subtree, so the tile or Back that was pressed unmounts with focus on
+  // it. Focus the new title (P2-m5, WCAG 2.4.3); never on the first mount, which keeps the page's
+  // own start and an invite arrival's.
+  const modeRoot = useRef<HTMLDivElement>(null);
+  const shownMode = useRef(mode);
+  useEffect(() => {
+    if (shownMode.current === mode) return;
+    shownMode.current = mode;
+    modeRoot.current?.querySelector<HTMLElement>('h1')?.focus();
+  }, [mode]);
 
   useEffect(() => {
     if (soloMenuSeed !== undefined) {
@@ -107,28 +153,31 @@ export function HomeScreen({
 
   const busy = status === 'connecting' || soloLaunchPending;
   const canSubmit = nickname.trim().length > 0 && !busy;
-  const canJoin = canSubmit && joinCode.trim().length === 6;
+  const canJoin = canSubmit && joinCode.trim().length === INVITE_CODE_LENGTH;
+  const launchOnce = useLaunchOnce(status, error, soloLaunchPending);
 
   const onCreateSubmit = (event: SyntheticEvent<HTMLFormElement>): void => {
     event.preventDefault();
     if (canSubmit) {
-      onCreate();
+      launchOnce('create', onCreate);
     }
   };
 
   const onJoinSubmit = (event: SyntheticEvent<HTMLFormElement>): void => {
     event.preventDefault();
     if (canJoin) {
-      onJoin();
+      launchOnce('join', onJoin);
     }
   };
 
   const onSoloSubmit = (event: SyntheticEvent<HTMLFormElement>): void => {
     event.preventDefault();
     if (canSubmit) {
-      onStartSolo(soloOpponents, soloDifficulty, soloLaunchKitSelection(solo), {
-        lobbyRules: solo.rules,
-        includeTurnTime: solo.includeTurnTime,
+      launchOnce('solo', () => {
+        onStartSolo(soloOpponents, soloDifficulty, soloLaunchKitSelection(solo), {
+          lobbyRules: solo.rules,
+          includeTurnTime: solo.includeTurnTime,
+        });
       });
     }
   };
@@ -136,7 +185,7 @@ export function HomeScreen({
   const onTutorialSubmit = (event: SyntheticEvent<HTMLFormElement>): void => {
     event.preventDefault();
     if (canSubmit) {
-      onStartTutorial();
+      launchOnce('tutorial', onStartTutorial);
     }
   };
 
@@ -201,141 +250,122 @@ export function HomeScreen({
   };
 
   return (
-    <main className="relative h-full min-h-full overflow-y-auto overscroll-contain bg-surface font-sans text-ink">
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_20%_0%,var(--color-surface-kit)_0%,transparent_55%),radial-gradient(ellipse_at_90%_20%,var(--color-slate-soft)_0%,transparent_45%)]"
-      />
-
-      <BetaCard />
-      <Button
-        type="button"
-        variant="green"
-        compact
-        data-whats-new-button
-        aria-label={whatsNewUnread ? "What's new (unread)" : "What's new"}
-        onClick={() => {
-          setWhatsNewScope('history');
-          setWhatsNewOpen(true);
-        }}
-        className="absolute right-[5.75rem] top-4 z-10 min-w-9 sm:right-28 sm:top-6"
-      >
-        New
-        {whatsNewUnread ? (
-          <span
-            data-whats-new-unread
-            aria-hidden
-            className="absolute -right-0.5 -top-0.5 h-2.5 w-2.5 rounded-full bg-cta-red"
-          />
-        ) : null}
-      </Button>
-
-      <div className="relative mx-auto grid min-h-full max-w-5xl gap-8 px-4 py-8 md:grid-cols-[1.1fr_0.9fr] md:items-center md:gap-12 md:px-8 md:py-12">
-        <section className="order-2 md:order-1">
-          <motion.div
-            key={mode}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.35 }}
-          >
-            {mode === 'hub' ? (
-              <HomeHub
-                status={status}
-                error={error}
-                soloLaunchPending={soloLaunchPending}
-                busy={busy}
-                onOpenHowToPlay={() => {
-                  setHowToPlayOpen(true);
-                }}
-                onOpenFeedback={() => {
-                  setFeedbackOpen(true);
-                }}
-                onChooseOnline={() => {
-                  requestPath('online');
-                }}
-                onChooseSolo={() => {
-                  requestPath('solo');
-                }}
-                onChooseTutorial={() => {
-                  requestPath('tutorial');
-                }}
-              />
-            ) : null}
-
-            {mode === 'online' ? (
-              <OnlinePath
-                nickname={nickname}
-                joinCode={joinCode}
-                status={status}
-                error={error}
-                busy={busy}
-                canSubmit={canSubmit}
-                canJoin={canJoin}
-                onBack={goHub}
-                onNicknameChange={onNicknameChange}
-                onJoinCodeChange={onJoinCodeChange}
-                onCreateSubmit={onCreateSubmit}
-                onJoinSubmit={onJoinSubmit}
-                onOpenFeedback={() => {
-                  setFeedbackOpen(true);
-                }}
-              />
-            ) : null}
-
-            {mode === 'solo' ? (
-              <SoloPath
-                nickname={nickname}
-                status={status}
-                error={error}
-                soloLaunchPending={soloLaunchPending}
-                busy={busy}
-                canSubmit={canSubmit}
-                soloOpponents={soloOpponents}
-                soloDifficulty={soloDifficulty}
-                soloKitSelection={solo.kitSelection}
-                soloRules={solo.rules}
-                rulesEditor={{
-                  onChange: (payload) => {
-                    setSolo((current) => applySoloRulesPayload(current, payload));
-                  },
-                  disabled: busy,
-                  serverDefaultTime: !solo.includeTurnTime,
-                }}
-                onBack={goHub}
-                onNicknameChange={onNicknameChange}
-                onSoloOpponentsChange={setSoloOpponents}
-                onSoloDifficultyChange={setSoloDifficulty}
-                onOpenKitPicker={() => {
-                  setKitPickerOpen(true);
-                }}
-                onSoloSubmit={onSoloSubmit}
-                onOpenFeedback={() => {
-                  setFeedbackOpen(true);
-                }}
-              />
-            ) : null}
-
-            {mode === 'tutorial' ? (
-              <TutorialPath
-                nickname={nickname}
-                status={status}
-                error={error}
-                soloLaunchPending={soloLaunchPending}
-                busy={busy}
-                canSubmit={canSubmit}
-                onBack={goHub}
-                onNicknameChange={onNicknameChange}
-                onTutorialSubmit={onTutorialSubmit}
-                onOpenFeedback={() => {
-                  setFeedbackOpen(true);
-                }}
-              />
-            ) : null}
-          </motion.div>
-        </section>
-
-        <HomeArt />
+    <main className="v7-ground relative h-full overflow-y-auto overscroll-contain font-v7-body text-v7-text">
+      <div data-home-corner className="flex items-center justify-end gap-2 px-4 pt-4 sm:px-6">
+        <BetaCard />
+        <WhatsNewControl
+          unread={whatsNewUnread}
+          disabled={soloLaunchPending}
+          onOpen={() => {
+            setWhatsNewScope('history');
+            setWhatsNewOpen(true);
+          }}
+        />
       </div>
+
+      <section className="mx-auto w-full max-w-3xl px-4 pb-10 pt-2 sm:px-6">
+        <motion.div
+          key={mode}
+          ref={modeRoot}
+          data-home-mode={mode}
+          data-motion={motionAttribute(reduced)}
+          {...motionPropsFor(HOME_MODE_MOTION, reduced)}
+        >
+          {mode === 'hub' ? (
+            <HomeHub
+              status={status}
+              error={error}
+              soloLaunchPending={soloLaunchPending}
+              busy={busy}
+              onOpenHowToPlay={() => {
+                setHowToPlayOpen(true);
+              }}
+              onOpenFeedback={() => {
+                setFeedbackOpen(true);
+              }}
+              onChooseOnline={() => {
+                requestPath('online');
+              }}
+              onChooseSolo={() => {
+                requestPath('solo');
+              }}
+              onChooseTutorial={() => {
+                requestPath('tutorial');
+              }}
+            />
+          ) : null}
+
+          {mode === 'online' ? (
+            <OnlinePath
+              nickname={nickname}
+              joinCode={joinCode}
+              status={status}
+              error={error}
+              busy={busy}
+              canSubmit={canSubmit}
+              canJoin={canJoin}
+              onBack={goHub}
+              onNicknameChange={onNicknameChange}
+              onJoinCodeChange={onJoinCodeChange}
+              onCreateSubmit={onCreateSubmit}
+              onJoinSubmit={onJoinSubmit}
+              onOpenFeedback={() => {
+                setFeedbackOpen(true);
+              }}
+            />
+          ) : null}
+
+          {mode === 'solo' ? (
+            <SoloPath
+              nickname={nickname}
+              status={status}
+              error={error}
+              soloLaunchPending={soloLaunchPending}
+              busy={busy}
+              canSubmit={canSubmit}
+              soloOpponents={soloOpponents}
+              soloDifficulty={soloDifficulty}
+              soloKitSelection={solo.kitSelection}
+              soloRules={solo.rules}
+              rulesEditor={{
+                onChange: (payload) => {
+                  setSolo((current) => applySoloRulesPayload(current, payload));
+                },
+                disabled: busy,
+                serverDefaultTime: !solo.includeTurnTime,
+              }}
+              onBack={goHub}
+              onNicknameChange={onNicknameChange}
+              onSoloOpponentsChange={setSoloOpponents}
+              onSoloDifficultyChange={setSoloDifficulty}
+              onOpenKitPicker={() => {
+                setKitPickerOpen(true);
+              }}
+              onSoloSubmit={onSoloSubmit}
+              onOpenFeedback={() => {
+                setFeedbackOpen(true);
+              }}
+            />
+          ) : null}
+
+          {mode === 'tutorial' ? (
+            <TutorialPath
+              nickname={nickname}
+              status={status}
+              error={error}
+              soloLaunchPending={soloLaunchPending}
+              busy={busy}
+              canSubmit={canSubmit}
+              onBack={goHub}
+              onNicknameChange={onNicknameChange}
+              onTutorialSubmit={onTutorialSubmit}
+              onOpenFeedback={() => {
+                setFeedbackOpen(true);
+              }}
+            />
+          ) : null}
+        </motion.div>
+      </section>
 
       <HowToPlayDialog open={howToPlayOpen} onClose={onHowToPlayClose} />
       <WhatsNewDialog open={whatsNewOpen} scope={whatsNewScope} onClose={closeWhatsNew} />

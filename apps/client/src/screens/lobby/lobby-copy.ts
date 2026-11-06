@@ -2,7 +2,8 @@
  * Lobby strings shared by the lobby components and their tests (technical spec v7 §7.2, §10.6;
  * plan Appendix A.6). L76-12 moves the V2 lobby strings here verbatim and adds two accessible
  * names for designer review: 'New bot difficulty' and '{nickname} difficulty'. The Your kit
- * sentence and the Random-only lines stay in `../kit-pick-copy` (shared with Home and the picker).
+ * sentence, the Random-only lines and 'Choose kit' (L76-11) stay in `../kit-pick-copy` (shared with
+ * Home and the picker).
  */
 
 import { BOT_DIFFICULTIES, MAX_PLAYERS, type BotDifficulty } from '@card-battle/shared';
@@ -22,6 +23,14 @@ export const COPY_RESULT_DISMISS_LABEL = 'OK';
 export function copyResultBody(gameCode: string, failed: boolean): string {
   return failed ? `Could not copy automatically. Game code: ${gameCode}` : `Share this code with friends: ${gameCode}`;
 }
+/** §7.2: the lobby code card's Web Share control (L76-17). */
+export const SHARE_LABEL = 'Share';
+/** §10.6: the result when Share falls back to copying the invite link. */
+export const LINK_COPIED_TITLE = 'Link copied';
+/** NEW (designer review): the Link copied body; the link carries the code. */
+export function linkCopiedBody(link: string): string {
+  return `Share this link with friends: ${link}`;
+}
 export const HOST_LINE = 'You are the host';
 /** The alert's dismiss: the V2 dialogs' and the arena reject toast's word (no new §10.6 string). L76-14. */
 export const LOBBY_DISMISS_LABEL = 'OK';
@@ -32,7 +41,6 @@ export const RULES_CHANGED_TITLE = 'Rules changed';
 export const PICK_RESET_BODY = 'Your pick was reset to Random.';
 
 export const YOUR_KIT_TITLE = 'Your kit';
-export const CHOOSE_KIT_LABEL = 'Choose kit';
 export const WATCHING_TITLE = 'Watching the lobby';
 export const WATCHING_BODY = 'Claim a disconnected seat if one is listed, or leave and join again later.';
 

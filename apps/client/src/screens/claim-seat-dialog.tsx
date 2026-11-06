@@ -23,6 +23,11 @@ export interface ClaimSeatDialogProps {
   playerIds: readonly string[];
   hostPlayerId?: string;
   stayLabel: string;
+  /**
+   * True while the connection is reconnecting: Sit here would queue an intent the player has not
+   * seen the state for (decisions.md 2026-11-02, L74-25; spec v7 §7.2, Q29). Stay stays live (§7.7).
+   */
+  locked?: boolean;
   onClaim: (playerId: string) => void;
   onStay: () => void;
 }
@@ -33,10 +38,16 @@ export function ClaimSeatDialog({
   playerIds,
   hostPlayerId,
   stayLabel,
+  locked = false,
   onClaim,
   onStay,
 }: ClaimSeatDialogProps): ReactElement {
   const [picked, setPicked] = useState<string | null>(null);
+  // A pick that left the set is forgotten, so the seat is not selected again if it returns
+  // (Review Focus 5, ledger #137): adjust state while rendering, not in an effect.
+  if (picked !== null && !seats.some((seat) => seat.playerId === picked)) {
+    setPicked(null);
+  }
   const selectedId = claimSelection(seats, picked);
   // One Sit here per claimable set. App keeps this dialog mounted while the server answers, so a
   // double tap would send twice. A new set (someone else sat, a seat dropped) is a new question
@@ -45,7 +56,7 @@ export function ClaimSeatDialog({
   const seatsKey = seats.map((seat) => seat.playerId).join('|');
   const claimedFor = useRef<string | null>(null);
   const sitHere = (): void => {
-    if (selectedId === null || claimedFor.current === seatsKey) {
+    if (locked || selectedId === null || claimedFor.current === seatsKey) {
       return;
     }
     claimedFor.current = seatsKey;
@@ -62,7 +73,7 @@ export function ClaimSeatDialog({
           <Button variant="secondary" onClick={onStay}>
             {stayLabel}
           </Button>
-          <Button variant="primary" disabled={selectedId === null} focusableWhenDisabled onClick={sitHere}>
+          <Button variant="primary" disabled={locked || selectedId === null} focusableWhenDisabled onClick={sitHere}>
             Sit here
           </Button>
         </>

@@ -18,9 +18,9 @@ import { Icon } from '../../ui/icons/icon';
 import { KitPortrait } from '../../ui/kit/kit-portrait';
 import { Button } from '../../ui/primitives/button';
 import { CHROME_SHAPE_CLASS } from '../../ui/primitives/chrome-classes';
-import { KIT_PRIVACY_COPY, RANDOM_ONLY_LOBBY_LINE, RANDOM_ONLY_SOLO_LINE } from '../kit-pick-copy';
+import { CHOOSE_KIT_LABEL, KIT_PRIVACY_COPY, RANDOM_ONLY_LOBBY_LINE, RANDOM_ONLY_SOLO_LINE } from '../kit-pick-copy';
 import { KitPickerSheet } from './kit-picker-sheet';
-import { CHOOSE_KIT_LABEL, CLAIM_SEAT_LABEL, WATCHING_BODY, WATCHING_TITLE, YOUR_KIT_TITLE } from './lobby-copy';
+import { CLAIM_SEAT_LABEL, WATCHING_BODY, WATCHING_TITLE, YOUR_KIT_TITLE } from './lobby-copy';
 import { lobbyKitSelectionLabel } from './lobby-kit-picker';
 
 export interface LobbyKitCardProps {
@@ -99,7 +99,7 @@ export function LobbyKitCard({ selection, rules, walkIn, isHost, locked, onChoos
         <h2 id={titleId} className={TITLE_CLASS}>
           {YOUR_KIT_TITLE}
         </h2>
-        <p className={`mt-2 ${BODY_CLASS}`}>{KIT_PRIVACY_COPY}</p>
+        <p className={`mt-2 text-pretty ${BODY_CLASS}`}>{KIT_PRIVACY_COPY}</p>
         <div className="mt-3 flex items-center gap-3">
           <KitPortrait kitId={selection} size="tile" />
           <div className="flex min-w-0 flex-col items-start gap-2">

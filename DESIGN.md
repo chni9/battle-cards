@@ -229,7 +229,9 @@ the friendlier print on a card face. Nunito keeps long text calm and legible. Al
 self-hosted through `@fontsource` (`ui/fonts.ts`); Outfit stays in `main.tsx` until L81.
 
 ### Hierarchy
-- **Display** (Lilita One 400, 32px, `--type-display`): wordmark and the biggest numerals.
+- **Display** (Lilita One 400, 32px, `--type-display`): wordmark and the biggest numerals. The Home
+  wordmark (L76-04) is Display uppercase, 48px from `sm`, with a 3px `--ink` outline (a 6px
+  `-webkit-text-stroke` painted under the fill) and the `0 4px 0` ink hard shadow.
 - **Title** (Lilita One 400, 20px, `--type-title`): titles, buttons, seat names. Own lives are
   at least 20px.
 - **Vital** (Lilita One 400, 22px, `--type-vital`): the incoming damage badge and other vital
@@ -417,10 +419,10 @@ Not ready is the existing `close` cross, so the two states differ by shape and n
 - **No icon on its own color.** An icon never sits directly on a fill equal or close to one of
   its body or motif tokens, because only the ink outline would remain. Close means CIEDE2000
   under 20 (`SEAT_HUE_MIN_DELTA_E`, the bound the seat hues use), which also covers a contrast
-  near 1.2:1 in the same hue. On `--cta` that rules out `point`, `shop`, `coach`, `feedback`,
+  near 1.2:1 in the same hue. On `--cta` that rules out `point`, `shop`, `coach`, `feedback`, `action`, `check`,
   `spying-on-you` and the `shield-active` and `reanimation-armed` motifs. On `--cta-2` it rules
   out `help`, `absorb-window`, `spied-by-you`, `shield` and `shield-active`. On `--danger` or a
-  `--life` chip it rules out `life`, `eliminated`, `flag` and `sentence-ticking`. The caller
+  `--life` chip it rules out `life`, `attack`, `eliminated`, `flag` and `sentence-ticking`. The caller
   puts such an icon in a `--bg-0` or `--panel` well on that fill, as with the `+N` point icon
   on the Draw button (spec v7 §6.1 item 5). The L72-08 primitives apply this rule. A body that
   only shares the luminance of the fill but not its hue (`--text-2` on `--cta`: 1.12:1, but
@@ -648,7 +650,11 @@ their lot restyles them.
   prints its words in `--text` (`--danger` text is 4.38:1 on `--panel-2`), inside a polite
   live region that is always present, so an error that appears later is announced. The
   placeholder is `--text-2` at 70% opacity: 5.20:1 on `--panel-2` (`ui/contrast.ts`; 60%
-  would fall to 4.20:1), dimmer than a typed `--text` value (12.61:1).
+  would fall to 4.20:1), dimmer than a typed `--text` value (12.61:1). `size="lg"` (the Home Join
+  code, L76-08): Lilita at `--type-display` (32px) with wide tracking, 56px tall.
+- **TextArea:** the multi-line twin of TextField (the Feedback message, L76-07): the same 16px
+  (`--type-input`) Nunito on `--panel-2`, chrome, hint, error live region and `aria-invalid`,
+  with a 112px minimum height and a vertical resize handle. TextField renders an `<input>` only.
 - **Carousel:** a scroll-snap track of full-width slides with chevron IconButtons, aria-hidden
   dots and a screen-reader status line, "{label}, {n} of {m}" (`role="status"`).
   - Paging scrolls smoothly, or instantly under reduced motion (§8.3). A swipe reports its
@@ -740,7 +746,9 @@ The V2 rule "one Esc closes every open Dialog" does not apply to V7 surfaces.
   swipe-down of at least 80px on the handle, all through `onClose`. A press inside the panel, or
   a drag that starts in the panel and ends on the backdrop, never closes it.
   `closeOnBackdrop={false}` removes only the backdrop path; `dismissLocked` (the Feedback send
-  lock, §7.7) removes all three. A backdrop press never moves focus out of the sheet.
+  lock, §7.7) removes all three. A backdrop press never moves focus out of the sheet. The
+  Feedback sheet (L76-07) holds that lock for at most 15 s: with no answer it unlocks and shows
+  the error. A success retitles the same sheet 'Sent', which closes by itself after 1.5 s.
 - **Press shield** (spec v7 §1 "an accidental tap never spends the turn", §6.6.4): a press
   during a sheet's exit does nothing, whether or not another sheet remains beneath. The exiting
   overlay keeps covering the whole box, hit-testable and `aria-hidden`, with handlers that check
@@ -818,7 +826,7 @@ The V2 rule "one Esc closes every open Dialog" does not apply to V7 surfaces.
 `ui/card/glyph-amount.ts`, `ui/card/cost-amount.tsx`, `ui/text/effect-text-with-icons.tsx` and
 `ui/text/card-effect-copy.tsx` (spec v7 §6.6.1; Appendix A `global-card-effect-copy-inline-icons`).
 They are the V7 successors of the V2 `CostDisplay`, `EffectTextWithIcons` and `CardEffectCopy`
-in `design/components/`, which stay until L75 and L76 retire their consumers. Catalog text is
+in `design/components/`, which stay until L75 (and L77 for Game over) retire their consumers. Catalog text is
 rendered as it is; the copy fixes of §10.5 are L72-13's.
 
 - **Icon map** (`glyphAmountIcon`, one `GlyphAmount` shape for the structured costs and for the
@@ -997,7 +1005,7 @@ only V7 card renderer; the V2 `design/components/card.tsx` stays for the classic
 placeholder? sendLocked? />` is shared by the lobby (L76), the arena chat sheet (L74) and the read-only Game
 over chat (L77). The lobby already uses it, inside `LobbyChatPanel` (L76-13: a collapsible
 `--panel` card under the seats, open from the start); the V6 `screens/table/chat-log.tsx` stays
-until the arena and Game over migrate.
+until L75 deletes the classic table.
 
 - **Box:** `h-52`, `--panel-2` fill, `rounded-v7-chrome-sm`, `px-3 py-2`, no hard shadow, like
   the text input. It is a `ScrollArea` (`axis="y"`) named "Chat" (`CHAT_LOG_LABEL`, the V6 copy
@@ -1050,7 +1058,7 @@ until the arena and Game over migrate.
 `kit.gallery.tsx` (spec v7 §4.2, §5.5, §6.6.5, §7.3, §11; Appendix A `kit-inspect-dialog`,
 `lobby-kit-picker-dialog`, `home-solo-kit-picker`, `global-art-catalog`). They replace the V2
 `design/components/kit-portrait.tsx` and `screens/table/kit-inspect-details.tsx` on V7 surfaces;
-the classic files and their duplicated copy stay until L75 and L76.
+the classic files and their duplicated copy stay until L75.
 
 - **KitPortrait:** `<KitPortrait kitId size? isEliminated? className? onClick? ariaLabel? />`,
   `kitId` a `KitId`, `'random'` or `null` (not revealed). Widths are `thumb` 40, `tile` 72,
@@ -1159,8 +1167,9 @@ the classic files and their duplicated copy stay until L75 and L76.
   "Table rules" (placement `auto`: a bottom sheet on phones, centered on desktop; Esc, backdrop and
   swipe-down close it, only the top sheet takes Esc). `dataAttributes` lands on the panel, as on
   `Sheet`; the arena passes `data-arena-sheet="rules"` (L74-22). Its only button is Close
-  (`secondary`), which also takes the initial focus; it has no editable control and no
-  `aria-pressed`. The body is the clock, "Human turn" and the seconds; the Random mark when set;
+  (`secondary`), which also takes the initial focus. With `editor` (the host, the solo menu) the body
+  holds `RulesEditor` and Close stays the only action; without it the sheet is the read-only view, which
+  has no editable control and no `aria-pressed`. The body is the clock, "Human turn" and the seconds; the Random mark when set;
   then a list of all 16 kits in auto-fill columns of at least 5.5rem (3 columns on a 320px phone, 4
   on the 28rem desktop panel, so "Indestructible" fits without a breakpoint). Each item is an
   `aria-hidden` thumb portrait (dimmed when excluded), the kit name in `--text-2` at 12px and, when
@@ -1175,7 +1184,8 @@ the classic files and their duplicated copy stay until L75 and L76.
   - The row: All `secondary`, None `quiet`, and the Random `Toggle` with the `random` icon.
   - The reason: "At least one kit must stay allowed." in Nunito 12px `--text-2`, shown only while
     one kit is allowed.
-  - The kit grid: auto-fill columns of at least 5.5rem. Each toggle is a quiet chrome button
+  - The kit grid: auto-fill columns of at least 6rem (the toggle's border and padding take 18px, so
+    "Indestructible" fits without splitting at 320px). Each toggle is a quiet chrome button
     composed from `chrome-classes.ts`, at least 44px, with `aria-pressed` = allowed and
     `aria-label` = kit name. It holds an `aria-hidden` thumb portrait, dimmed `opacity-40
     grayscale` only when excluded, then the name and "Excluded" at full opacity.
@@ -1339,7 +1349,7 @@ pure `connection-badge-label.ts`) and `seat.gallery.tsx` (spec v7 §4.2, §5.1, 
 Appendix A `global-connection-badge`). Props and copy are V2's, unchanged: `<PlayerName
 nickname playerId? view? seatIndex? className? possessive? />`, `<BotSeatLabel difficulty
 className? />`, `<ConnectionBadge player className? />`. The V2 files in `design/components/`
-stay until L74, L76 and L77 switch their imports; new code imports only `ui/seat/`.
+stay until L75 (and L77 for Game over) switch their imports; new code imports only `ui/seat/`.
 
 - **PlayerName:** Lilita One (`font-v7-display`, one weight; V2's `font-semibold` is gone). The
   hue is inline hex from `v7SeatColor`, never `var()` or `color-mix()`, on the nickname span

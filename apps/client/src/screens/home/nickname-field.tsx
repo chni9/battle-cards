@@ -1,8 +1,11 @@
-/** Home Nickname field (NicknameField): technical spec v7 §7.1; L57-07, L17-01, L45-04. */
+/**
+ * Home Nickname field (NicknameField): technical spec v7 §7.1; L57-07, L17-01, L45-04. 16 px through
+ * `TextField` (spec v7 §5.2, L76-08).
+ */
 
 import type { ReactElement } from 'react';
 
-import { HOME_INPUT_CLASS } from './home-classes';
+import { TextField } from '../../ui/primitives/text-field';
 
 export interface NicknameFieldProps {
   value: string;
@@ -12,19 +15,16 @@ export interface NicknameFieldProps {
 
 export function NicknameField({ value, disabled, onChange }: NicknameFieldProps): ReactElement {
   return (
-    <label className="block text-sm font-medium text-ink">
-      Nickname
-      <input
-        className={HOME_INPUT_CLASS}
-        value={value}
-        onChange={(event) => {
-          onChange(event.target.value);
-        }}
-        maxLength={24}
-        autoComplete="nickname"
-        placeholder="Your name"
-        disabled={disabled}
-      />
-    </label>
+    <TextField
+      label="Nickname"
+      value={value}
+      maxLength={24}
+      autoComplete="nickname"
+      placeholder="Your name"
+      disabled={disabled}
+      onChange={(event) => {
+        onChange(event.currentTarget.value);
+      }}
+    />
   );
 }

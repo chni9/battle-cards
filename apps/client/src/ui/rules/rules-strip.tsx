@@ -38,7 +38,7 @@
  */
 
 import type { LobbyRules } from '@card-battle/shared';
-import { useId, useState, type ReactElement } from 'react';
+import { useId, useRef, useState, type ReactElement } from 'react';
 import { Icon } from '../icons/icon';
 import { KitPortrait } from '../kit/kit-portrait';
 import { usePrefersReducedMotion } from '../motion/use-prefers-reduced-motion';
@@ -67,6 +67,9 @@ const FACE_CELL_CLASS = 'flex w-12 flex-col items-center justify-self-center gap
 
 export function RulesStrip({ rules, className = '', editor }: RulesStripProps): ReactElement {
   const [open, setOpen] = useState(false);
+  // Safari does not focus a button on click, so the sheet's focus trap would find no opener to
+  // return to; the strip hands focus back itself on every close (P2 critique b, L76-18).
+  const stripRef = useRef<HTMLButtonElement>(null);
   const reduced = usePrefersReducedMotion();
   const summaryId = useId();
   const clock = turnTimeLabel(rules, editor?.serverDefaultTime === true);
@@ -74,6 +77,7 @@ export function RulesStrip({ rules, className = '', editor }: RulesStripProps): 
   return (
     <>
       <button
+        ref={stripRef}
         type="button"
         aria-label={TABLE_RULES_LABEL}
         aria-describedby={summaryId}
@@ -140,6 +144,7 @@ export function RulesStrip({ rules, className = '', editor }: RulesStripProps): 
         rules={rules}
         onClose={() => {
           setOpen(false);
+          stripRef.current?.focus();
         }}
         {...(editor !== undefined ? { editor } : {})}
       />

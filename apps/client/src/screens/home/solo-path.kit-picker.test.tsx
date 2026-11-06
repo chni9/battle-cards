@@ -81,4 +81,21 @@ describe('solo kit picker (L76-10)', () => {
     expect(screen.queryByRole('button', { name: 'Choose kit' })).toBeNull();
     expect(screen.getByText(RANDOM_ONLY_SOLO_LINE)).toBeTruthy();
   });
+
+  it('turning Random only on with the picker open closes it, and turning it off never reopens it (m5)', async () => {
+    const { user, props } = await openSolo();
+    await user.click(screen.getByRole('button', { name: 'Choose kit' }));
+    await user.click(screen.getByRole('button', { name: 'Table rules' }));
+    await user.click(within(screen.getByRole('dialog', { name: 'Table rules' })).getByRole('button', { name: 'Random' }));
+    await waitFor(() => {
+      expect(screen.queryByRole('dialog', { name: 'Choose kit', hidden: true })).toBeNull();
+    });
+    await user.click(within(screen.getByRole('dialog', { name: 'Table rules' })).getByRole('button', { name: 'Random' }));
+    await user.keyboard('{Escape}');
+    await waitFor(() => {
+      expect(screen.queryByRole('dialog', { name: 'Table rules', hidden: true })).toBeNull();
+    });
+    expect(screen.queryByRole('dialog', { name: 'Choose kit' })).toBeNull();
+    expectNoHomeIntent(props);
+  });
 });

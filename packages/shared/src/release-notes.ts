@@ -85,8 +85,12 @@ const RELEASE_NOTES_CATALOG = [
         after: 'Fixed some bugs.',
       },
       {
-        before: 'The lobby was a plain list, and only the host could open the table rules.',
-        after: 'The lobby shows each seat in its player color, and everyone can open the table rules.',
+        before: 'The lobby was a plain list, only the host could open the table rules, and friends had to type the code.',
+        after: 'The lobby shows each seat in its player color, everyone can open the table rules, and Share sends a link that fills in the code.',
+      },
+      {
+        before: 'Home was a plain menu, How to play was one long page, and Feedback closed without a word.',
+        after: 'Home has the new look, How to play is a deck of cards you swipe through, and Feedback shows Sent once your note is saved.',
       },
     ],
   },

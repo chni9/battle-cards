@@ -11,7 +11,7 @@
  */
 
 import { ACTION_REJECT_MESSAGE, type BotDifficulty, type LobbyStateView } from '@card-battle/shared';
-import { useId, useState, type ReactElement } from 'react';
+import { useId, useRef, useState, type ReactElement } from 'react';
 
 import { Icon } from '../../ui/icons/icon';
 import { Avatar } from '../../ui/primitives/avatar';
@@ -49,6 +49,10 @@ const HOST_TAG_CLASS =
 export function LobbySeats({ view, locked, onAddBot, onKickPlayer, onSetBotDifficulty }: LobbySeatsProps): ReactElement {
   const headingId = useId();
   const [kickTargetId, setKickTargetId] = useState<string | null>(null);
+  // The Kick that opened the confirm. Safari does not focus a button on click, so the Dialog's focus
+  // trap would have no opener; Cancel, Esc and the backdrop hand focus back (P2 critique b, L76-18).
+  // Written and read only in handlers, never during render.
+  const kickOpener = useRef<HTMLElement | null>(null);
   const [addDifficulty, setAddDifficulty] = useState<BotDifficulty>('normal');
   const rows = lobbySeatRows(view);
   const isHost = view.hostPlayerId === view.you;
@@ -108,7 +112,8 @@ export function LobbySeats({ view, locked, onAddBot, onKickPlayer, onSetBotDiffi
               variant="quiet"
               disabled={locked}
               focusableWhenDisabled
-              onClick={() => {
+              onClick={(event) => {
+                kickOpener.current = event.currentTarget;
                 setKickTargetId(row.id);
               }}
             >
@@ -155,6 +160,7 @@ export function LobbySeats({ view, locked, onAddBot, onKickPlayer, onSetBotDiffi
         target={target}
         onCancel={() => {
           setKickTargetId(null);
+          kickOpener.current?.focus();
         }}
         onConfirm={(playerId) => {
           setKickTargetId(null);

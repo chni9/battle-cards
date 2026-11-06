@@ -4,9 +4,9 @@
  * scrolling `main`, so Start and Ready stay on screen with eight seats. The host gets Start,
  * grey with `lobbyStartReason` (the server's reject words) until `lobbyStartEnabled`; a human
  * guest gets one Ready (primary, `check` icon) / Cancel ready (secondary) button and its hint;
- * a walk-in reads the waiting hint. Leave is immediate and Feedback opens the V2 manual
- * `FeedbackDialog` until L76-07. `locked` (reconnecting) disables Start and Ready; Leave and
- * Feedback stay live (plan A.9 ruling 6). L76-12.
+ * a walk-in reads the waiting hint. Leave is immediate and Feedback opens the manual Feedback
+ * sheet (L76-07). `locked` (reconnecting) disables Start and Ready; Leave and Feedback stay live
+ * (plan A.9 ruling 6). L76-12.
  */
 
 import type { LobbyStateView } from '@card-battle/shared';

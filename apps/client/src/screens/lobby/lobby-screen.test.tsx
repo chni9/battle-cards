@@ -161,6 +161,31 @@ describe('Kick (L57-09; parity lobby-kick-confirm, lobby-host-seat-kick)', () =>
     expectNoLobbyIntent(props);
   });
 
+  it('opens with focus on Cancel, the safe default (ledger #100)', async () => {
+    const { user } = renderLobby();
+    await user.click(within(lobbySeat('guest')).getByRole('button', { name: 'Kick' }));
+    const confirm = screen.getByRole('dialog', { name: KICK_CONFIRM });
+    expect(document.activeElement).toBe(within(confirm).getByRole('button', { name: 'Cancel' }));
+  });
+
+  it.each(['Cancel', 'Esc', 'the backdrop'] as const)(
+    'returns focus to the Kick that opened the confirm when %s closes it, even when the press never focused it (Safari; P2 critique b)',
+    async (way) => {
+      const { user } = renderLobby();
+      const opener = within(lobbySeat('guest')).getByRole('button', { name: 'Kick' });
+      fireEvent.click(opener); // Safari does not focus a button on click, so the sheet has no opener to return to
+      expect(document.activeElement).not.toBe(opener);
+      const confirm = screen.getByRole('dialog', { name: KICK_CONFIRM });
+      if (way === 'Cancel') await user.click(within(confirm).getByRole('button', { name: 'Cancel' }));
+      else if (way === 'Esc') await user.keyboard('{Escape}');
+      else await user.click(lobbyBackdrop(confirm));
+      await waitFor(() => {
+        expect(screen.queryByRole('dialog', { name: KICK_CONFIRM, hidden: true })).toBeNull();
+      });
+      expect(document.activeElement).toBe(opener);
+    },
+  );
+
   it.each([
     ['guest', 'Bea'],
     ['bot-1', 'Bot Cy'],

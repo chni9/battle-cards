@@ -1,6 +1,6 @@
 /**
  * Lobby kit picker roster — PROTOCOL_VERSION 30 / L49-01.
- * Random first, then every catalog kit. Description copy lives with the Dialog.
+ * Random first, then every catalog kit. Description copy lives in `kit-pick-copy.ts` and `random-kit-details.tsx`.
  */
 
 import { KIT_IDS, getKit, type LobbyKitSelection } from '@card-battle/shared';

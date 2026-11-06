@@ -63,9 +63,9 @@ export function lobbySeat(playerId: string): HTMLElement {
   return seat;
 }
 
-/** The scrim behind a lobby dialog: `[data-zone="sheet-overlay"]` (V7) or `[data-zone="dialog-overlay"]` (V2: the lobby until L76-12, Feedback until L76-07). */
+/** The scrim behind a lobby dialog: every lobby dialog is a V7 Sheet or Dialog, so `[data-zone="sheet-overlay"]`. */
 export function lobbyBackdrop(dialog: HTMLElement): HTMLElement {
-  const overlay = dialog.closest<HTMLElement>('[data-zone="sheet-overlay"], [data-zone="dialog-overlay"]');
+  const overlay = dialog.closest<HTMLElement>('[data-zone="sheet-overlay"]');
   if (overlay === null) throw new Error('no dialog backdrop');
   return overlay;
 }

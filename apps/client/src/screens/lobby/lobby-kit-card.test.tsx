@@ -5,8 +5,8 @@ import { fireEvent, screen, within } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { renderUi } from '../../test/render';
-import { RANDOM_ONLY_LOBBY_LINE, RANDOM_ONLY_SOLO_LINE } from '../kit-pick-copy';
-import { CHOOSE_KIT_LABEL, YOUR_KIT_TITLE } from './lobby-copy';
+import { CHOOSE_KIT_LABEL, RANDOM_ONLY_LOBBY_LINE, RANDOM_ONLY_SOLO_LINE } from '../kit-pick-copy';
+import { YOUR_KIT_TITLE } from './lobby-copy';
 import { LobbyKitCard } from './lobby-kit-card';
 import { LobbyScreen, type LobbyScreenProps } from './lobby-screen';
 import { guestLobbyView, hostLobbyView, isLobbyControlDisabled, makeLobbyProps } from './test-lobby';

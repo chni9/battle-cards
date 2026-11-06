@@ -1,27 +1,31 @@
-/** Home Play solo path: opponents, difficulty, rules, kit (SoloPath): technical spec v7 §7.1; L17-01, L67-01, Lot 70. */
+/**
+ * Home Play solo path (SoloPath): technical spec v7 §7.1, §11 (Q7 radio semantics, Q8 busy);
+ * L17-01, L67-01, Lot 70. L76-11: the V7 Solo path, one form in the §7.1 order: Nickname,
+ * Opponents (`SoloOpponentPicker`, seat radios around a mini table), Difficulty (`Segmented`),
+ * Your kit (`SoloKitCard`), the Table rules strip (L76-09) and Start solo game, the only submit:
+ * every other button is `type="button"`, and the rules and kit sheets portal outside the form,
+ * so neither ever submits it. While busy every control is disabled and the strip still opens.
+ */
 
-import {
-  BOT_DIFFICULTIES,
-  SOLO_OPPONENT_COUNTS,
-  type BotDifficulty,
-  type LobbyKitSelection,
-  type LobbyRules,
-  type SoloOpponentCount,
+import type {
+  BotDifficulty,
+  LobbyKitSelection,
+  LobbyRules,
+  SoloOpponentCount,
 } from '@card-battle/shared';
 import type { ReactElement, SyntheticEvent } from 'react';
 
-import { formatBotDifficulty } from '../../bots/format-bot-difficulty';
-import { Button } from '../../design/components/button';
-import { KitPortrait } from '../../design/components/kit-portrait';
 import type { RoomConnectionStatus } from '../../net/use-room-connection';
+import { Button } from '../../ui/primitives/button';
+import { Segmented } from '../../ui/primitives/segmented';
 import type { RulesEditorBinding } from '../../ui/rules/rules-editor-model';
 import { RulesStrip } from '../../ui/rules/rules-strip';
-import { lobbyKitSelectionLabel } from '../lobby/lobby-kit-picker';
-import { KIT_PICKER_LEAD, RANDOM_ONLY_SOLO_LINE } from '../kit-pick-copy';
+import { BOT_DIFFICULTY_OPTIONS } from '../lobby/lobby-copy';
+import { SOLO_DIFFICULTY_LABEL } from './home-copy';
 import { NicknameField } from './nickname-field';
 import { PathHeader } from './path-header';
-
-const OPPONENT_COUNTS = SOLO_OPPONENT_COUNTS;
+import { SoloKitCard } from './solo-kit-card';
+import { SoloOpponentPicker } from './solo-opponent-picker';
 
 export interface SoloPathProps {
   nickname: string;
@@ -78,84 +82,40 @@ export function SoloPath({
         onOpenFeedback={onOpenFeedback}
       />
 
-      <form onSubmit={onSoloSubmit} className="mt-8 space-y-6">
-        <NicknameField
-          value={nickname}
+      <form onSubmit={onSoloSubmit} className="mt-6 flex flex-col gap-5">
+        <NicknameField value={nickname} disabled={busy} onChange={onNicknameChange} />
+
+        <SoloOpponentPicker
+          value={soloOpponents}
+          nickname={nickname}
           disabled={busy}
-          onChange={onNicknameChange}
+          onChange={onSoloOpponentsChange}
         />
 
-        <fieldset className="space-y-2">
-          <legend className="text-sm font-medium text-ink">Opponents</legend>
-          <div className="flex flex-wrap gap-2">
-            {OPPONENT_COUNTS.map((count) => (
-              <Button
-                key={count}
-                type="button"
-                variant={soloOpponents === count ? 'green' : 'orange'}
-                disabled={busy}
-                onClick={() => {
-                  onSoloOpponentsChange(count);
-                }}
-              >
-                {count}
-              </Button>
-            ))}
-          </div>
-        </fieldset>
+        <div className="flex flex-col gap-2">
+          {/* The visible caption; the group carries the same name through `Segmented`'s `label`. */}
+          <p aria-hidden="true" className="font-v7-body text-v7-body font-extrabold text-v7-text">
+            {SOLO_DIFFICULTY_LABEL}
+          </p>
+          <Segmented<BotDifficulty>
+            label={SOLO_DIFFICULTY_LABEL}
+            options={BOT_DIFFICULTY_OPTIONS}
+            value={soloDifficulty}
+            onChange={onSoloDifficultyChange}
+            disabled={busy}
+          />
+        </div>
 
-        <fieldset className="space-y-2">
-          <legend className="text-sm font-medium text-ink">Difficulty</legend>
-          <div className="flex flex-wrap gap-2">
-            {BOT_DIFFICULTIES.map((tier) => (
-              <Button
-                key={tier}
-                type="button"
-                variant={soloDifficulty === tier ? 'green' : 'orange'}
-                disabled={busy}
-                onClick={() => {
-                  onSoloDifficultyChange(tier);
-                }}
-              >
-                {formatBotDifficulty(tier)}
-              </Button>
-            ))}
-          </div>
-        </fieldset>
+        <SoloKitCard
+          selection={soloKitSelection}
+          randomOnly={soloRules.randomOnly}
+          disabled={busy}
+          onOpenKitPicker={onOpenKitPicker}
+        />
 
         <RulesStrip rules={soloRules} editor={rulesEditor} />
 
-        {soloRules.randomOnly ? (
-        <div className="space-y-2">
-          <p className="text-sm font-medium text-ink">Your kit</p>
-          <p className="text-sm text-ink-muted">{RANDOM_ONLY_SOLO_LINE}</p>
-        </div>
-        ) : (
-        <div className="space-y-2">
-          <p className="text-sm font-medium text-ink">Your kit</p>
-          <p className="text-sm text-ink-muted">{KIT_PICKER_LEAD}</p>
-          <div className="flex flex-wrap items-center gap-3">
-            <KitPortrait
-              kitId={soloKitSelection === 'random' ? null : soloKitSelection}
-              nickname="Random kit"
-              className="w-16"
-            />
-            <div className="min-w-0 space-y-2">
-              <p className="font-medium text-ink">{lobbyKitSelectionLabel(soloKitSelection)}</p>
-              <Button
-                type="button"
-                variant="orange"
-                disabled={busy}
-                onClick={onOpenKitPicker}
-              >
-                Choose kit
-              </Button>
-            </div>
-          </div>
-        </div>
-        )}
-
-        <Button type="submit" variant="green" disabled={!canSubmit}>
+        <Button type="submit" variant="primary" size="lg" disabled={!canSubmit}>
           Start solo game
         </Button>
       </form>

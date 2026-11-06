@@ -30,7 +30,7 @@ import { Button } from '../../ui/primitives/button';
 import { KitTile } from '../../ui/primitives/kit-tile';
 import { Sheet } from '../../ui/primitives/sheet';
 import { ILLEGAL_ACTION_COPY } from '../illegal-action-copy';
-import { KIT_PICKER_LEAD } from '../kit-pick-copy';
+import { CHOOSE_KIT_LABEL, KIT_PICKER_LEAD } from '../kit-pick-copy';
 import { LOBBY_KIT_PICKER_SELECTIONS, lobbyKitSelectionLabel } from './lobby-kit-picker';
 import { kitTileStats } from './kit-tile-stats';
 import { RandomKitDetails } from './random-kit-details';
@@ -91,7 +91,7 @@ export function KitPickerSheet({
       <Sheet
         mode="read-only"
         open={visible}
-        title="Choose kit"
+        title={CHOOSE_KIT_LABEL}
         placement="auto"
         className="max-w-3xl"
         onClose={onClose}

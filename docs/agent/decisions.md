@@ -6529,3 +6529,82 @@ rulings 4, 6, 7 and 8.
 The L76-15 Acceptance says no notice fires "on a Random-only toggle that keeps the pick", and also that 'Rules changed' fires for each field change; spec v7 §7.4 gives guests a toast "when rules change". `randomOnly` is a rules field, and turning it on keeps `yourKitSelection` in the view (the server ignores picks at deal time). Reading: such a toggle never adds the "Your pick was reset to Random." line, but it does show 'Rules changed'. Designer answer (2026-11-03, Lot 76 plan, Appendix B, Domain D question 2): a Random-only toggle shows 'Rules changed' without the reset line, and walk-ins and the host get no toast (A.9 ruling 10).
 
 ---
+
+## 2026-11-04 · [P] V7 Home New control: the V2 style checks retire, and New locks during a solo launch (L76-04)
+
+Spec v7 §5.1 replaces the V2/V6 `--cta-*` colors with the V7 tokens, and §7.1 keeps New as a small top-right control with an unread dot beside Beta. L76-04 rebuilds the hub on the V7 ground, so two source-text `it()`s of `screens/whats-new-dialog.test.ts` that pinned the V2 look retire (spec v7 §12.1, old-layout detail):
+
+- "wires a green New control, red unread badge, and auto-open when unseen": `variant="green"` within 400 characters of `data-whats-new-button`, `bg-cta-red`, no `bg-cta-green`;
+- "keeps What’s new as a small top-right control, not a hub action-row block": `data-whats-new-button` within 400 characters of `absolute`.
+
+Their product meaning stays rendered in `screens/home/home-screen.test.tsx`: the unread name and dot ('auto-opens only the latest entry when it is unseen, under an unread New', 'a %s dismissal marks the latest entry seen and clears the unread label and dot') and the placement ('keeps New beside the Beta badge, outside the hub buttons', now in the top-right row on every path).
+
+This supersedes "The New button is never disabled, even while connecting or launching" (parity `home-whats-new`): per spec v7 §11 and §13 Q8, New is disabled while a solo game launches and keeps its "What's new (unread)" name. An online create or join leaves it live; Q8 names only the solo launch.
+
+---
+
+## 2026-11-04 · [P] How to play is a card carousel with icons and card renders (L76-06)
+
+Spec v7 §7.1 asks for resource icons inline; §13 row 12 says icons and card renders; the designer chose both (2026-11-03): four slides (Cards, Upgrade, Kits, Special cards) add aria-hidden base-art renders. This supersedes the parity row `home-how-to-play-dialog` (a V2 Dialog with PNG glyph rows). `screens/how-to-play-dialog.tsx` keeps its export and `onClose(reason)` contract, so the arena TopBar and the classic table mount the V7 sheet unedited; on the classic table '?' it is now a V7 sheet in the sheet stack (Esc closes only it).
+
+---
+
+## 2026-11-04 · [P] Feedback locks dismissal while sending, times out after 15 s and ends on Sent (L76-07)
+
+Source: technical spec v7 §7.7 (a 15 s client timeout re-enables dismissal with an error; ends with "Sent"); the Lot 76 backlog review of 2026-10-21 ("Sent" closes by itself after ~1.5 s; not in §7.7, a designer question); §5.2, §10.6, §11 (Q6, Q68, Q69, Q71); Lot 76 plan L76-07 Review line, Part 2 Review Focus 2.
+
+- **Supersedes** in Appendix A `global-feedback-dialog`: "Esc / overlay dismisses as skip (ask) or cancel (manual). It is not gated by busy", "Success: the dialog closes at once with reason 'sent'. There is no confirmation toast" and "The Kind buttons carry no aria-pressed"; and in `feedback-dialog-dismiss`: "busy sending: buttons disabled, but Escape / backdrop still close". While a send is in flight the sheet is `dismissLocked` (Esc, backdrop, swipe) and Skip / Cancel are disabled.
+- **Timeout.** The dialog owns the 15 s timer (`FEEDBACK_SEND_TIMEOUT_MS`), not `submitFeedback`, so a hung fetch and a mocked one behave alike. On expiry it moves the request id on, releases the in-flight gate and shows the existing 'Could not save — try again'. A late answer to that request is ignored: no Sent, no 'sent'. The note may still have been stored, so a retry can store a second one: a duplicate row is preferred to a sheet the player cannot leave.
+- **Sent.** A success retitles the same sheet "Sent" with "Thanks for your feedback." and a focused OK. It closes after `FEEDBACK_SENT_CLOSE_MS` (1.5 s) or on OK, Esc, backdrop or swipe, and calls `onDismiss('sent')` exactly once, so no caller changes (End still marks the ask-once flag on 'sent', 1.5 s later). Every way out of Sent goes through `useOncePerOpen` (plan A.9 ruling 5; controller ruling on L76-07), so OK pressed in the same moment as the auto-close still reports once. The sheet is renamed at once, so a test that waits for the 'Feedback' dialog to close after a send still passes.
+- **Fields.** Kind is a `Segmented` radio group (Q71); the About chips keep `aria-pressed`. Message is the new `ui/primitives` `TextArea` (16 px, §5.2). There is still no `<form>`: Enter never sends. `FEEDBACK_FALLBACK_ERROR` moved to `feedback-form-copy.ts`, because a lobby test mocks `submit-feedback` without its constants.
+- **Test edit.** `screens/home/home-screen.test.tsx` › 'opens Feedback in manual mode from the hub…' finds Idea by role `radio` instead of `button`: the same control, now a radio (§11, Q71). Its assertions are unchanged.
+
+---
+
+## 2026-11-04 · [P] Home launches each intent once per connection state (L76-08)
+
+Source: Lot 76 plan Part 2 Review Focus 3; technical spec v7 §1 ("an accidental tap never spends the turn"), §7.1, §7.7 (connection errors stay inline, retry in place); Appendix A `home-forms-enter-submit`, `global-room-connection-lifecycle`.
+
+- A double click on Create, Join, Start tutorial or Start solo game called its callback twice: `createGame` and the solo and tutorial launches await `leaveCurrent` before they set `connecting`, so a second submit can land before the buttons grey out. `useLaunchOnce` (`screens/home/use-launch-once.ts`) records, per intent, the connection epoch it last launched in. The epoch moves whenever `status`, `error` or `soloLaunchPending` changes ("adjust state while rendering"); the ref is read only in handlers (the epoch latch of `screens/arena/top-bar.tsx`, plan A.9 ruling 5).
+- Per intent, not one latch for all: a Create and a Join in the same state each go through once, as `home-screen.test.tsx` already expects. A failure (new `status` and `error`) re-arms every intent, so the player retries in place.
+- `screens/home/home-classes.ts` (`HOME_INPUT_CLASS`, plan Appendix A.2) is deleted: Nickname and Game code are `TextField`s, and the Join code uses its new `size="lg"` (§7.1 "a large code field").
+
+---
+
+## 2026-11-04 · [P] Solo opponents are seat radios around a mini table (L76-11)
+
+Source: technical spec v7 §7.1 ("opponents 1–7 picked by adding avatars around a mini table"), §11 (Q7: real radio semantics, Q8: busy); Lot 76 plan Appendix A.10 (the count control must fit a 328 px content width), Part 2 Review Focus 3 and 5.
+
+- A seven-option `Segmented` needs about 346 px and its options never wrap, so it would overflow a 360 px phone. The count is a radio group "Opponents" whose seven radios are the bot seats around an oval table, inside a 320×216 px stage (`screens/home/solo-table.ts`; `solo-table.test.ts` checks every 44 px seat fits and none overlap). Seat n is checked at n opponents; seats 1…n fill in their seat hue (`v7SeatColor(n)`, the index the bot will take in `view.players`), the rest are dashed empties; the player's own avatar sits at the bottom, decorative. The radios keep the labels 1–7, so no new string.
+- Keyboard: the checked seat is the only Tab stop; arrow keys move and select, wrapping (the `Segmented` model, `roving-focus.ts`); a click selects.
+- Rejected: a stepper (it needs plus and minus icons and two new labels, and has no checked state for §11), and a two-row radio row (it fits but shows no table).
+- Difficulty is `Segmented<BotDifficulty>` "Difficulty" with the lobby's `BOT_DIFFICULTY_OPTIONS`, so `screens/home` no longer imports `bots/`. Your kit (`SoloKitCard`) moves before the rules strip (§7.1 order); its Choose kit is disabled during a launch (Q8), where the lobby's stays live while reconnecting (A.9 ruling 6). Start solo game goes through the L76-08 launch latch.
+- **Test edit.** `screens/home/home-screen.test.tsx` › 'locks the solo menu while the launch is pending' finds 1, 7, Easy, Normal and Hard by role `radio`: the same controls with radio semantics (§11, Q7). Every control is still asserted disabled.
+
+---
+
+## 2026-11-04 · [P] An invite link opens Join through the soft gate, once (L76-17)
+
+Source: technical spec v7 §7.1 (`?code=XXXXXX` pre-fills Join; client only; nickname still required), §7.2 (Share: Web Share, else copy a link), §10.6 ("Link copied"), §13 Q28; Lot 76 plan L76-17 Review line, Appendix A.10, Part 2 Review Focus 4.
+
+- **Link.** `inviteLink(origin, code)` = `{origin}/?code={code}` (`screens/lobby/invite-link.ts`). Share calls `navigator.share({ url })` when the browser has it; a cancel (`AbortError`) is silent. Without Web Share, or when it fails for another reason, Share copies the link and shows "Link copied" ("Share this link with friends: {link}"); a refused clipboard shows the existing "Copy failed" with the code, so every failure still shows the code. Share sends nothing and stays live while reconnecting, as Copy.
+- **Read once.** `GameApp` reads `?code=` in a `useState` initialiser: uppercased, capped at 6, no character filter (the server validates, as for the Join field); a missing or empty value is ignored. It seeds `joinCode`, and an effect strips `code` with `history.replaceState` (other parameters, such as `ui`, stay), so a reload or Back does not open it again. `/admin` and `/dev/ui` return before `GameApp` and never read it.
+- **Online once.** App passes `openOnline` to Home only until the first room view, so a Leave or a kick lands on the hub (parity `home-online-path`: "After a kick: Home remounts on the hub"). Home enters Online through the How to play soft gate (`homeMountEntry`); a solo Play again seed still wins. Nothing joins by itself: Join stays disabled until a nickname is typed.
+- What's new at mount is unchanged: when the latest entry is unseen it opens above the gated How to play, as it does over a seeded solo menu.
+
+---
+
+## 2026-11-06 · [P] The Lot 76 gate fix wave: focus hand-backs live in the callers (L76-18)
+
+Source: Lot 76 Part 2 final review (P2-m1 to P2-m5), the controller's browser pass D1 to D5, the design critique, and the Lot 76 plan Review Focus; technical spec v7 §6.7, §7.1, §7.2, §7.7.
+
+- **Sit here locks while reconnecting.** `ClaimSeatDialog` takes `locked`; App passes `status === 'reconnecting'` on the shared `claimDialog`. Sit here is disabled (still focusable, no reason line, the open Q39 decision) and Stay stays live. A pick that leaves the claimable set is forgotten, so it is not selected again if that seat returns.
+- **Focus returns to the control that opened the sheet, set by the caller.** The focus trap returns focus to the element that was focused when the sheet opened. Safari does not focus a button on click, so that element is `body` and the trap has nothing to return to. `RulesStrip` (every caller of the Table rules sheet) and `LobbySeats` (the Kick confirm: Cancel, Esc and the backdrop) now focus their own button on close. The primitives `sheet.tsx` and `dialog.tsx` are unchanged. A Kick that is sent, or a lock that closes the confirm, focuses nothing, because the seat is gone or the control is disabled.
+- **How to play opens on Next.** The first control in the DOM is the Previous chevron, which is `aria-disabled` on slide 1. `HowToPlayDialog` finds Next with a callback ref on the carousel's box and passes it as `initialFocusRef`.
+- **Home focuses the title on a mode switch.** The mode switch remounts the subtree, so the pressed tile or Back unmounts with focus on it. `HomeScreen` focuses the new `<h1>` (`tabIndex={-1}`) after any change of mode, the gated Skip and Got it included, and never on the first mount, so an invite arrival keeps its own start. The lobby alert's OK moves focus to the lobby `<h1>` before it dismisses.
+- **The Feedback Sent report latches per Sent**, not per open: `useOncePerOpen(open && sent)`.
+- **Layout.** Under 500px of viewport height the hub hides the card fan and drops the wordmark overlap, so the three tiles fit a landscape phone (844x390); 360, 375, 390 and 1440 are unchanged. The rules editor's kit grid takes 6rem columns (its buttons spend 18px on border and padding), so "Indestructible" no longer splits at 320. Copy and Share share one flex group so the pair wraps together.
+- **What's new item 9** is one short sentence per side: "Home was a plain menu, How to play was one long page, and Feedback closed without a word." / "Home has the new look, How to play is a deck of cards you swipe through, and Feedback shows Sent once your note is saved."
+- **Recorded, not fixable in Lot 76 (P2-m4).** On the classic table the shared V7 sheets (z-50) sit under the your-turn flash (z-90/91), so the flash paints over them for its duration. When a V2 `Dialog` opens over an open V7 sheet (the elimination-reward sub-choice, an opponent reveal), one Esc also closes the V7 sheet underneath, because the V7 listener sees only V7 sheets. The L76-06 entry's "Esc closes only it" holds only while no V2 dialog is open. Both vanish when L75-09 and L75-11 retire the classic table.
+
+---

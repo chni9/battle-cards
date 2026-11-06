@@ -66,6 +66,21 @@ describe('lobby table rules (L76-09)', () => {
     expectNoLobbyIntent(props);
   });
 
+  it.each([
+    { who: 'the host', view: hostLobbyView({ lobbyRules: RULES }) },
+    { who: 'a guest', view: guestLobbyView({ lobbyRules: RULES }) },
+  ])('Close returns focus to the Table rules strip for $who, even when the press never focused it (Safari; P2 critique b)', async ({ view }) => {
+    const { user } = renderUi(<LobbyScreen {...makeLobbyProps({ view })} />, { reducedMotion: true });
+    const opener = strip();
+    fireEvent.click(opener); // Safari does not focus a button on click, so the sheet has no opener to return to
+    expect(document.activeElement).not.toBe(opener);
+    await user.click(within(sheet()).getByRole('button', { name: 'Close' }));
+    await waitFor(() => {
+      expect(screen.queryByRole('dialog', { name: 'Table rules', hidden: true })).toBeNull();
+    });
+    expect(document.activeElement).toBe(opener);
+  });
+
   it('every face on the strip has its kit-name alt, and every excluded face says Excluded', () => {
     const excludedKitIds: readonly KitId[] = ['assassin', 'gambler'];
     renderUi(<LobbyScreen {...makeLobbyProps({ view: guestLobbyView({ lobbyRules: { ...RULES, excludedKitIds } }) })} />);
