@@ -144,7 +144,7 @@ import { CentralPlate } from './central-plate';
 import { ChatSheet } from './chat-sheet';
 import { useChatUnread } from './chat-unread-store';
 import { Dock, type DockCommit } from './dock';
-import { dockHasControls } from './dock-model';
+import { dockHasControls, dockIconOnly } from './dock-model';
 import { plateDropHighlight, seatDropHighlight } from './hand-drag';
 import { HandDragLayer } from './hand-drag-layer';
 import { HandFan } from './hand-fan';
@@ -621,6 +621,7 @@ function ArenaScreenInner(props: ArenaScreenProps): ReactElement {
               tour === 'shop' ? 'shop' : (tutorialEconomySpotlight(tutorial.scriptHighlight, shopOpen) ?? null)
             }
             locked={tutorial.locksTable}
+            iconOnly={dockIconOnly(layoutBox.viewport)}
           />
         ) : null}
       </div>

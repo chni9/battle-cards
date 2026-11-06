@@ -4,7 +4,15 @@
 import { describe, expect, it } from 'vitest';
 
 import type { UnspyControl } from '../../view-model/self-strip';
-import { dockHasControls, drawAriaLabel, drawPulseKey, resolvedSpyId, unspyAriaLabel } from './dock-model';
+import {
+  DOCK_ICON_ONLY_MAX_WIDTH_PX,
+  dockHasControls,
+  dockIconOnly,
+  drawAriaLabel,
+  drawPulseKey,
+  resolvedSpyId,
+  unspyAriaLabel,
+} from './dock-model';
 
 const control = (spyIds: readonly string[]): UnspyControl => ({
   cost: { kind: 'points', amount: 10 },
@@ -43,5 +51,25 @@ describe('dock model', () => {
 
   it('counts Stats: a walk-in on the finished board has a Stats-only dock (L74-24)', () => {
     expect(dockHasControls({ draw: null, shop: null, unspy: null, duplication: null, stats: true })).toBe(true);
+  });
+});
+
+describe('the icon-only dock (designer 2026-11-06, S2)', () => {
+  it('is landscape-compact under 700 px of viewport width, so 667×375 is icon-only and 844×390 is not', () => {
+    expect(DOCK_ICON_ONLY_MAX_WIDTH_PX).toBe(700);
+    expect([
+      dockIconOnly({ width: 667, height: 375 }),
+      dockIconOnly({ width: 699, height: 390 }),
+      dockIconOnly({ width: 700, height: 390 }),
+      dockIconOnly({ width: 844, height: 390 }),
+    ]).toEqual([true, true, false, false]);
+  });
+
+  it('never applies outside landscape-compact: a 360×740 phone and a narrow desktop keep their words', () => {
+    expect([dockIconOnly({ width: 360, height: 740 }), dockIconOnly({ width: 600, height: 500 }), dockIconOnly({ width: 520, height: 800 })]).toEqual([
+      false,
+      false,
+      false,
+    ]);
   });
 });

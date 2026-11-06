@@ -7,6 +7,7 @@ import type { ActionLogEntryView, PlayingStateView } from '@card-battle/shared';
 import { within } from '@testing-library/react';
 import { afterEach, describe, expect, it } from 'vitest';
 
+import { visibleText } from '../../test/glyph-queries';
 import { renderUi } from '../../test/render';
 import { heightBoundHandCardWidthPx } from '../../ui/card/hand-card-size';
 import { SEAT_BOX, seatOrder, type LayoutBox } from '../../view-model/seat-layout';
@@ -95,5 +96,41 @@ describe('landscape-compact (§6.4, R4)', () => {
     }
     expect(within(region('top-bar')).getByRole('button', { name: 'Forfeit' })).toBeTruthy();
     expect(one('[data-self-strip]').getAttribute('data-self-strip')).toBe(strip);
+  });
+});
+
+describe('the dock under 700 px of landscape width (designer 2026-11-06, S2)', () => {
+  const dockOf = (): HTMLElement => one('[data-arena-region="dock"]');
+  const duplicator = (): PlayingStateView => makeArenaView({ overrides: { self: makeSelf({ kitId: 'duplicator', points: 20 }) } });
+
+  it('667×375 shows icons only; every control keeps its name, and a disabled one keeps its reason', () => {
+    setupAt(ARENA_TEST_BOXES.landscapeSmall, duplicator());
+    const dock = dockOf();
+    const names = ['Shop', 'Activate duplication'];
+    for (const name of names) {
+      const button = within(dock).getByRole('button', { name });
+      expect([visibleText(button).trim(), button.getAttribute('title')?.startsWith(name), button.querySelector('[data-icon]') !== null]).toEqual(['', true, true]);
+    }
+    expect(within(dock).getByRole('button', { name: /^Draw, plus / })).toBeTruthy();
+    expect(within(dock).getByRole('button', { name: /^Unspy/ })).toBeTruthy();
+    expect(dock.querySelector('[data-reason-slot]')).toBeNull();
+  });
+
+  it('a disabled icon control says why: its title and its description hold the reason, with no visible line', () => {
+    setupAt(ARENA_TEST_BOXES.landscapeSmall, makeArenaView({ overrides: { self: makeSelf({ kitId: 'duplicator', points: 20 }), currentTurnPlayerId: 'p1' } }));
+    const button = within(dockOf()).getByRole('button', { name: 'Activate duplication' });
+    expect(button.getAttribute('aria-disabled')).toBe('true');
+    const reason = (button.getAttribute('aria-describedby') ?? '').split(' ').map((id) => document.getElementById(id)?.textContent ?? '').join(' ').trim();
+    expect(reason).not.toBe('');
+    expect(button.getAttribute('title')).toBe(`Activate duplication. ${reason}`);
+    expect(visibleText(dockOf()).includes(reason)).toBe(false);
+  });
+
+  it('844×390 keeps the labelled dock', () => {
+    setupAt(ARENA_TEST_BOXES.landscape, duplicator());
+    const dock = dockOf();
+    expect(visibleText(within(dock).getByRole('button', { name: 'Shop' })).trim()).toBe('Shop');
+    expect(visibleText(within(dock).getByRole('button', { name: 'Activate duplication' })).trim()).toBe('Activate duplication');
+    expect(dock.querySelector('[data-reason-slot]')).not.toBeNull();
   });
 });

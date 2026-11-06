@@ -1603,6 +1603,10 @@ Appendix A). Each Lot 74 task appends its bullet here, in task order.
     that follows new lines within 48 px (`useLogFollow`, shared with the log sheet). Collapsed, the
     list unmounts. The panel opens expanded; Menu → Action log expands it and opens no sheet. The
     dock sits right of the hand in the `hand` row.
+  - The dock draws icon-only under 700 px of landscape-compact width (`dockIconOnly`, `Dock iconOnly`,
+    designer 2026-11-06): Shop and Activate duplication lose their words, the controls sit in two
+    columns, and a disabled control's reason moves to its `title` and an sr-only `aria-describedby`
+    text. At 667×375 the hand then gets 220 px beside the 287 px strip.
   - The card, Shop and seat sheets pass `placement="auto"`: centred dialogs on desktop, bottom sheets
     elsewhere. Every other arena sheet stays `bottom`.
   - Seats are drawn at `seatRenderBox(mode, layout.box)` (`SEAT_BOX[mode]`, `data-seat-size`; desktop 120×136
